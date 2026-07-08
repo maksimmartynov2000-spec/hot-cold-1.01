@@ -233,6 +233,7 @@
       font-size: 12px;
       color: rgba(255, 255, 255, 0.45);
       line-height: 1.4;
+      white-space: pre-line;
     }
 
     .hidden { display: none !important; }
@@ -290,8 +291,8 @@
     <div class="legend-grid" id="legendGrid"></div>
     
     <details class="instruction-box">
-      <summary id="tInsTitle">How to play? 📋</summary>
-      <p id="tInsBody">Guess the secret number (1–1000) in 20 attempts. The thermometer tracks the absolute mathematical difference: the smaller the gap, the hotter the response (from Absolute Zero to Epicenter). Missed all 20? You get one final do-or-die try!</p>
+      <summary id="tInsTitle">Rules 📋</summary>
+      <p id="tInsBody">Loading...</p>
     </details>
   </div>
 </div>
@@ -304,10 +305,10 @@
       enterGuess: "Enter the guesser's attempt", placeholder: "Number 1–1000...", submitGuess: "Check",
       finalWarning: "20 attempts used — last chance!", finalSubmit: "Submit",
       resultWin: "🎉 Victory! Number is guessed!", resultLose: "❌ Wrong. The secret number was: ",
-      historyTitle: "Guess History", legendTitle: "Thermal Scale",
+      historyTitle: "Guess History", legendTitle: "Distance Scale",
       insTitle: "How to play? 📋",
-      insBody: "The computer generated a secret number from 1 to 1000. Find it in 20 attempts. The thermometer tracks the distance (difference) between your guess and the secret number. Example: the secret number is 350, you enter 900 — the distance is 550 steps (🧊 Absolute Zero). The smaller the gap, the higher the temperature. After 20 misses, you get one final do-or-die chance!",
-      labels: ["🧊 Absolute zero", "❄️ Glacier", "🌬️ Freezing", "🌤️ Chilly", "☀️ Warmer", "🔥 Hot", "🌋 Lava", "💥 Epicenter", "🎯 Bullseye!"],
+      insBody: "Guess the secret number (from 1 to 1000) in 20 attempts.\n\nThe thermometer tracks the distance (difference) between your guess and the secret number.\n\nExample: the secret number is 350, you enter 900 — the distance is 550 steps. The thermometer will show:\n🧊 Very cold.\n\nThe smaller this distance, the higher the thermometer temperature.\n\nGood luck!",
+      labels: ["🧊 Very cold", "❄️ Cold", "🌬️ Chilly", "🌤️ Warm", "☀️ Hot", "🔥 Very hot", "💥 Blast", "🌋 Lava", "🎯 Bullseye!"],
       finalInput: "Final answer..."
     },
     ru: {
@@ -316,10 +317,10 @@
       enterGuess: "Введите попытку угадывающего", placeholder: "Число от 1 до 1000...", submitGuess: "Проверить",
       finalWarning: "20 попыток использовано — последний шанс!", finalSubmit: "Ответ",
       resultWin: "🎉 Победа! Число угадано!", resultLose: "❌ Неверно. Загаданное число было: ",
-      historyTitle: "История попыток", legendTitle: "Тепловая шкала",
+      historyTitle: "История попыток", legendTitle: "Шкала расстояний",
       insTitle: "Как играть? 📋",
-      insBody: "Компьютер загадал секретное число от 1 до 1000. Твоя задача — вычислить его за 20 попыток. Градусник измеряет расстояние (разницу) между твоим вариантом и секретным числом. Например: секретное число 350, ты вводишь 900 — расстояние 550 шагов (🧊 Абсолютный ноль). Чем меньше этот зазор, тем выше температура шкалы. После 20 промахов включится один последний решающий шанс!",
-      labels: ["🧊 Абсолютный ноль", "❄️ Ледник", "🌬️ Мороз", "🌤️ Прохладно", "☀️ Тепло", "🔥 Жарко", "🌋 Лава", "💥 Эпицентр", "🎯 В точку!"],
+      insBody: "Отгадай секретное число (от 1 до 1000) за 20 попыток.\n\nГрадусник измеряет расстояние (разницу) между твоим вариантом и секретным числом.\n\nНапример: секретное число 350, ты вводишь 900 — расстояние 550 шагов. Градусник покажет:\n🧊 Очень холодно.\n\nЧем меньше это расстояние, тем выше температура градусника.\n\nУдачи!",
+      labels: ["🧊 Очень холодно", "❄️ Холодно", "🌬️ Прохладно", "🌤️ Тепло", "☀️ Жарко", "🔥 Горячо", "💥 Очень горячо", "🌋 Лава", "🎯 В точку!"],
       finalInput: "Финальный ответ..."
     },
     fr: {
@@ -328,10 +329,10 @@
       enterGuess: "Entrez la tentative du devineur", placeholder: "Nombre 1–1000...", submitGuess: "Vérifier",
       finalWarning: "20 tentatives utilisées — dernière chance!", finalSubmit: "Valider",
       resultWin: "🎉 Victoire! Le nombre est deviné!", resultLose: "❌ Incorrect. Le nombre secret était: ",
-      historyTitle: "Historique", legendTitle: "Échelle Thermique",
+      historyTitle: "Historique", legendTitle: "Échelle de Distance",
       insTitle: "Comment jouer? 📋",
-      insBody: "L'ordinateur a généré un nombre secret de 1 à 1000. Trouvez-le en 20 tentatives. Le thermomètre suit la distance (différence) entre votre supposition et le nombre secret. Exemple: le nombre secret est 350, you entrez 900 — la distance est de 550 étapes (🧊 Zéro Absolu). Plus l'écart est petit, plus la température est élevée. Après 20 ratés, vous obtenez une dernière chance décisive!",
-      labels: ["🧊 Zéro absolu", "❄️ Glacier", "🌬️ Gel", "🌤️ Frais", "☀️ Chaud", "🔥 Très chaud", "🌋 Lave", "💥 Épicentre", "🎯 Dans le mille!"],
+      insBody: "Devinez le nombre secret (de 1 à 1000) en 20 tentatives.\n\nLe thermomètre mesure la distance (différence) entre votre suggestion et le nombre secret.\n\nExemple: le nombre secret est 350, vous entrez 900 — la distance est de 550 étapes. Le thermomètre affichera:\n🧊 Très froid.\n\nPlus cette distance est petite, plus la température du thermomètre est élevée.\n\nBonne chance!",
+      labels: ["🧊 Très froid", "❄️ Froid", "🌬️ Frais", "🌤️ Tiède", "☀️ Chaud", "🔥 Très chaud", "💥 Explosion", "🌋 Lave", "🎯 Dans le mille!"],
       finalInput: "Réponse finale..."
     },
     de: {
@@ -340,10 +341,10 @@
       enterGuess: "Geben Sie den Rateversuch ein", placeholder: "Zahl 1–1000...", submitGuess: "Prüfen",
       finalWarning: "20 Versuche verbraucht — letzte Chance!", finalSubmit: "Absenden",
       resultWin: "🎉 Sieg! Zahl wurde erraten!", resultLose: "❌ Falsch. Die Geheimzahl war: ",
-      historyTitle: "Verlauf", legendTitle: "Thermoskala",
+      historyTitle: "Verlauf", legendTitle: "Entfernungsskala",
       insTitle: "Spielanleitung 📋",
-      insBody: "Der Computer hat eine Geheimzahl von 1 bis 1000 generiert. Finde sie in 20 Versuchen. Das Thermometer verfolgt den Abstand (Differenz) zwischen Ihrem Tipp und der Geheimzahl. Beispiel: Die Geheimzahl ist 350, Sie geben 900 ein — der Abstand beträgt 550 Schritte (🧊 Absoluter Nullpunkt). Je kleiner der Abstand, desto höher die Temperatur. Nach 20 Fehlversuchen erhalten Sie eine letzte entscheidende Chance!",
-      labels: ["🧊 Absoluter Nullpunkt", "❄️ Gletscher", "🌬️ Frost", "🌤️ Kühl", "☀️ Warm", "🔥 Heiß", "🌋 Lava", "💥 Epizentrum", "🎯 Volltreffer!"],
+      insBody: "Errate die Geheimzahl (von 1 bis 1000) in 20 Versuchen.\n\nDas Thermometer misst den Abstand (Differenz) zwischen deinem Tipp und der Geheimzahl.\n\nBeispiel: Die Geheimzahl ist 350, du gibst 900 ein — der Abstand beträgt 550 Schritte. Das Thermometer zeigt:\n🧊 Sehr kalt.\n\nJe kleiner dieser Abstand ist, desto höher ist die Temperatur des Thermometers.\n\nViel Glück!",
+      labels: ["🧊 Sehr kalt", "❄️ Kalt", "🌬️ Kühl", "🌤️ Warm", "☀️ Heiß", "🔥 Sehr heiß", "💥 Explosion", "🌋 Lava", "🎯 Volltreffer!"],
       finalInput: "Letzte Antwort..."
     }
   };
@@ -355,8 +356,8 @@
     { min: 51,  max: 100,      color: "#F59E0B", bg: "rgba(245, 158, 11, 0.15)", labelIndex: 3 },
     { min: 21,  max: 50,       color: "#F97316", bg: "rgba(249, 115, 22, 0.15)", labelIndex: 4 },
     { min: 11,  max: 20,       color: "#EF4444", bg: "rgba(239, 68, 68, 0.15)", labelIndex: 5 },
-    { min: 4,   max: 10,       color: "#DC2626", bg: "rgba(220, 38, 38, 0.15)", labelIndex: 6 },
-    { min: 1,   max: 3,        color: "#9F1239", bg: "rgba(159, 18, 57, 0.15)", labelIndex: 7 },
+    { min: 4,   max: 10,       color: "#9F1239", bg: "rgba(159, 18, 57, 0.15)", labelIndex: 6 },
+    { min: 1,   max: 3,        color: "#DC2626", bg: "rgba(220, 38, 38, 0.15)", labelIndex: 7 },
     { min: 0,   max: 0,        color: "#16A34A", bg: "rgba(22, 163, 74, 0.15)", labelIndex: 8 },
   ];
 
