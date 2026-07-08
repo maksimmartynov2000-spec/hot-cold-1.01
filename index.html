@@ -331,7 +331,7 @@
       resultWin: "🎉 Victoire! Le nombre est deviné!", resultLose: "❌ Incorrect. Le nombre secret était: ",
       historyTitle: "Historique", legendTitle: "Échelle de Distance",
       insTitle: "Comment jouer? 📋",
-      insBody: "Devinez le nombre secret (de 1 à 1000) en 20 tentatives.\n\nLe thermomètre mesure la distance (différence) entre votre supposition et le nombre secret.\n\nExemple: le nombre secret est 350, vous entrez 900 — la distance is de 550 étapes. Le thermomètre affichera: 🧊 Très froid.\n\nPlus cette distance est petite, plus la température du thermomètre est élevée.\n\nBonne chance!",
+      insBody: "Devinez le nombre secret (de 1 à 1000) en 20 tentatives.\n\nLe thermomètre mesure la distance (différence) entre votre supposition et le nombre secret.\n\nExemple: le nombre secret est 350, you entrez 900 — la distance is de 550 étapes. Le thermomètre affichera: 🧊 Très froid.\n\nPlus cette distance est petite, plus la température du thermomètre est élevée.\n\nBonne chance!",
       labels: ["🧊 Très froid", "❄️ Froid", "🌬️ Frais", "🌤️ Tiède", "☀️ Chaud", "🔥 Très chaud", "💥 Explosion", "🌋 Lave", "🎯 Dans le mille!"],
       finalInput: "Réponse finale..."
     },
@@ -350,15 +350,15 @@
   };
 
   const FEEDBACK_META = [
-    { min: 501, max: 1000,     color: "#3B82F6", bg: "rgba(59, 130, 246, 0.15)", labelIndex: 0 },
-    { min: 201, max: 500,      color: "#60A5FA", bg: "rgba(96, 165, 250, 0.15)", labelIndex: 1 },
-    { min: 101, max: 200,      color: "#93C5FD", bg: "rgba(147, 197, 253, 0.15)", labelIndex: 2 },
-    { min: 51,  max: 100,      color: "#F59E0B", bg: "rgba(245, 158, 11, 0.15)", labelIndex: 3 },
-    { min: 21,  max: 50,       color: "#F97316", bg: "rgba(249, 115, 22, 0.15)", labelIndex: 4 },
-    { min: 11,  max: 20,       color: "#EF4444", bg: "rgba(239, 68, 68, 0.15)", labelIndex: 5 },
-    { min: 4,   max: 10,       color: "#9F1239", bg: "rgba(159, 18, 57, 0.15)", labelIndex: 6 }, // Поставили индекс Очень горячо (6) к винному цвету
-    { min: 1,   max: 3,        color: "#DC2626", bg: "rgba(220, 38, 38, 0.15)", labelIndex: 7 }, // Поставили индекс Лавы (7) к ярко-красному цвету
-    { min: 0,   max: 0,        color: "#16A34A", bg: "rgba(22, 163, 74, 0.15)", labelIndex: 8 },
+    { min: 501, max: 1000,     color: "#93C5FD", bg: "rgba(147, 197, 253, 0.15)", labelIndex: 0 }, // Ледяной голубой
+    { min: 201, max: 500,      color: "#38BDF8", bg: "rgba(56, 189, 248, 0.15)",  labelIndex: 1 }, // Яркий небесный
+    { min: 101, max: 200,      color: "#2DD4BF", bg: "rgba(45, 212, 191, 0.15)",  labelIndex: 2 }, // Мятно-бирюзовый
+    { min: 51,  max: 100,      color: "#FBBF24", bg: "rgba(251, 191, 36, 0.15)",  labelIndex: 3 }, // Солнечный желтый
+    { min: 21,  max: 50,       color: "#FB923C", bg: "rgba(251, 146, 60, 0.15)",  labelIndex: 4 }, // Насыщенный оранжевый
+    { min: 11,  max: 20,       color: "#F87171", bg: "rgba(248, 113, 113, 0.15)", labelIndex: 5 }, // Кораллово-красный
+    { min: 4,   max: 10,       color: "#FB7185", bg: "rgba(251, 113, 133, 0.15)", labelIndex: 6 }, // Сочный малиновый
+    { min: 1,   max: 3,        color: "#FF3333", bg: "rgba(255, 51, 51, 0.18)",   labelIndex: 7 }, // Неоново-алый (Лава)
+    { min: 0,   max: 0,        color: "#4ADE80", bg: "rgba(74, 222, 128, 0.15)",  labelIndex: 8 }, // Сочный зеленый
   ];
 
   const MAX_GUESSES = 20;
