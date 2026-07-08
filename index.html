@@ -274,7 +274,7 @@
   <div class="result-box hidden" id="resultBox"></div>
 
   <div class="guess-section" id="guessSection">
-    <p id="tEnterGuess">Enter the guesser's attempt</p>
+    <p id="tEnterGuess">Enter a number</p>
     <div class="row">
       <input type="number" id="guessInput" min="1" max="1000" placeholder="" pattern="[0-9]*" inputmode="numeric" />
       <button class="btn" onclick="handleGuess()" id="tSubmitGuess">Check</button>
@@ -302,7 +302,7 @@
     en: {
       title: "Hot or Cold", docTitle: "Hot or Cold | 🌡️",
       confirmed: "Number generated ✓", attemptsPrefix: "Attempts: ", newGame: "New Game",
-      enterGuess: "Enter the guesser's attempt", placeholder: "Number 1–1000...", submitGuess: "Check",
+      enterGuess: "Enter a number", placeholder: "Number 1–1000...", submitGuess: "Check",
       finalWarning: "20 attempts used — last chance!", finalSubmit: "Submit",
       resultWin: "🎉 Victory! Number is guessed!", resultLose: "❌ Wrong. The secret number was: ",
       historyTitle: "Guess History", legendTitle: "Distance Scale",
@@ -314,19 +314,19 @@
     ru: {
       title: "Горячо — Холодно", docTitle: "Горячо — Холодно | 🌡️",
       confirmed: "Число загадано ✓", attemptsPrefix: "Попыток: ", newGame: "Новая игра",
-      enterGuess: "Введите попытку угадывающего", placeholder: "Число от 1 до 1000...", submitGuess: "Проверить",
+      enterGuess: "Введите число", placeholder: "Число от 1 до 1000...", submitGuess: "Проверить",
       finalWarning: "20 попыток использовано — последний шанс!", finalSubmit: "Ответ",
       resultWin: "🎉 Победа! Число угадано!", resultLose: "❌ Неверно. Загаданное число было: ",
       historyTitle: "История попыток", legendTitle: "Шкала расстояний",
       insTitle: "Как играть? 📋",
-      insBody: "Отгадай секретное число (от 1 до 1000) за 20 попыток.\n\nГрадусник измеряет расстояние (разницу) между твоим вариантом и секретным числом.\n\nНапример: секретное число 350, ты вводишь 900 — расстояние 550 шагов. Градусник покажет:\n🧊 Очень холодно.\n\nЧем меньше это расстояние, тем выше температура градусника.\n\nУдачи!",
+      insBody: "Отгадайте секретное число (от 1 до 1000) за 20 попыток.\n\nГрадусник измеряет расстояние (разницу) между вашим вариантом и секретным числом.\n\nНапример: секретное число 350, вы вводите 900 — расстояние 550 шагов. Градусник покажет:\n🧊 Очень холодно.\n\nЧем меньше это расстояние, тем выше температура градусника.\n\nУдачи!",
       labels: ["🧊 Очень холодно", "❄️ Холодно", "🌬️ Прохладно", "🌤️ Тепло", "☀️ Жарко", "🔥 Горячо", "💥 Очень горячо", "🌋 Лава", "🎯 В точку!"],
       finalInput: "Финальный ответ..."
     },
     fr: {
       title: "Chaud ou Froid", docTitle: "Chaud ou Froid | 🌡️",
       confirmed: "Nombre défini ✓", attemptsPrefix: "Essais: ", newGame: "Nouveau Jeu",
-      enterGuess: "Entrez la tentative du devineur", placeholder: "Nombre 1–1000...", submitGuess: "Vérifier",
+      enterGuess: "Entrez un nombre", placeholder: "Nombre 1–1000...", submitGuess: "Vérifier",
       finalWarning: "20 tentatives utilisées — dernière chance!", finalSubmit: "Valider",
       resultWin: "🎉 Victoire! Le nombre est deviné!", resultLose: "❌ Incorrect. Le nombre secret était: ",
       historyTitle: "Historique", legendTitle: "Échelle de Distance",
@@ -338,12 +338,12 @@
     de: {
       title: "Heiß oder Kalt", docTitle: "Heiß oder Kalt | 🌡️",
       confirmed: "Zahl gesetzt ✓", attemptsPrefix: "Versuche: ", newGame: "Neues Spiel",
-      enterGuess: "Geben Sie den Rateversuch ein", placeholder: "Zahl 1–1000...", submitGuess: "Prüfen",
+      enterGuess: "Geben Sie eine Zahl ein", placeholder: "Zahl 1–1000...", submitGuess: "Prüfen",
       finalWarning: "20 Versuche verbraucht — letzte Chance!", finalSubmit: "Absenden",
       resultWin: "🎉 Sieg! Zahl wurde erraten!", resultLose: "❌ Falsch. Die Geheimzahl war: ",
       historyTitle: "Verlauf", legendTitle: "Entfernungsskala",
       insTitle: "Spielanleitung 📋",
-      insBody: "Errate die Geheimzahl (von 1 bis 1000) in 20 Versuchen.\n\nDas Thermometer misst den Abstand (Differenz) zwischen deinem Tipp und der Geheimzahl.\n\nBeispiel: Die Geheimzahl ist 350, du gibst 900 ein — der Abstand beträgt 550 Schritte. Das Thermometer zeigt:\n🧊 Sehr kalt.\n\nJe kleiner dieser Abstand ist, desto höher ist die Temperatur des Thermometers.\n\nViel Glück!",
+      insBody: "Errate die Geheimzahl (von 1 bis 1000) in 20 Versuchen.\n\ Das Thermometer misst den Abstand (Differenz) zwischen deinem Tipp und der Geheimzahl.\n\nBeispiel: Die Geheimzahl ist 350, du gibst 900 ein — der Abstand beträgt 550 Schritte. Das Thermometer zeigt:\n🧊 Sehr kalt.\n\nJe kleiner dieser Abstand ist, desto höher ist die Temperatur des Thermometers.\n\nViel Glück!",
       labels: ["🧊 Sehr kalt", "❄️ Kalt", "🌬️ Kühl", "🌤️ Warm", "☀️ Heiß", "🔥 Sehr heiß", "💥 Explosion", "🌋 Lava", "🎯 Volltreffer!"],
       finalInput: "Letzte Antwort..."
     }
