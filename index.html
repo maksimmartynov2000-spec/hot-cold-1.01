@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <link rel="apple-touch-icon" href="https://img.icons8.com/fluent/512/thermometer.png" />
-  <link rel="icon" type="image/png" href="https://img.icons8.com/fluent/512/thermometer.png" />
+  
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><defs><linearGradient id=%22g%22 x1=%220%25%22 y1=%22100%25%22 x2=%220%25%22 y2=%220%25%22><stop offset=%220%25%22 stop-color=%22%2338BDF8%22/><stop offset=%2240%25%22 stop-color=%22%23FBBF24%22/><stop offset=%22100%25%22 stop-color=%22%23FF3333%22/></linearGradient></defs><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%231e1b4b%22/><circle cx=%2250%22 cy=%2270%22 r=%2214%22 fill=%22url(%23g)%22/><path d=%22M42 30 c0-4.4 3.6-8 8-8 s8 3.6 8 8 v30 h-16 z%22 fill=%22url(%23g)%22/><path d=%22M40 30 v32 a16 16 0 1 0 20 0 v-32 a10 10 0 0 0-20 0z%22 fill=%22none%22 stroke=%22%23ffffff%22 stroke-width=%224%22 stroke-linecap=%22round%22 opacity=%220.9%22/><circle cx=%2250%22 cy=%2232%22 r=%222%22 fill=%22%23fff%22 opacity=%220.5%22/><circle cx=%2250%22 cy=%2244%22 r=%222%22 fill=%22%23fff%22 opacity=%220.5%22/><circle cx=%2250%22 cy=%2256%22 r=%222%22 fill=%22%23fff%22 opacity=%220.5%22/></svg>" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><defs><linearGradient id=%22g%22 x1=%220%25%22 y1=%22100%25%22 x2=%220%25%22 y2=%220%25%22><stop offset=%220%25%22 stop-color=%22%2338BDF8%22/><stop offset=%2240%25%22 stop-color=%22%23FBBF24%22/><stop offset=%22100%25%22 stop-color=%22%23FF3333%22/></linearGradient></defs><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%231e1b4b%22/><circle cx=%2250%22 cy=%2270%22 r=%2214%22 fill=%22url(%23g)%22/><path d=%22M42 30 c0-4.4 3.6-8 8-8 s8 3.6 8 8 v30 h-16 z%22 fill=%22url(%23g)%22/><path d=%22M40 30 v32 a16 16 0 1 0 20 0 v-32 a10 10 0 0 0-20 0z%22 fill=%22none%22 stroke=%22%23ffffff%22 stroke-width=%224%22 stroke-linecap=%22round%22 opacity=%220.9%22/><circle cx=%2250%22 cy=%2232%22 r=%222%22 fill=%22%23fff%22 opacity=%220.5%22/><circle cx=%2250%22 cy=%2244%22 r=%222%22 fill=%22%23fff%22 opacity=%220.5%22/><circle cx=%2250%22 cy=%2256%22 r=%222%22 fill=%22%23fff%22 opacity=%220.5%22/></svg>" />
+
   <title id="docTitle">Hot - Cold | 🌡️</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -249,7 +251,23 @@
   </select>
 
   <div class="header">
-    <div class="emoji">🌡️</div>
+    <div class="emoji">
+      <svg width="46" height="46" viewBox="0 0 100 100" style="vertical-align: middle;">
+        <defs>
+          <linearGradient id="internalG" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stop-color="#38BDF8"/>
+            <stop offset="40%" stop-color="#FBBF24"/>
+            <stop offset="100%" stop-color="#FF3333"/>
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="70" r="14" fill="url(#internalG)"/>
+        <path d="M42 30 c0-4.4 3.6-8 8-8 s8 3.6 8 8 v30 h-16 z" fill="url(#internalG)"/>
+        <path d="M40 30 v32 a16 16 0 1 0 20 0 v-32 a10 10 0 0 0-20 0z" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+        <circle cx="50" cy="32" r="2" fill="#fff" opacity="0.4"/>
+        <circle cx="50" cy="44" r="2" fill="#fff" opacity="0.4"/>
+        <circle cx="50" cy="56" r="2" fill="#fff" opacity="0.4"/>
+      </svg>
+    </div>
     <h1 id="tTitle">Hot or Cold</h1>
   </div>
 
@@ -331,7 +349,7 @@
       resultWin: "🎉 Victoire! Le nombre est deviné!", resultLose: "❌ Incorrect. Le nombre secret était: ",
       historyTitle: "Historique", legendTitle: "Échelle de Distance",
       insTitle: "Comment jouer? 📋",
-      insBody: "Devinez le nombre secret (de 1 à 1000) en 20 tentatives.\n\nLe thermomètre mesure la distance (différence) entre votre supposition et le nombre secret.\n\nExemple: le nombre secret est 350, you entrez 900 — la distance is de 550 étapes. Le thermomètre affichera: 🧊 Très froid.\n\nPlus cette distance est petite, plus la température du thermomètre est élevée.\n\nBonne chance!",
+      insBody: "Devinez le nombre secret (de 1 à 1000) en 20 tentatives.\n\nLe thermomètre mesure la distance (différence) entre votre supposition et le nombre secret.\n\nExemple: le nombre secret is 350, vous entrez 900 — la distance is de 550 étapes. Le thermomètre affichera: 🧊 Très froid.\n\nPlus cette distance est petite, plus la température du thermomètre est élevée.\n\nBonne chance!",
       labels: ["🧊 Très froid", "❄️ Froid", "🌬️ Frais", "🌤️ Tiède", "☀️ Chaud", "🔥 Très chaud", "💥 Explosion", "🌋 Lave", "🎯 Dans le mille!"],
       finalInput: "Réponse finale..."
     },
@@ -350,15 +368,15 @@
   };
 
   const FEEDBACK_META = [
-    { min: 501, max: 1000,     color: "#93C5FD", bg: "rgba(147, 197, 253, 0.15)", labelIndex: 0 }, // Ледяной голубой
-    { min: 201, max: 500,      color: "#38BDF8", bg: "rgba(56, 189, 248, 0.15)",  labelIndex: 1 }, // Яркий небесный
-    { min: 101, max: 200,      color: "#2DD4BF", bg: "rgba(45, 212, 191, 0.15)",  labelIndex: 2 }, // Мятно-бирюзовый
-    { min: 51,  max: 100,      color: "#FBBF24", bg: "rgba(251, 191, 36, 0.15)",  labelIndex: 3 }, // Солнечный желтый
-    { min: 21,  max: 50,       color: "#FB923C", bg: "rgba(251, 146, 60, 0.15)",  labelIndex: 4 }, // Насыщенный оранжевый
-    { min: 11,  max: 20,       color: "#F87171", bg: "rgba(248, 113, 113, 0.15)", labelIndex: 5 }, // Кораллово-красный
-    { min: 4,   max: 10,       color: "#FB7185", bg: "rgba(251, 113, 133, 0.15)", labelIndex: 6 }, // Сочный малиновый
-    { min: 1,   max: 3,        color: "#FF3333", bg: "rgba(255, 51, 51, 0.18)",   labelIndex: 7 }, // Неоново-алый (Лава)
-    { min: 0,   max: 0,        color: "#4ADE80", bg: "rgba(74, 222, 128, 0.15)",  labelIndex: 8 }, // Сочный зеленый
+    { min: 501, max: 1000,     color: "#93C5FD", bg: "rgba(147, 197, 253, 0.15)", labelIndex: 0 }, 
+    { min: 201, max: 500,      color: "#38BDF8", bg: "rgba(56, 189, 248, 0.15)",  labelIndex: 1 }, 
+    { min: 101, max: 200,      color: "#2DD4BF", bg: "rgba(45, 212, 191, 0.15)",  labelIndex: 2 }, 
+    { min: 51,  max: 100,      color: "#FBBF24", bg: "rgba(251, 191, 36, 0.15)",  labelIndex: 3 }, 
+    { min: 21,  max: 50,       color: "#FB923C", bg: "rgba(251, 146, 60, 0.15)",  labelIndex: 4 }, 
+    { min: 11,  max: 20,       color: "#F87171", bg: "rgba(248, 113, 113, 0.15)", labelIndex: 5 }, 
+    { min: 4,   max: 10,       color: "#FB7185", bg: "rgba(251, 113, 133, 0.15)", labelIndex: 6 }, 
+    { min: 1,   max: 3,        color: "#FF3333", bg: "rgba(255, 51, 51, 0.18)",   labelIndex: 7 }, 
+    { min: 0,   max: 0,        color: "#4ADE80", bg: "rgba(74, 222, 128, 0.15)",  labelIndex: 8 },
   ];
 
   const MAX_GUESSES = 20;
