@@ -30,10 +30,9 @@
       padding: 24px 20px;
       color: #fff;
       box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-      position: relative; /* Для позиционирования переключателя языка */
+      position: relative;
     }
 
-    /* Стили для аккуратного переключателя языка */
     .lang-switcher {
       position: absolute;
       top: 14px;
@@ -50,7 +49,7 @@
     }
     .lang-switcher:focus { border-color: rgba(255,255,255,0.4); }
 
-    .header { text-align: center; margin-bottom: 20px; margin-top: 10px; /* Чтобы не мешал переключателю */ }
+    .header { text-align: center; margin-bottom: 20px; margin-top: 10px; }
     .header .emoji { font-size: clamp(30px, 8vw, 40px); margin-bottom: 6px; }
     .header h1 { font-size: clamp(20px, 5vw, 24px); font-weight: 700; letter-spacing: -0.5px; }
     .header p { margin-top: 4px; color: rgba(255, 255, 255, 0.55); font-size: clamp(12px, 3.5vw, 14px); }
@@ -229,51 +228,50 @@
 
   <div class="header">
     <div class="emoji">🌡️</div>
-    <h1 id="tTitle">Горячо — Холодно h1>
-    <p id="tSubtitle">Помощник ведущего p>
+    <h1 id="tTitle">Горячо — Холодно</h1>
+    <p id="tSubtitle">Помощник ведущего</p>
   </div>
 
   <div class="info-bar">
-    <span class="confirmed" id="tConfirmed">Число загадано ✓ span>
-    <span class="attempts" id="attemptsLabel">span>
-    <button class="btn-reset" onclick="resetGame()" id="tNewGame">Новая игра button>
+    <span class="confirmed" id="tConfirmed">Число загадано ✓</span>
+    <span class="attempts" id="attemptsLabel"></span>
+    <button class="btn-reset" onclick="resetGame()" id="tNewGame">Новая игра</button>
   </div>
 
   <div class="feedback-panel hidden" id="feedbackPanel">
-    <div class="fb-label" id="feedbackLabel">div>
+    <div class="fb-label" id="feedbackLabel"></div>
   </div>
 
   <div class="final-box hidden" id="finalBox">
-    <p id="tFinalWarning">20 попыток использовано — последний шанс! p>
+    <p id="tFinalWarning">20 попыток использовано — последний шанс!</p>
     <div class="row">
       <input type="number" id="finalInput" min="1" max="1000" placeholder="" pattern="[0-9]*" inputmode="numeric" />
-      <button class="btn-yellow" onclick="submitFinal()" id="tFinalSubmit">Ответ button>
+      <button class="btn-yellow" onclick="submitFinal()" id="tFinalSubmit">Ответ</button>
     </div>
   </div>
 
-  <div class="result-box hidden" id="resultBox">div>
+  <div class="result-box hidden" id="resultBox"></div>
 
   <div class="guess-section" id="guessSection">
-    <p id="tEnterGuess">Введите попытку угадывающего p>
+    <p id="tEnterGuess">Введите попытку угадывающего</p>
     <div class="row">
       <input type="number" id="guessInput" min="1" max="1000" placeholder="" pattern="[0-9]*" inputmode="numeric" />
-      <button class="btn" onclick="handleGuess()" id="tSubmitGuess">Проверить button>
+      <button class="btn" onclick="handleGuess()" id="tSubmitGuess">Проверить</button>
     </div>
   </div>
 
   <div class="history-section hidden" id="historySection">
-    <div class="history-title" id="tHistoryTitle">История попыток div>
-    <div class="history-list" id="historyList">div>
+    <div class="history-title" id="tHistoryTitle">История попыток</div>
+    <div class="history-list" id="historyList"></div>
   </div>
 
   <div class="legend">
-    <div class="legend-title" id="tLegendTitle">Шкала расстояний div>
-    <div class="legend-grid" id="legendGrid">div>
+    <div class="legend-title" id="tLegendTitle">Шкала расстояний</div>
+    <div class="legend-grid" id="legendGrid"></div>
   </div>
 </div>
 
 <script>
-  // --- Словарь переводов ---
   const i18n = {
     ru: {
       title: "Горячо — Холодно", subtitle: "Помощник ведущего", docTitle: "Горячо — Холодно | 🌡️",
@@ -317,7 +315,6 @@
     }
   };
 
-  // --- Конфигурация FEEDBACK (цвета и диапазоны общие, текст меняется) ---
   const FEEDBACK_META = [
     { min: 501, max: Infinity, color: "#3B82F6", bg: "rgba(59, 130, 246, 0.15)", labelIndex: 0 },
     { min: 201, max: 500,      color: "#60A5FA", bg: "rgba(96, 165, 250, 0.15)", labelIndex: 1 },
@@ -331,20 +328,17 @@
   ];
 
   const MAX_GUESSES = 20;
-
-  // --- Логика мультиязычности ---
-  let currentLang = localStorage.getItem('hc_lang') || 'ru'; // Запоминаем язык в браузере
+  let currentLang = localStorage.getItem('hc_lang') || 'ru';
 
   function changeLanguage() {
     currentLang = document.getElementById('langSwitcher').value;
-    localStorage.setItem('hc_lang', currentLang); // Сохраняем выбор
+    localStorage.setItem('hc_lang', currentLang);
     applyTranslations();
   }
 
   function applyTranslations() {
     const t = i18n[currentLang];
     
-    // Прямой маппинг элементов
     document.getElementById('docTitle').textContent = t.docTitle;
     document.getElementById('tTitle').textContent = t.title;
     document.getElementById('tSubtitle').textContent = t.subtitle;
@@ -357,22 +351,17 @@
     document.getElementById('tHistoryTitle').textContent = t.historyTitle;
     document.getElementById('tLegendTitle').textContent = t.legendTitle;
 
-    // Маппинг плейсхолдеров
     document.getElementById('guessInput').placeholder = t.placeholder;
     document.getElementById('finalInput').placeholder = t.finalInput;
 
-    // Обновляем шкалу расстояний (легенду)
     buildLegend();
     updateAttemptsLabel();
-    renderHistory(); // Чтобы перевелись ярлыки в истории
+    renderHistory();
     
-    // Если игра окончена, переводим сообщение результата
     if(gameOver) {
-        showResult(gameOverType); // Перерисовываем результат
+        showResult(gameOverType);
     }
   }
-
-  // --- Логика игры (с изменениями под i18n) ---
 
   function getFeedback(distance) {
     return FEEDBACK_META.find(f => distance >= f.min && distance <= f.max);
@@ -385,7 +374,7 @@
   let secret = Math.floor(Math.random() * 1000) + 1;
   let history = [];
   let gameOver = false;
-  let gameOverType = null; // Запоминаем тип для перевода
+  let gameOverType = null;
 
   function handleGuess() {
     if (gameOver) return;
@@ -395,8 +384,7 @@
 
     const distance = Math.abs(guess - secret);
     const meta = getFeedback(distance);
-    const fbText = getFbText(meta);
-    history.push({ guess, distance, meta, fbText });
+    history.push({ guess, distance, meta });
     guessInput.value = '';
 
     showFeedback(meta);
@@ -409,7 +397,7 @@
       showResult('win');
     } else if (history.length >= MAX_GUESSES) {
       gameOver = true;
-      gameOverType = 'lose_waiting'; // Специальное состояние
+      gameOverType = 'lose_waiting';
       document.getElementById('guessSection').classList.add('hidden');
       document.getElementById('finalBox').classList.remove('hidden');
     }
@@ -437,16 +425,13 @@
 
   function showResult(type) {
     const box = document.getElementById('resultBox');
-    if (type === 'lose_waiting') return; // Не показываем до финального ответа
+    if (type === 'lose_waiting') return;
 
     const t = i18n[currentLang];
     box.className = 'result-box ' + (type === 'win' ? 'result-win' : 'result-lose');
-    box.textContent = type === 'win'
-      ? t.resultWin
-      : `${t.resultLose}${secret}`;
+    box.textContent = type === 'win' ? t.resultWin : `${t.resultLose}${secret}`;
     box.classList.remove('hidden');
     document.getElementById('guessSection').classList.add('hidden');
-    // Скрыть панель обратной связи, чтобы не мешала финальному результату
     document.getElementById('feedbackPanel').classList.add('hidden');
   }
 
@@ -511,14 +496,11 @@
     });
   }
 
-  // --- Инициализация ---
   document.getElementById('guessInput').addEventListener('keydown', e => { if (e.key === 'Enter') handleGuess(); });
   document.getElementById('finalInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitFinal(); });
 
-  // Устанавливаем переключатель в сохраненное положение
   document.getElementById('langSwitcher').value = currentLang;
-  applyTranslations(); // Сразу применяем язык при загрузке
-
+  applyTranslations();
 </script>
 </body>
 </html>
