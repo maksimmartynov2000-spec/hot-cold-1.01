@@ -22,7 +22,7 @@
     <div id="app"></div>
 
     <script>
-    // =========================================================================
+        // =========================================================================
     // ЧАСТЬ 1: ИГРОВАЯ ЛОГИКА, БАЗА КАРТ И ДВИЖОК СИНЕРГИЙ
     // =========================================================================
 
@@ -56,11 +56,9 @@
             this.description = config.description || '';
             this.tags = config.tags || [];
             
-            // Специфичные для Бизнеса поля
             this.baseIncome = config.baseIncome || 0;
             this.maxLifespan = config.maxLifespan || 0;
             
-            // Эффекты синергий и модификаторы
             this.effects = config.effects || {};
             this.synergyDescriptions = config.synergyDescriptions || [];
         }
@@ -68,21 +66,22 @@
 
     // КЛАСС АКТИВНОГО БИЗНЕСА НА ПОЛЕ
     class BusinessInstance {
-        constructor(card) {
+        constructor(card, owner) {
             this.id = Math.random().toString(36).substr(2, 9);
             this.cardId = card.id;
             this.title = card.title;
             this.icon = card.icon;
             this.tags = [...card.tags];
+            this.owner = owner; // 'player' или 'ai'
             
             this.baseIncome = card.baseIncome;
-            this.income = card.baseIncome; // Расчетный доход с учетом синергий
+            this.income = card.baseIncome;
             
             this.age = 0;
             this.maxLifespan = card.maxLifespan;
             this.isEternal = false;
             
-            this.upgradesApplied = []; // Сюда складываем ID примененных улучшений
+            this.upgradesApplied = [];
         }
 
         get turnsLeft() {
@@ -96,11 +95,8 @@
         }
     }
 
-    // =========================================================================
-    // БАЗА ДАННЫХ КАРТ (65 карт для глубокого геймплея)
-    // =========================================================================
+    // БАЗА ДАННЫХ КАРТ
     const CARD_DATABASE = [
-        // --- БИЗНЕСЫ (20 штук) ---
         new Card({
             id: 'b_coffee', title: 'Кофейня', type: CardTypes.BUSINESS, cost: 40, icon: '☕',
             baseIncome: 12, maxLifespan: 8, tags: [Tags.FOOD, Tags.RETAIL],
@@ -202,7 +198,7 @@
             description: 'Огромный поток покупателей и товаров.'
         }),
 
-        // --- УЛУЧШЕНИЯ БИЗНЕСА (31 штука) ---
+        // УЛУЧШЕНИЯ
         new Card({
             id: 'u_staff', title: 'Обучение персонала', type: CardTypes.UPGRADE, cost: 30, icon: '👨‍🎓',
             description: 'Дает +5 доход выбранному бизнесу. Если это Service: +10 доход.',
@@ -253,7 +249,6 @@
             description: 'Дает +10 доход розничному бизнесу (Retail).',
             effects: { target: 'single', restrictTag: Tags.RETAIL, incomeBonus: 10 }
         }),
-        // ... (Всего будет сгенерировано 30+, добавим уникальные триггерные карты для цепочек):
         new Card({
             id: 'u_agro_tech', title: 'Агро-дроны', type: CardTypes.UPGRADE, cost: 50, icon: '🛸',
             description: 'Дает +14 доход агробизнесу (Agro) и +4 к сроку жизни.',
@@ -270,7 +265,7 @@
             effects: { target: 'single', restrictTagsOr: [Tags.PRODUCTION, Tags.FOOD], incomeBonus: 12 }
         }),
 
-        // --- ГЛОБАЛЬНЫЕ УЛУЧШЕНИЯ (15 штук) ---
+        // ГЛОБАЛЬНЫЕ
         new Card({
             id: 'g_hr', title: 'Глобальный HR-Департамент', type: CardTypes.GLOBAL, cost: 100, icon: '👥',
             description: 'Глобально: Каждое улучшение на поле приносит дополнительно +3 дохода.',
@@ -313,7 +308,7 @@
         })
     ];
 
-    // Догенерируем базу до полных лимитов, чтобы у игрока было много разнообразия
+    // Генерация базы
     for(let i = 1; i <= 20; i++) {
         if (!CARD_DATABASE.find(c => c.id === `u_gen_${i}`)) {
             CARD_DATABASE.push(new Card({
@@ -322,99 +317,66 @@
                 type: CardTypes.UPGRADE,
                 cost: 20 + (i * 2),
                 icon: '🔧',
-                description: `Оптимизирует процессы. Дает +${5 + Math.floor(i/2)} дохода выбранному предприятию.`,
+                description: `Оптимизирует процессы. Дает +${5 + Math.floor(i/2)} дохода предприятию.`,
                 effects: { target: 'single', incomeBonus: 5 + Math.floor(i/2) }
             }));
         }
     }
-    for(let i = 1; i <= 8; i++) {
-        if (!CARD_DATABASE.find(c => c.id === `g_gen_${i}`)) {
-            CARD_DATABASE.push(new Card({
-                id: `g_gen_${i}`,
-                title: `Синдикат Инвесторов v${i}`,
-                type: CardTypes.GLOBAL,
-                cost: 100 + (i * 10),
-                icon: '🤝',
-                description: `Глобально: Повышает доход всех компаний с тегом Service на +${4 + i}.`,
-                effects: { global: true, type: 'tag_flat', tags: [Tags.SERVICE], bonus: 4 + i }
-            }));
-        }
-    }
 
-    // =========================================================================
-    // ДВИЖОК СИНЕРГИЙ (ЯДРО ИГРЫ)
-    // =========================================================================
+    // ДВИЖОК СИНЕРГИЙ
     class SynergyEngine {
-        /**
-         * Вычисляет все цепочки и бонусы на поле.
-         * Возвращает детальную карту распределения бонусов для отрисовки подсказок.
-         */
         static calculate(businesses, globals) {
-            // Сброс и инициализация доходов к базовым значениям
-            businesses.forEach(b => {
-                b.income = b.baseIncome;
-            });
+            businesses.forEach(b => { b.income = b.baseIncome; });
+            const synergyLogs = [];
 
-            const synergyLogs = []; // Список для хранения информации о том, кто кого бафнул
-
-            // 1. СИСТЕМНЫЕ СИНЕРГИИ МЕЖДУ БИЗНЕСАМИ (ЦЕПОЧКИ ПОСТАВОК)
-            // Ищем пары на поле и применяем взаимные эффекты
-            
-            const hasBusiness = (id) => businesses.some(b => b.cardId === id);
-            const countTag = (tag) => businesses.filter(b => b.tags.includes(tag)).length;
+            const hasBusiness = (id, owner) => businesses.some(b => b.cardId === id && b.owner === owner);
+            const countTag = (tag, owner) => businesses.filter(b => b.tags.includes(tag) && b.owner === owner).length;
 
             businesses.forEach(b => {
-                // Цепочка 1: Ферма (b_farm) -> Мельница (b_mill) -> Пекарня (b_bakery) -> Кофейня (b_coffee) / Ресторан (b_restaurant)
-                if (b.cardId === 'b_bakery' && hasBusiness('b_farm')) {
+                const own = b.owner;
+                // Цепочки поставок работают внутри структуры одного владельца
+                if (b.cardId === 'b_bakery' && hasBusiness('b_farm', own)) {
                     b.income += 10;
                     synergyLogs.push({ from: 'Ферма', to: b.id, amount: 10, reason: 'Поставка свежего зерна' });
                 }
-                if (b.cardId === 'b_coffee' && hasBusiness('b_bakery')) {
+                if (b.cardId === 'b_coffee' && hasBusiness('b_bakery', own)) {
                     b.income += 8;
                     synergyLogs.push({ from: 'Пекарня', to: b.id, amount: 8, reason: 'Совместное меню выпечки' });
                 }
-                if (b.cardId === 'b_restaurant' && hasBusiness('b_farm')) {
+                if (b.cardId === 'b_restaurant' && hasBusiness('b_farm', own)) {
                     b.income += 15;
                     synergyLogs.push({ from: 'Ферма', to: b.id, amount: 15, reason: 'Концепция Farm-to-Table' });
                 }
-
-                // Цепочка 2: Завод (b_factory) -> Логистика (b_logistics) -> Онлайн-магазин (b_store) / Супермаркет (b_supermarket)
-                if (b.cardId === 'b_logistics' && hasBusiness('b_factory')) {
+                if (b.cardId === 'b_logistics' && hasBusiness('b_factory', own)) {
                     b.income += 15;
                     synergyLogs.push({ from: 'Завод', to: b.id, amount: 15, reason: 'Крупный контракт на перевозки' });
                 }
-                if ((b.cardId === 'b_store' || b.cardId === 'b_supermarket') && hasBusiness('b_logistics')) {
+                if ((b.cardId === 'b_store' || b.cardId === 'b_supermarket') && hasBusiness('b_logistics', own)) {
                     b.income += 12;
                     synergyLogs.push({ from: 'Логистика', to: b.id, amount: 12, reason: 'Быстрая доставка товаров' });
                 }
-
-                // Цепочка 3: IT-Стартап (b_startup) -> Облачный сервис (b_cloud) -> AI Лаборатория (b_ai)
-                if (b.cardId === 'b_cloud' && hasBusiness('b_startup')) {
+                if (b.cardId === 'b_cloud' && hasBusiness('b_startup', own)) {
                     b.income += 20;
                     synergyLogs.push({ from: 'IT-Стартап', to: b.id, amount: 20, reason: 'Потребление облачных мощностей' });
                 }
-                if (b.cardId === 'b_ai' && hasBusiness('b_cloud')) {
+                if (b.cardId === 'b_ai' && hasBusiness('b_cloud', own)) {
                     b.income += 25;
-                    synergyLogs.push({ from: 'Облачный сервис', to: b.id, amount: 25, reason: 'Дата-центры для обучения моделей' });
+                    synergyLogs.push({ from: 'Облачный сервис', to: b.id, amount: 25, reason: 'Дата-центры для ИИ' });
                 }
-                if (b.cardId === 'b_startup' && hasBusiness('b_ai')) {
+                if (b.cardId === 'b_startup' && hasBusiness('b_ai', own)) {
                     b.income += 18;
                     synergyLogs.push({ from: 'AI Лаборатория', to: b.id, amount: 18, reason: 'Интеграция передового ИИ' });
                 }
 
-                // Кросс-тэговые синергии от количества зданий на поле
-                // Например, Логистика получает +4 за каждый Production на поле
                 if (b.tags.includes(Tags.LOGISTICS)) {
-                    let prodCount = countTag(Tags.PRODUCTION);
+                    let prodCount = countTag(Tags.PRODUCTION, own);
                     if (prodCount > 0) {
                         b.income += prodCount * 5;
                         synergyLogs.push({ from: `Производства (x${prodCount})`, to: b.id, amount: prodCount * 5, reason: 'Обслуживание фабрик' });
                     }
                 }
-                
-                // Маркетинговое агентство получает +4 за каждый Retail на поле
                 if (b.cardId === 'b_marketing') {
-                    let retailCount = countTag(Tags.RETAIL);
+                    let retailCount = countTag(Tags.RETAIL, own);
                     if (retailCount > 0) {
                         b.income += retailCount * 6;
                         synergyLogs.push({ from: `Ритейл (x${retailCount})`, to: b.id, amount: retailCount * 6, reason: 'Рекламные кампании' });
@@ -422,138 +384,104 @@
                 }
             });
 
-            // 2. ПРИМЕНЕНИЕ ЛОКАЛЬНЫХ УЛУЧШЕНИЙ НА КАРТАХ
-            // Рассчитываются поверх базовых и цепочечных
+            // Улучшения
             businesses.forEach(b => {
                 b.upgradesApplied.forEach(upgCardId => {
                     const upgCard = CARD_DATABASE.find(c => c.id === upgCardId);
                     if (!upgCard) return;
-
                     let eff = upgCard.effects;
-                    
-                    // Плоский бонус к доходу
                     if (eff.incomeBonus) {
                         b.income += eff.incomeBonus;
                         synergyLogs.push({ from: upgCard.title, to: b.id, amount: eff.incomeBonus, reason: 'Модификатор улучшения' });
                     }
-
-                    // Специфичные бонусы по тегам внутри улучшения
                     if (eff.tagSpecific && b.tags.includes(eff.tagSpecific.tag)) {
                         b.income += eff.tagSpecific.incomeBonus;
-                        synergyLogs.push({ from: upgCard.title, to: b.id, amount: eff.tagSpecific.incomeBonus, reason: `Спец-бонус для ${eff.tagSpecific.tag}` });
+                        synergyLogs.push({ from: upgCard.title, to: b.id, amount: eff.tagSpecific.incomeBonus, reason: 'Профильный буст' });
                     }
-
                     if (eff.tagSpecificOr) {
-                        let matches = eff.tagSpecificOr.tags.some(t => b.tags.includes(t));
-                        if (matches) {
+                        if (eff.tagSpecificOr.tags.some(t => b.tags.includes(t))) {
                             b.income += eff.tagSpecificOr.incomeBonus;
-                            synergyLogs.push({ from: upgCard.title, to: b.id, amount: eff.tagSpecificOr.incomeBonus, reason: 'Профильный буст технологии' });
+                            synergyLogs.push({ from: upgCard.title, to: b.id, amount: eff.tagSpecificOr.incomeBonus, reason: 'Технологический буст' });
                         }
                     }
-
-                    // Мультипликаторы
                     if (eff.incomeMultiplier) {
                         let addition = b.baseIncome * (eff.incomeMultiplier - 1);
                         b.income += addition;
-                        synergyLogs.push({ from: upgCard.title, to: b.id, amount: addition, reason: 'Масштабирование (Мультипликатор)' });
+                        synergyLogs.push({ from: upgCard.title, to: b.id, amount: addition, reason: 'Франшиза' });
                     }
                 });
             });
 
-            // 3. ПРИМЕНЕНИЕ ГЛОБАЛЬНЫХ КАРТ УЛУЧШЕНИЙ
-            globals.forEach(gCardId => {
-                const gCard = CARD_DATABASE.find(c => c.id === gCardId);
-                if (!gCard) return;
+            // Глобальные (проверка по владельцу через префикс или фильтрацию списка в Game)
+            const activeGlobals = (owner) => globals.filter(g => g.owner === owner).map(g => g.id);
 
-                let eff = gCard.effects;
+            businesses.forEach(b => {
+                const own = b.owner;
+                const gList = activeGlobals(own);
 
-                businesses.forEach(b => {
-                    if (eff.type === 'all_flat') {
-                        b.income += eff.bonus;
-                        synergyLogs.push({ from: gCard.title, to: b.id, amount: eff.bonus, reason: 'Глобальный закон' });
+                gList.forEach(gCardId => {
+                    const gCard = CARD_DATABASE.find(c => c.id === gCardId);
+                    if (!gCard) return;
+                    let eff = gCard.effects;
+
+                    if (eff.type === 'all_flat') b.income += eff.bonus;
+                    if (eff.type === 'tag_flat' && eff.tags.some(t => b.tags.includes(t))) b.income += eff.bonus;
+                    if (eff.type === 'tag_multiplier' && eff.tags.some(t => b.tags.includes(t))) {
+                        b.income += Math.floor(b.income * (eff.multiplier - 1));
                     }
-                    if (eff.type === 'tag_flat') {
-                        let hasTag = eff.tags.some(t => b.tags.includes(t));
-                        if (hasTag) {
-                            b.income += eff.bonus;
-                            synergyLogs.push({ from: gCard.title, to: b.id, amount: eff.bonus, reason: 'Отраслевая субсидия' });
-                        }
-                    }
-                    if (eff.type === 'tag_multiplier') {
-                        let hasTag = eff.tags.some(t => b.tags.includes(t));
-                        if (hasTag) {
-                            let amt = Math.floor(b.income * (eff.multiplier - 1));
-                            b.income += amt;
-                            synergyLogs.push({ from: gCard.title, to: b.id, amount: amt, reason: 'Глобальный рост индустрии' });
-                        }
-                    }
-                    if (eff.type === 'upgrade_boost') {
-                        let upgCount = b.upgradesApplied.length;
-                        if (upgCount > 0) {
-                            let amt = upgCount * eff.bonus;
-                            b.income += amt;
-                            synergyLogs.push({ from: gCard.title, to: b.id, amount: amt, reason: `Эффективность менеджмента (x${upgCount})` });
-                        }
-                    }
+                    if (eff.type === 'upgrade_boost') b.income += b.upgradesApplied.length * eff.bonus;
                 });
+
+                if (gList.includes('g_synergy_hub')) {
+                    b.income += 5; 
+                }
             });
-
-            // Дополнительный буст от Инновационного Хаба, если он построен
-            if (globals.includes('g_synergy_hub')) {
-                // Увеличиваем каждую найденную синергию в логах, кроме самих глобалок и прямых улучшений
-                synergyLogs.forEach(log => {
-                    if (!log.reason.includes('Глобальный') && !log.reason.includes('Модификатор')) {
-                        let targetBiz = businesses.find(b => b.id === log.to);
-                        if (targetBiz) {
-                            targetBiz.income += 5;
-                            log.amount += 5;
-                            log.reason += ' + Инновационный Хаб';
-                        }
-                    }
-                });
-            }
 
             return synergyLogs;
         }
     }
 
     // =========================================================================
-    // КЛАСС УПРАВЛЕНИЯ СОСТОЯНИЕМ ИГРЫ (STATE MANAGEMENT)
+    // КЛАСС УПРАВЛЕНИЯ СОСТОЯНИЕМ ИГРЫ С ИИ СОПЕРНИКОМ
     // =========================================================================
     class GameEngine {
         constructor() {
-            this.capital = 150;     // Стартовый капитал
-            this.currentTurn = 1;   // Текущий ход
-            this.maxTurns = 30;     // Лимит ходов
+            this.capital = 150;     // Капитал игрока
+            this.aiCapital = 150;   // Капитал ИИ
+            this.currentTurn = 1;
+            this.maxTurns = 30;
             
-            this.businesses = [];   // Активные бизнесы на поле (BusinessInstance)
-            this.globals = [];      // ID купленных глобальных карт
-            this.hand = [];         // Карты в руке (Card экземпляры)
-            this.deck = [];         // Колода (оставшиеся карты)
+            this.businesses = [];   // Общий массив всех бизнесов на поле
+            this.globals = [];      // Купленные глобальные карты: {id, owner}
             
-            this.synergyLogs = [];  // Логи рассчитанных связей
-            this.selectedCardIndex = null; // Выбранная карта в руке для розыгрыша
+            this.hand = [];         // Рука игрока
+            this.aiHand = [];       // Рука ИИ
+            this.deck = [];
+            
+            this.synergyLogs = [];
+            this.selectedCardIndex = null;
             this.gameEnded = false;
             
             this.initDeck();
-            this.drawHand(5); // Берем стартовую руку
+            this.drawHand('player', 5);
+            this.drawHand('ai', 5);
         }
 
         initDeck() {
-            // Перемешиваем глубокую копию базы карт
             this.deck = [...CARD_DATABASE].sort(() => Math.random() - 0.5);
         }
 
-        drawHand(count) {
-            while (this.hand.length < count && this.deck.length > 0) {
-                this.hand.push(this.deck.pop());
+        drawHand(owner, count) {
+            const hand = owner === 'player' ? this.hand : this.aiHand;
+            while (hand.length < count && this.deck.length > 0) {
+                hand.push(this.deck.pop());
             }
         }
 
-        getCardCost(card) {
+        getCardCost(card, owner) {
             let cost = card.cost;
-            // Проверяем глобальный модификатор Бизнес-акселератора
-            if (card.type === CardTypes.UPGRADE && this.globals.includes('g_accelerator')) {
+            const hasAccelerator = this.globals.some(g => g.id === 'g_accelerator' && g.owner === owner);
+            if (card.type === CardTypes.UPGRADE && hasAccelerator) {
                 cost = Math.max(5, cost - 10);
             }
             return cost;
@@ -567,41 +495,36 @@
 
         playCard(targetBusinessId = null) {
             if (this.selectedCardIndex === null || this.gameEnded) return false;
-            
             const card = this.hand[this.selectedCardIndex];
-            const cost = this.getCardCost(card);
+            const cost = this.getCardCost(card, 'player');
 
             if (this.capital < cost) {
                 alert('Недостаточно капитала для этого стратегического решения!');
                 return false;
             }
 
-            // Розыгрыш в зависимости от типа
             if (card.type === CardTypes.BUSINESS) {
-                // Создаем инстанс бизнеса
-                const newBiz = new BusinessInstance(card);
-                // Проверяем глобальный бонус долголетия
-                if (this.globals.includes('g_green_energy')) {
+                const newBiz = new BusinessInstance(card, 'player');
+                if (this.globals.some(g => g.id === 'g_green_energy' && g.owner === 'player')) {
                     newBiz.maxLifespan += 2;
                 }
                 this.businesses.push(newBiz);
             } 
             else if (card.type === CardTypes.GLOBAL) {
-                if (this.globals.includes(card.id)) {
-                    alert('Данное стратегическое улучшение уже действует во всей империи!');
+                if (this.globals.some(g => g.id === card.id && g.owner === 'player')) {
+                    alert('Данное стратегическое улучшение уже действует в вашей империи!');
                     return false;
                 }
-                this.globals.push(card.id);
+                this.globals.push({ id: card.id, owner: 'player' });
             } 
             else if (card.type === CardTypes.UPGRADE) {
                 if (!targetBusinessId) {
                     alert('Выберите предприятие на поле для применения этого улучшения.');
                     return false;
                 }
-                const target = this.businesses.find(b => b.id === targetBusinessId);
+                const target = this.businesses.find(b => b.id === targetBusinessId && b.owner === 'player');
                 if (!target) return false;
 
-                // Проверка ограничений тегов (валидация целей)
                 let eff = card.effects;
                 if (eff.restrictTag && !target.tags.includes(eff.restrictTag)) {
                     alert(`Это улучшение применимо только к бизнесу с тегом ${eff.restrictTag}`);
@@ -612,7 +535,6 @@
                     return false;
                 }
 
-                // Применяем эффекты мгновенного действия при интеграции
                 if (eff.resetAge) target.age = 0;
                 if (eff.lifespanBonus) target.maxLifespan += eff.lifespanBonus;
                 if (eff.makeEternal) target.isEternal = true;
@@ -620,7 +542,6 @@
                 target.upgradesApplied.push(card.id);
             }
 
-            // Списываем капитал, убираем карту из руки
             this.capital -= cost;
             this.hand.splice(this.selectedCardIndex, 1);
             this.selectedCardIndex = null;
@@ -629,36 +550,111 @@
             return true;
         }
 
-        // Кнопка продажи компании до ее закрытия
         sellBusiness(id) {
             if (this.gameEnded) return;
-            const idx = this.businesses.findIndex(b => b.id === id);
+            const idx = this.businesses.findIndex(b => b.id === id && b.owner === 'player');
             if (idx === -1) return;
-
             const b = this.businesses[idx];
-            // Ликвидационная стоимость зависит от оставшегося срока службы и текущего дохода
             let compensation = Math.floor((b.income * 1.5) + (b.turnsLeft === Infinity ? 40 : b.turnsLeft * 4));
             this.capital += compensation;
-            
             this.businesses.splice(idx, 1);
             this.updateSystem();
+        }
+
+        // ВЫЗОВ ХОДА ИИ-СОПЕРНИКА
+        makeAiTurn() {
+            if (this.gameEnded) return;
+
+            // ИИ анализирует карты в руке и пытается сделать лучшее действие
+            let actionDone = false;
+
+            // 1. Попытка применить Улучшения к уже существующим зданиям ИИ
+            const aiUpgrades = this.aiHand.filter(c => c.type === CardTypes.UPGRADE);
+            const aiBizs = this.businesses.filter(b => b.owner === 'ai');
+
+            for (let card of aiUpgrades) {
+                let cost = this.getCardCost(card, 'ai');
+                if (this.aiCapital >= cost && aiBizs.length > 0) {
+                    // Ищем подходящий бизнес по тегам
+                    let target = aiBizs.find(b => {
+                        let eff = card.effects;
+                        if (eff.restrictTag && !b.tags.includes(eff.restrictTag)) return false;
+                        if (eff.restrictTagsOr && !eff.restrictTagsOr.some(t => b.tags.includes(t))) return false;
+                        return true;
+                    });
+
+                    if (target) {
+                        this.aiCapital -= cost;
+                        if (card.effects.resetAge) target.age = 0;
+                        if (card.effects.lifespanBonus) target.maxLifespan += card.effects.lifespanBonus;
+                        if (card.effects.makeEternal) target.isEternal = true;
+                        target.upgradesApplied.push(card.id);
+                        
+                        this.aiHand = this.aiHand.filter(c => c.id !== card.id);
+                        actionDone = true;
+                        break;
+                    }
+                }
+            }
+
+            // 2. Если улучшение не разыграно, ИИ пробует построить самый выгодный Бизнес
+            if (!actionDone) {
+                const aiBusinesses = this.aiHand.filter(c => c.type === CardTypes.BUSINESS);
+                // Сортируем по базовому доходу
+                aiBusinesses.sort((a, b) => b.baseIncome - a.baseIncome);
+
+                for (let card of aiBusinesses) {
+                    let cost = this.getCardCost(card, 'ai');
+                    if (this.aiCapital >= cost) {
+                        this.aiCapital -= cost;
+                        const newBiz = new BusinessInstance(card, 'ai');
+                        if (this.globals.some(g => g.id === 'g_green_energy' && g.owner === 'ai')) {
+                            newBiz.maxLifespan += 2;
+                        }
+                        this.businesses.push(newBiz);
+                        this.aiHand = this.aiHand.filter(c => c.id !== card.id);
+                        actionDone = true;
+                        break;
+                    }
+                }
+            }
+
+            // 3. Если денег много, ИИ покупает Глобальную карту
+            if (!actionDone) {
+                const aiGlobals = this.aiHand.filter(c => c.type === CardTypes.GLOBAL);
+                for (let card of aiGlobals) {
+                    let cost = this.getCardCost(card, 'ai');
+                    if (this.aiCapital >= cost && !this.globals.some(g => g.id === card.id && g.owner === 'ai')) {
+                        this.aiCapital -= cost;
+                        this.globals.push({ id: card.id, owner: 'ai' });
+                        this.aiHand = this.aiHand.filter(c => c.id !== card.id);
+                        actionDone = true;
+                        break;
+                    }
+                }
+            }
         }
 
         endTurn() {
             if (this.gameEnded) return;
 
-            // 1. Компании генерируют прибыль
+            // 1. Игрок получает прибыль
             this.businesses.forEach(b => {
-                this.capital += b.income;
-                b.age += 1; // Увеличиваем возраст
+                if (b.owner === 'player') this.capital += b.income;
+                if (b.owner === 'ai') this.aiCapital += b.income;
+                b.age += 1;
             });
 
-            // 2. Отсев закрывшихся компаний
+            // 2. Ход делает ИИ-соперник
+            this.makeAiTurn();
+
+            // 3. Отсев закрывшихся компаний
             this.businesses = this.businesses.filter(b => !b.isExpired);
 
-            // 3. Переход хода и добор карт
+            // 4. Переход хода и добор
             this.currentTurn += 1;
-            this.drawHand(5);
+            this.drawHand('player', 5);
+            this.drawHand('ai', 5);
 
             if (this.currentTurn > this.maxTurns) {
                 this.gameEnded = true;
@@ -668,7 +664,6 @@
             this.updateSystem();
         }
 
-        // Пересчет баланса синергий
         updateSystem() {
             this.synergyLogs = SynergyEngine.calculate(this.businesses, this.globals);
             if (window.renderApp) {
@@ -676,733 +671,216 @@
             }
         }
 
-        calculateEmpireValue() {
-            // Итоговый счет: капитал + капитализация всех живых бизнесов
-            let val = this.capital;
-            this.businesses.forEach(b => {
-                val += (b.income * 3); // Мультипликатор оценки стоимости компании
-            });
+        calculateEmpireValue(owner) {
+            let cap = owner === 'player' ? this.capital : this.aiCapital;
+            let bizs = this.businesses.filter(b => b.owner === owner);
+            let val = cap;
+            bizs.forEach(b => { val += (b.income * 3); });
             return val;
         }
     }
 
-    // Инициализируем глобальный объект игры
     const Game = new GameEngine();
-    Game.updateSystem();
 
-    // КОНЕЦ ЧАСТИ 1. Далее следует графический интерфейс (Renderer) и стили.
-            // =========================================================================
-    // ЧАСТЬ 2: ИНТЕРФЕЙС (RENDERER), СТИЛИ (NOTION/LINEAR STYLE) И ИНИЦИАЛИЗАЦИЯ
     // =========================================================================
-
-    // Добавляем стили динамически в head
+    // ЧАСТЬ 2: ИНТЕРФЕЙС (RENDERER), СТИЛИ И ИНИЦИАЛИЗАЦИЯ
+    // =========================================================================
     const styleElement = document.createElement('style');
     styleElement.textContent = `
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', -apple-system, sans-serif;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        body {
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            padding: 24px;
-            line-height: 1.5;
-        }
-
-        /* Комплексная сетка интерфейса */
-        .game-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            gap: 24px;
-        }
-
-        /* Панель управления и метрики */
-        .sidebar {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            height: fit-content;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            position: sticky;
-            top: 24px;
-        }
-
-        .metric-card {
-            margin-bottom: 20px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .metric-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .metric-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--text-main);
-            margin-top: 4px;
-        }
-
-        .btn-primary {
-            width: 100%;
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
-        }
-
-        .btn-primary:hover {
-            background: #1d4ed8;
-            transform: translateY(-1px);
-        }
-
-        /* Главная зона игры */
-        .main-content {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .badge {
-            font-size: 11px;
-            padding: 2px 8px;
-            background: #f1f5f9;
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        /* Игровое поле (Активные бизнесы) */
-        .board {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 16px;
-            min-height: 180px;
-            background: #f1f5f9;
-            border: 2px dashed #cbd5e1;
-            border-radius: var(--radius);
-            padding: 16px;
-            transition: background 0.2s ease;
-        }
-
-        .board.valid-target {
-            background: #e0f2fe;
-            border-color: #38bdf8;
-        }
-
-        /* Карточка активного бизнеса */
-        .biz-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            position: relative;
-            animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .biz-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08);
-        }
-
-        .biz-card.highlight-target {
-            border: 2px solid var(--primary);
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
-            animation: pulseBorder 1.5s infinite;
-        }
-
-        .biz-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-
-        .biz-identity {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .biz-icon {
-            font-size: 24px;
-        }
-
-        .biz-title {
-            font-weight: 600;
-            font-size: 15px;
-        }
-
-        .biz-tags {
-            display: flex;
-            gap: 4px;
-            flex-wrap: wrap;
-            margin-top: 4px;
-        }
-
-        .tag {
-            font-size: 10px;
-            padding: 1px 6px;
-            border-radius: 4px;
-            font-weight: 600;
-            letter-spacing: 0.02em;
-        }
-        .tag-food { background: #fee2e2; color: #991b1b; }
-        .tag-it { background: #e0f2fe; color: #0369a1; }
-        .tag-production { background: #fef3c7; color: #92400e; }
-        .tag-retail { background: #f3e8ff; color: #6b21a8; }
-        .tag-service { background: #e2e8f0; color: #334155; }
-        .tag-tech { background: #dcfce7; color: #166534; }
-        .tag-logistics { background: #ffedd5; color: #9a3412; }
-        .tag-agro { background: #ccfbf1; color: #115e59; }
-
-        .biz-stats {
-            background: #f8fafc;
-            border-radius: 6px;
-            padding: 8px;
-            margin-bottom: 12px;
-            font-size: 13px;
-        }
-
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 4px;
-        }
-        .stat-row:last-child { margin-bottom: 0; }
-
-        .stat-profit { color: #16a34a; font-weight: 600; }
-
-        .applied-upgrades {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            margin-bottom: 12px;
-        }
-
-        .upg-dot {
-            font-size: 14px;
-            background: #f1f5f9;
-            padding: 2px 6px;
-            border-radius: 4px;
-            border: 1px solid var(--border);
-        }
-
-        .biz-actions {
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .btn-sell {
-            background: transparent;
-            border: 1px solid #fca5a5;
-            color: #ef4444;
-            padding: 4px 8px;
-            font-size: 11px;
-            font-weight: 500;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-
-        .btn-sell:hover {
-            background: #fef2f2;
-        }
-
-        /* Рука карт игрока */
-        .hand-container {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .cards-list {
-            display: flex;
-            gap: 16px;
-            overflow-x: auto;
-            padding: 8px 4px;
-        }
-
-        .card-item {
-            flex: 0 0 210px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 14px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            cursor: pointer;
-            position: relative;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .card-item:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 20px -5px rgba(0,0,0,0.1);
-            border-color: #cbd5e1;
-        }
-
-        .card-item.selected {
-            border: 2px solid var(--primary);
-            background: #f8fafc;
-            transform: translateY(-12px);
-            box-shadow: 0 15px 25px -5px rgba(37, 99, 235, 0.15);
-        }
-
-        .card-cost {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #f1f5f9;
-            border: 1px solid var(--border);
-            padding: 1px 6px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 700;
-            color: #334155;
-        }
-
-        .card-main-info {
-            margin-bottom: 8px;
-        }
-
-        .card-title-row {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 6px;
-            padding-right: 25px;
-        }
-
-        .card-title {
-            font-weight: 600;
-            font-size: 13px;
-            line-height: 1.3;
-        }
-
-        .card-type-badge {
-            font-size: 9px;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-            font-weight: 700;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-        }
-
-        .card-desc {
-            font-size: 11px;
-            color: var(--text-muted);
-            line-height: 1.4;
-        }
-
-        /* Индикатор эффективности синергий на картах в руке */
-        .synergy-indicator {
-            margin-top: 8px;
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            border-radius: 4px;
-            padding: 4px;
-            font-size: 10px;
-            color: #166534;
-            font-weight: 500;
-            display: none;
-        }
-
-        .card-item.has-synergy-match .synergy-indicator {
-            display: block;
-        }
-
-        /* Глобальные улучшения статус-бар */
-        .globals-panel {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px;
-        }
-
-        .globals-list {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .global-badge {
-            background: #fafafa;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 6px 12px;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-        }
-
-        /* Центр мониторинга связей (Синергии) */
-        .synergy-monitor {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .log-item {
-            font-size: 12px;
-            padding: 4px 0;
-            border-bottom: 1px solid #f1f5f9;
-            display: flex;
-            justify-content: space-between;
-        }
-        .log-item:last-child { border-bottom: none; }
-        .log-reason { color: var(--text-muted); }
-        .log-value { color: #16a34a; font-weight: 600; }
-
-        /* Экран завершения игры */
-        .game-over-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            animation: fadeIn 0.4s ease forwards;
-        }
-
-        .game-over-modal {
-            background: var(--surface);
-            border-radius: 16px;
-            padding: 40px;
-            max-width: 500px;
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
-
-        .final-score {
-            font-size: 48px;
-            font-weight: 800;
-            color: var(--primary);
-            margin: 20px 0;
-        }
-
-        /* Анимации */
-        @keyframes popIn {
-            0% { transform: scale(0.92); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes fadeIn {
-            0% { opacity: 0; }
-            100% { opacity: 1; }
-        }
-        @keyframes pulseBorder {
-            0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
-            70% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 24px; }
+        .game-container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 300px 1fr; gap: 24px; }
+        .sidebar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; height: fit-content; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: sticky; top: 24px; }
+        .metric-card { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .metric-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .metric-value { font-size: 28px; font-weight: 700; color: var(--text-main); margin-top: 4px; }
+        .ai-value { color: #dc2626; }
+        .btn-primary { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s ease; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .main-content { display: flex; flex-direction: column; gap: 24px; }
+        .board-zone { background: #f1f5f9; border: 2px dashed #cbd5e1; border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+        .board-title { font-weight: 600; margin-bottom: 10px; font-size: 14px; color: #475569; text-transform: uppercase; }
+        .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; min-height: 120px; }
+        .biz-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 12px; position: relative; }
+        .biz-header { display: flex; align-items: center; gap: 10px; }
+        .biz-icon { font-size: 24px; }
+        .biz-title { font-weight: 600; font-size: 15px; }
+        .biz-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+        .tag-badge { font-size: 10px; background: #eff6ff; color: #2563eb; padding: 2px 6px; border-radius: 4px; font-weight: 500; }
+        .biz-stats { font-size: 13px; color: var(--text-muted); display: flex; justify-content: space-between; }
+        .biz-income { font-weight: 700; color: #10b981; }
+        .btn-sell { background: #fee2e2; color: #ef4444; border: none; padding: 6px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 500; text-align: center; }
+        .hand-container { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+        .card-item { min-width: 180px; max-width: 180px; background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; cursor: pointer; transition: all 0.2s ease; }
+        .card-item:hover { transform: translateY(-4px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .card-item.selected { border-color: var(--primary); background: #eff6ff; box-shadow: 0 0 0 2px var(--primary); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; }
+        .card-cost { font-weight: 700; color: #eab308; font-size: 13px; }
+        .card-desc { font-size: 11px; color: var(--text-muted); line-height: 1.3; }
     `;
     document.head.appendChild(styleElement);
 
-    // =========================================================================
-    // СИСТЕМА ОТРИСОВКИ ПРИЛОЖЕНИЯ (RENDERER ENGINE)
-    // =========================================================================
+    // Функция отрисовки интерфейса
     window.renderApp = function() {
-        const root = document.getElementById('app');
-        if (!root) return;
+        const app = document.getElementById('app');
+        if (!app) return;
 
-        // Проверка окончания игры
+        const playerValue = Game.calculateEmpireValue('player');
+        const aiValue = Game.calculateEmpireValue('ai');
+
         if (Game.gameEnded) {
-            root.innerHTML = `
-                <div class="game-over-overlay">
-                    <div class="game-over-modal">
-                        <h2>Партия завершена!</h2>
-                        <p style="color: var(--text-muted); margin-top: 8px;">Ваша бизнес-империя прошла 30 циклов оптимизации.</p>
-                        <div class="final-score">$${Game.calculateEmpireValue()}</div>
-                        <p style="margin-bottom: 24px; font-size: 14px;">Чистый капитал: $${Game.capital} | Капитализация активов: $${Game.calculateEmpireValue() - Game.capital}</p>
-                        <button class="btn-primary" onclick="window.location.reload()">Начать новую сессию</button>
-                    </div>
+            let winnerText = playerValue > aiValue ? "Вы победили ИИ!" : "ИИ-соперник оказался эффективнее!";
+            if (playerValue === aiValue) winnerText = "Ничья!";
+
+            app.innerHTML = `
+                <div style="max-width: 600px; margin: 100px auto; text-align: center; background: white; padding: 40px; border-radius: var(--radius); border: 1px solid var(--border);">
+                    <h1 style="margin-bottom: 20px;">Игра окончена!</h1>
+                    <p style="font-size: 18px; margin-bottom: 10px;">${winnerText}</p>
+                    <p style="margin-bottom: 8px;">Ваша Капитализация: <b>${playerValue} 🪙</b></p>
+                    <p style="margin-bottom: 20px;">Капитализация ИИ: <b>${aiValue} 🪙</b></p>
+                    <button class="btn-primary" onclick="location.reload()">Начать заново</button>
                 </div>
             `;
             return;
         }
 
-        // Проверяем выбранную карту для подсветок потенциальных целей
-        const selectedIndex = Game.selectedCardIndex;
-        const selectedCard = selectedIndex !== null ? Game.hand[selectedIndex] : null;
-        const isUpgradeSelected = selectedCard && selectedCard.type === CardTypes.UPGRADE;
+        const playerBiz = Game.businesses.filter(b => b.owner === 'player');
+        const aiBiz = Game.businesses.filter(b => b.owner === 'ai');
 
-        // Построение разметки
-        root.innerHTML = `
+        app.innerHTML = `
             <div class="game-container">
-                <!-- Боковая панель -->
-                <aside class="sidebar">
+                <div class="sidebar">
                     <div class="metric-card">
-                        <div class="metric-label">Текущий Капитал</div>
-                        <div class="metric-value">$${Game.capital}</div>
+                        <div class="metric-label">Ваш Капитал</div>
+                        <div class="metric-value">${Game.capital} 🪙</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-label">Цикл планирования</div>
-                        <div class="metric-value">${Game.currentTurn} <span style="font-size:16px; color:var(--text-muted);">/ ${Game.maxTurns}</span></div>
+                        <div class="metric-label">Капитал ИИ</div>
+                        <div class="metric-value ai-value">${Game.aiCapital} 🪙</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-label">Активные активы</div>
-                        <div class="metric-value" style="font-size:24px;">${Game.businesses.length}</div>
+                        <div class="metric-label">Ход</div>
+                        <div class="metric-value">${Game.currentTurn} / ${Game.maxTurns}</div>
                     </div>
-                    
-                    <button class="btn-primary" onclick="Game.endTurn()">Завершить цикл (ход)</button>
-                    <p style="font-size:11px; color:var(--text-muted); text-align:center; margin-top:8px;">Все бизнесы принесут доход и увеличат свой возраст.</p>
-                </aside>
+                    <div class="metric-card">
+                        <div class="metric-label">Ваша Империя</div>
+                        <div style="font-size:14px; margin-top:4px;">Оценка: <b>${playerValue}</b></div>
+                        <div style="font-size:12px; color:gray;">Глобалок: ${Game.globals.filter(g=>g.owner==='player').length}</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Империя ИИ</div>
+                        <div style="font-size:14px; margin-top:4px;">Оценка: <b>${aiValue}</b></div>
+                        <div style="font-size:12px; color:gray;">Глобалок: ${Game.globals.filter(g=>g.owner==='ai').length}</div>
+                    </div>
+                    <button class="btn-primary" onclick="Game.endTurn()">Завершить ход</button>
+                </div>
 
-                <!-- Основная игровая зона -->
-                <main class="main-content">
-                    
-                    <!-- Панель Глобальных Улучшений -->
-                    <section class="globals-panel">
-                        <h3 class="section-title">Глобальная инфраструктура <span class="badge">${Game.globals.length}</span></h3>
-                        <div class="globals-list">
-                            ${Game.globals.length === 0 ? '<div style="color:var(--text-muted); font-size:13px;">Нет запущенных глобальных программ. Сыграйте карту глобального улучшения.</div>' : ''}
-                            ${Game.globals.map(gId => {
-                                const card = CARD_DATABASE.find(c => c.id === gId);
-                                return `
-                                    <div class="global-badge">
-                                        <span>${card.icon}</span>
-                                        <strong>${card.title}</strong>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </section>
-
-                    <!-- Игровое поле с бизнесами -->
-                    <section>
-                        <h3 class="section-title">Действующие предприятия на поле <span class="badge">${Game.businesses.length}</span></h3>
-                        <div id="game-board" class="board ${isUpgradeSelected ? 'valid-target' : ''}">
-                            ${Game.businesses.length === 0 ? '<div style="color:var(--text-muted); font-size:13px; grid-column: 1/-1; text-align:center; padding: 40px 0;">Поле пусто. Выберите карту бизнеса из руки внизу и нажмите на поле, чтобы открыть его.</div>' : ''}
-                            ${Game.businesses.map(b => {
-                                // Проверка, подходит ли данный бизнес под ограничения выбранного улучшения
-                                let isHighlightTarget = false;
-                                if (isUpgradeSelected) {
-                                    let eff = selectedCard.effects;
-                                    let tagOk = !eff.restrictTag || b.tags.includes(eff.restrictTag);
-                                    let tagOrOk = !eff.restrictTagsOr || eff.restrictTagsOr.some(t => b.tags.includes(t));
-                                    if (tagOk && tagOrOk) isHighlightTarget = true;
-                                }
-
-                                return `
-                                    <div class="biz-card ${isHighlightTarget ? 'highlight-target' : ''}" onclick="handleBoardClick('${b.id}')">
-                                        <div>
-                                            <div class="biz-header">
-                                                <div class="biz-identity">
-                                                    <span class="biz-icon">${b.icon}</span>
-                                                    <div>
-                                                        <div class="biz-title">${b.title}</div>
-                                                        <div class="biz-tags">
-                                                            ${b.tags.map(t => `<span class="tag tag-${t.toLowerCase()}">${t}</span>`).join('')}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="biz-stats">
-                                                <div class="stat-row">
-                                                    <span>Доходность:</span>
-                                                    <span class="stat-profit">+$${b.income}/ход</span>
-                                                </div>
-                                                <div class="stat-row">
-                                                    <span>Базовый доход:</span>
-                                                    <span style="color:var(--text-muted);">$${b.baseIncome}</span>
-                                                </div>
-                                                <div class="stat-row">
-                                                    <span>Срок жизни:</span>
-                                                    <span>${b.isEternal ? '∞' : `${b.age} / ${b.maxLifespan} ходов`}</span>
-                                                </div>
-                                            </div>
-
-                                            <div class="applied-upgrades">
-                                                ${b.upgradesApplied.map(uId => {
-                                                    const uCard = CARD_DATABASE.find(c => c.id === uId);
-                                                    return `<span class="upg-dot" title="${uCard.title}">${uCard.icon}</span>`;
-                                                }).join('')}
+                <div class="main-content">
+                    <div>
+                        <h2 style="font-size: 18px; margin-bottom: 12px;">🏢 ИГРОВОЕ ПОЛЕ (РЫНОК КОМПАНИЙ)</h2>
+                        
+                        <div class="board-zone">
+                            <div class="board-title">Ваши предприятия (Кликните сюда для розыгрыша бизнеса или улучшения)</div>
+                            <div class="board" id="player-board">
+                                ${playerBiz.map(b => `
+                                    <div class="biz-card" onclick="event.stopPropagation(); window.handleBoardClick('${b.id}')">
+                                        <div class="biz-header">
+                                            <span class="biz-icon">${b.icon}</span>
+                                            <div>
+                                                <div class="biz-title">${b.title}</div>
+                                                <div class="biz-tags">${b.tags.map(t => `<span class="tag-badge">${t}</span>`).join('')}</div>
                                             </div>
                                         </div>
+                                        <div class="biz-stats">
+                                            <span>Доход/ход:</span>
+                                            <span class="biz-income">+${b.income} 🪙</span>
+                                        </div>
+                                        <div class="biz-stats">
+                                            <span>Осталось ходов:</span>
+                                            <span>${b.turnsLeft === Infinity ? 'Бессрочно' : b.turnsLeft}</span>
+                                        </div>
+                                        <button class="btn-sell" onclick="event.stopPropagation(); Game.sellBusiness('${b.id}')">Ликвидировать</button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
 
-                                        <div class="biz-actions">
-                                            <button class="btn-sell" onclick="event.stopPropagation(); Game.sellBusiness('${b.id}')">Ликвидировать активы</button>
+                        <div class="board-zone" style="background: #fef2f2; border-color: #fca5a5;">
+                            <div class="board-title" style="color: #991b1b;">Предприятия ИИ-Соперника</div>
+                            <div class="board">
+                                ${aiBiz.map(b => `
+                                    <div class="biz-card" style="border-color: #fca5a5;">
+                                        <div class="biz-header">
+                                            <span class="biz-icon">${b.icon}</span>
+                                            <div>
+                                                <div class="biz-title">${b.title}</div>
+                                                <div class="biz-tags">${b.tags.map(t => `<span class="tag-badge" style="background:#fef2f2; color:#b91c1c;">${t}</span>`).join('')}</div>
+                                            </div>
+                                        </div>
+                                        <div class="biz-stats">
+                                            <span>Доход/ход:</span>
+                                            <span class="biz-income" style="color:#b91c1c;">+${b.income} 🪙</span>
+                                        </div>
+                                        <div class="biz-stats">
+                                            <span>Осталось ходов:</span>
+                                            <span>${b.turnsLeft === Infinity ? 'Бессрочно' : b.turnsLeft}</span>
                                         </div>
                                     </div>
-                                `;
-                            }).join('')}
+                                `).join('')}
+                            </div>
                         </div>
-                    </section>
+                    </div>
 
-                    <!-- Центр мониторинга синергий -->
-                    <section class="synergy-monitor">
-                        <h4 style="font-size:13px; font-weight:600; text-transform:uppercase; color:var(--text-muted); margin-bottom:8px; letter-spacing:0.03em;">Действующие логистические и операционные синергии</h4>
-                        <div>
-                            ${Game.synergyLogs.length === 0 ? '<div style="color:var(--text-muted); font-size:12px;">Пока нет активных межпроизводственных цепочек. Стройте бизнесы одного кластера для генерации синергий.</div>' : ''}
-                            ${Game.synergyLogs.map(log => {
-                                const targetBiz = Game.businesses.find(b => b.id === log.to);
-                                return `
-                                    <div class="log-item">
-                                        <div><strong>${log.from}</strong> → <span style="color:var(--primary); font-weight:500;">${targetBiz ? targetBiz.title : 'Предприятие'}</span> <span class="log-reason">(${log.reason})</span></div>
-                                        <div class="log-value">+$${log.amount}</div>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </section>
-
-                    <!-- Нижняя панель: Стратегические решения в руке -->
-                    <section class="hand-container">
-                        <h3 class="section-title">Доступные стратегические решения (Рука) <span class="badge">${Game.hand.length}</span></h3>
-                        <div class="cards-list">
+                    <div>
+                        <h2 style="font-size: 16px; margin-bottom: 10px;">🎴 ВАША СТРАТЕГИЧЕСКАЯ РУКА (Выберите карту)</h2>
+                        <div class="hand-container">
                             ${Game.hand.map((card, idx) => {
-                                const cost = Game.getCardCost(card);
-                                const isSelected = selectedIndex === idx;
-                                const canAfford = Game.capital >= cost;
-
-                                // Вычисляем интерактивную подсказку синергии для карты в руке!
-                                let hasSynergyMatch = false;
-                                let synergyHintText = '';
-
-                                if (card.type === CardTypes.UPGRADE) {
-                                    // Подсвечиваем, есть ли на поле подходящие по тегам цели
-                                    let hasTargets = Game.businesses.some(b => {
-                                        let tagOk = !card.effects.restrictTag || b.tags.includes(card.effects.restrictTag);
-                                        let tagOrOk = !card.effects.restrictTagsOr || card.effects.restrictTagsOr.some(t => b.tags.includes(t));
-                                        return tagOk && tagOrOk;
-                                    });
-                                    if (hasTargets) {
-                                        hasSynergyMatch = true;
-                                        synergyHintText = 'Есть цель на поле';
-                                    }
-                                } else if (card.type === CardTypes.BUSINESS) {
-                                    // Проверяем цепочки синергий
-                                    if (card.id === 'b_bakery' && Game.businesses.some(b => b.cardId === 'b_farm')) { hasSynergyMatch = true; synergyHintText = 'Цепочка с Фермой (+10)'; }
-                                    if (card.id === 'b_coffee' && Game.businesses.some(b => b.cardId === 'b_bakery')) { hasSynergyMatch = true; synergyHintText = 'Цепочка с Пекарней (+8)'; }
-                                    if (card.id === 'b_restaurant' && Game.businesses.some(b => b.cardId === 'b_farm')) { hasSynergyMatch = true; synergyHintText = 'Цепочка с Фермой (+15)'; }
-                                    if (card.id === 'b_logistics' && Game.businesses.some(b => b.cardId === 'b_factory')) { hasSynergyMatch = true; synergyHintText = 'Цепочка с Заводом (+15)'; }
-                                    if ((card.id === 'b_store' || card.id === 'b_supermarket') && Game.businesses.some(b => b.tags.includes(Tags.LOGISTICS))) { hasSynergyMatch = true; synergyHintText = 'Цепочка с Логистикой (+12)'; }
-                                    if (card.id === 'b_cloud' && Game.businesses.some(b => b.cardId === 'b_startup')) { hasSynergyMatch = true; synergyHintText = 'Инфраструктура IT-Стартапа (+20)'; }
-                                    if (card.id === 'b_ai' && Game.businesses.some(b => b.cardId === 'b_cloud')) { hasSynergyMatch = true; synergyHintText = 'Инфраструктура Облака (+25)'; }
-                                }
-
+                                const isSelected = Game.selectedCardIndex === idx;
                                 return `
-                                    <div class="card-item ${isSelected ? 'selected' : ''} ${hasSynergyMatch ? 'has-synergy-match' : ''}" 
-                                         onclick="Game.selectCard(${idx})"
-                                         style="opacity: ${canAfford ? '1' : '0.5'}; border-top: 4px solid ${getCardTypeColor(card.type)};">
-                                        <div class="card-cost">$${cost}</div>
-                                        
-                                        <div class="card-main-info">
-                                            <div class="card-type-badge">${translateCardType(card.type)}</div>
-                                            <div class="card-title-row">
-                                                <span style="font-size:18px;">${card.icon}</span>
-                                                <span class="card-title">${card.title}</span>
-                                            </div>
+                                    <div class="card-item ${isSelected ? 'selected' : ''}" onclick="Game.selectCard(${idx})">
+                                        <div class="card-header">
+                                            <span style="font-size:20px;">${card.icon}</span>
+                                            <span class="card-cost">${Game.getCardCost(card, 'player')} 🪙</span>
+                                        </div>
+                                        <div>
+                                            <div style="font-weight:600; font-size:13px; margin-bottom:2px;">${card.title}</div>
+                                            <div style="font-size:10px; color:gray; text-transform:uppercase; margin-bottom:4px;">${card.type}</div>
                                             <div class="card-desc">${card.description}</div>
                                         </div>
-
-                                        <div>
-                                            ${card.tags && card.tags.length > 0 ? `
-                                                <div class="biz-tags" style="margin-top:8px;">
-                                                    ${card.tags.map(t => `<span class="tag tag-${t.toLowerCase()}">${t}</span>`).join('')}
-                                                </div>
-                                            ` : ''}
-                                            <div class="synergy-indicator">⚡ ${synergyHintText}</div>
-                                        </div>
                                     </div>
                                 `;
                             }).join('')}
                         </div>
-                    </section>
-                </main>
+                    </div>
+                </div>
             </div>
         `;
     };
 
-    // Вспомогательные функции для интерфейса
-    function getCardTypeColor(type) {
-        if (type === CardTypes.BUSINESS) return '#2563eb'; // Синий
-        if (type === CardTypes.UPGRADE) return '#eab308';  // Желтый
-        return '#10b981';                                  // Зеленый (Глобальный)
-    }
-
-    function translateCardType(type) {
-        if (type === CardTypes.BUSINESS) return 'Предприятие';
-        if (type === CardTypes.UPGRADE) return 'Улучшение';
-        return 'Глобальное';
-    }
-
-    // Обработчик клика по игровому полю/бизнесам
+    // Слушатели кликов
     window.handleBoardClick = function(businessId) {
         if (Game.selectedCardIndex === null) return;
         const card = Game.hand[Game.selectedCardIndex];
-        
         if (card.type === CardTypes.UPGRADE) {
-            // Если выбрано улучшение, применяем на конкретный бизнес
             Game.playCard(businessId);
         }
     };
 
-    // Слушатель клика на саму сетку поля для розыгрыша бизнесов
     document.addEventListener('click', function(e) {
         if (Game.selectedCardIndex === null) return;
         const card = Game.hand[Game.selectedCardIndex];
-
-        // Если это бизнес или глобалка, их можно разыграть кликом по пустой зоне поля
         if (card.type === CardTypes.BUSINESS || card.type === CardTypes.GLOBAL) {
-            const board = document.getElementById('game-board');
+            const board = document.getElementById('player-board');
             if (board && (e.target === board || board.contains(e.target) && !e.target.closest('.biz-card'))) {
                 Game.playCard();
             }
         }
     });
 
-    // Стартовый запуск приложения
-    window.renderApp();
+    // Первый запуск
+    Game.updateSystem();
+
     </script>
 </body>
 </html>
