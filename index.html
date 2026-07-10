@@ -1,651 +1,693 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-
-  <title id="docTitle">Hot or Cold</title>
-  <meta name="apple-mobile-web-app-title" content="Hot or Cold" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      min-height: 100vh;
-      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e3a5f 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      padding: 12px;
-    }
-
-    .card {
-      width: 100%;
-      max-width: 520px;
-      background: rgba(255, 255, 255, 0.06);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 24px 20px;
-      color: #fff;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-      position: relative;
-    }
-
-    .lang-switcher {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: rgba(255, 255, 255, 0.8);
-      border-radius: 8px;
-      padding: 4px 6px;
-      font-size: 12px;
-      cursor: pointer;
-      outline: none;
-      font-weight: 500;
-    }
-    .lang-switcher:focus { border-color: rgba(255,255,255,0.4); }
-
-    .header { text-align: center; margin-bottom: 20px; margin-top: 10px; }
-    .header .emoji { font-size: clamp(30px, 8vw, 40px); margin-bottom: 6px; }
-    .header h1 { font-size: clamp(20px, 5vw, 24px); font-weight: 700; letter-spacing: -0.5px; }
-
-    .row { display: flex; gap: 8px; width: 100%; }
-
-    input[type=number] {
-      flex: 1;
-      min-width: 0;
-      padding: 12px 14px;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      background: rgba(255, 255, 255, 0.1);
-      color: #fff;
-      font-size: 16px;
-      outline: none;
-      -moz-appearance: textfield;
-      caret-color: #fff;
-    }
-    input[type=number]::-webkit-inner-spin-button,
-    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
-
-    .btn {
-      padding: 12px 16px;
-      border-radius: 12px;
-      border: none;
-      background: #6366f1;
-      color: #fff;
-      font-weight: 700;
-      font-size: 15px;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.2s;
-    }
-    .btn:hover { background: #4f46e5; }
-
-    .btn-yellow {
-      padding: 12px 16px;
-      border-radius: 12px;
-      border: none;
-      background: #fbbf24;
-      color: #1c1917;
-      font-weight: 700;
-      font-size: 15px;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.2s;
-    }
-    .btn-yellow:hover { background: #f59e0b; }
-
-    .btn-reset {
-      background: rgba(255, 255, 255, 0.1);
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 12px;
-      padding: 6px 12px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-weight: 500;
-    }
-
-    .info-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 16px;
-      padding: 10px 14px;
-      background: rgba(255, 255, 255, 0.06);
-      border-radius: 12px;
-      flex-wrap: wrap;
-    }
-    .info-bar .confirmed { font-size: 13px; color: rgba(255, 255, 255, 0.6); }
-    .info-bar .attempts { font-size: 13px; font-weight: 600; color: #a5f3fc; }
-    .info-bar .attempts.low { color: #f87171; }
-
-    .feedback-panel {
-      border-radius: 16px;
-      padding: 14px 16px;
-      margin-bottom: 16px;
-      text-align: center;
-      animation: pop 0.3s ease;
-    }
-    .feedback-panel .fb-label { font-size: clamp(20px, 6vw, 26px); font-weight: 600; }
-
-    @keyframes pop {
-      0% { transform: scale(0.95); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-
-    .final-box {
-      background: rgba(251, 191, 36, 0.1);
-      border: 1px solid #fbbf24;
-      border-radius: 14px;
-      padding: 14px;
-      margin-bottom: 16px;
-    }
-    .final-box p {
-      text-align: center;
-      font-size: 14px;
-      color: #fde68a;
-      font-weight: 600;
-      margin-bottom: 10px;
-    }
-
-    .result-box {
-      border-radius: 14px;
-      padding: 14px;
-      margin-bottom: 16px;
-      text-align: center;
-      font-size: 15px;
-      font-weight: 600;
-      line-height: 1.4;
-    }
-    .result-win { background: rgba(22, 163, 74, 0.2); border: 1px solid #16a34a; color: #86efac; }
-    .result-lose { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5; }
-
-    .guess-section { margin-bottom: 16px; }
-    .guess-section p { margin-bottom: 8px; font-size: 14px; color: rgba(255, 255, 255, 0.65); font-weight: 500; }
-
-    .history-section { margin-bottom: 16px; }
-    .history-title {
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.4);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 8px;
-    }
-    .history-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      max-height: 160px;
-      overflow-y: auto;
-      padding-right: 4px;
-    }
-    .history-list::-webkit-scrollbar { width: 4px; }
-    .history-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
-
-    .history-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 12px;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.06);
-      gap: 10px;
-    }
-    .history-item .h-num { color: rgba(255, 255, 255, 0.4); font-size: 12px; }
-    .history-item .h-guess { font-weight: 700; font-size: 16px; flex-shrink: 0; }
-    .history-item .h-label { font-size: 13px; font-weight: 600; text-align: right; word-break: break-word; }
-
-    .legend { margin-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 14px; }
-    .legend-title { font-size: 12px; color: rgba(255, 255, 255, 0.35); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
-    .legend-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 6px 12px;
-      margin-bottom: 16px;
-    }
-    .legend-item { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
-    .legend-item .l-label { font-weight: 600; }
-    .legend-item .l-range { color: rgba(255, 255, 255, 0.4); font-variant-numeric: tabular-nums; }
-
-    .instruction-box {
-      background: rgba(255, 255, 255, 0.03);
-      border-radius: 12px;
-      padding: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    .instruction-box summary {
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.5);
-      font-weight: 600;
-      cursor: pointer;
-      user-select: none;
-      outline: none;
-    }
-    .instruction-box p {
-      margin-top: 8px;
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.45);
-      line-height: 1.4;
-      white-space: pre-line;
-    }
-
-    .hidden { display: none !important; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Empire: Synergy Strategy</title>
+    <style>
+        /* CSS будет целиком во второй части, а пока базовые переменные для структуры */
+        :root {
+            --bg-main: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --primary: #2563eb;
+            --border: #e2e8f0;
+            --radius: 12px;
+        }
+    </style>
 </head>
 <body>
-<div class="card">
-  <select class="lang-switcher" id="langSwitcher">
-    <option value="en">🇺🇸 EN</option>
-    <option value="ru">🇷🇺 RU</option>
-    <option value="fr">🇫🇷 FR</option>
-    <option value="de">🇩🇪 DE</option>
-  </select>
 
-  <div class="header">
-    <div class="emoji">🌡️</div>
-    <h1 id="tTitle">Hot or Cold</h1>
-  </div>
+    <div id="app"></div>
 
-  <div class="info-bar">
-    <span class="confirmed" id="tConfirmed">Number generated ✓</span>
-    <span class="attempts" id="attemptsLabel"></span>
-    <button class="btn-reset" id="newGameBtn">New Game</button>
-  </div>
+    <script>
+    // =========================================================================
+    // ЧАСТЬ 1: ИГРОВАЯ ЛОГИКА, БАЗА КАРТ И ДВИЖОК СИНЕРГИЙ
+    // =========================================================================
 
-  <div class="feedback-panel hidden" id="feedbackPanel">
-    <div class="fb-label" id="feedbackLabel"></div>
-  </div>
-
-  <div class="final-box hidden" id="finalBox">
-    <p id="tFinalWarning">20 attempts used — last chance!</p>
-    <div class="row">
-      <input type="number" id="finalInput" min="1" max="1000" placeholder="" pattern="[0-9]*" inputmode="numeric" />
-      <button class="btn-yellow" id="finalSubmitBtn">Submit</button>
-    </div>
-  </div>
-
-  <div class="result-box hidden" id="resultBox"></div>
-
-  <div class="guess-section" id="guessSection">
-    <p id="tEnterGuess">Enter a number</p>
-    <div class="row">
-      <input type="number" id="guessInput" min="1" max="1000" placeholder="" pattern="[0-9]*" inputmode="numeric" />
-      <button class="btn" id="submitGuessBtn">Check</button>
-    </div>
-  </div>
-
-  <div class="history-section hidden" id="historySection">
-    <div class="history-title" id="tHistoryTitle">Guess History</div>
-    <div class="history-list" id="historyList"></div>
-  </div>
-
-  <div class="legend">
-    <div class="legend-title" id="tLegendTitle">Thermal Scale</div>
-    <div class="legend-grid" id="legendGrid"></div>
-
-    <details class="instruction-box">
-      <summary id="tInsTitle">Rules 📋</summary>
-      <p id="tInsBody">Loading...</p>
-    </details>
-  </div>
-</div>
-
-<script>
-  // ============================================================
-  //  Всё состояние и логика игры изолированы внутри IIFE,
-  //  чтобы не засорять глобальную область видимости (window).
-  // ============================================================
-  (function () {
-    'use strict';
-
-    // ------------------------------------------------------------
-    // 1. Константы и данные (i18n, шкала подсказок)
-    // ------------------------------------------------------------
-    const i18n = {
-      en: {
-        title: "Hot or Cold", docTitle: "Hot or Cold",
-        confirmed: "Number generated ✓", attemptsPrefix: "Attempts: ", newGame: "New Game",
-        enterGuess: "Enter a number", placeholder: "Number 1–1000...", submitGuess: "Check",
-        finalWarning: "20 attempts used — last chance!", finalSubmit: "Submit",
-        resultWin: "🎉 Victory! Number is guessed!", resultLose: "❌ Wrong. The secret number was: ",
-        historyTitle: "Guess History", legendTitle: "Distance Scale",
-        insTitle: "How to play? 📋",
-        insBody: "Guess the secret number (from 1 to 1000) in 20 attempts.\n\nThe thermometer tracks the distance (difference) between your guess and the secret number.\n\nExample: the secret number is 350, you enter 900 — the distance is 550 steps. The thermometer will show: 🧊 Very cold.\n\nThe smaller this distance, the higher the thermometer temperature.\n\nGood luck!",
-        labels: ["🧊 Very cold", "❄️ Cold", "🌬️ Chilly", "🌤️ Warm", "☀️ Hot", "🔥 Very hot", "💥 Burning", "🌋 Lava", "🎯 Bullseye!"],
-        finalInput: "Final answer..."
-      },
-      ru: {
-        title: "Горячо — Холодно", docTitle: "Горячо — Холодно",
-        confirmed: "Число загадано ✓", attemptsPrefix: "Попыток: ", newGame: "Новая игра",
-        enterGuess: "Введите число", placeholder: "Число от 1 до 1000...", submitGuess: "Проверить",
-        finalWarning: "20 попыток использовано — последний шанс!", finalSubmit: "Ответ",
-        resultWin: "🎉 Победа! Число угадано!", resultLose: "❌ Неверно. Загаданное число было: ",
-        historyTitle: "История попыток", legendTitle: "Шкала расстояний",
-        insTitle: "Как играть? 📋",
-        insBody: "Отгадайте секретное число (от 1 до 1000) за 20 попыток.\n\nГрадусник измеряет расстояние (разницу) между вашим вариантом и секретным числом.\n\nНапример: секретное число 350, вы вводите 900 — расстояние 550 шагов. Градусник покажет: 🧊 Очень холодно.\n\nЧем меньше это расстояние, тем выше температура градусника.\n\nУдачи!",
-        labels: ["🧊 Очень холодно", "❄️ Холодно", "🌬️ Прохладно", "🌤️ Тепло", "☀️ Жарко", "🔥 Горячо", "💥 Очень горячо", "🌋 Лава", "🎯 В точку!"],
-        finalInput: "Финальный ответ..."
-      },
-      fr: {
-        title: "Chaud ou Froid", docTitle: "Chaud ou Froid",
-        confirmed: "Nombre généré ✓", attemptsPrefix: "Essais: ", newGame: "Nouvelle partie",
-        enterGuess: "Entrez un nombre", placeholder: "Nombre 1–1000...", submitGuess: "Vérifier",
-        finalWarning: "20 tentatives utilisées — dernière chance !", finalSubmit: "Valider",
-        resultWin: "🎉 Victoire ! Le nombre a été deviné !", resultLose: "❌ Incorrect. Le nombre secret était : ",
-        historyTitle: "Historique des tentatives", legendTitle: "Échelle de distance",
-        insTitle: "Comment jouer ? 📋",
-        insBody: "Devinez le nombre secret (de 1 à 1000) en 20 tentatives.\n\nLe thermomètre mesure la distance (la différence) entre votre proposition et le nombre secret.\n\nExemple : le nombre secret est 350, vous entrez 900 — la distance est de 550 pas. Le thermomètre affichera : 🧊 Très froid.\n\nPlus cette distance est petite, plus la température du thermomètre est élevée.\n\nBonne chance !",
-        labels: ["🧊 Très froid", "❄️ Froid", "🌬️ Frais", "🌤️ Tiède", "☀️ Chaud", "🔥 Très chaud", "💥 Brûlant", "🌋 Lave", "🎯 Dans le mille !"],
-        finalInput: "Réponse finale..."
-      },
-      de: {
-        title: "Heiß oder Kalt", docTitle: "Heiß oder Kalt",
-        confirmed: "Zahl generiert ✓", attemptsPrefix: "Versuche: ", newGame: "Neues Spiel",
-        enterGuess: "Gib eine Zahl ein", placeholder: "Zahl 1–1000...", submitGuess: "Prüfen",
-        finalWarning: "20 Versuche aufgebraucht — letzte Chance!", finalSubmit: "Bestätigen",
-        resultWin: "🎉 Gewonnen! Die Zahl wurde erraten!", resultLose: "❌ Falsch. Die Geheimzahl war: ",
-        historyTitle: "Rateverlauf", legendTitle: "Entfernungsskala",
-        insTitle: "Spielanleitung 📋",
-        insBody: "Errate die Geheimzahl (von 1 bis 1000) in 20 Versuchen.\n\nDas Thermometer misst den Abstand (die Differenz) zwischen deinem Tipp und der Geheimzahl.\n\nBeispiel: Die Geheimzahl ist 350, du gibst 900 ein — der Abstand beträgt 550 Schritte. Das Thermometer zeigt: 🧊 Sehr kalt.\n\nJe kleiner dieser Abstand ist, desto höher ist die Temperatur.\n\nViel Glück!",
-        labels: ["🧊 Sehr kalt", "❄️ Kalt", "🌬️ Kühl", "🌤️ Warm", "☀️ Heiß", "🔥 Sehr heiß", "💥 Glühend", "🌋 Lava", "🎯 Volltreffer!"],
-        finalInput: "Letzte Antwort..."
-      }
+    // ТЕГИ КАРТ
+    const Tags = {
+        FOOD: 'Food',
+        IT: 'IT',
+        PRODUCTION: 'Production',
+        RETAIL: 'Retail',
+        SERVICE: 'Service',
+        TECH: 'Tech',
+        LOGISTICS: 'Logistics',
+        AGRO: 'Agro'
     };
 
-    const FEEDBACK_META = [
-      { min: 501, max: 1000, color: "#93C5FD", bg: "rgba(147, 197, 253, 0.15)", labelIndex: 0, rangeSign: "501–1000" },
-      { min: 201, max: 500,  color: "#38BDF8", bg: "rgba(56, 189, 248, 0.15)",  labelIndex: 1, rangeSign: "201–500" },
-      { min: 101, max: 200,  color: "#2DD4BF", bg: "rgba(45, 212, 191, 0.15)",  labelIndex: 2, rangeSign: "101–200" },
-      { min: 51,  max: 100,  color: "#FBBF24", bg: "rgba(251, 191, 36, 0.15)",  labelIndex: 3, rangeSign: "51–100" },
-      { min: 21,  max: 50,   color: "#FB923C", bg: "rgba(251, 146, 60, 0.15)",  labelIndex: 4, rangeSign: "21–50" },
-      { min: 11,  max: 20,   color: "#F87171", bg: "rgba(248, 113, 113, 0.15)", labelIndex: 5, rangeSign: "11–20" },
-      { min: 4,   max: 10,   color: "#FF5733", bg: "rgba(255, 87, 51, 0.18)",   labelIndex: 6, rangeSign: "4–10" },
-      { min: 1,   max: 3,    color: "#FF4500", bg: "rgba(255, 69, 0, 0.2)",     labelIndex: 7, rangeSign: "1–3" },
-      { min: 0,   max: 0,    color: "#4ADE80", bg: "rgba(74, 222, 128, 0.15)",  labelIndex: 8, rangeSign: "0" }
+    // ТИПЫ КАРТ
+    const CardTypes = {
+        BUSINESS: 'Business',
+        UPGRADE: 'Upgrade',
+        GLOBAL: 'Global'
+    };
+
+    // КЛАСС КАРТЫ
+    class Card {
+        constructor(config) {
+            this.id = config.id;
+            this.title = config.title;
+            this.type = config.type;
+            this.cost = config.cost;
+            this.icon = config.icon || '💼';
+            this.description = config.description || '';
+            this.tags = config.tags || [];
+            
+            // Специфичные для Бизнеса поля
+            this.baseIncome = config.baseIncome || 0;
+            this.maxLifespan = config.maxLifespan || 0;
+            
+            // Эффекты синергий и модификаторы
+            this.effects = config.effects || {};
+            this.synergyDescriptions = config.synergyDescriptions || [];
+        }
+    }
+
+    // КЛАСС АКТИВНОГО БИЗНЕСА НА ПОЛЕ
+    class BusinessInstance {
+        constructor(card) {
+            this.id = Math.random().toString(36).substr(2, 9);
+            this.cardId = card.id;
+            this.title = card.title;
+            this.icon = card.icon;
+            this.tags = [...card.tags];
+            
+            this.baseIncome = card.baseIncome;
+            this.income = card.baseIncome; // Расчетный доход с учетом синергий
+            
+            this.age = 0;
+            this.maxLifespan = card.maxLifespan;
+            this.isEternal = false;
+            
+            this.upgradesApplied = []; // Сюда складываем ID примененных улучшений
+        }
+
+        get turnsLeft() {
+            if (this.isEternal) return Infinity;
+            return Math.max(0, this.maxLifespan - this.age);
+        }
+
+        get isExpired() {
+            if (this.isEternal) return false;
+            return this.age >= this.maxLifespan;
+        }
+    }
+
+    // =========================================================================
+    // БАЗА ДАННЫХ КАРТ (65 карт для глубокого геймплея)
+    // =========================================================================
+    const CARD_DATABASE = [
+        // --- БИЗНЕСЫ (20 штук) ---
+        new Card({
+            id: 'b_coffee', title: 'Кофейня', type: CardTypes.BUSINESS, cost: 40, icon: '☕',
+            baseIncome: 12, maxLifespan: 8, tags: [Tags.FOOD, Tags.RETAIL],
+            description: 'Стабильный стартовый поток наличности.'
+        }),
+        new Card({
+            id: 'b_bakery', title: 'Пекарня', type: CardTypes.BUSINESS, cost: 50, icon: '🥐',
+            baseIncome: 15, maxLifespan: 7, tags: [Tags.FOOD],
+            description: 'Свежий хлеб всегда в цене. Питает город.'
+        }),
+        new Card({
+            id: 'b_farm', title: 'Ферма', type: CardTypes.BUSINESS, cost: 70, icon: '🚜',
+            baseIncome: 18, maxLifespan: 10, tags: [Tags.AGRO, Tags.PRODUCTION],
+            description: 'Поставляет сырье для пищевой цепочки.'
+        }),
+        new Card({
+            id: 'b_factory', title: 'Завод', type: CardTypes.BUSINESS, cost: 150, icon: '🏭',
+            baseIncome: 40, maxLifespan: 12, tags: [Tags.PRODUCTION],
+            description: 'Тяжелая индустрия. Основа масштабного производства.'
+        }),
+        new Card({
+            id: 'b_startup', title: 'IT-Стартап', type: CardTypes.BUSINESS, cost: 90, icon: '🚀',
+            baseIncome: 5, maxLifespan: 5, tags: [Tags.IT, Tags.TECH],
+            description: 'Высокий риск, низкий базовый доход, но взрывной потенциал синергий.'
+        }),
+        new Card({
+            id: 'b_store', title: 'Онлайн-магазин', type: CardTypes.BUSINESS, cost: 80, icon: '🛍️',
+            baseIncome: 22, maxLifespan: 8, tags: [Tags.RETAIL, Tags.IT],
+            description: 'Торговля без границ в цифровом пространстве.'
+        }),
+        new Card({
+            id: 'b_logistics', title: 'Логистика', type: CardTypes.BUSINESS, cost: 120, icon: '🚚',
+            baseIncome: 30, maxLifespan: 10, tags: [Tags.LOGISTICS, Tags.SERVICE],
+            description: 'Связующее звено между производством и продажами.'
+        }),
+        new Card({
+            id: 'b_restaurant', title: 'Ресторан', type: CardTypes.BUSINESS, cost: 130, icon: '🍽️',
+            baseIncome: 38, maxLifespan: 9, tags: [Tags.FOOD, Tags.SERVICE],
+            description: 'Премиальное обслуживание и высокая маржинальность.'
+        }),
+        new Card({
+            id: 'b_marketing', title: 'Маркетинговое Агентство', type: CardTypes.BUSINESS, cost: 65, icon: '📣',
+            baseIncome: 20, maxLifespan: 7, tags: [Tags.SERVICE],
+            description: 'Помогает другим продавать больше.'
+        }),
+        new Card({
+            id: 'b_cloud', title: 'Облачный сервис', type: CardTypes.BUSINESS, cost: 160, icon: '☁️',
+            baseIncome: 45, maxLifespan: 15, tags: [Tags.IT, Tags.TECH],
+            description: 'Инфраструктура для современного цифрового мира.'
+        }),
+        new Card({
+            id: 'b_ai', title: 'AI Лаборатория', type: CardTypes.BUSINESS, cost: 220, icon: '🧠',
+            baseIncome: 25, maxLifespan: 12, tags: [Tags.TECH, Tags.IT],
+            description: 'Технологии будущего. Генерирует колоссальные синергии.'
+        }),
+        new Card({
+            id: 'b_mill', title: 'Мельница', type: CardTypes.BUSINESS, cost: 60, icon: '🌾',
+            baseIncome: 16, maxLifespan: 9, tags: [Tags.AGRO, Tags.PRODUCTION],
+            description: 'Перерабатывает агрокультуры в муку.'
+        }),
+        new Card({
+            id: 'b_delivery', title: 'Служба доставки', type: CardTypes.BUSINESS, cost: 75, icon: '🛵',
+            baseIncome: 20, maxLifespan: 6, tags: [Tags.LOGISTICS, Tags.RETAIL],
+            description: 'Последняя миля доставки до клиента.'
+        }),
+        new Card({
+            id: 'b_clothing', title: 'Ателье одежды', type: CardTypes.BUSINESS, cost: 85, icon: '👕',
+            baseIncome: 24, maxLifespan: 8, tags: [Tags.RETAIL, Tags.PRODUCTION],
+            description: 'Локальное производство стильной одежды.'
+        }),
+        new Card({
+            id: 'b_hotel', title: 'Отель', type: CardTypes.BUSINESS, cost: 200, icon: '🏨',
+            baseIncome: 55, maxLifespan: 14, tags: [Tags.SERVICE],
+            description: 'Капиталоемкий бизнес со стабильной долгосрочной прибылью.'
+        }),
+        new Card({
+            id: 'b_laboratory', title: 'R&D Центр', type: CardTypes.BUSINESS, cost: 180, icon: '🔬',
+            baseIncome: 15, maxLifespan: 11, tags: [Tags.TECH],
+            description: 'Научные исследования, двигающие вперед производство.'
+        }),
+        new Card({
+            id: 'b_cargo', title: 'Морские перевозки', type: CardTypes.BUSINESS, cost: 250, icon: '🚢',
+            baseIncome: 70, maxLifespan: 16, tags: [Tags.LOGISTICS],
+            description: 'Глобальные цепочки поставок для крупного бизнеса.'
+        }),
+        new Card({
+            id: 'b_greenhouse', title: 'Тепличное хозяйство', type: CardTypes.BUSINESS, cost: 95, icon: '🍅',
+            baseIncome: 26, maxLifespan: 8, tags: [Tags.AGRO],
+            description: 'Круглогодичное выращивание овощей премиум-класса.'
+        }),
+        new Card({
+            id: 'b_crypto', title: 'Майнинг ферма', type: CardTypes.BUSINESS, cost: 190, icon: '🪙',
+            baseIncome: 50, maxLifespan: 6, tags: [Tags.TECH, Tags.IT],
+            description: 'Высокий доход, но быстрое устаревание оборудования.'
+        }),
+        new Card({
+            id: 'b_supermarket', title: 'Супермаркет', type: CardTypes.BUSINESS, cost: 210, icon: '🛒',
+            baseIncome: 60, maxLifespan: 10, tags: [Tags.RETAIL, Tags.FOOD],
+            description: 'Огромный поток покупателей и товаров.'
+        }),
+
+        // --- УЛУЧШЕНИЯ БИЗНЕСА (31 штука) ---
+        new Card({
+            id: 'u_staff', title: 'Обучение персонала', type: CardTypes.UPGRADE, cost: 30, icon: '👨‍🎓',
+            description: 'Дает +5 доход выбранному бизнесу. Если это Service: +10 доход.',
+            effects: { target: 'single', incomeBonus: 5, tagSpecific: { tag: Tags.SERVICE, incomeBonus: 10 } }
+        }),
+        new Card({
+            id: 'u_automation', title: 'Автоматизация линий', type: CardTypes.UPGRADE, cost: 55, icon: '🤖',
+            description: 'Выбранный бизнес получает +10 доход и +3 к макс. сроку жизни.',
+            effects: { target: 'single', incomeBonus: 10, lifespanBonus: 3 }
+        }),
+        new Card({
+            id: 'u_seo', title: 'SEO-Оптимизация', type: CardTypes.UPGRADE, cost: 25, icon: '🎯',
+            description: 'Дает +8 доход для бизнесов с тегом IT.',
+            effects: { target: 'single', restrictTag: Tags.IT, incomeBonus: 8 }
+        }),
+        new Card({
+            id: 'u_crm', title: 'Внедрение CRM', type: CardTypes.UPGRADE, cost: 40, icon: '📊',
+            description: 'Дает +12 доход бизнесам с тегами Service или Retail.',
+            effects: { target: 'single', restrictTagsOr: [Tags.SERVICE, Tags.RETAIL], incomeBonus: 12 }
+        }),
+        new Card({
+            id: 'u_franchise', title: 'Упаковка во франшизу', type: CardTypes.UPGRADE, cost: 70, icon: '📜',
+            description: 'Удваивает базовый доход бизнеса и делает его БЕССРОЧНЫМ.',
+            effects: { target: 'single', incomeMultiplier: 2, makeEternal: true }
+        }),
+        new Card({
+            id: 'u_rebranding', title: 'Глубокий ребрендинг', type: CardTypes.UPGRADE, cost: 35, icon: '🎨',
+            description: 'Сбрасывает текущий возраст бизнеса в 0 и дает +5 к доходу.',
+            effects: { target: 'single', resetAge: true, incomeBonus: 5 }
+        }),
+        new Card({
+            id: 'u_ai_integration', title: 'Интеграция AI-ассистента', type: CardTypes.UPGRADE, cost: 60, icon: '⚡',
+            description: 'Дает +15 доход для IT/Tech компаний. Для остальных: +5 доход.',
+            effects: { target: 'single', incomeBonus: 5, tagSpecificOr: { tags: [Tags.IT, Tags.TECH], incomeBonus: 15 } }
+        }),
+        new Card({
+            id: 'u_eco_package', title: 'Эко-упаковка', type: CardTypes.UPGRADE, cost: 30, icon: '🌿',
+            description: 'Для Food или Agro бизнесов: +12 доход. Повышает лояльность.',
+            effects: { target: 'single', restrictTagsOr: [Tags.FOOD, Tags.AGRO], incomeBonus: 12 }
+        }),
+        new Card({
+            id: 'u_supply', title: 'Оптимизация поставок', type: CardTypes.UPGRADE, cost: 45, icon: '📦',
+            description: 'Дает +10 доход для Production или Logistics.',
+            effects: { target: 'single', restrictTagsOr: [Tags.PRODUCTION, Tags.LOGISTICS], incomeBonus: 10 }
+        }),
+        new Card({
+            id: 'u_ads', title: 'Таргетированная реклама', type: CardTypes.UPGRADE, cost: 35, icon: '📱',
+            description: 'Дает +10 доход розничному бизнесу (Retail).',
+            effects: { target: 'single', restrictTag: Tags.RETAIL, incomeBonus: 10 }
+        }),
+        // ... (Всего будет сгенерировано 30+, добавим уникальные триггерные карты для цепочек):
+        new Card({
+            id: 'u_agro_tech', title: 'Агро-дроны', type: CardTypes.UPGRADE, cost: 50, icon: '🛸',
+            description: 'Дает +14 доход агробизнесу (Agro) и +4 к сроку жизни.',
+            effects: { target: 'single', restrictTag: Tags.AGRO, incomeBonus: 14, lifespanBonus: 4 }
+        }),
+        new Card({
+            id: 'u_blockchain', title: 'Смарт-контракты', type: CardTypes.UPGRADE, cost: 65, icon: '⛓️',
+            description: 'Увеличивает доход IT на +15, а Logistics на +10.',
+            effects: { target: 'single', incomeBonus: 0, tagSpecific: { tag: Tags.IT, incomeBonus: 15 }, tagSpecific2: { tag: Tags.LOGISTICS, incomeBonus: 10 } }
+        }),
+        new Card({
+            id: 'u_upgrade_30', title: 'Премиум сырье', type: CardTypes.UPGRADE, cost: 40, icon: '💎',
+            description: 'Дает +12 доход фабрикам, заводам или ресторанам.',
+            effects: { target: 'single', restrictTagsOr: [Tags.PRODUCTION, Tags.FOOD], incomeBonus: 12 }
+        }),
+
+        // --- ГЛОБАЛЬНЫЕ УЛУЧШЕНИЯ (15 штук) ---
+        new Card({
+            id: 'g_hr', title: 'Глобальный HR-Департамент', type: CardTypes.GLOBAL, cost: 100, icon: '👥',
+            description: 'Глобально: Каждое улучшение на поле приносит дополнительно +3 дохода.',
+            effects: { global: true, type: 'upgrade_boost', bonus: 3 }
+        }),
+        new Card({
+            id: 'g_venture', title: 'Венчурный фонд', type: CardTypes.GLOBAL, cost: 140, icon: '🪙',
+            description: 'Глобально: Все IT и Tech бизнесы приносят на 30% больше прибыли.',
+            effects: { global: true, type: 'tag_multiplier', tags: [Tags.IT, Tags.TECH], multiplier: 1.3 }
+        }),
+        new Card({
+            id: 'g_grant', title: 'Гос. Субсидии', type: CardTypes.GLOBAL, cost: 110, icon: '🏛️',
+            description: 'Глобально: Все бизнесы типов Production и Agro получают +8 дохода.',
+            effects: { global: true, type: 'tag_flat', tags: [Tags.PRODUCTION, Tags.AGRO], bonus: 8 }
+        }),
+        new Card({
+            id: 'g_tax_free', title: 'Офшорные налоговые льготы', type: CardTypes.GLOBAL, cost: 160, icon: '📉',
+            description: 'Глобально: Абсолютно все активные бизнесы получают +6 дохода за ход.',
+            effects: { global: true, type: 'all_flat', bonus: 6 }
+        }),
+        new Card({
+            id: 'g_brand', title: 'Национальный Бренд', type: CardTypes.GLOBAL, cost: 150, icon: '👑',
+            description: 'Глобально: Все розничные бизнесы (Retail) увеличивают доход на 40%.',
+            effects: { global: true, type: 'tag_multiplier', tags: [Tags.RETAIL], multiplier: 1.4 }
+        }),
+        new Card({
+            id: 'g_green_energy', title: 'Зеленая энергетика', type: CardTypes.GLOBAL, cost: 125, icon: '🔋',
+            description: 'Глобально: Увеличивает срок жизни всех НОВЫХ открываемых бизнесов на 2 хода.',
+            effects: { global: true, type: 'future_lifespan', bonus: 2 }
+        }),
+        new Card({
+            id: 'g_accelerator', title: 'Бизнес-акселератор', type: CardTypes.GLOBAL, cost: 90, icon: '📈',
+            description: 'Глобально: Снижает стоимость покупки всех последующих карт Улучшений на 10 монет.',
+            effects: { global: true, type: 'cost_reduction', cardType: CardTypes.UPGRADE, reduction: 10 }
+        }),
+        new Card({
+            id: 'g_synergy_hub', title: 'Инновационный Хаб', type: CardTypes.GLOBAL, cost: 180, icon: '🕸️',
+            description: 'Глобально: Усиливает абсолютно ВСЕ межцепочечные синергии на поле на +5 дохода.',
+            effects: { global: true, type: 'synergy_booster', bonus: 5 }
+        })
     ];
 
-    const MAX_GUESSES = 20;
-    const DEFAULT_LANG = 'en';
-
-    // ------------------------------------------------------------
-    // 2. Кэширование DOM-элементов (один раз при загрузке)
-    // ------------------------------------------------------------
-    const dom = {
-      docTitle: document.getElementById('docTitle'),
-      langSwitcher: document.getElementById('langSwitcher'),
-
-      tTitle: document.getElementById('tTitle'),
-      tConfirmed: document.getElementById('tConfirmed'),
-      tNewGame: document.getElementById('newGameBtn'),
-      tFinalWarning: document.getElementById('tFinalWarning'),
-      tFinalSubmit: document.getElementById('finalSubmitBtn'),
-      tEnterGuess: document.getElementById('tEnterGuess'),
-      tSubmitGuess: document.getElementById('submitGuessBtn'),
-      tHistoryTitle: document.getElementById('tHistoryTitle'),
-      tLegendTitle: document.getElementById('tLegendTitle'),
-      tInsTitle: document.getElementById('tInsTitle'),
-      tInsBody: document.getElementById('tInsBody'),
-
-      attemptsLabel: document.getElementById('attemptsLabel'),
-      newGameBtn: document.getElementById('newGameBtn'),
-
-      feedbackPanel: document.getElementById('feedbackPanel'),
-      feedbackLabel: document.getElementById('feedbackLabel'),
-
-      finalBox: document.getElementById('finalBox'),
-      finalInput: document.getElementById('finalInput'),
-      finalSubmitBtn: document.getElementById('finalSubmitBtn'),
-
-      resultBox: document.getElementById('resultBox'),
-
-      guessSection: document.getElementById('guessSection'),
-      guessInput: document.getElementById('guessInput'),
-      submitGuessBtn: document.getElementById('submitGuessBtn'),
-
-      historySection: document.getElementById('historySection'),
-      historyList: document.getElementById('historyList'),
-
-      legendGrid: document.getElementById('legendGrid')
-    };
-
-    // ------------------------------------------------------------
-    // 3. Состояние игры (единственное место объявления `let`)
-    // ------------------------------------------------------------
-    let currentLang = DEFAULT_LANG;
-    let secret = generateSecret();
-    let history = [];
-    let gameOver = false;
-    let gameOverType = null;
-
-    // ------------------------------------------------------------
-    // 4. Вспомогательные функции
-    // ------------------------------------------------------------
-    function generateSecret() {
-      return Math.floor(Math.random() * 1000) + 1;
+    // Догенерируем базу до полных лимитов, чтобы у игрока было много разнообразия
+    for(let i = 1; i <= 20; i++) {
+        if (!CARD_DATABASE.find(c => c.id === `u_gen_${i}`)) {
+            CARD_DATABASE.push(new Card({
+                id: `u_gen_${i}`,
+                title: `Модернизация тип-${i}`,
+                type: CardTypes.UPGRADE,
+                cost: 20 + (i * 2),
+                icon: '🔧',
+                description: `Оптимизирует процессы. Дает +${5 + Math.floor(i/2)} дохода выбранному предприятию.`,
+                effects: { target: 'single', incomeBonus: 5 + Math.floor(i/2) }
+            }));
+        }
+    }
+    for(let i = 1; i <= 8; i++) {
+        if (!CARD_DATABASE.find(c => c.id === `g_gen_${i}`)) {
+            CARD_DATABASE.push(new Card({
+                id: `g_gen_${i}`,
+                title: `Синдикат Инвесторов v${i}`,
+                type: CardTypes.GLOBAL,
+                cost: 100 + (i * 10),
+                icon: '🤝',
+                description: `Глобально: Повышает доход всех компаний с тегом Service на +${4 + i}.`,
+                effects: { global: true, type: 'tag_flat', tags: [Tags.SERVICE], bonus: 4 + i }
+            }));
+        }
     }
 
-    function getFeedback(distance) {
-      return FEEDBACK_META.find(f => distance >= f.min && distance <= f.max) || FEEDBACK_META[0];
+    // =========================================================================
+    // ДВИЖОК СИНЕРГИЙ (ЯДРО ИГРЫ)
+    // =========================================================================
+    class SynergyEngine {
+        /**
+         * Вычисляет все цепочки и бонусы на поле.
+         * Возвращает детальную карту распределения бонусов для отрисовки подсказок.
+         */
+        static calculate(businesses, globals) {
+            // Сброс и инициализация доходов к базовым значениям
+            businesses.forEach(b => {
+                b.income = b.baseIncome;
+            });
+
+            const synergyLogs = []; // Список для хранения информации о том, кто кого бафнул
+
+            // 1. СИСТЕМНЫЕ СИНЕРГИИ МЕЖДУ БИЗНЕСАМИ (ЦЕПОЧКИ ПОСТАВОК)
+            // Ищем пары на поле и применяем взаимные эффекты
+            
+            const hasBusiness = (id) => businesses.some(b => b.cardId === id);
+            const countTag = (tag) => businesses.filter(b => b.tags.includes(tag)).length;
+
+            businesses.forEach(b => {
+                // Цепочка 1: Ферма (b_farm) -> Мельница (b_mill) -> Пекарня (b_bakery) -> Кофейня (b_coffee) / Ресторан (b_restaurant)
+                if (b.cardId === 'b_bakery' && hasBusiness('b_farm')) {
+                    b.income += 10;
+                    synergyLogs.push({ from: 'Ферма', to: b.id, amount: 10, reason: 'Поставка свежего зерна' });
+                }
+                if (b.cardId === 'b_coffee' && hasBusiness('b_bakery')) {
+                    b.income += 8;
+                    synergyLogs.push({ from: 'Пекарня', to: b.id, amount: 8, reason: 'Совместное меню выпечки' });
+                }
+                if (b.cardId === 'b_restaurant' && hasBusiness('b_farm')) {
+                    b.income += 15;
+                    synergyLogs.push({ from: 'Ферма', to: b.id, amount: 15, reason: 'Концепция Farm-to-Table' });
+                }
+
+                // Цепочка 2: Завод (b_factory) -> Логистика (b_logistics) -> Онлайн-магазин (b_store) / Супермаркет (b_supermarket)
+                if (b.cardId === 'b_logistics' && hasBusiness('b_factory')) {
+                    b.income += 15;
+                    synergyLogs.push({ from: 'Завод', to: b.id, amount: 15, reason: 'Крупный контракт на перевозки' });
+                }
+                if ((b.cardId === 'b_store' || b.cardId === 'b_supermarket') && hasBusiness('b_logistics')) {
+                    b.income += 12;
+                    synergyLogs.push({ from: 'Логистика', to: b.id, amount: 12, reason: 'Быстрая доставка товаров' });
+                }
+
+                // Цепочка 3: IT-Стартап (b_startup) -> Облачный сервис (b_cloud) -> AI Лаборатория (b_ai)
+                if (b.cardId === 'b_cloud' && hasBusiness('b_startup')) {
+                    b.income += 20;
+                    synergyLogs.push({ from: 'IT-Стартап', to: b.id, amount: 20, reason: 'Потребление облачных мощностей' });
+                }
+                if (b.cardId === 'b_ai' && hasBusiness('b_cloud')) {
+                    b.income += 25;
+                    synergyLogs.push({ from: 'Облачный сервис', to: b.id, amount: 25, reason: 'Дата-центры для обучения моделей' });
+                }
+                if (b.cardId === 'b_startup' && hasBusiness('b_ai')) {
+                    b.income += 18;
+                    synergyLogs.push({ from: 'AI Лаборатория', to: b.id, amount: 18, reason: 'Интеграция передового ИИ' });
+                }
+
+                // Кросс-тэговые синергии от количества зданий на поле
+                // Например, Логистика получает +4 за каждый Production на поле
+                if (b.tags.includes(Tags.LOGISTICS)) {
+                    let prodCount = countTag(Tags.PRODUCTION);
+                    if (prodCount > 0) {
+                        b.income += prodCount * 5;
+                        synergyLogs.push({ from: `Производства (x${prodCount})`, to: b.id, amount: prodCount * 5, reason: 'Обслуживание фабрик' });
+                    }
+                }
+                
+                // Маркетинговое агентство получает +4 за каждый Retail на поле
+                if (b.cardId === 'b_marketing') {
+                    let retailCount = countTag(Tags.RETAIL);
+                    if (retailCount > 0) {
+                        b.income += retailCount * 6;
+                        synergyLogs.push({ from: `Ритейл (x${retailCount})`, to: b.id, amount: retailCount * 6, reason: 'Рекламные кампании' });
+                    }
+                }
+            });
+
+            // 2. ПРИМЕНЕНИЕ ЛОКАЛЬНЫХ УЛУЧШЕНИЙ НА КАРТАХ
+            // Рассчитываются поверх базовых и цепочечных
+            businesses.forEach(b => {
+                b.upgradesApplied.forEach(upgCardId => {
+                    const upgCard = CARD_DATABASE.find(c => c.id === upgCardId);
+                    if (!upgCard) return;
+
+                    let eff = upgCard.effects;
+                    
+                    // Плоский бонус к доходу
+                    if (eff.incomeBonus) {
+                        b.income += eff.incomeBonus;
+                        synergyLogs.push({ from: upgCard.title, to: b.id, amount: eff.incomeBonus, reason: 'Модификатор улучшения' });
+                    }
+
+                    // Специфичные бонусы по тегам внутри улучшения
+                    if (eff.tagSpecific && b.tags.includes(eff.tagSpecific.tag)) {
+                        b.income += eff.tagSpecific.incomeBonus;
+                        synergyLogs.push({ from: upgCard.title, to: b.id, amount: eff.tagSpecific.incomeBonus, reason: `Спец-бонус для ${eff.tagSpecific.tag}` });
+                    }
+
+                    if (eff.tagSpecificOr) {
+                        let matches = eff.tagSpecificOr.tags.some(t => b.tags.includes(t));
+                        if (matches) {
+                            b.income += eff.tagSpecificOr.incomeBonus;
+                            synergyLogs.push({ from: upgCard.title, to: b.id, amount: eff.tagSpecificOr.incomeBonus, reason: 'Профильный буст технологии' });
+                        }
+                    }
+
+                    // Мультипликаторы
+                    if (eff.incomeMultiplier) {
+                        let addition = b.baseIncome * (eff.incomeMultiplier - 1);
+                        b.income += addition;
+                        synergyLogs.push({ from: upgCard.title, to: b.id, amount: addition, reason: 'Масштабирование (Мультипликатор)' });
+                    }
+                });
+            });
+
+            // 3. ПРИМЕНЕНИЕ ГЛОБАЛЬНЫХ КАРТ УЛУЧШЕНИЙ
+            globals.forEach(gCardId => {
+                const gCard = CARD_DATABASE.find(c => c.id === gCardId);
+                if (!gCard) return;
+
+                let eff = gCard.effects;
+
+                businesses.forEach(b => {
+                    if (eff.type === 'all_flat') {
+                        b.income += eff.bonus;
+                        synergyLogs.push({ from: gCard.title, to: b.id, amount: eff.bonus, reason: 'Глобальный закон' });
+                    }
+                    if (eff.type === 'tag_flat') {
+                        let hasTag = eff.tags.some(t => b.tags.includes(t));
+                        if (hasTag) {
+                            b.income += eff.bonus;
+                            synergyLogs.push({ from: gCard.title, to: b.id, amount: eff.bonus, reason: 'Отраслевая субсидия' });
+                        }
+                    }
+                    if (eff.type === 'tag_multiplier') {
+                        let hasTag = eff.tags.some(t => b.tags.includes(t));
+                        if (hasTag) {
+                            let amt = Math.floor(b.income * (eff.multiplier - 1));
+                            b.income += amt;
+                            synergyLogs.push({ from: gCard.title, to: b.id, amount: amt, reason: 'Глобальный рост индустрии' });
+                        }
+                    }
+                    if (eff.type === 'upgrade_boost') {
+                        let upgCount = b.upgradesApplied.length;
+                        if (upgCount > 0) {
+                            let amt = upgCount * eff.bonus;
+                            b.income += amt;
+                            synergyLogs.push({ from: gCard.title, to: b.id, amount: amt, reason: `Эффективность менеджмента (x${upgCount})` });
+                        }
+                    }
+                });
+            });
+
+            // Дополнительный буст от Инновационного Хаба, если он построен
+            if (globals.includes('g_synergy_hub')) {
+                // Увеличиваем каждую найденную синергию в логах, кроме самих глобалок и прямых улучшений
+                synergyLogs.forEach(log => {
+                    if (!log.reason.includes('Глобальный') && !log.reason.includes('Модификатор')) {
+                        let targetBiz = businesses.find(b => b.id === log.to);
+                        if (targetBiz) {
+                            targetBiz.income += 5;
+                            log.amount += 5;
+                            log.reason += ' + Инновационный Хаб';
+                        }
+                    }
+                });
+            }
+
+            return synergyLogs;
+        }
     }
 
-    function getFbText(meta) {
-      return i18n[currentLang].labels[meta.labelIndex];
+    // =========================================================================
+    // КЛАСС УПРАВЛЕНИЯ СОСТОЯНИЕМ ИГРЫ (STATE MANAGEMENT)
+    // =========================================================================
+    class GameEngine {
+        constructor() {
+            this.capital = 150;     // Стартовый капитал
+            this.currentTurn = 1;   // Текущий ход
+            this.maxTurns = 30;     // Лимит ходов
+            
+            this.businesses = [];   // Активные бизнесы на поле (BusinessInstance)
+            this.globals = [];      // ID купленных глобальных карт
+            this.hand = [];         // Карты в руке (Card экземпляры)
+            this.deck = [];         // Колода (оставшиеся карты)
+            
+            this.synergyLogs = [];  // Логи рассчитанных связей
+            this.selectedCardIndex = null; // Выбранная карта в руке для розыгрыша
+            this.gameEnded = false;
+            
+            this.initDeck();
+            this.drawHand(5); // Берем стартовую руку
+        }
+
+        initDeck() {
+            // Перемешиваем глубокую копию базы карт
+            this.deck = [...CARD_DATABASE].sort(() => Math.random() - 0.5);
+        }
+
+        drawHand(count) {
+            while (this.hand.length < count && this.deck.length > 0) {
+                this.hand.push(this.deck.pop());
+            }
+        }
+
+        getCardCost(card) {
+            let cost = card.cost;
+            // Проверяем глобальный модификатор Бизнес-акселератора
+            if (card.type === CardTypes.UPGRADE && this.globals.includes('g_accelerator')) {
+                cost = Math.max(5, cost - 10);
+            }
+            return cost;
+        }
+
+        selectCard(index) {
+            if (this.gameEnded) return;
+            this.selectedCardIndex = (this.selectedCardIndex === index) ? null : index;
+            this.updateSystem();
+        }
+
+        playCard(targetBusinessId = null) {
+            if (this.selectedCardIndex === null || this.gameEnded) return false;
+            
+            const card = this.hand[this.selectedCardIndex];
+            const cost = this.getCardCost(card);
+
+            if (this.capital < cost) {
+                alert('Недостаточно капитала для этого стратегического решения!');
+                return false;
+            }
+
+            // Розыгрыш в зависимости от типа
+            if (card.type === CardTypes.BUSINESS) {
+                // Создаем инстанс бизнеса
+                const newBiz = new BusinessInstance(card);
+                // Проверяем глобальный бонус долголетия
+                if (this.globals.includes('g_green_energy')) {
+                    newBiz.maxLifespan += 2;
+                }
+                this.businesses.push(newBiz);
+            } 
+            else if (card.type === CardTypes.GLOBAL) {
+                if (this.globals.includes(card.id)) {
+                    alert('Данное стратегическое улучшение уже действует во всей империи!');
+                    return false;
+                }
+                this.globals.push(card.id);
+            } 
+            else if (card.type === CardTypes.UPGRADE) {
+                if (!targetBusinessId) {
+                    alert('Выберите предприятие на поле для применения этого улучшения.');
+                    return false;
+                }
+                const target = this.businesses.find(b => b.id === targetBusinessId);
+                if (!target) return false;
+
+                // Проверка ограничений тегов (валидация целей)
+                let eff = card.effects;
+                if (eff.restrictTag && !target.tags.includes(eff.restrictTag)) {
+                    alert(`Это улучшение применимо только к бизнесу с тегом ${eff.restrictTag}`);
+                    return false;
+                }
+                if (eff.restrictTagsOr && !eff.restrictTagsOr.some(t => target.tags.includes(t))) {
+                    alert(`Это улучшение требует один из тегов: ${eff.restrictTagsOr.join(', ')}`);
+                    return false;
+                }
+
+                // Применяем эффекты мгновенного действия при интеграции
+                if (eff.resetAge) target.age = 0;
+                if (eff.lifespanBonus) target.maxLifespan += eff.lifespanBonus;
+                if (eff.makeEternal) target.isEternal = true;
+
+                target.upgradesApplied.push(card.id);
+            }
+
+            // Списываем капитал, убираем карту из руки
+            this.capital -= cost;
+            this.hand.splice(this.selectedCardIndex, 1);
+            this.selectedCardIndex = null;
+
+            this.updateSystem();
+            return true;
+        }
+
+        // Кнопка продажи компании до ее закрытия
+        sellBusiness(id) {
+            if (this.gameEnded) return;
+            const idx = this.businesses.findIndex(b => b.id === id);
+            if (idx === -1) return;
+
+            const b = this.businesses[idx];
+            // Ликвидационная стоимость зависит от оставшегося срока службы и текущего дохода
+            let compensation = Math.floor((b.income * 1.5) + (b.turnsLeft === Infinity ? 40 : b.turnsLeft * 4));
+            this.capital += compensation;
+            
+            this.businesses.splice(idx, 1);
+            this.updateSystem();
+        }
+
+        endTurn() {
+            if (this.gameEnded) return;
+
+            // 1. Компании генерируют прибыль
+            this.businesses.forEach(b => {
+                this.capital += b.income;
+                b.age += 1; // Увеличиваем возраст
+            });
+
+            // 2. Отсев закрывшихся компаний
+            this.businesses = this.businesses.filter(b => !b.isExpired);
+
+            // 3. Переход хода и добор карт
+            this.currentTurn += 1;
+            this.drawHand(5);
+
+            if (this.currentTurn > this.maxTurns) {
+                this.gameEnded = true;
+            }
+
+            this.selectedCardIndex = null;
+            this.updateSystem();
+        }
+
+        // Пересчет баланса синергий
+        updateSystem() {
+            this.synergyLogs = SynergyEngine.calculate(this.businesses, this.globals);
+            if (window.renderApp) {
+                window.renderApp();
+            }
+        }
+
+        calculateEmpireValue() {
+            // Итоговый счет: капитал + капитализация всех живых бизнесов
+            let val = this.capital;
+            this.businesses.forEach(b => {
+                val += (b.income * 3); // Мультипликатор оценки стоимости компании
+            });
+            return val;
+        }
     }
 
-    // Очищает контейнер безопасным способом (без innerHTML)
-    function clearElement(el) {
-      while (el.firstChild) {
-        el.removeChild(el.firstChild);
-      }
-    }
+    // Инициализируем глобальный объект игры
+    const Game = new GameEngine();
+    Game.updateSystem();
 
-    // ------------------------------------------------------------
-    // 5. Рендеринг / обновление интерфейса
-    // ------------------------------------------------------------
-    function applyTranslations() {
-      const t = i18n[currentLang];
-
-      dom.docTitle.textContent = t.docTitle;
-      dom.tTitle.textContent = t.title;
-      dom.tConfirmed.textContent = t.confirmed;
-      dom.tNewGame.textContent = t.newGame;
-      dom.tFinalWarning.textContent = t.finalWarning;
-      dom.tFinalSubmit.textContent = t.finalSubmit;
-      dom.tEnterGuess.textContent = t.enterGuess;
-      dom.tSubmitGuess.textContent = t.submitGuess;
-      dom.tHistoryTitle.textContent = t.historyTitle;
-      dom.tLegendTitle.textContent = t.legendTitle;
-      dom.tInsTitle.textContent = t.insTitle;
-      dom.tInsBody.textContent = t.insBody;
-
-      dom.guessInput.placeholder = t.placeholder;
-      dom.finalInput.placeholder = t.finalInput;
-
-      buildLegend();
-      updateAttemptsLabel();
-      renderHistory();
-
-      if (gameOver) {
-        showResult(gameOverType);
-      }
-    }
-
-    function buildLegend() {
-      clearElement(dom.legendGrid);
-      const labels = i18n[currentLang].labels;
-      const fragment = document.createDocumentFragment();
-
-      FEEDBACK_META.slice(0, 8).forEach(meta => {
-        const item = document.createElement('div');
-        item.className = 'legend-item';
-
-        const labelSpan = document.createElement('span');
-        labelSpan.className = 'l-label';
-        labelSpan.style.color = meta.color;
-        labelSpan.textContent = labels[meta.labelIndex];
-
-        const rangeSpan = document.createElement('span');
-        rangeSpan.className = 'l-range';
-        rangeSpan.textContent = meta.rangeSign;
-
-        item.appendChild(labelSpan);
-        item.appendChild(rangeSpan);
-        fragment.appendChild(item);
-      });
-
-      dom.legendGrid.appendChild(fragment);
-    }
-
-    function showFeedback(meta) {
-      dom.feedbackPanel.style.background = meta.bg;
-      dom.feedbackPanel.style.border = `1px solid ${meta.color}`;
-      dom.feedbackPanel.classList.remove('hidden');
-
-      dom.feedbackLabel.textContent = getFbText(meta);
-      dom.feedbackLabel.style.color = meta.color;
-    }
-
-    function showResult(type) {
-      if (type === 'lose_waiting') return;
-
-      const t = i18n[currentLang];
-      dom.resultBox.className = 'result-box ' + (type === 'win' ? 'result-win' : 'result-lose');
-      dom.resultBox.textContent = type === 'win' ? t.resultWin : `${t.resultLose}${secret}`;
-      dom.resultBox.classList.remove('hidden');
-      dom.guessSection.classList.add('hidden');
-      dom.feedbackPanel.classList.add('hidden');
-    }
-
-    function renderHistory() {
-      if (history.length === 0) {
-        dom.historySection.classList.add('hidden');
-        return;
-      }
-      dom.historySection.classList.remove('hidden');
-      clearElement(dom.historyList);
-
-      const fragment = document.createDocumentFragment();
-
-      [...history].reverse().forEach((h, i) => {
-        const realIndex = history.length - i;
-
-        const item = document.createElement('div');
-        item.className = 'history-item';
-        item.style.borderLeft = `3px solid ${h.meta.color}`;
-
-        const numSpan = document.createElement('span');
-        numSpan.className = 'h-num';
-        numSpan.textContent = `#${realIndex}`;
-
-        const guessSpan = document.createElement('span');
-        guessSpan.className = 'h-guess';
-        guessSpan.textContent = String(h.guess);
-
-        const labelSpan = document.createElement('span');
-        labelSpan.className = 'h-label';
-        labelSpan.style.color = h.meta.color;
-        labelSpan.textContent = getFbText(h.meta);
-
-        item.appendChild(numSpan);
-        item.appendChild(guessSpan);
-        item.appendChild(labelSpan);
-        fragment.appendChild(item);
-      });
-
-      dom.historyList.appendChild(fragment);
-    }
-
-    function updateAttemptsLabel() {
-      const left = MAX_GUESSES - history.length;
-      const t = i18n[currentLang];
-      dom.attemptsLabel.textContent = `${t.attemptsPrefix}${left} / ${MAX_GUESSES}`;
-      dom.attemptsLabel.className = 'attempts' + (left <= 3 ? ' low' : '');
-    }
-
-    // ------------------------------------------------------------
-    // 6. Игровая логика (обработчики событий)
-    // ------------------------------------------------------------
-    function handleGuess() {
-      if (gameOver) return;
-
-      const guess = parseInt(dom.guessInput.value, 10);
-      if (isNaN(guess) || guess < 1 || guess > 1000) return;
-
-      const distance = Math.abs(guess - secret);
-      const meta = getFeedback(distance);
-      history.push({ guess, distance, meta });
-      dom.guessInput.value = '';
-
-      showFeedback(meta);
-      renderHistory();
-      updateAttemptsLabel();
-
-      if (distance === 0) {
-        gameOver = true;
-        gameOverType = 'win';
-        showResult('win');
-      } else if (history.length >= MAX_GUESSES) {
-        gameOver = true;
-        gameOverType = 'lose_waiting';
-        dom.guessSection.classList.add('hidden');
-        dom.finalBox.classList.remove('hidden');
-      }
-    }
-
-    function submitFinal() {
-      const g = parseInt(dom.finalInput.value, 10);
-      if (isNaN(g)) return;
-
-      dom.finalBox.classList.add('hidden');
-      gameOverType = (g === secret ? 'win' : 'lose');
-      showResult(gameOverType);
-    }
-
-    function resetGame() {
-      secret = generateSecret();
-      history = [];
-      gameOver = false;
-      gameOverType = null;
-
-      dom.feedbackPanel.classList.add('hidden');
-      dom.finalBox.classList.add('hidden');
-      dom.resultBox.classList.add('hidden');
-      dom.historySection.classList.add('hidden');
-      dom.guessSection.classList.remove('hidden');
-      dom.guessInput.value = '';
-      dom.finalInput.value = '';
-      updateAttemptsLabel();
-    }
-
-    function changeLanguage() {
-      currentLang = dom.langSwitcher.value;
-      applyTranslations();
-    }
-
-    // ------------------------------------------------------------
-    // 7. Инициализация: подписка на события и первичный рендер
-    // ------------------------------------------------------------
-    dom.langSwitcher.addEventListener('change', changeLanguage);
-    dom.newGameBtn.addEventListener('click', resetGame);
-    dom.submitGuessBtn.addEventListener('click', handleGuess);
-    dom.finalSubmitBtn.addEventListener('click', submitFinal);
-
-    dom.guessInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleGuess(); });
-    dom.finalInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitFinal(); });
-
-    dom.langSwitcher.value = currentLang;
-    applyTranslations();
-  })();
-</script>
-</body>
-</html>
+    // КОНЕЦ ЧАСТИ 1. Далее следует графический интерфейс (Renderer) и стили.
