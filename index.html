@@ -1,887 +1,764 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Empire: Synergy Strategy</title>
-    <style>
-        /* CSS будет целиком во второй части, а пока базовые переменные для структуры */
-        :root {
-            --bg-main: #f8fafc;
-            --surface: #ffffff;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --primary: #2563eb;
-            --border: #e2e8f0;
-            --radius: 12px;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Летопись Эпох — Выживание Поселения</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: '#12161D',
+          panel: '#1B222C',
+          panel2: '#232C38',
+          line: '#313B48',
+          paper: '#EAE4D6',
+          muted: '#8B95A3',
+          brass: '#D4A73D',
+          brassdim: '#8A712C',
+          moss: '#6FA86B',
+          teal: '#4F86A6',
+          rose: '#C97B84',
+          danger: '#C2554B',
+        },
+        fontFamily: {
+          display: ['Spectral', 'serif'],
+          body: ['Inter', 'sans-serif'],
+          mono: ['IBM Plex Mono', 'monospace'],
+        },
+        keyframes: {
+          pop: { '0%': { transform: 'scale(0.6) rotate(-8deg)', opacity: 0 }, '100%': { transform: 'scale(1) rotate(0deg)', opacity: 1 } },
+          rise: { '0%': { transform: 'translateY(6px)', opacity: 0 }, '100%': { transform: 'translateY(0)', opacity: 1 } },
+        },
+        animation: {
+          pop: 'pop 0.35s ease-out',
+          rise: 'rise 0.25s ease-out',
         }
-    </style>
+      }
+    }
+  }
+</script>
+<style>
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: #1B222C; }
+  ::-webkit-scrollbar-thumb { background: #313B48; border-radius: 4px; }
+  body { background-color: #12161D; }
+  .tick { width: 6px; height: 16px; border-radius: 1px; }
+  .btn-focus:focus-visible { outline: 2px solid #D4A73D; outline-offset: 2px; }
+  select.assign-select { color-scheme: dark; }
+</style>
 </head>
-<body>
+<body class="bg-ink text-paper font-body min-h-screen pb-16">
 
-    <div id="app"></div>
+<div id="app" class="max-w-6xl mx-auto px-3 sm:px-6 py-5 space-y-5">
 
-    <script>
-        // =========================================================================
-    // ЧАСТЬ 1: ИГРОВАЯ ЛОГИКА, БАЗА КАРТ И ДВИЖОК СИНЕРГИЙ
-    // =========================================================================
+  <header class="border-b border-line pb-4">
+    <div class="flex flex-wrap items-baseline justify-between gap-2">
+      <div>
+        <h1 class="font-display text-3xl sm:text-4xl font-700 tracking-tight text-paper">Летопись Эпох</h1>
+        <p class="text-muted text-sm mt-0.5">Хроника поселения — первый, кто накопит <span class="text-brass font-mono">50 золота</span>, входит в легенду.</p>
+      </div>
+      <div id="round-badge" class="font-mono text-sm text-muted"></div>
+    </div>
+  </header>
 
-    // ТЕГИ КАРТ
-    const Tags = {
-        FOOD: 'Food',
-        IT: 'IT',
-        PRODUCTION: 'Production',
-        RETAIL: 'Retail',
-        SERVICE: 'Service',
-        TECH: 'Tech',
-        LOGISTICS: 'Logistics',
-        AGRO: 'Agro'
-    };
+  <section id="comparison-strip" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></section>
 
-    // ТИПЫ КАРТ
-    const CardTypes = {
-        BUSINESS: 'Business',
-        UPGRADE: 'Upgrade',
-        GLOBAL: 'Global'
-    };
+  <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div id="dice-panel" class="md:col-span-1 bg-panel border border-line rounded-lg p-4 flex flex-col items-center justify-center text-center min-h-[140px]"></div>
+    <div class="md:col-span-2 bg-panel border border-line rounded-lg p-4">
+      <h3 class="font-display text-lg text-brass mb-2">Хроника событий</h3>
+      <div id="log-list" class="font-mono text-xs sm:text-[13px] space-y-1.5 max-h-40 overflow-y-auto pr-1"></div>
+    </div>
+  </section>
 
-    // КЛАСС КАРТЫ
-    class Card {
-        constructor(config) {
-            this.id = config.id;
-            this.title = config.title;
-            this.type = config.type;
-            this.cost = config.cost;
-            this.icon = config.icon || '💼';
-            this.description = config.description || '';
-            this.tags = config.tags || [];
-            
-            this.baseIncome = config.baseIncome || 0;
-            this.maxLifespan = config.maxLifespan || 0;
-            
-            this.effects = config.effects || {};
-            this.synergyDescriptions = config.synergyDescriptions || [];
-        }
+  <section class="flex justify-center">
+    <button id="main-btn" data-action="main-btn"
+      class="btn-focus px-8 py-3 rounded-md font-display text-lg font-600 tracking-wide bg-brass text-ink hover:bg-[#e3bb52] transition-colors shadow-lg shadow-black/30 disabled:opacity-40 disabled:cursor-not-allowed">
+      Бросить кубик и начать ход
+    </button>
+  </section>
+
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div>
+      <h2 class="font-display text-xl text-paper mb-2 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-brass"></span> Ваш город
+      </h2>
+      <div id="player-town" class="space-y-3"></div>
+    </div>
+    <div>
+      <h2 class="font-display text-xl text-paper mb-2 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-rose"></span> Город соперника (ИИ)
+      </h2>
+      <div id="ai-town" class="space-y-3"></div>
+    </div>
+  </section>
+
+  <section class="bg-panel border border-line rounded-lg p-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-display text-xl text-brass">Рынок</h2>
+      <span id="market-hint" class="text-xs font-mono text-muted"></span>
+    </div>
+    <div id="market-list" class="flex gap-3 overflow-x-auto pb-1"></div>
+  </section>
+
+</div>
+
+<div id="win-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center px-4">
+  <div class="bg-panel border border-brass/60 rounded-lg p-8 max-w-md w-full text-center animate-pop">
+    <h2 id="win-title" class="font-display text-3xl text-brass mb-2"></h2>
+    <p id="win-sub" class="text-muted mb-6 font-body text-sm"></p>
+    <button data-action="restart" class="btn-focus px-6 py-2.5 rounded-md bg-brass text-ink font-display font-600 hover:bg-[#e3bb52] transition-colors">
+      Основать новое поселение
+    </button>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   GAME DATA DEFINITIONS (UPDATED BALANCE)
+========================================================= */
+const BUILDING_DEFS = {
+  Farm:     { label: 'Ферма',    cost: 3,  maint: 1, resource: 'food',     base: 1, boosted: 4, icon: '🌾', color: 'moss',  maxDurability: 4 },
+  House:    { label: 'Дом',      cost: 3,  maint: 1, resource: 'housing',  base: 1, boosted: 4, icon: '🏠', color: 'teal',  maxDurability: 4 },
+  Hospital: { label: 'Больница', cost: 4,  maint: 1, resource: 'medicine', base: 1, boosted: 4, icon: '⚕️', color: 'rose',  maxDurability: 4 },
+  Bank:     { label: 'Банк',     cost: 12, maint: 2, resource: 'gold',     base: 1, boosted: 5, icon: '🪙', color: 'brass', maxDurability: 5 },
+};
+const CITIZEN_COST = 4;
+const CITIZEN_MAX_DURABILITY = 5;
+
+const RESOURCE_LABEL_RU = { gold: 'золото', food: 'еды', housing: 'жилья', medicine: 'медицины' };
+const COLOR_CLASS = { moss: 'text-moss', teal: 'text-teal', rose: 'text-rose', brass: 'text-brass' };
+const DICE_FACES = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+
+let uidCounter = 1;
+function uid(prefix) { return prefix + (uidCounter++); }
+
+/* =========================================================
+   STATE FACTORY
+========================================================= */
+function newPlayerState(name) {
+  const farmId = uid('b');
+  const houseId = uid('b');
+  const workerId = uid('c');
+  return {
+    name,
+    gold: 7, // Немного увеличили стартовый капитал
+    warehouse: { food: 2, housing: 2, medicine: 1 }, // Стартовые запасы для защиты от кризиса первого хода
+    buildings: [
+      { id: farmId,  type: 'Farm',  durability: BUILDING_DEFS.Farm.maxDurability, workerId: workerId },
+      { id: houseId, type: 'House', durability: BUILDING_DEFS.House.maxDurability, workerId: null },
+    ],
+    citizens: [
+      { id: workerId, durability: CITIZEN_MAX_DURABILITY, assignedTo: farmId },
+    ],
+  };
+}
+
+function newGame() {
+  return {
+    round: 1,
+    activeTurn: 'player',
+    phase: 'ready',        // 'ready' | 'market' | 'ai-turn'
+    purchasedThisTurn: false,
+    gameOver: false,
+    winner: null,
+    lastDiceRoll: null,
+    lastEventText: '',
+    log: [],
+    player: newPlayerState('Вы'),
+    ai: newPlayerState('Соперник (ИИ)'),
+  };
+}
+
+let game = newGame();
+
+function logMsg(msg, type) {
+  game.log.unshift({ msg, type, round: game.round });
+  if (game.log.length > 80) game.log.pop();
+}
+
+/* =========================================================
+   CORE ENGINE
+========================================================= */
+function agingPhase(actor) {
+  actor.buildings.forEach(b => { b.durability -= 1; });
+  const expired = actor.buildings.filter(b => b.durability <= 0);
+  expired.forEach(b => {
+    if (b.workerId) {
+      const c = actor.citizens.find(c => c.id === b.workerId);
+      if (c) c.assignedTo = null;
     }
+    logMsg(`${actor.name}: здание «${BUILDING_DEFS[b.type].label}» разрушилось — истёк срок службы.`, 'decay');
+  });
+  actor.buildings = actor.buildings.filter(b => b.durability > 0);
 
-    // КЛАСС АКТИВНОГО БИЗНЕСА НА ПОЛЕ
-    class BusinessInstance {
-        constructor(card, owner) {
-            this.id = Math.random().toString(36).substr(2, 9);
-            this.cardId = card.id;
-            this.title = card.title;
-            this.icon = card.icon;
-            this.tags = [...card.tags];
-            this.owner = owner; // 'player' или 'ai'
-            
-            this.baseIncome = card.baseIncome;
-            this.income = card.baseIncome;
-            
-            this.age = 0;
-            this.maxLifespan = card.maxLifespan;
-            this.isEternal = false;
-            
-            this.upgradesApplied = [];
-        }
-
-        get turnsLeft() {
-            if (this.isEternal) return Infinity;
-            return Math.max(0, this.maxLifespan - this.age);
-        }
-
-        get isExpired() {
-            if (this.isEternal) return false;
-            return this.age >= this.maxLifespan;
-        }
+  actor.citizens.forEach(c => { c.durability -= 1; });
+  const passed = actor.citizens.filter(c => c.durability <= 0);
+  passed.forEach(c => {
+    if (c.assignedTo) {
+      const b = actor.buildings.find(b => b.id === c.assignedTo);
+      if (b) b.workerId = null;
     }
+    logMsg(`${actor.name}: житель скончался от старости.`, 'death');
+  });
+  actor.citizens = actor.citizens.filter(c => c.durability > 0);
+}
 
-    // БАЗА ДАННЫХ КАРТ
-    const CARD_DATABASE = [
-        new Card({
-            id: 'b_coffee', title: 'Кофейня', type: CardTypes.BUSINESS, cost: 40, icon: '☕',
-            baseIncome: 12, maxLifespan: 8, tags: [Tags.FOOD, Tags.RETAIL],
-            description: 'Стабильный стартовый поток наличности.'
-        }),
-        new Card({
-            id: 'b_bakery', title: 'Пекарня', type: CardTypes.BUSINESS, cost: 50, icon: '🥐',
-            baseIncome: 15, maxLifespan: 7, tags: [Tags.FOOD],
-            description: 'Свежий хлеб всегда в цене. Питает город.'
-        }),
-        new Card({
-            id: 'b_farm', title: 'Ферма', type: CardTypes.BUSINESS, cost: 70, icon: '🚜',
-            baseIncome: 18, maxLifespan: 10, tags: [Tags.AGRO, Tags.PRODUCTION],
-            description: 'Поставляет сырье для пищевой цепочки.'
-        }),
-        new Card({
-            id: 'b_factory', title: 'Завод', type: CardTypes.BUSINESS, cost: 150, icon: '🏭',
-            baseIncome: 40, maxLifespan: 12, tags: [Tags.PRODUCTION],
-            description: 'Тяжелая индустрия. Основа масштабного производства.'
-        }),
-        new Card({
-            id: 'b_startup', title: 'IT-Стартап', type: CardTypes.BUSINESS, cost: 90, icon: '🚀',
-            baseIncome: 5, maxLifespan: 5, tags: [Tags.IT, Tags.TECH],
-            description: 'Высокий риск, низкий базовый доход, но взрывной потенциал синергий.'
-        }),
-        new Card({
-            id: 'b_store', title: 'Онлайн-магазин', type: CardTypes.BUSINESS, cost: 80, icon: '🛍️',
-            baseIncome: 22, maxLifespan: 8, tags: [Tags.RETAIL, Tags.IT],
-            description: 'Торговля без границ в цифровом пространстве.'
-        }),
-        new Card({
-            id: 'b_logistics', title: 'Логистика', type: CardTypes.BUSINESS, cost: 120, icon: '🚚',
-            baseIncome: 30, maxLifespan: 10, tags: [Tags.LOGISTICS, Tags.SERVICE],
-            description: 'Связующее звено между производством и продажами.'
-        }),
-        new Card({
-            id: 'b_restaurant', title: 'Ресторан', type: CardTypes.BUSINESS, cost: 130, icon: '🍽️',
-            baseIncome: 38, maxLifespan: 9, tags: [Tags.FOOD, Tags.SERVICE],
-            description: 'Премиальное обслуживание и высокая маржинальность.'
-        }),
-        new Card({
-            id: 'b_marketing', title: 'Маркетинговое Агентство', type: CardTypes.BUSINESS, cost: 65, icon: '📣',
-            baseIncome: 20, maxLifespan: 7, tags: [Tags.SERVICE],
-            description: 'Помогает другим продавать больше.'
-        }),
-        new Card({
-            id: 'b_cloud', title: 'Облачный сервис', type: CardTypes.BUSINESS, cost: 160, icon: '☁️',
-            baseIncome: 45, maxLifespan: 15, tags: [Tags.IT, Tags.TECH],
-            description: 'Инфраструктура для современного цифрового мира.'
-        }),
-        new Card({
-            id: 'b_ai', title: 'AI Лаборатория', type: CardTypes.BUSINESS, cost: 220, icon: '🧠',
-            baseIncome: 25, maxLifespan: 12, tags: [Tags.TECH, Tags.IT],
-            description: 'Технологии будущего. Генерирует колоссальные синергии.'
-        }),
-        new Card({
-            id: 'b_mill', title: 'Мельница', type: CardTypes.BUSINESS, cost: 60, icon: '🌾',
-            baseIncome: 16, maxLifespan: 9, tags: [Tags.AGRO, Tags.PRODUCTION],
-            description: 'Перерабатывает агрокультуры в муку.'
-        }),
-        new Card({
-            id: 'b_delivery', title: 'Служба доставки', type: CardTypes.BUSINESS, cost: 75, icon: '🛵',
-            baseIncome: 20, maxLifespan: 6, tags: [Tags.LOGISTICS, Tags.RETAIL],
-            description: 'Последняя миля доставки до клиента.'
-        }),
-        new Card({
-            id: 'b_clothing', title: 'Ателье одежды', type: CardTypes.BUSINESS, cost: 85, icon: '👕',
-            baseIncome: 24, maxLifespan: 8, tags: [Tags.RETAIL, Tags.PRODUCTION],
-            description: 'Локальное производство стильной одежды.'
-        }),
-        new Card({
-            id: 'b_hotel', title: 'Отель', type: CardTypes.BUSINESS, cost: 200, icon: '🏨',
-            baseIncome: 55, maxLifespan: 14, tags: [Tags.SERVICE],
-            description: 'Капиталоемкий бизнес со стабильной долгосрочной прибылью.'
-        }),
-        new Card({
-            id: 'b_laboratory', title: 'R&D Центр', type: CardTypes.BUSINESS, cost: 180, icon: '🔬',
-            baseIncome: 15, maxLifespan: 11, tags: [Tags.TECH],
-            description: 'Научные исследования, двигающие вперед производство.'
-        }),
-        new Card({
-            id: 'b_cargo', title: 'Морские перевозки', type: CardTypes.BUSINESS, cost: 250, icon: '🚢',
-            baseIncome: 70, maxLifespan: 16, tags: [Tags.LOGISTICS],
-            description: 'Глобальные цепочки поставок для крупного бизнеса.'
-        }),
-        new Card({
-            id: 'b_greenhouse', title: 'Тепличное хозяйство', type: CardTypes.BUSINESS, cost: 95, icon: '🍅',
-            baseIncome: 26, maxLifespan: 8, tags: [Tags.AGRO],
-            description: 'Круглогодичное выращивание овощей премиум-класса.'
-        }),
-        new Card({
-            id: 'b_crypto', title: 'Майнинг ферма', type: CardTypes.BUSINESS, cost: 190, icon: '🪙',
-            baseIncome: 50, maxLifespan: 6, tags: [Tags.TECH, Tags.IT],
-            description: 'Высокий доход, но быстрое устаревание оборудования.'
-        }),
-        new Card({
-            id: 'b_supermarket', title: 'Супермаркет', type: CardTypes.BUSINESS, cost: 210, icon: '🛒',
-            baseIncome: 60, maxLifespan: 10, tags: [Tags.RETAIL, Tags.FOOD],
-            description: 'Огромный поток покупателей и товаров.'
-        }),
-
-        // УЛУЧШЕНИЯ
-        new Card({
-            id: 'u_staff', title: 'Обучение персонала', type: CardTypes.UPGRADE, cost: 30, icon: '👨‍🎓',
-            description: 'Дает +5 доход выбранному бизнесу. Если это Service: +10 доход.',
-            effects: { target: 'single', incomeBonus: 5, tagSpecific: { tag: Tags.SERVICE, incomeBonus: 10 } }
-        }),
-        new Card({
-            id: 'u_automation', title: 'Автоматизация линий', type: CardTypes.UPGRADE, cost: 55, icon: '🤖',
-            description: 'Выбранный бизнес получает +10 доход и +3 к макс. сроку жизни.',
-            effects: { target: 'single', incomeBonus: 10, lifespanBonus: 3 }
-        }),
-        new Card({
-            id: 'u_seo', title: 'SEO-Оптимизация', type: CardTypes.UPGRADE, cost: 25, icon: '🎯',
-            description: 'Дает +8 доход для бизнесов с тегом IT.',
-            effects: { target: 'single', restrictTag: Tags.IT, incomeBonus: 8 }
-        }),
-        new Card({
-            id: 'u_crm', title: 'Внедрение CRM', type: CardTypes.UPGRADE, cost: 40, icon: '📊',
-            description: 'Дает +12 доход бизнесам с тегами Service или Retail.',
-            effects: { target: 'single', restrictTagsOr: [Tags.SERVICE, Tags.RETAIL], incomeBonus: 12 }
-        }),
-        new Card({
-            id: 'u_franchise', title: 'Упаковка во франшизу', type: CardTypes.UPGRADE, cost: 70, icon: '📜',
-            description: 'Удваивает базовый доход бизнеса и делает его БЕССРОЧНЫМ.',
-            effects: { target: 'single', incomeMultiplier: 2, makeEternal: true }
-        }),
-        new Card({
-            id: 'u_rebranding', title: 'Глубокий ребрендинг', type: CardTypes.UPGRADE, cost: 35, icon: '🎨',
-            description: 'Сбрасывает текущий возраст бизнеса в 0 и дает +5 к доходу.',
-            effects: { target: 'single', resetAge: true, incomeBonus: 5 }
-        }),
-        new Card({
-            id: 'u_ai_integration', title: 'Интеграция AI-ассистента', type: CardTypes.UPGRADE, cost: 60, icon: '⚡',
-            description: 'Дает +15 доход для IT/Tech компаний. Для остальных: +5 доход.',
-            effects: { target: 'single', incomeBonus: 5, tagSpecificOr: { tags: [Tags.IT, Tags.TECH], incomeBonus: 15 } }
-        }),
-        new Card({
-            id: 'u_eco_package', title: 'Эко-упаковка', type: CardTypes.UPGRADE, cost: 30, icon: '🌿',
-            description: 'Для Food или Agro бизнесов: +12 доход. Повышает лояльность.',
-            effects: { target: 'single', restrictTagsOr: [Tags.FOOD, Tags.AGRO], incomeBonus: 12 }
-        }),
-        new Card({
-            id: 'u_supply', title: 'Оптимизация поставок', type: CardTypes.UPGRADE, cost: 45, icon: '📦',
-            description: 'Дает +10 доход для Production или Logistics.',
-            effects: { target: 'single', restrictTagsOr: [Tags.PRODUCTION, Tags.LOGISTICS], incomeBonus: 10 }
-        }),
-        new Card({
-            id: 'u_ads', title: 'Таргетированная реклама', type: CardTypes.UPGRADE, cost: 35, icon: '📱',
-            description: 'Дает +10 доход розничному бизнесу (Retail).',
-            effects: { target: 'single', restrictTag: Tags.RETAIL, incomeBonus: 10 }
-        }),
-        new Card({
-            id: 'u_agro_tech', title: 'Агро-дроны', type: CardTypes.UPGRADE, cost: 50, icon: '🛸',
-            description: 'Дает +14 доход агробизнесу (Agro) и +4 к сроку жизни.',
-            effects: { target: 'single', restrictTag: Tags.AGRO, incomeBonus: 14, lifespanBonus: 4 }
-        }),
-        new Card({
-            id: 'u_blockchain', title: 'Смарт-контракты', type: CardTypes.UPGRADE, cost: 65, icon: '⛓️',
-            description: 'Увеличивает доход IT на +15, а Logistics на +10.',
-            effects: { target: 'single', incomeBonus: 0, tagSpecific: { tag: Tags.IT, incomeBonus: 15 }, tagSpecific2: { tag: Tags.LOGISTICS, incomeBonus: 10 } }
-        }),
-        new Card({
-            id: 'u_upgrade_30', title: 'Премиум сырье', type: CardTypes.UPGRADE, cost: 40, icon: '💎',
-            description: 'Дает +12 доход фабрикам, заводам или ресторанам.',
-            effects: { target: 'single', restrictTagsOr: [Tags.PRODUCTION, Tags.FOOD], incomeBonus: 12 }
-        }),
-
-        // ГЛОБАЛЬНЫЕ
-        new Card({
-            id: 'g_hr', title: 'Глобальный HR-Департамент', type: CardTypes.GLOBAL, cost: 100, icon: '👥',
-            description: 'Глобально: Каждое улучшение на поле приносит дополнительно +3 дохода.',
-            effects: { global: true, type: 'upgrade_boost', bonus: 3 }
-        }),
-        new Card({
-            id: 'g_venture', title: 'Венчурный фонд', type: CardTypes.GLOBAL, cost: 140, icon: '🪙',
-            description: 'Глобально: Все IT и Tech бизнесы приносят на 30% больше прибыли.',
-            effects: { global: true, type: 'tag_multiplier', tags: [Tags.IT, Tags.TECH], multiplier: 1.3 }
-        }),
-        new Card({
-            id: 'g_grant', title: 'Гос. Субсидии', type: CardTypes.GLOBAL, cost: 110, icon: '🏛️',
-            description: 'Глобально: Все бизнесы типов Production и Agro получают +8 дохода.',
-            effects: { global: true, type: 'tag_flat', tags: [Tags.PRODUCTION, Tags.AGRO], bonus: 8 }
-        }),
-        new Card({
-            id: 'g_tax_free', title: 'Офшорные налоговые льготы', type: CardTypes.GLOBAL, cost: 160, icon: '📉',
-            description: 'Глобально: Абсолютно все активные бизнесы получают +6 дохода за ход.',
-            effects: { global: true, type: 'all_flat', bonus: 6 }
-        }),
-        new Card({
-            id: 'g_brand', title: 'Национальный Бренд', type: CardTypes.GLOBAL, cost: 150, icon: '👑',
-            description: 'Глобально: Все розничные бизнесы (Retail) увеличивают доход на 40%.',
-            effects: { global: true, type: 'tag_multiplier', tags: [Tags.RETAIL], multiplier: 1.4 }
-        }),
-        new Card({
-            id: 'g_green_energy', title: 'Зеленая энергетика', type: CardTypes.GLOBAL, cost: 125, icon: '🔋',
-            description: 'Глобально: Увеличивает срок жизни всех НОВЫХ открываемых бизнесов на 2 хода.',
-            effects: { global: true, type: 'future_lifespan', bonus: 2 }
-        }),
-        new Card({
-            id: 'g_accelerator', title: 'Бизнес-акселератор', type: CardTypes.GLOBAL, cost: 90, icon: '📈',
-            description: 'Глобально: Снижает стоимость покупки всех последующих карт Улучшений на 10 монет.',
-            effects: { global: true, type: 'cost_reduction', cardType: CardTypes.UPGRADE, reduction: 10 }
-        }),
-        new Card({
-            id: 'g_synergy_hub', title: 'Инновационный Хаб', type: CardTypes.GLOBAL, cost: 180, icon: '🕸️',
-            description: 'Глобально: Усиливает абсолютно ВСЕ межцепочечные синергии на поле на +5 дохода.',
-            effects: { global: true, type: 'synergy_booster', bonus: 5 }
-        })
-    ];
-
-    // Генерация базы
-    for(let i = 1; i <= 20; i++) {
-        if (!CARD_DATABASE.find(c => c.id === `u_gen_${i}`)) {
-            CARD_DATABASE.push(new Card({
-                id: `u_gen_${i}`,
-                title: `Модернизация тип-${i}`,
-                type: CardTypes.UPGRADE,
-                cost: 20 + (i * 2),
-                icon: '🔧',
-                description: `Оптимизирует процессы. Дает +${5 + Math.floor(i/2)} дохода предприятию.`,
-                effects: { target: 'single', incomeBonus: 5 + Math.floor(i/2) }
-            }));
+function rollDicePhase(actor) {
+  const roll = 1 + Math.floor(Math.random() * 6);
+  const modifiers = { food: 1, housing: 1, medicine: 1, econCrisis: false };
+  let eventText = '';
+  switch (roll) {
+    case 1:
+      modifiers.food = 2;
+      eventText = 'Голод — в этот ход жители потребляют вдвое больше еды.';
+      break;
+    case 2:
+      modifiers.housing = 2;
+      eventText = 'Жилищный кризис — в этот ход жители потребляют вдвое больше жилья.';
+      break;
+    case 3:
+      modifiers.medicine = 2;
+      eventText = 'Эпидемия — в этот ход жители потребляют вдвое больше медицины.';
+      break;
+    case 4:
+      modifiers.econCrisis = true;
+      eventText = 'Экономический кризис — содержание каждого здания обходится на 1🪙 дороже.';
+      break;
+    case 5: {
+      if (actor.citizens.length > 0) {
+        const idx = Math.floor(Math.random() * actor.citizens.length);
+        const victim = actor.citizens[idx];
+        if (victim.assignedTo) {
+          const b = actor.buildings.find(b => b.id === victim.assignedTo);
+          if (b) b.workerId = null;
         }
+        actor.citizens.splice(idx, 1);
+        eventText = 'Один из жителей неожиданно уехал из города.';
+      } else {
+        eventText = 'Судьба искала жителя, но город пуст.';
+      }
+      break;
     }
-
-    // ДВИЖОК СИНЕРГИЙ
-    class SynergyEngine {
-        static calculate(businesses, globals) {
-            businesses.forEach(b => { b.income = b.baseIncome; });
-            const synergyLogs = [];
-
-            const hasBusiness = (id, owner) => businesses.some(b => b.cardId === id && b.owner === owner);
-            const countTag = (tag, owner) => businesses.filter(b => b.tags.includes(tag) && b.owner === owner).length;
-
-            businesses.forEach(b => {
-                const own = b.owner;
-                // Цепочки поставок работают внутри структуры одного владельца
-                if (b.cardId === 'b_bakery' && hasBusiness('b_farm', own)) {
-                    b.income += 10;
-                    synergyLogs.push({ from: 'Ферма', to: b.id, amount: 10, reason: 'Поставка свежего зерна' });
-                }
-                if (b.cardId === 'b_coffee' && hasBusiness('b_bakery', own)) {
-                    b.income += 8;
-                    synergyLogs.push({ from: 'Пекарня', to: b.id, amount: 8, reason: 'Совместное меню выпечки' });
-                }
-                if (b.cardId === 'b_restaurant' && hasBusiness('b_farm', own)) {
-                    b.income += 15;
-                    synergyLogs.push({ from: 'Ферма', to: b.id, amount: 15, reason: 'Концепция Farm-to-Table' });
-                }
-                if (b.cardId === 'b_logistics' && hasBusiness('b_factory', own)) {
-                    b.income += 15;
-                    synergyLogs.push({ from: 'Завод', to: b.id, amount: 15, reason: 'Крупный контракт на перевозки' });
-                }
-                if ((b.cardId === 'b_store' || b.cardId === 'b_supermarket') && hasBusiness('b_logistics', own)) {
-                    b.income += 12;
-                    synergyLogs.push({ from: 'Логистика', to: b.id, amount: 12, reason: 'Быстрая доставка товаров' });
-                }
-                if (b.cardId === 'b_cloud' && hasBusiness('b_startup', own)) {
-                    b.income += 20;
-                    synergyLogs.push({ from: 'IT-Стартап', to: b.id, amount: 20, reason: 'Потребление облачных мощностей' });
-                }
-                if (b.cardId === 'b_ai' && hasBusiness('b_cloud', own)) {
-                    b.income += 25;
-                    synergyLogs.push({ from: 'Облачный сервис', to: b.id, amount: 25, reason: 'Дата-центры для ИИ' });
-                }
-                if (b.cardId === 'b_startup' && hasBusiness('b_ai', own)) {
-                    b.income += 18;
-                    synergyLogs.push({ from: 'AI Лаборатория', to: b.id, amount: 18, reason: 'Интеграция передового ИИ' });
-                }
-
-                if (b.tags.includes(Tags.LOGISTICS)) {
-                    let prodCount = countTag(Tags.PRODUCTION, own);
-                    if (prodCount > 0) {
-                        b.income += prodCount * 5;
-                        synergyLogs.push({ from: `Производства (x${prodCount})`, to: b.id, amount: prodCount * 5, reason: 'Обслуживание фабрик' });
-                    }
-                }
-                if (b.cardId === 'b_marketing') {
-                    let retailCount = countTag(Tags.RETAIL, own);
-                    if (retailCount > 0) {
-                        b.income += retailCount * 6;
-                        synergyLogs.push({ from: `Ритейл (x${retailCount})`, to: b.id, amount: retailCount * 6, reason: 'Рекламные кампании' });
-                    }
-                }
-            });
-
-            // Улучшения
-            businesses.forEach(b => {
-                b.upgradesApplied.forEach(upgCardId => {
-                    const upgCard = CARD_DATABASE.find(c => c.id === upgCardId);
-                    if (!upgCard) return;
-                    let eff = upgCard.effects;
-                    if (eff.incomeBonus) {
-                        b.income += eff.incomeBonus;
-                        synergyLogs.push({ from: upgCard.title, to: b.id, amount: eff.incomeBonus, reason: 'Модификатор улучшения' });
-                    }
-                    if (eff.tagSpecific && b.tags.includes(eff.tagSpecific.tag)) {
-                        b.income += eff.tagSpecific.incomeBonus;
-                        synergyLogs.push({ from: upgCard.title, to: b.id, amount: eff.tagSpecific.incomeBonus, reason: 'Профильный буст' });
-                    }
-                    if (eff.tagSpecificOr) {
-                        if (eff.tagSpecificOr.tags.some(t => b.tags.includes(t))) {
-                            b.income += eff.tagSpecificOr.incomeBonus;
-                            synergyLogs.push({ from: upgCard.title, to: b.id, amount: eff.tagSpecificOr.incomeBonus, reason: 'Технологический буст' });
-                        }
-                    }
-                    if (eff.incomeMultiplier) {
-                        let addition = b.baseIncome * (eff.incomeMultiplier - 1);
-                        b.income += addition;
-                        synergyLogs.push({ from: upgCard.title, to: b.id, amount: addition, reason: 'Франшиза' });
-                    }
-                });
-            });
-
-            // Глобальные (проверка по владельцу через префикс или фильтрацию списка в Game)
-            const activeGlobals = (owner) => globals.filter(g => g.owner === owner).map(g => g.id);
-
-            businesses.forEach(b => {
-                const own = b.owner;
-                const gList = activeGlobals(own);
-
-                gList.forEach(gCardId => {
-                    const gCard = CARD_DATABASE.find(c => c.id === gCardId);
-                    if (!gCard) return;
-                    let eff = gCard.effects;
-
-                    if (eff.type === 'all_flat') b.income += eff.bonus;
-                    if (eff.type === 'tag_flat' && eff.tags.some(t => b.tags.includes(t))) b.income += eff.bonus;
-                    if (eff.type === 'tag_multiplier' && eff.tags.some(t => b.tags.includes(t))) {
-                        b.income += Math.floor(b.income * (eff.multiplier - 1));
-                    }
-                    if (eff.type === 'upgrade_boost') b.income += b.upgradesApplied.length * eff.bonus;
-                });
-
-                if (gList.includes('g_synergy_hub')) {
-                    b.income += 5; 
-                }
-            });
-
-            return synergyLogs;
-        }
+    case 6: {
+      actor.citizens.push({ id: uid('c'), durability: CITIZEN_MAX_DURABILITY, assignedTo: null });
+      eventText = 'Иммиграция — прибыл новый рабочий, пока без дела.';
+      break;
     }
+  }
+  game.lastDiceRoll = roll;
+  game.lastEventText = eventText;
+  logMsg(`${actor.name} выбрасывает ${roll}: ${eventText}`, 'dice');
+  return modifiers;
+}
 
-    // =========================================================================
-    // КЛАСС УПРАВЛЕНИЯ СОСТОЯНИЕМ ИГРЫ С ИИ СОПЕРНИКОМ
-    // =========================================================================
-    class GameEngine {
-        constructor() {
-            this.capital = 150;     // Капитал игрока
-            this.aiCapital = 150;   // Капитал ИИ
-            this.currentTurn = 1;
-            this.maxTurns = 30;
-            
-            this.businesses = [];   // Общий массив всех бизнесов на поле
-            this.globals = [];      // Купленные глобальные карты: {id, owner}
-            
-            this.hand = [];         // Рука игрока
-            this.aiHand = [];       // Рука ИИ
-            this.deck = [];
-            
-            this.synergyLogs = [];
-            this.selectedCardIndex = null;
-            this.gameEnded = false;
-            
-            this.initDeck();
-            this.drawHand('player', 5);
-            this.drawHand('ai', 5);
-        }
+function productionPhase(actor, modifiers) {
+  let grossGold = 0, grossFood = 0, grossHousing = 0, grossMedicine = 0, upkeep = 0;
+  actor.buildings.forEach(b => {
+    const def = BUILDING_DEFS[b.type];
+    const amount = b.workerId ? def.boosted : def.base;
+    if (def.resource === 'gold') grossGold += amount;
+    else if (def.resource === 'food') grossFood += amount;
+    else if (def.resource === 'housing') grossHousing += amount;
+    else if (def.resource === 'medicine') grossMedicine += amount;
+    upkeep += def.maint + (modifiers.econCrisis ? 1 : 0);
+  });
 
-        initDeck() {
-            this.deck = [...CARD_DATABASE].sort(() => Math.random() - 0.5);
-        }
+  actor.warehouse.food += grossFood;
+  actor.warehouse.housing += grossHousing;
+  actor.warehouse.medicine += grossMedicine;
+  actor.gold += grossGold;
+  actor.gold -= upkeep;
+  if (actor.gold < 0) actor.gold = 0;
 
-        drawHand(owner, count) {
-            const hand = owner === 'player' ? this.hand : this.aiHand;
-            while (hand.length < count && this.deck.length > 0) {
-                hand.push(this.deck.pop());
-            }
-        }
+  const n = actor.citizens.length;
+  const needs = {
+    food: n * modifiers.food,
+    housing: n * modifiers.housing,
+    medicine: n * modifiers.medicine,
+  };
 
-        getCardCost(card, owner) {
-            let cost = card.cost;
-            const hasAccelerator = this.globals.some(g => g.id === 'g_accelerator' && g.owner === owner);
-            if (card.type === CardTypes.UPGRADE && hasAccelerator) {
-                cost = Math.max(5, cost - 10);
-            }
-            return cost;
-        }
-
-        selectCard(index) {
-            if (this.gameEnded) return;
-            this.selectedCardIndex = (this.selectedCardIndex === index) ? null : index;
-            this.updateSystem();
-        }
-
-        playCard(targetBusinessId = null) {
-            if (this.selectedCardIndex === null || this.gameEnded) return false;
-            const card = this.hand[this.selectedCardIndex];
-            const cost = this.getCardCost(card, 'player');
-
-            if (this.capital < cost) {
-                alert('Недостаточно капитала для этого стратегического решения!');
-                return false;
-            }
-
-            if (card.type === CardTypes.BUSINESS) {
-                const newBiz = new BusinessInstance(card, 'player');
-                if (this.globals.some(g => g.id === 'g_green_energy' && g.owner === 'player')) {
-                    newBiz.maxLifespan += 2;
-                }
-                this.businesses.push(newBiz);
-            } 
-            else if (card.type === CardTypes.GLOBAL) {
-                if (this.globals.some(g => g.id === card.id && g.owner === 'player')) {
-                    alert('Данное стратегическое улучшение уже действует в вашей империи!');
-                    return false;
-                }
-                this.globals.push({ id: card.id, owner: 'player' });
-            } 
-            else if (card.type === CardTypes.UPGRADE) {
-                if (!targetBusinessId) {
-                    alert('Выберите предприятие на поле для применения этого улучшения.');
-                    return false;
-                }
-                const target = this.businesses.find(b => b.id === targetBusinessId && b.owner === 'player');
-                if (!target) return false;
-
-                let eff = card.effects;
-                if (eff.restrictTag && !target.tags.includes(eff.restrictTag)) {
-                    alert(`Это улучшение применимо только к бизнесу с тегом ${eff.restrictTag}`);
-                    return false;
-                }
-                if (eff.restrictTagsOr && !eff.restrictTagsOr.some(t => target.tags.includes(t))) {
-                    alert(`Это улучшение требует один из тегов: ${eff.restrictTagsOr.join(', ')}`);
-                    return false;
-                }
-
-                if (eff.resetAge) target.age = 0;
-                if (eff.lifespanBonus) target.maxLifespan += eff.lifespanBonus;
-                if (eff.makeEternal) target.isEternal = true;
-
-                target.upgradesApplied.push(card.id);
-            }
-
-            this.capital -= cost;
-            this.hand.splice(this.selectedCardIndex, 1);
-            this.selectedCardIndex = null;
-
-            this.updateSystem();
-            return true;
-        }
-
-        sellBusiness(id) {
-            if (this.gameEnded) return;
-            const idx = this.businesses.findIndex(b => b.id === id && b.owner === 'player');
-            if (idx === -1) return;
-            const b = this.businesses[idx];
-            let compensation = Math.floor((b.income * 1.5) + (b.turnsLeft === Infinity ? 40 : b.turnsLeft * 4));
-            this.capital += compensation;
-            this.businesses.splice(idx, 1);
-            this.updateSystem();
-        }
-
-        // ВЫЗОВ ХОДА ИИ-СОПЕРНИКА
-        makeAiTurn() {
-            if (this.gameEnded) return;
-
-            // ИИ анализирует карты в руке и пытается сделать лучшее действие
-            let actionDone = false;
-
-            // 1. Попытка применить Улучшения к уже существующим зданиям ИИ
-            const aiUpgrades = this.aiHand.filter(c => c.type === CardTypes.UPGRADE);
-            const aiBizs = this.businesses.filter(b => b.owner === 'ai');
-
-            for (let card of aiUpgrades) {
-                let cost = this.getCardCost(card, 'ai');
-                if (this.aiCapital >= cost && aiBizs.length > 0) {
-                    // Ищем подходящий бизнес по тегам
-                    let target = aiBizs.find(b => {
-                        let eff = card.effects;
-                        if (eff.restrictTag && !b.tags.includes(eff.restrictTag)) return false;
-                        if (eff.restrictTagsOr && !eff.restrictTagsOr.some(t => b.tags.includes(t))) return false;
-                        return true;
-                    });
-
-                    if (target) {
-                        this.aiCapital -= cost;
-                        if (card.effects.resetAge) target.age = 0;
-                        if (card.effects.lifespanBonus) target.maxLifespan += card.effects.lifespanBonus;
-                        if (card.effects.makeEternal) target.isEternal = true;
-                        target.upgradesApplied.push(card.id);
-                        
-                        this.aiHand = this.aiHand.filter(c => c.id !== card.id);
-                        actionDone = true;
-                        break;
-                    }
-                }
-            }
-
-            // 2. Если улучшение не разыграно, ИИ пробует построить самый выгодный Бизнес
-            if (!actionDone) {
-                const aiBusinesses = this.aiHand.filter(c => c.type === CardTypes.BUSINESS);
-                // Сортируем по базовому доходу
-                aiBusinesses.sort((a, b) => b.baseIncome - a.baseIncome);
-
-                for (let card of aiBusinesses) {
-                    let cost = this.getCardCost(card, 'ai');
-                    if (this.aiCapital >= cost) {
-                        this.aiCapital -= cost;
-                        const newBiz = new BusinessInstance(card, 'ai');
-                        if (this.globals.some(g => g.id === 'g_green_energy' && g.owner === 'ai')) {
-                            newBiz.maxLifespan += 2;
-                        }
-                        this.businesses.push(newBiz);
-                        this.aiHand = this.aiHand.filter(c => c.id !== card.id);
-                        actionDone = true;
-                        break;
-                    }
-                }
-            }
-
-            // 3. Если денег много, ИИ покупает Глобальную карту
-            if (!actionDone) {
-                const aiGlobals = this.aiHand.filter(c => c.type === CardTypes.GLOBAL);
-                for (let card of aiGlobals) {
-                    let cost = this.getCardCost(card, 'ai');
-                    if (this.aiCapital >= cost && !this.globals.some(g => g.id === card.id && g.owner === 'ai')) {
-                        this.aiCapital -= cost;
-                        this.globals.push({ id: card.id, owner: 'ai' });
-                        this.aiHand = this.aiHand.filter(c => c.id !== card.id);
-                        actionDone = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        endTurn() {
-            if (this.gameEnded) return;
-
-            // 1. Игрок получает прибыль
-            this.businesses.forEach(b => {
-                if (b.owner === 'player') this.capital += b.income;
-                if (b.owner === 'ai') this.aiCapital += b.income;
-                b.age += 1;
-            });
-
-            // 2. Ход делает ИИ-соперник
-            this.makeAiTurn();
-
-            // 3. Отсев закрывшихся компаний
-            this.businesses = this.businesses.filter(b => !b.isExpired);
-
-            // 4. Переход хода и добор
-            this.currentTurn += 1;
-            this.drawHand('player', 5);
-            this.drawHand('ai', 5);
-
-            if (this.currentTurn > this.maxTurns) {
-                this.gameEnded = true;
-            }
-
-            this.selectedCardIndex = null;
-            this.updateSystem();
-        }
-
-        updateSystem() {
-            this.synergyLogs = SynergyEngine.calculate(this.businesses, this.globals);
-            if (window.renderApp) {
-                window.renderApp();
-            }
-        }
-
-        calculateEmpireValue(owner) {
-            let cap = owner === 'player' ? this.capital : this.aiCapital;
-            let bizs = this.businesses.filter(b => b.owner === owner);
-            let val = cap;
-            bizs.forEach(b => { val += (b.income * 3); });
-            return val;
-        }
+  let deficit = 0;
+  ['food', 'housing', 'medicine'].forEach(res => {
+    if (actor.warehouse[res] >= needs[res]) {
+      actor.warehouse[res] -= needs[res];
+    } else {
+      deficit += needs[res] - actor.warehouse[res];
+      actor.warehouse[res] = 0;
     }
+  });
 
-    const Game = new GameEngine();
+  logMsg(`${actor.name} производит: 🪙${grossGold} 🌾${grossFood} 🏠${grossHousing} ⚕️${grossMedicine}. Содержание — ${upkeep}🪙.`, 'production');
 
-    // =========================================================================
-    // ЧАСТЬ 2: ИНТЕРФЕЙС (RENDERER), СТИЛИ И ИНИЦИАЛИЗАЦИЯ
-    // =========================================================================
-    const styleElement = document.createElement('style');
-    styleElement.textContent = `
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-main); padding: 24px; }
-        .game-container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 300px 1fr; gap: 24px; }
-        .sidebar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; height: fit-content; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: sticky; top: 24px; }
-        .metric-card { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
-        .metric-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-        .metric-value { font-size: 28px; font-weight: 700; color: var(--text-main); margin-top: 4px; }
-        .ai-value { color: #dc2626; }
-        .btn-primary { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s ease; }
-        .btn-primary:hover { background: #1d4ed8; }
-        .main-content { display: flex; flex-direction: column; gap: 24px; }
-        .board-zone { background: #f1f5f9; border: 2px dashed #cbd5e1; border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
-        .board-title { font-weight: 600; margin-bottom: 10px; font-size: 14px; color: #475569; text-transform: uppercase; }
-        .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; min-height: 120px; }
-        .biz-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 12px; position: relative; }
-        .biz-header { display: flex; align-items: center; gap: 10px; }
-        .biz-icon { font-size: 24px; }
-        .biz-title { font-weight: 600; font-size: 15px; }
-        .biz-tags { display: flex; gap: 4px; flex-wrap: wrap; }
-        .tag-badge { font-size: 10px; background: #eff6ff; color: #2563eb; padding: 2px 6px; border-radius: 4px; font-weight: 500; }
-        .biz-stats { font-size: 13px; color: var(--text-muted); display: flex; justify-content: space-between; }
-        .biz-income { font-weight: 700; color: #10b981; }
-        .btn-sell { background: #fee2e2; color: #ef4444; border: none; padding: 6px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 500; text-align: center; }
-        .hand-container { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
-        .card-item { min-width: 180px; max-width: 180px; background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; cursor: pointer; transition: all 0.2s ease; }
-        .card-item:hover { transform: translateY(-4px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .card-item.selected { border-color: var(--primary); background: #eff6ff; box-shadow: 0 0 0 2px var(--primary); }
-        .card-header { display: flex; justify-content: space-between; align-items: center; }
-        .card-cost { font-weight: 700; color: #eab308; font-size: 13px; }
-        .card-desc { font-size: 11px; color: var(--text-muted); line-height: 1.3; }
-    `;
-    document.head.appendChild(styleElement);
-
-    // Функция отрисовки интерфейса
-    window.renderApp = function() {
-        const app = document.getElementById('app');
-        if (!app) return;
-
-        const playerValue = Game.calculateEmpireValue('player');
-        const aiValue = Game.calculateEmpireValue('ai');
-
-        if (Game.gameEnded) {
-            let winnerText = playerValue > aiValue ? "Вы победили ИИ!" : "ИИ-соперник оказался эффективнее!";
-            if (playerValue === aiValue) winnerText = "Ничья!";
-
-            app.innerHTML = `
-                <div style="max-width: 600px; margin: 100px auto; text-align: center; background: white; padding: 40px; border-radius: var(--radius); border: 1px solid var(--border);">
-                    <h1 style="margin-bottom: 20px;">Игра окончена!</h1>
-                    <p style="font-size: 18px; margin-bottom: 10px;">${winnerText}</p>
-                    <p style="margin-bottom: 8px;">Ваша Капитализация: <b>${playerValue} 🪙</b></p>
-                    <p style="margin-bottom: 20px;">Капитализация ИИ: <b>${aiValue} 🪙</b></p>
-                    <button class="btn-primary" onclick="location.reload()">Начать заново</button>
-                </div>
-            `;
-            return;
-        }
-
-        const playerBiz = Game.businesses.filter(b => b.owner === 'player');
-        const aiBiz = Game.businesses.filter(b => b.owner === 'ai');
-
-        app.innerHTML = `
-            <div class="game-container">
-                <div class="sidebar">
-                    <div class="metric-card">
-                        <div class="metric-label">Ваш Капитал</div>
-                        <div class="metric-value">${Game.capital} 🪙</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Капитал ИИ</div>
-                        <div class="metric-value ai-value">${Game.aiCapital} 🪙</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Ход</div>
-                        <div class="metric-value">${Game.currentTurn} / ${Game.maxTurns}</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Ваша Империя</div>
-                        <div style="font-size:14px; margin-top:4px;">Оценка: <b>${playerValue}</b></div>
-                        <div style="font-size:12px; color:gray;">Глобалок: ${Game.globals.filter(g=>g.owner==='player').length}</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Империя ИИ</div>
-                        <div style="font-size:14px; margin-top:4px;">Оценка: <b>${aiValue}</b></div>
-                        <div style="font-size:12px; color:gray;">Глобалок: ${Game.globals.filter(g=>g.owner==='ai').length}</div>
-                    </div>
-                    <button class="btn-primary" onclick="Game.endTurn()">Завершить ход</button>
-                </div>
-
-                <div class="main-content">
-                    <div>
-                        <h2 style="font-size: 18px; margin-bottom: 12px;">🏢 ИГРОВОЕ ПОЛЕ (РЫНОК КОМПАНИЙ)</h2>
-                        
-                        <div class="board-zone">
-                            <div class="board-title">Ваши предприятия (Кликните сюда для розыгрыша бизнеса или улучшения)</div>
-                            <div class="board" id="player-board">
-                                ${playerBiz.map(b => `
-                                    <div class="biz-card" onclick="event.stopPropagation(); window.handleBoardClick('${b.id}')">
-                                        <div class="biz-header">
-                                            <span class="biz-icon">${b.icon}</span>
-                                            <div>
-                                                <div class="biz-title">${b.title}</div>
-                                                <div class="biz-tags">${b.tags.map(t => `<span class="tag-badge">${t}</span>`).join('')}</div>
-                                            </div>
-                                        </div>
-                                        <div class="biz-stats">
-                                            <span>Доход/ход:</span>
-                                            <span class="biz-income">+${b.income} 🪙</span>
-                                        </div>
-                                        <div class="biz-stats">
-                                            <span>Осталось ходов:</span>
-                                            <span>${b.turnsLeft === Infinity ? 'Бессрочно' : b.turnsLeft}</span>
-                                        </div>
-                                        <button class="btn-sell" onclick="event.stopPropagation(); Game.sellBusiness('${b.id}')">Ликвидировать</button>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-
-                        <div class="board-zone" style="background: #fef2f2; border-color: #fca5a5;">
-                            <div class="board-title" style="color: #991b1b;">Предприятия ИИ-Соперника</div>
-                            <div class="board">
-                                ${aiBiz.map(b => `
-                                    <div class="biz-card" style="border-color: #fca5a5;">
-                                        <div class="biz-header">
-                                            <span class="biz-icon">${b.icon}</span>
-                                            <div>
-                                                <div class="biz-title">${b.title}</div>
-                                                <div class="biz-tags">${b.tags.map(t => `<span class="tag-badge" style="background:#fef2f2; color:#b91c1c;">${t}</span>`).join('')}</div>
-                                            </div>
-                                        </div>
-                                        <div class="biz-stats">
-                                            <span>Доход/ход:</span>
-                                            <span class="biz-income" style="color:#b91c1c;">+${b.income} 🪙</span>
-                                        </div>
-                                        <div class="biz-stats">
-                                            <span>Осталось ходов:</span>
-                                            <span>${b.turnsLeft === Infinity ? 'Бессрочно' : b.turnsLeft}</span>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h2 style="font-size: 16px; margin-bottom: 10px;">🎴 ВАША СТРАТЕГИЧЕСКАЯ РУКА (Выберите карту)</h2>
-                        <div class="hand-container">
-                            ${Game.hand.map((card, idx) => {
-                                const isSelected = Game.selectedCardIndex === idx;
-                                return `
-                                    <div class="card-item ${isSelected ? 'selected' : ''}" onclick="Game.selectCard(${idx})">
-                                        <div class="card-header">
-                                            <span style="font-size:20px;">${card.icon}</span>
-                                            <span class="card-cost">${Game.getCardCost(card, 'player')} 🪙</span>
-                                        </div>
-                                        <div>
-                                            <div style="font-weight:600; font-size:13px; margin-bottom:2px;">${card.title}</div>
-                                            <div style="font-size:10px; color:gray; text-transform:uppercase; margin-bottom:4px;">${card.type}</div>
-                                            <div class="card-desc">${card.description}</div>
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    };
-
-    // Слушатели кликов
-    window.handleBoardClick = function(businessId) {
-        if (Game.selectedCardIndex === null) return;
-        const card = Game.hand[Game.selectedCardIndex];
-        if (card.type === CardTypes.UPGRADE) {
-            Game.playCard(businessId);
-        }
-    };
-
-    document.addEventListener('click', function(e) {
-        if (Game.selectedCardIndex === null) return;
-        const card = Game.hand[Game.selectedCardIndex];
-        if (card.type === CardTypes.BUSINESS || card.type === CardTypes.GLOBAL) {
-            const board = document.getElementById('player-board');
-            if (board && (e.target === board || board.contains(e.target) && !e.target.closest('.biz-card'))) {
-                Game.playCard();
-            }
-        }
+  if (deficit > 0) {
+    // Смягчение механики: дефицит истощает жителей (снимает durability), а не убивает мгновенно
+    actor.citizens.forEach(c => {
+      c.durability -= 1; 
     });
+    
+    const passedAway = actor.citizens.filter(c => c.durability <= 0);
+    passedAway.forEach(c => {
+      if (c.assignedTo) {
+        const b = actor.buildings.find(b => b.id === c.assignedTo);
+        if (b) b.workerId = null;
+      }
+    });
+    actor.citizens = actor.citizens.filter(c => c.durability > 0);
+    
+    logMsg(`${actor.name}: из-за нехватки ресурсов жители истощены! Из жизни ушло: ${passedAway.length}.`, 'death');
+  }
+}
 
-    // Первый запуск
-    Game.updateSystem();
+function buyBuilding(actor, type) {
+  const def = BUILDING_DEFS[type];
+  if (actor.gold < def.cost) return false;
+  actor.gold -= def.cost;
+  actor.buildings.push({ id: uid('b'), type, durability: def.maxDurability, workerId: null });
+  return true;
+}
 
-    </script>
+function buyCitizen(actor) {
+  if (actor.gold < CITIZEN_COST) return false;
+  actor.gold -= CITIZEN_COST;
+  actor.citizens.push({ id: uid('c'), durability: CITIZEN_MAX_DURABILITY, assignedTo: null });
+  return true;
+}
+
+function assignWorker(actor, citizenId, buildingId) {
+  const c = actor.citizens.find(c => c.id === citizenId);
+  const b = actor.buildings.find(b => b.id === buildingId);
+  if (!c || !b || b.workerId) return;
+  if (c.assignedTo) {
+    const prev = actor.buildings.find(bb => bb.id === c.assignedTo);
+    if (prev) prev.workerId = null;
+  }
+  c.assignedTo = buildingId;
+  b.workerId = citizenId;
+}
+
+function unassignWorker(actor, buildingId) {
+  const b = actor.buildings.find(b => b.id === buildingId);
+  if (!b || !b.workerId) return;
+  const c = actor.citizens.find(c => c.id === b.workerId);
+  if (c) c.assignedTo = null;
+  b.workerId = null;
+}
+
+/* AI Умный балансировщик цепочек */
+function aiBuyPhase(actor) {
+  function currentProduction(res) {
+    let total = 0;
+    actor.buildings.forEach(b => {
+      const def = BUILDING_DEFS[b.type];
+      if (def.resource === res) total += (b.workerId ? def.boosted : def.base);
+    });
+    return total;
+  }
+  
+  const n = actor.citizens.length;
+  
+  // 1. Проверка жизнеобеспечения
+  const survivalChecks = [
+    { res: 'food', type: 'Farm' },
+    { res: 'housing', type: 'House' },
+    { res: 'medicine', type: 'Hospital' },
+  ];
+  for (const { res, type } of survivalChecks) {
+    if (actor.warehouse[res] === 0 && currentProduction(res) < n) {
+      const def = BUILDING_DEFS[type];
+      if (actor.gold >= def.cost) {
+        buyBuilding(actor, type);
+        logMsg(`${actor.name} строит «${def.label}», защищаясь от кризиса.`, 'ai');
+        return;
+      }
+    }
+  }
+  
+  // 2. Если есть пустое здание, сначала нанимаем человека
+  const emptySlot = actor.buildings.find(b => !b.workerId);
+  if (emptySlot && actor.gold >= CITIZEN_COST) {
+    buyCitizen(actor);
+    const newCitizen = actor.citizens[actor.citizens.length - 1];
+    assignWorker(actor, newCitizen.id, emptySlot.id);
+    logMsg(`${actor.name} нанимает рабочего в здание «${BUILDING_DEFS[emptySlot.type].label}».`, 'ai');
+    return;
+  }
+  
+  // 3. Капитализация в Банк (Только при избытке еды/жилья и наличии 16 золота на комбо Банк+Житель)
+  const stable = actor.warehouse.food > 2 && actor.warehouse.housing > 2;
+  const canAffordCombo = actor.gold >= (BUILDING_DEFS.Bank.cost + CITIZEN_COST);
+  
+  if (stable && canAffordCombo) {
+    buyBuilding(actor, 'Bank');
+    logMsg(`${actor.name} открывает «Банк» для накопления богатства.`, 'ai');
+    return;
+  }
+  
+  logMsg(`${actor.name} решает сохранить золото до лучших времён.`, 'ai');
+}
+
+function checkWin() {
+  if (game.gameOver) return;
+  if (game.player.gold >= 50) {
+    game.gameOver = true; game.winner = 'player';
+    logMsg('Вы накопили 50 золота — ваше поселение уходит в вечность!', 'win');
+  } else if (game.ai.gold >= 50) {
+    game.gameOver = true; game.winner = 'ai';
+    logMsg('Соперник (ИИ) накопил 50 золота первым. Ваша эпоха окончена.', 'win');
+  }
+}
+
+/* Навигация ходов */
+function startPlayerTurn() {
+  if (game.gameOver || game.phase !== 'ready') return;
+  agingPhase(game.player);
+  const modifiers = rollDicePhase(game.player);
+  productionPhase(game.player, modifiers);
+  checkWin();
+  if (!game.gameOver) {
+    game.phase = 'market';
+    game.purchasedThisTurn = false;
+  }
+  render();
+}
+
+function endPlayerMarketPhase() {
+  if (game.gameOver || game.phase !== 'market') return;
+  game.phase = 'ai-turn';
+  render();
+  setTimeout(runAiTurn, 550);
+}
+
+function runAiTurn() {
+  if (game.gameOver) return;
+  agingPhase(game.ai);
+  const modifiers = rollDicePhase(game.ai);
+  productionPhase(game.ai, modifiers);
+  checkWin();
+  if (!game.gameOver) {
+    aiBuyPhase(game.ai);
+    checkWin();
+  }
+  if (!game.gameOver) {
+    game.round += 1;
+    game.activeTurn = 'player';
+    game.phase = 'ready';
+  }
+  render();
+}
+
+function playerBuyBuilding(type) {
+  if (game.phase !== 'market' || game.purchasedThisTurn || game.gameOver) return;
+  const def = BUILDING_DEFS[type];
+  if (game.player.gold < def.cost) return;
+  buyBuilding(game.player, type);
+  game.purchasedThisTurn = true;
+  logMsg(`Вы построили здание «${def.label}».`, 'buy');
+  render();
+}
+
+function playerBuyCitizen() {
+  if (game.phase !== 'market' || game.purchasedThisTurn || game.gameOver) return;
+  if (game.player.gold < CITIZEN_COST) return;
+  buyCitizen(game.player);
+  game.purchasedThisTurn = true;
+  logMsg('Вы наняли нового жителя на бирже труда.', 'buy');
+  render();
+}
+
+function playerAssign(buildingId, citizenId) {
+  if (game.phase !== 'market' || game.gameOver || !citizenId) return;
+  assignWorker(game.player, citizenId, buildingId);
+  render();
+}
+
+function playerUnassign(buildingId) {
+  if (game.phase !== 'market' || game.gameOver) return;
+  unassignWorker(game.player, buildingId);
+  render();
+}
+
+function restartGame() {
+  uidCounter = 1;
+  game = newGame();
+  document.getElementById('win-modal').classList.add('hidden');
+  render();
+}
+
+/* =========================================================
+   RENDERING ENGINE
+========================================================= */
+function tickMarks(durability, maxDurability = 4) {
+  let html = '<div class="flex gap-0.5">';
+  for (let i = 0; i < maxDurability; i++) {
+    html += `<span class="tick ${i < durability ? 'bg-brass' : 'bg-panel2 border border-line'}" style="width: 6px;"></span>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderComparisonStrip() {
+  const el = document.getElementById('comparison-strip');
+  function statBlock(actor, accent) {
+    return `
+      <div class="bg-panel border border-line rounded-lg p-4">
+        <div class="flex items-center justify-between mb-3">
+          <span class="font-display text-lg text-paper">${actor.name}</span>
+          <span class="font-mono text-xl text-brass">🪙 ${actor.gold}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center font-mono text-sm">
+          <div class="bg-panel2 rounded p-2">
+            <div class="text-moss text-base">🌾 ${actor.warehouse.food}</div>
+            <div class="text-[10px] text-muted mt-0.5">Еда</div>
+          </div>
+          <div class="bg-panel2 rounded p-2">
+            <div class="text-teal text-base">🏠 ${actor.warehouse.housing}</div>
+            <div class="text-[10px] text-muted mt-0.5">Жильё</div>
+          </div>
+          <div class="bg-panel2 rounded p-2">
+            <div class="text-rose text-base">⚕️ ${actor.warehouse.medicine}</div>
+            <div class="text-[10px] text-muted mt-0.5">Медицина</div>
+          </div>
+        </div>
+        <div class="mt-2 text-xs text-muted font-mono">${actor.citizens.length} жит. · ${actor.buildings.length} здан.</div>
+        <div class="mt-2 h-1.5 bg-panel2 rounded overflow-hidden">
+          <div class="h-full ${accent}" style="width:${Math.min(100, actor.gold / 50 * 100)}%"></div>
+        </div>
+      </div>`;
+  }
+  el.innerHTML = statBlock(game.player, 'bg-brass') + statBlock(game.ai, 'bg-rose');
+}
+
+function renderDicePanel() {
+  const el = document.getElementById('dice-panel');
+  if (game.lastDiceRoll) {
+    el.innerHTML = `
+      <div class="text-6xl leading-none animate-pop">${DICE_FACES[game.lastDiceRoll]}</div>
+      <p class="text-xs text-muted mt-3 max-w-[220px]">${game.lastEventText}</p>`;
+  } else {
+    el.innerHTML = `<p class="text-muted text-sm">Нажмите кнопку ниже, чтобы сделать ход.</p>`;
+  }
+}
+
+function renderLog() {
+  const el = document.getElementById('log-list');
+  const colorFor = {
+    dice: 'text-brass', production: 'text-muted', death: 'text-danger',
+    decay: 'text-[#7A8494]', buy: 'text-moss', ai: 'text-rose', win: 'text-brass font-600',
+  };
+  el.innerHTML = game.log.map(entry =>
+    `<div class="${colorFor[entry.type] || 'text-muted'} animate-rise">· Р${entry.round} — ${entry.msg}</div>`
+  ).join('');
+}
+
+function renderBuildingCard(actor, b, interactive) {
+  const def = BUILDING_DEFS[b.type];
+  const producing = b.workerId ? def.boosted : def.base;
+  const worker = b.workerId ? actor.citizens.find(c => c.id === b.workerId) : null;
+  const unassignedCitizens = actor.citizens.filter(c => !c.assignedTo);
+
+  let workerControl = '';
+  if (interactive) {
+    if (worker) {
+      workerControl = `
+        <button data-action="unassign" data-building="${b.id}"
+          class="btn-focus text-[11px] font-mono px-2 py-1 rounded bg-panel2 border border-line text-muted hover:text-paper hover:border-brass/60 transition-colors">
+          Снять рабочего
+        </button>`;
+    } else if (unassignedCitizens.length > 0) {
+      workerControl = `
+        <select data-action="assign-select" data-building="${b.id}"
+          class="assign-select text-[11px] font-mono bg-panel2 border border-line rounded px-1.5 py-1 text-paper btn-focus">
+          <option value="">+ Назначить рабочего</option>
+          ${unassignedCitizens.map(c => `<option value="${c.id}">Рабочий (осталось ${c.durability}х)</option>`).join('')}
+        </select>`;
+    } else {
+      workerControl = `<span class="text-[11px] font-mono text-muted">Нет свободных рук</span>`;
+    }
+  } else {
+    workerControl = worker
+      ? `<span class="text-[11px] font-mono text-muted">Занято персоналом</span>`
+      : `<span class="text-[11px] font-mono text-muted">Пустует</span>`;
+  }
+
+  return `
+    <div class="bg-panel2 border border-line rounded-md p-3 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">${def.icon}</span>
+        <div>
+          <div class="font-body font-600 text-sm text-paper">${def.label}</div>
+          <div class="font-mono text-xs ${COLOR_CLASS[def.color]}">+${producing} ${RESOURCE_LABEL_RU[def.resource]}</div>
+        </div>
+      </div>
+      <div class="flex flex-col items-end gap-1.5">
+        ${tickMarks(b.durability, def.maxDurability)}
+        ${workerControl}
+      </div>
+    </div>`;
+}
+
+function renderTown(actor, containerId, interactive) {
+  const el = document.getElementById(containerId);
+  const unassigned = actor.citizens.filter(c => !c.assignedTo);
+  el.innerHTML = `
+    <div class="space-y-2">
+      ${actor.buildings.map(b => renderBuildingCard(actor, b, interactive)).join('')}
+    </div>
+    ${unassigned.length > 0 ? `
+      <div class="flex items-center gap-2 flex-wrap pt-1">
+        <span class="text-xs text-muted font-mono">Свободные люди:</span>
+        ${unassigned.map(c => `<span class="text-xs font-mono px-2 py-0.5 rounded bg-panel2 border border-line text-paper">🧍 раунд ${c.durability}</span>`).join('')}
+      </div>` : ''}
+  `;
+}
+
+function renderMarket() {
+  const el = document.getElementById('market-list');
+  const hint = document.getElementById('market-hint');
+  const canBuy = game.phase === 'market' && !game.purchasedThisTurn && !game.gameOver;
+  hint.textContent = game.phase === 'market'
+    ? (game.purchasedThisTurn ? 'Покупка в этом ходу уже сделана' : 'Доступна одна покупка в этом ходу')
+    : 'Доступно во время вашей фазы рынка';
+
+  const cards = Object.entries(BUILDING_DEFS).map(([type, def]) => {
+    const affordable = game.player.gold >= def.cost;
+    const disabled = !canBuy || !affordable;
+    return `
+      <div class="min-w-[160px] bg-panel2 border border-line rounded-md p-3 flex flex-col justify-between gap-2 shrink-0">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">${def.icon}</span>
+            <span class="font-body font-600 text-sm">${def.label}</span>
+          </div>
+          <div class="font-mono text-[11px] ${COLOR_CLASS[def.color]} mt-2">
+            База: +${def.base}<br>
+            С рабочим: +${def.boosted}<br>
+            Срок: ${def.maxDurability} ходов<br>
+            Расходы: ${def.maint}🪙/ход
+          </div>
+        </div>
+        <button data-action="buy" data-type="${type}" ${disabled ? 'disabled' : ''}
+          class="btn-focus mt-1 text-xs font-mono px-2 py-1.5 rounded bg-brass text-ink font-600 hover:bg-[#e3bb52] disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+          Купить — 🪙${def.cost}
+        </button>
+      </div>`;
+  }).join('');
+
+  const citizenAffordable = game.player.gold >= CITIZEN_COST;
+  const citizenDisabled = !canBuy || !citizenAffordable;
+  const citizenCard = `
+    <div class="min-w-[160px] bg-panel2 border border-line rounded-md p-3 flex flex-col justify-between gap-2 shrink-0">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🧍</span>
+          <span class="font-body font-600 text-sm">Рабочий</span>
+        </div>
+        <div class="font-mono text-[11px] text-muted mt-2">
+          Увеличивает отдачу зданий.<br>
+          Живёт ${CITIZEN_MAX_DURABILITY} ходов.<br>
+          Потребляет ресурсы.
+        </div>
+      </div>
+      <button data-action="buy" data-type="Citizen" ${citizenDisabled ? 'disabled' : ''}
+        class="btn-focus mt-1 text-xs font-mono px-2 py-1.5 rounded bg-brass text-ink font-600 hover:bg-[#e3bb52] disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+        Нанять — 🪙${CITIZEN_COST}
+      </button>
+    </div>`;
+
+  el.innerHTML = cards + citizenCard;
+}
+
+function renderMainButton() {
+  const btn = document.getElementById('main-btn');
+  if (game.gameOver) {
+    btn.textContent = 'Хроника завершена';
+    btn.disabled = true;
+    return;
+  }
+  if (game.phase === 'ready') {
+    btn.textContent = 'Бросить кубик и начать ход';
+    btn.disabled = false;
+  } else if (game.phase === 'market') {
+    btn.textContent = 'Закончить ход (передать ИИ)';
+    btn.disabled = false;
+  } else {
+    btn.textContent = 'Соперник (ИИ) управляет городом…';
+    btn.disabled = true;
+  }
+}
+
+function renderRoundBadge() {
+  const el = document.getElementById('round-badge');
+  const phaseLabel = { ready: 'Готов к ходу', market: 'Ваша фаза рынка', 'ai-turn': 'Ход ИИ' }[game.phase];
+  el.textContent = `Раунд ${game.round} · ${phaseLabel}`;
+}
+
+function renderWinModal() {
+  const modal = document.getElementById('win-modal');
+  if (!game.gameOver) { modal.classList.add('hidden'); return; }
+  modal.classList.remove('hidden');
+  const title = document.getElementById('win-title');
+  const sub = document.getElementById('win-sub');
+  if (game.winner === 'player') {
+    title.textContent = 'Победа — Золотой век!';
+    sub.textContent = `Вы триумфально накопили ${game.player.gold} золота за ${game.round} раундов.`;
+  } else {
+    title.textContent = 'Поражение — Вы в тени истории';
+    sub.textContent = `ИИ опередил вас, накопив ${game.ai.gold} золота за ${game.round} раундов.`;
+  }
+}
+
+function render() {
+  renderRoundBadge();
+  renderComparisonStrip();
+  renderDicePanel();
+  renderLog();
+  renderMainButton();
+  renderTown(game.player, 'player-town', true);
+  renderTown(game.ai, 'ai-town', false);
+  renderMarket();
+  renderWinModal();
+}
+
+/* =========================================================
+   EVENT DELEGATION
+========================================================= */
+document.getElementById('app').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  if (action === 'main-btn') {
+    if (game.phase === 'ready') startPlayerTurn();
+    else if (game.phase === 'market') endPlayerMarketPhase();
+  } else if (action === 'buy') {
+    if (btn.dataset.type === 'Citizen') playerBuyCitizen();
+    else playerBuyBuilding(btn.dataset.type);
+  } else if (action === 'unassign') {
+    playerUnassign(btn.dataset.building);
+  }
+});
+
+document.getElementById('app').addEventListener('change', (e) => {
+  const sel = e.target.closest('[data-action="assign-select"]');
+  if (!sel) return;
+  playerAssign(sel.dataset.building, sel.value);
+});
+
+document.getElementById('win-modal').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action="restart"]');
+  if (btn) restartGame();
+});
+
+/* Первичный запуск */
+render();
+</script>
 </body>
 </html>
-
