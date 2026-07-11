@@ -405,6 +405,7 @@ function render(){
   const inRollPhase = state.phase==='roll';
   const inActionPhase = state.phase==='action';
   const inPending = state.phase==='pending';
+  const canEndTurn = (state.phase==='action' || state.phase==='end');
 
   let html = `<div class="title"><h1>🎲 Мачи Коро</h1><div class="sub">своя настольная версия</div></div>`;
   html += `<div class="board"><div>`;
@@ -446,7 +447,7 @@ function render(){
   }
   html += `</div>`;
 
-  if(inActionPhase){
+  if(canEndTurn){
     html += `<button class="action-btn primary" onclick="endTurn()">Закончить ход ${state.extraTurn?'(и ходить ещё раз ✨)':'→'}</button>`;
   }
   if(inPending){
