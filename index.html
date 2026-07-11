@@ -3,762 +3,1196 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Летопись Эпох — Выживание Поселения</title>
+<title>Империя — карточная бизнес-стратегия</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          ink: '#12161D',
-          panel: '#1B222C',
-          panel2: '#232C38',
-          line: '#313B48',
-          paper: '#EAE4D6',
-          muted: '#8B95A3',
-          brass: '#D4A73D',
-          brassdim: '#8A712C',
-          moss: '#6FA86B',
-          teal: '#4F86A6',
-          rose: '#C97B84',
-          danger: '#C2554B',
-        },
-        fontFamily: {
-          display: ['Spectral', 'serif'],
-          body: ['Inter', 'sans-serif'],
-          mono: ['IBM Plex Mono', 'monospace'],
-        },
-        keyframes: {
-          pop: { '0%': { transform: 'scale(0.6) rotate(-8deg)', opacity: 0 }, '100%': { transform: 'scale(1) rotate(0deg)', opacity: 1 } },
-          rise: { '0%': { transform: 'translateY(6px)', opacity: 0 }, '100%': { transform: 'translateY(0)', opacity: 1 } },
-        },
-        animation: {
-          pop: 'pop 0.35s ease-out',
-          rise: 'rise 0.25s ease-out',
-        }
-      }
-    }
-  }
-</script>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  @media (prefers-reduced-motion: reduce) {
-    * { animation: none !important; transition: none !important; }
-  }
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track { background: #1B222C; }
-  ::-webkit-scrollbar-thumb { background: #313B48; border-radius: 4px; }
-  body { background-color: #12161D; }
-  .tick { width: 6px; height: 16px; border-radius: 1px; }
-  .btn-focus:focus-visible { outline: 2px solid #D4A73D; outline-offset: 2px; }
-  select.assign-select { color-scheme: dark; }
+/* ============================= TOKENS ============================= */
+:root{
+  --ink-900:#0a1614;
+  --ink-800:#0f211d;
+  --ink-700:#152c26;
+  --ink-600:#1c3a32;
+  --line:#264940;
+  --paper:#eee8da;
+  --paper-dim:#c9c0ac;
+  --gold:#d1a24c;
+  --gold-soft:#e8c98a;
+  --emerald:#3fae82;
+  --emerald-soft:#79d1ab;
+  --violet:#8f8fd9;
+  --violet-soft:#b6b6ea;
+  --clay:#c96a4c;
+  --danger:#c96a4c;
+  --radius-lg:18px;
+  --radius-md:12px;
+  --radius-sm:8px;
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 10px 24px -12px rgba(0,0,0,0.55);
+  --shadow-pop: 0 20px 60px -20px rgba(0,0,0,0.7);
+  font-size:16px;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:
+    radial-gradient(1200px 800px at 15% -10%, rgba(63,174,130,0.10), transparent 60%),
+    radial-gradient(900px 700px at 100% 0%, rgba(209,162,76,0.08), transparent 55%),
+    var(--ink-900);
+  color:var(--paper);
+  font-family:'Inter',sans-serif;
+  min-height:100%;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.display{font-family:'Fraunces',serif;}
+.mono{font-family:'JetBrains Mono',monospace;}
+::selection{background:var(--gold);color:var(--ink-900);}
+button{font-family:inherit;}
+.scrollbar::-webkit-scrollbar{width:8px;height:8px;}
+.scrollbar::-webkit-scrollbar-thumb{background:var(--ink-600);border-radius:8px;}
+.scrollbar::-webkit-scrollbar-track{background:transparent;}
+
+/* ============================= LAYOUT ============================= */
+#app{max-width:1440px;margin:0 auto;padding:22px 26px 40px;}
+
+/* ---------- header / ticker ---------- */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:24px;
+  padding:18px 24px;border:1px solid var(--line);border-radius:var(--radius-lg);
+  background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
+  box-shadow:var(--shadow-card);
+  margin-bottom:18px;
+  flex-wrap:wrap;
+}
+.brand{display:flex;align-items:baseline;gap:10px;}
+.brand .mark{font-size:26px;}
+.brand h1{font-size:22px;margin:0;font-weight:600;letter-spacing:0.3px;color:var(--paper);}
+.brand .tagline{font-size:11px;color:var(--paper-dim);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;}
+
+.stat-cluster{display:flex;gap:26px;align-items:center;flex-wrap:wrap;}
+.stat{display:flex;flex-direction:column;gap:2px;min-width:90px;}
+.stat .label{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--paper-dim);}
+.stat .value{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.stat.capital .value{color:var(--gold-soft);}
+.stat.turn .value{color:var(--emerald-soft);}
+.stat.empire .value{color:var(--violet-soft);}
+
+.sparkline-wrap{width:150px;height:40px;}
+.sparkline-wrap svg{width:100%;height:100%;overflow:visible;}
+
+.turn-progress{width:100%;height:5px;border-radius:6px;background:var(--ink-600);overflow:hidden;margin-top:12px;}
+.turn-progress .fill{height:100%;background:linear-gradient(90deg,var(--emerald),var(--gold));transition:width .5s ease;}
+
+.end-turn-btn{
+  padding:13px 22px;border-radius:12px;border:1px solid var(--gold);
+  background:linear-gradient(180deg, var(--gold-soft), var(--gold));
+  color:var(--ink-900);font-weight:700;font-size:14px;cursor:pointer;
+  box-shadow:0 8px 20px -8px rgba(209,162,76,0.6);
+  transition:transform .15s ease, box-shadow .15s ease;
+  white-space:nowrap;
+}
+.end-turn-btn:hover{transform:translateY(-1px);box-shadow:0 12px 26px -8px rgba(209,162,76,0.75);}
+.end-turn-btn:active{transform:translateY(0px);}
+.end-turn-btn.pulse{animation:pulseGlow 1.8s ease-in-out infinite;}
+@keyframes pulseGlow{
+  0%,100%{box-shadow:0 8px 20px -8px rgba(209,162,76,0.6);}
+  50%{box-shadow:0 8px 30px -6px rgba(209,162,76,0.95);}
+}
+
+/* ---------- main grid ---------- */
+.main-grid{
+  display:grid;
+  grid-template-columns: 1fr 300px;
+  gap:18px;
+  align-items:start;
+}
+@media (max-width:980px){
+  .main-grid{grid-template-columns:1fr;}
+}
+
+.panel{
+  border:1px solid var(--line);border-radius:var(--radius-lg);
+  background:linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0));
+  box-shadow:var(--shadow-card);
+  padding:18px;
+}
+.panel h2{
+  font-size:13px;text-transform:uppercase;letter-spacing:1.4px;color:var(--paper-dim);
+  margin:0 0 14px 0;font-family:'Inter',sans-serif;font-weight:700;
+  display:flex;align-items:center;gap:8px;
+}
+.panel h2 .count-badge{
+  background:var(--ink-600);color:var(--paper);border-radius:20px;padding:1px 8px;font-size:11px;font-family:'JetBrains Mono',monospace;
+}
+
+/* ---------- field ---------- */
+#field{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+  gap:14px;
+  min-height:160px;
+}
+.empty-field{
+  grid-column:1/-1;
+  border:1.5px dashed var(--line);border-radius:var(--radius-md);
+  padding:36px 20px;text-align:center;color:var(--paper-dim);font-size:13.5px;
+}
+
+/* ---------- business card on field ---------- */
+.biz-card{
+  position:relative;
+  border-radius:var(--radius-md);
+  border:1px solid var(--line);
+  background:linear-gradient(165deg, rgba(63,174,130,0.10), rgba(20,40,35,0.6) 55%);
+  padding:14px 14px 12px;
+  box-shadow:var(--shadow-card);
+  animation:cardIn .45s cubic-bezier(.2,.9,.25,1) both;
+  transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+  cursor:default;
+}
+.biz-card.targetable{
+  border-color:var(--gold);
+  cursor:pointer;
+  box-shadow:0 0 0 1px var(--gold), 0 12px 26px -10px rgba(209,162,76,0.55);
+}
+.biz-card.targetable:hover{transform:translateY(-3px);}
+.biz-card.closing{animation:cardOut .5s ease forwards;}
+@keyframes cardIn{
+  from{opacity:0;transform:translateY(14px) scale(.96);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+@keyframes cardOut{
+  to{opacity:0;transform:translateY(-8px) scale(.92);}
+}
+.biz-top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;}
+.biz-icon{font-size:26px;line-height:1;}
+.biz-income{
+  font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;color:var(--gold-soft);
+  display:flex;align-items:center;gap:3px;
+}
+.biz-name{font-family:'Fraunces',serif;font-size:15.5px;font-weight:600;margin:8px 0 2px;color:var(--paper);}
+.biz-tags{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 8px;}
+.tag-chip{
+  font-size:9.5px;letter-spacing:.4px;text-transform:uppercase;padding:2px 7px;border-radius:20px;
+  background:rgba(255,255,255,0.06);color:var(--paper-dim);border:1px solid var(--line);
+}
+.biz-life{margin-top:8px;}
+.life-bar{height:5px;border-radius:5px;background:var(--ink-600);overflow:hidden;}
+.life-bar .fill{height:100%;background:linear-gradient(90deg,var(--emerald),var(--emerald-soft));}
+.life-bar .fill.warn{background:linear-gradient(90deg,var(--clay),var(--gold));}
+.life-label{font-size:10.5px;color:var(--paper-dim);margin-top:4px;display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;}
+.biz-upgrades{display:flex;flex-wrap:wrap;gap:4px;margin-top:9px;}
+.upg-pill{
+  font-size:13px;background:rgba(143,143,217,0.15);border:1px solid rgba(143,143,217,0.4);
+  border-radius:20px;padding:2px 6px;line-height:1;
+}
+.biz-bonus-note{
+  margin-top:8px;font-size:10.5px;color:var(--emerald-soft);display:flex;gap:5px;align-items:center;
+}
+
+/* ---------- hand ---------- */
+#hand-wrap{margin-top:18px;}
+#hand{
+  display:flex;gap:14px;overflow-x:auto;padding:6px 4px 14px;
+}
+.card{
+  position:relative;
+  flex:0 0 178px;
+  min-height:230px;
+  border-radius:var(--radius-md);
+  border:1px solid var(--line);
+  padding:14px 13px 12px;
+  cursor:pointer;
+  transition:transform .18s ease, box-shadow .18s ease, opacity .2s ease, border-color .18s ease;
+  box-shadow:var(--shadow-card);
+  animation:cardIn .4s cubic-bezier(.2,.9,.25,1) both;
+  display:flex;flex-direction:column;
+}
+.card:hover{transform:translateY(-6px);}
+.card.type-business{background:linear-gradient(165deg, rgba(63,174,130,0.16), rgba(20,40,35,0.65));}
+.card.type-upgrade{background:linear-gradient(165deg, rgba(143,143,217,0.18), rgba(30,30,50,0.55));}
+.card.type-global{background:linear-gradient(165deg, rgba(209,162,76,0.18), rgba(45,36,20,0.55));}
+.card.disabled{opacity:.4;cursor:not-allowed;transform:none !important;}
+.card.selected{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold),0 14px 30px -10px rgba(209,162,76,0.5);transform:translateY(-6px);}
+.card .kind-badge{
+  position:absolute;top:10px;right:10px;font-size:9px;letter-spacing:.5px;text-transform:uppercase;
+  padding:2px 7px;border-radius:20px;font-weight:700;
+}
+.type-business .kind-badge{background:rgba(63,174,130,0.25);color:var(--emerald-soft);}
+.type-upgrade .kind-badge{background:rgba(143,143,217,0.28);color:var(--violet-soft);}
+.type-global .kind-badge{background:rgba(209,162,76,0.28);color:var(--gold-soft);}
+.card .c-icon{font-size:28px;}
+.card .c-name{font-family:'Fraunces',serif;font-weight:600;font-size:15px;margin-top:8px;min-height:38px;}
+.card .c-desc{font-size:11.5px;color:var(--paper-dim);line-height:1.4;margin-top:4px;flex:1;}
+.card .c-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
+.card .c-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:9px;border-top:1px solid var(--line);}
+.card .c-cost{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;}
+.card .c-cost.afford{color:var(--gold-soft);}
+.card .c-cost.noafford{color:var(--clay);}
+.card .c-stat{font-size:10.5px;color:var(--paper-dim);font-family:'JetBrains Mono',monospace;}
+.synergy-badge{
+  margin-top:7px;font-size:10.5px;padding:5px 7px;border-radius:8px;
+  background:rgba(63,174,130,0.16);color:var(--emerald-soft);border:1px solid rgba(63,174,130,0.35);
+  display:flex;gap:5px;align-items:flex-start;line-height:1.3;
+}
+.synergy-badge.warn{background:rgba(201,106,76,0.14);color:#e0a58f;border-color:rgba(201,106,76,0.35);}
+
+.hand-hint-banner{
+  display:none;align-items:center;gap:10px;padding:10px 16px;border-radius:10px;
+  background:rgba(209,162,76,0.14);border:1px solid rgba(209,162,76,0.4);color:var(--gold-soft);
+  font-size:13px;margin-bottom:10px;
+}
+.hand-hint-banner.show{display:flex;}
+.hand-hint-banner button{
+  margin-left:auto;background:transparent;border:1px solid var(--gold);color:var(--gold-soft);
+  padding:4px 10px;border-radius:8px;cursor:pointer;font-size:12px;
+}
+.hand-locked-note{font-size:12px;color:var(--paper-dim);margin-bottom:10px;}
+
+/* ---------- sidebar ---------- */
+.side-panel + .side-panel{margin-top:16px;}
+.chain-row{margin-bottom:12px;}
+.chain-row:last-child{margin-bottom:0;}
+.chain-title{font-size:12px;color:var(--paper-dim);margin-bottom:6px;display:flex;justify-content:space-between;}
+.chain-steps{display:flex;gap:5px;}
+.chain-step{
+  flex:1;height:26px;border-radius:6px;background:var(--ink-600);display:flex;align-items:center;justify-content:center;
+  font-size:14px;opacity:.4;filter:grayscale(1);transition:all .3s ease;border:1px solid transparent;
+}
+.chain-step.active{opacity:1;filter:none;background:rgba(63,174,130,0.22);border-color:rgba(63,174,130,0.5);}
+
+.hint-item{
+  font-size:12px;line-height:1.45;padding:9px 10px;border-radius:9px;background:rgba(255,255,255,0.03);
+  border:1px solid var(--line);margin-bottom:8px;color:var(--paper-dim);
+}
+.hint-item:last-child{margin-bottom:0;}
+.hint-item b{color:var(--paper);}
+
+.global-mod-row{display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid var(--line);}
+.global-mod-row:last-child{border-bottom:none;}
+.global-mod-row span:last-child{font-family:'JetBrains Mono',monospace;color:var(--emerald-soft);}
+
+#log{max-height:210px;overflow-y:auto;display:flex;flex-direction:column-reverse;gap:6px;}
+.log-line{font-size:12px;color:var(--paper-dim);padding:6px 9px;border-radius:8px;background:rgba(255,255,255,0.02);border-left:2px solid var(--line);animation:cardIn .3s ease both;}
+.log-line.pos{border-left-color:var(--emerald);}
+.log-line.neg{border-left-color:var(--clay);}
+.log-line.info{border-left-color:var(--violet);}
+
+/* ---------- modal ---------- */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(5,10,9,0.78);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;z-index:50;padding:20px;
+}
+.modal-overlay.show{display:flex;animation:fadeIn .35s ease;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.modal{
+  width:min(560px,100%);background:linear-gradient(165deg, var(--ink-700), var(--ink-800));
+  border:1px solid var(--line);border-radius:20px;padding:34px 32px;box-shadow:var(--shadow-pop);
+  animation:modalIn .4s cubic-bezier(.2,.9,.25,1);
+}
+@keyframes modalIn{from{opacity:0;transform:translateY(18px) scale(.97);}to{opacity:1;transform:translateY(0) scale(1);}}
+.modal h2{font-family:'Fraunces',serif;font-size:26px;margin:0 0 4px;font-weight:600;}
+.modal .rank{color:var(--gold-soft);font-size:13px;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:20px;}
+.score-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+.score-row.total{border-bottom:none;padding-top:14px;font-size:17px;font-weight:700;color:var(--gold-soft);}
+.score-row span:last-child{font-family:'JetBrains Mono',monospace;}
+.modal-btn{
+  margin-top:22px;width:100%;padding:13px;border-radius:12px;border:1px solid var(--gold);
+  background:linear-gradient(180deg, var(--gold-soft), var(--gold));color:var(--ink-900);
+  font-weight:700;font-size:14px;cursor:pointer;
+}
+
+/* ---------- targeting mode ---------- */
+body.targeting #field{outline:none;}
+.targeting-note{
+  position:fixed;bottom:0;left:0;right:0;text-align:center;padding:12px;
+  background:rgba(209,162,76,0.92);color:var(--ink-900);font-weight:700;font-size:13px;
+  z-index:40;display:none;letter-spacing:.3px;
+}
+.targeting-note.show{display:block;animation:fadeIn .2s ease;}
+
+.footer-note{text-align:center;color:var(--paper-dim);font-size:11.5px;margin-top:26px;opacity:.6;}
 </style>
 </head>
-<body class="bg-ink text-paper font-body min-h-screen pb-16">
+<body>
+<div id="app">
 
-<div id="app" class="max-w-6xl mx-auto px-3 sm:px-6 py-5 space-y-5">
-
-  <header class="border-b border-line pb-4">
-    <div class="flex flex-wrap items-baseline justify-between gap-2">
-      <div>
-        <h1 class="font-display text-3xl sm:text-4xl font-700 tracking-tight text-paper">Летопись Эпох</h1>
-        <p class="text-muted text-sm mt-0.5">Хроника поселения — первый, кто накопит <span class="text-brass font-mono">50 золота</span>, входит в легенду.</p>
+  <div class="topbar">
+    <div>
+      <div class="brand">
+        <span class="mark">👑</span>
+        <h1>Империя</h1>
       </div>
-      <div id="round-badge" class="font-mono text-sm text-muted"></div>
+      <div class="tagline">карточная бизнес-стратегия</div>
     </div>
-  </header>
 
-  <section id="comparison-strip" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></section>
-
-  <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
-    <div id="dice-panel" class="md:col-span-1 bg-panel border border-line rounded-lg p-4 flex flex-col items-center justify-center text-center min-h-[140px]"></div>
-    <div class="md:col-span-2 bg-panel border border-line rounded-lg p-4">
-      <h3 class="font-display text-lg text-brass mb-2">Хроника событий</h3>
-      <div id="log-list" class="font-mono text-xs sm:text-[13px] space-y-1.5 max-h-40 overflow-y-auto pr-1"></div>
+    <div class="stat-cluster">
+      <div class="stat capital">
+        <span class="label">Капитал</span>
+        <span class="value mono" id="stat-capital">0 ₽</span>
+      </div>
+      <div class="stat turn">
+        <span class="label">Ход</span>
+        <span class="value mono" id="stat-turn">1 / 30</span>
+      </div>
+      <div class="stat empire">
+        <span class="label">Оценка империи</span>
+        <span class="value mono" id="stat-empire">0 ₽</span>
+      </div>
+      <div class="sparkline-wrap"><svg id="sparkline" viewBox="0 0 150 40" preserveAspectRatio="none"></svg></div>
     </div>
-  </section>
 
-  <section class="flex justify-center">
-    <button id="main-btn" data-action="main-btn"
-      class="btn-focus px-8 py-3 rounded-md font-display text-lg font-600 tracking-wide bg-brass text-ink hover:bg-[#e3bb52] transition-colors shadow-lg shadow-black/30 disabled:opacity-40 disabled:cursor-not-allowed">
-      Бросить кубик и начать ход
-    </button>
-  </section>
+    <button class="end-turn-btn" id="btn-end-turn">Завершить ход →</button>
+  </div>
 
-  <section class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+  <div class="turn-progress"><div class="fill" id="turn-progress-fill" style="width:3.3%"></div></div>
+
+  <div class="main-grid" style="margin-top:18px;">
     <div>
-      <h2 class="font-display text-xl text-paper mb-2 flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-brass"></span> Ваш город
-      </h2>
-      <div id="player-town" class="space-y-3"></div>
+      <div class="panel">
+        <h2>Ваше дело <span class="count-badge" id="field-count">0</span></h2>
+        <div id="field"></div>
+      </div>
+
+      <div id="hand-wrap" class="panel" style="margin-top:16px;">
+        <h2>Рука <span class="count-badge" id="hand-count">0/5</span></h2>
+        <div class="hand-hint-banner" id="hand-locked-banner">
+          🎯 Выберите бизнес на поле, чтобы применить улучшение
+          <button id="btn-cancel-target">Отмена</button>
+        </div>
+        <div id="hand"></div>
+      </div>
     </div>
+
     <div>
-      <h2 class="font-display text-xl text-paper mb-2 flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-rose"></span> Город соперника (ИИ)
-      </h2>
-      <div id="ai-town" class="space-y-3"></div>
+      <div class="panel side-panel">
+        <h2>🔗 Цепочки синергий</h2>
+        <div id="chains"></div>
+      </div>
+      <div class="panel side-panel">
+        <h2>💡 Подсказки</h2>
+        <div id="hints"></div>
+      </div>
+      <div class="panel side-panel">
+        <h2>🌐 Глобальные эффекты</h2>
+        <div id="global-mods"></div>
+      </div>
+      <div class="panel side-panel">
+        <h2>Журнал событий</h2>
+        <div id="log"></div>
+      </div>
     </div>
-  </section>
+  </div>
 
-  <section class="bg-panel border border-line rounded-lg p-4">
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="font-display text-xl text-brass">Рынок</h2>
-      <span id="market-hint" class="text-xs font-mono text-muted"></span>
-    </div>
-    <div id="market-list" class="flex gap-3 overflow-x-auto pb-1"></div>
-  </section>
-
+  <div class="footer-note">Постройте максимально ценную бизнес-империю за 30 ходов. Ищите синергии между бизнесами, улучшениями и глобальными эффектами.</div>
 </div>
 
-<div id="win-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center px-4">
-  <div class="bg-panel border border-brass/60 rounded-lg p-8 max-w-md w-full text-center animate-pop">
-    <h2 id="win-title" class="font-display text-3xl text-brass mb-2"></h2>
-    <p id="win-sub" class="text-muted mb-6 font-body text-sm"></p>
-    <button data-action="restart" class="btn-focus px-6 py-2.5 rounded-md bg-brass text-ink font-display font-600 hover:bg-[#e3bb52] transition-colors">
-      Основать новое поселение
-    </button>
+<div class="targeting-note" id="targeting-note">Выберите бизнес на поле для применения карты — или нажмите «Отмена»</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h2>Империя построена</h2>
+    <div class="rank" id="modal-rank">—</div>
+    <div class="score-row"><span>Капитал на руках</span><span id="score-capital">0 ₽</span></div>
+    <div class="score-row"><span>Стоимость активных бизнесов</span><span id="score-biz">0 ₽</span></div>
+    <div class="score-row"><span>Бонус за улучшения</span><span id="score-upg">0 ₽</span></div>
+    <div class="score-row total"><span>Итоговая оценка</span><span id="score-total">0 ₽</span></div>
+    <button class="modal-btn" id="btn-restart">Начать заново</button>
   </div>
 </div>
 
 <script>
-/* =========================================================
-   GAME DATA DEFINITIONS (UPDATED BALANCE)
-========================================================= */
-const BUILDING_DEFS = {
-  Farm:     { label: 'Ферма',    cost: 3,  maint: 1, resource: 'food',     base: 1, boosted: 4, icon: '🌾', color: 'moss',  maxDurability: 4 },
-  House:    { label: 'Дом',      cost: 3,  maint: 1, resource: 'housing',  base: 1, boosted: 4, icon: '🏠', color: 'teal',  maxDurability: 4 },
-  Hospital: { label: 'Больница', cost: 4,  maint: 1, resource: 'medicine', base: 1, boosted: 4, icon: '⚕️', color: 'rose',  maxDurability: 4 },
-  Bank:     { label: 'Банк',     cost: 12, maint: 2, resource: 'gold',     base: 1, boosted: 5, icon: '🪙', color: 'brass', maxDurability: 5 },
-};
-const CITIZEN_COST = 4;
-const CITIZEN_MAX_DURABILITY = 5;
+'use strict';
+/* =========================================================================
+   ДАННЫЕ: определения бизнесов, улучшений и глобальных карт
+   ========================================================================= */
 
-const RESOURCE_LABEL_RU = { gold: 'золото', food: 'еды', housing: 'жилья', medicine: 'медицины' };
-const COLOR_CLASS = { moss: 'text-moss', teal: 'text-teal', rose: 'text-rose', brass: 'text-brass' };
-const DICE_FACES = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+const BUSINESS_DEFS = [
+  { id:'farm', name:'Ферма', icon:'🌾', cost:30, income:4, lifetime:8,
+    tags:['Food','Agriculture'], chain:[], flavor:'Источник сырья для всей продуктовой цепочки.' },
+  { id:'bakery', name:'Пекарня', icon:'🥖', cost:50, income:6, lifetime:7,
+    tags:['Food','Production'], chain:[{req:'farm',bonus:4,label:'Ферма'}],
+    flavor:'Печёт хлеб — сильнее рядом со своей фермой.' },
+  { id:'coffee', name:'Кофейня', icon:'☕', cost:70, income:8, lifetime:6,
+    tags:['Food','Retail'], chain:[{req:'bakery',bonus:5,label:'Пекарня'},{req:'farm',bonus:2,label:'Ферма'}],
+    flavor:'Свежая выпечка к кофе — довольные клиенты.' },
+  { id:'restaurant', name:'Ресторан', icon:'🍽️', cost:110, income:12, lifetime:6,
+    tags:['Food','Retail','Service'], chain:[{req:'coffee',bonus:4,label:'Кофейня'},{req:'bakery',bonus:3,label:'Пекарня'}],
+    flavor:'Вершина продуктовой цепочки — премиальный опыт.' },
+  { id:'factory', name:'Завод', icon:'🏭', cost:90, income:10, lifetime:7,
+    tags:['Production','Industry'], chain:[], flavor:'Тяжёлое производство, основа индустриальной цепочки.' },
+  { id:'logistics', name:'Логистическая компания', icon:'🚚', cost:80, income:7, lifetime:8,
+    tags:['Logistics','Service'], chain:[{req:'factory',bonus:5,label:'Завод'}],
+    flavor:'Возит товары завода быстрее и дешевле.' },
+  { id:'marketplace', name:'Маркетплейс', icon:'🛒', cost:130, income:14, lifetime:6,
+    tags:['Retail','IT'], chain:[{req:'logistics',bonus:6,label:'Логистика'},{req:'factory',bonus:3,label:'Завод'}],
+    flavor:'Продаёт продукцию завода напрямую покупателям.' },
+  { id:'onlineshop', name:'Онлайн-магазин', icon:'🛍️', cost:60, income:7, lifetime:6,
+    tags:['Retail','IT'], chain:[], flavor:'Небольшой интернет-магазин с гибким ассортиментом.' },
+  { id:'itstartup', name:'IT-стартап', icon:'💻', cost:70, income:6, lifetime:5,
+    tags:['IT','Tech'], chain:[], flavor:'Рискованно, но начало технологической цепочки.' },
+  { id:'softwaredev', name:'Разработка ПО', icon:'👨‍💻', cost:100, income:9, lifetime:6,
+    tags:['IT','Tech'], chain:[{req:'itstartup',bonus:4,label:'IT-стартап'}],
+    flavor:'Зрелая продуктовая команда, выросшая из стартапа.' },
+  { id:'cloud', name:'Облачный сервис', icon:'☁️', cost:140, income:13, lifetime:7,
+    tags:['IT','Tech','Service'], chain:[{req:'softwaredev',bonus:6,label:'Разработка ПО'}],
+    flavor:'Масштабируемая инфраструктура для растущих продуктов.' },
+  { id:'aicompany', name:'AI-компания', icon:'🤖', cost:200, income:20, lifetime:6,
+    tags:['IT','Tech','AI'], chain:[{req:'cloud',bonus:10,label:'Облачный сервис'},{req:'softwaredev',bonus:5,label:'Разработка ПО'}],
+    flavor:'Вершина технологической цепочки. Дорого и мощно.' },
+  { id:'marketing', name:'Маркетинговое агентство', icon:'📣', cost:60, income:6, lifetime:6,
+    tags:['Service','Marketing'], chain:[], flavor:'Продаёт внимание — усиливает всех вокруг.' },
+  { id:'manufacturing', name:'Производство', icon:'⚙️', cost:100, income:11, lifetime:7,
+    tags:['Production','Industry'], chain:[], flavor:'Серийный выпуск товаров народного потребления.' },
+  { id:'tailor', name:'Швейная мастерская', icon:'🧵', cost:40, income:5, lifetime:6,
+    tags:['Production','Fashion'], chain:[], flavor:'Небольшое ателье — начало модной цепочки.' },
+  { id:'boutique', name:'Модный бутик', icon:'👗', cost:75, income:9, lifetime:6,
+    tags:['Retail','Fashion'], chain:[{req:'tailor',bonus:5,label:'Швейная мастерская'}],
+    flavor:'Продаёт вещи собственного пошива втридорога.' },
+  { id:'carwash', name:'Автомойка', icon:'🚗', cost:35, income:5, lifetime:7,
+    tags:['Service'], chain:[], flavor:'Простой и стабильный сервисный бизнес.' },
+  { id:'beauty', name:'Салон красоты', icon:'💅', cost:55, income:7, lifetime:6,
+    tags:['Service','Health'], chain:[], flavor:'Уход и красота — часть цепочки здоровья.' },
+  { id:'fitness', name:'Фитнес-клуб', icon:'🏋️', cost:85, income:9, lifetime:7,
+    tags:['Service','Health'], chain:[], flavor:'Абонементы и тренировки — стабильный поток клиентов.' },
+  { id:'clinic', name:'Медицинская клиника', icon:'🏥', cost:150, income:15, lifetime:8,
+    tags:['Service','Health'], chain:[{req:'fitness',bonus:5,label:'Фитнес-клуб'},{req:'beauty',bonus:3,label:'Салон красоты'}],
+    flavor:'Комплексное здоровье — вершина цепочки здоровья.' },
+  { id:'construction', name:'Строительная компания', icon:'🏗️', cost:120, income:12, lifetime:7,
+    tags:['Production','Industry'], chain:[], flavor:'Строит объекты, которые потом кто-то продаёт.' },
+  { id:'realestate', name:'Агентство недвижимости', icon:'🏘️', cost:95, income:10, lifetime:7,
+    tags:['Service','Retail'], chain:[{req:'construction',bonus:6,label:'Стройкомпания'}],
+    flavor:'Продаёт то, что построила стройкомпания.' },
+];
 
-let uidCounter = 1;
-function uid(prefix) { return prefix + (uidCounter++); }
+// requiresTags: [] значит подходит любому бизнесу
+const UPGRADE_DEFS = [
+  { id:'staff', name:'Сотрудники', icon:'👥', cost:25, requiresTags:[],
+    incomeFlat:3, desc:'Базовый найм персонала. +3 к доходу любого бизнеса.' },
+  { id:'automation', name:'Автоматизация', icon:'🤖', cost:60, requiresTags:['Production','Industry'],
+    incomeFlat:4, lifetimeFlat:2, desc:'Станки работают без устали. +4 доход, +2 к сроку жизни производств.' },
+  { id:'advertising', name:'Реклама', icon:'📢', cost:45, requiresTags:['Retail'],
+    incomePercent:1.0, desc:'Удваивает доход розничного бизнеса.' },
+  { id:'crm', name:'CRM-система', icon:'📊', cost:50, requiresTags:['Service'],
+    incomePercent:0.4, desc:'Учёт клиентов повышает удержание. +40% доход сервисов.' },
+  { id:'ai_upgrade', name:'AI-модуль', icon:'🧠', cost:90, requiresTags:['IT','Tech'],
+    incomePercent:0.6, desc:'Внедрение ИИ в продукт. +60% доход IT/Tech.' },
+  { id:'newline', name:'Новая линейка продуктов', icon:'🆕', cost:40, requiresTags:[],
+    incomeFlat:5, ageDelta:-2, desc:'Свежий продукт. +5 доход и немного «омолаживает» бизнес.' },
+  { id:'franchise', name:'Франшиза', icon:'🏪', cost:70, requiresTags:['Retail','Food'],
+    lifetimeFlat:5, desc:'Тиражирование модели. +5 к сроку жизни розницы/еды.' },
+  { id:'rebrand', name:'Ребрендинг', icon:'🎨', cost:30, requiresTags:[],
+    resetAge:true, desc:'Полностью обнуляет возраст бизнеса.' },
+  { id:'logistics_upgrade', name:'Логистика', icon:'📦', cost:55, requiresTags:['Production','Industry'],
+    incomeFlat:4, auraTag:'Production', auraBonus:2,
+    desc:'+4 доход цели, а также +2 всем Production-бизнесам на поле.' },
+  { id:'training', name:'Обучение персонала', icon:'🎓', cost:35, requiresTags:['Service'],
+    incomeFlat:2, lifetimeFlat:1, desc:'Квалификация сотрудников. +2 доход, +1 срок жизни.' },
+  { id:'process_opt', name:'Оптимизация процессов', icon:'📈', cost:50, requiresTags:['Production'],
+    incomePercent:0.35, desc:'Бережливое производство. +35% доход.' },
+  { id:'digitalization', name:'Цифровизация', icon:'💾', cost:55, requiresTags:['IT'],
+    incomePercent:0.4, desc:'Перевод процессов в цифру. +40% доход IT.' },
+  { id:'sustainability', name:'Экологичность', icon:'🌱', cost:40, requiresTags:['Agriculture','Food'],
+    incomeFlat:3, lifetimeFlat:2, desc:'Устойчивые практики. +3 доход, +2 срок жизни.' },
+  { id:'partner_program', name:'Партнёрская программа', icon:'🤝', cost:45, requiresTags:['Retail'],
+    incomePercent:0.3, desc:'Партнёрства расширяют аудиторию. +30% доход розницы.' },
+  { id:'mobile_app', name:'Мобильное приложение', icon:'📱', cost:65, requiresTags:['Retail','IT'],
+    incomePercent:0.35, desc:'Свой апп для клиентов. +35% доход.' },
+  { id:'warehouse', name:'Складская сеть', icon:'🏬', cost:60, requiresTags:['Logistics','Production'],
+    incomeFlat:5, desc:'Собственные склады сокращают издержки. +5 доход.' },
+  { id:'support', name:'Клиентская поддержка', icon:'🎧', cost:30, requiresTags:['Service'],
+    incomeFlat:3, desc:'Довольные клиенты возвращаются. +3 доход.' },
+  { id:'patent', name:'Патент', icon:'📜', cost:80, requiresTags:['Tech','AI'],
+    incomePercent:0.3, lifetimeFlat:3, desc:'Защита технологии. +30% доход, +3 срок жизни.' },
+  { id:'data_analytics', name:'Аналитика данных', icon:'📉', cost:70, requiresTags:['IT','AI'],
+    incomePercent:0.4, desc:'Данные — новая нефть. +40% доход.' },
+  { id:'assortment', name:'Расширение ассортимента', icon:'🧺', cost:35, requiresTags:['Retail','Food'],
+    incomeFlat:3, desc:'Больше товаров — больше чеков. +3 доход.' },
+  { id:'local_marketing', name:'Локальный маркетинг', icon:'📌', cost:20, requiresTags:[],
+    incomeFlat:2, desc:'Листовки и сарафанное радио. +2 доход.' },
+  { id:'pr_campaign', name:'PR-кампания', icon:'🎤', cost:50, requiresTags:['Marketing','Service'],
+    incomePercent:0.3, desc:'Известность продаёт. +30% доход.' },
+  { id:'energy_eff', name:'Энергоэффективность', icon:'⚡', cost:45, requiresTags:['Production'],
+    incomeFlat:3, lifetimeFlat:2, desc:'Меньше расходов на энергию. +3 доход, +2 срок жизни.' },
+  { id:'quality', name:'Контроль качества', icon:'✅', cost:40, requiresTags:['Production','Food'],
+    lifetimeFlat:3, desc:'Меньше брака — дольше репутация. +3 к сроку жизни.' },
+  { id:'brand_design', name:'Дизайн бренда', icon:'🎯', cost:45, requiresTags:['Fashion','Retail'],
+    incomePercent:0.3, desc:'Сильный визуальный образ. +30% доход.' },
+  { id:'delivery', name:'Доставка', icon:'🚴', cost:40, requiresTags:['Food','Retail'],
+    incomeFlat:4, desc:'Заказы прямо к клиенту. +4 доход.' },
+  { id:'subscription', name:'Абонементная модель', icon:'🔁', cost:60, requiresTags:['Service','IT'],
+    incomePercent:0.4, desc:'Регулярный доход вместо разовых продаж. +40%.' },
+  { id:'robotization', name:'Роботизация', icon:'🦾', cost:100, requiresTags:['Production'],
+    incomeFlat:8, lifetimeFlat:-1, desc:'Мощный рост дохода ценой ускоренного износа. +8 доход, −1 срок жизни.' },
+  { id:'expansion', name:'Международная экспансия', icon:'🌍', cost:150, requiresTags:[],
+    incomePercent:0.5, desc:'Выход на новые рынки. +50% доход — дорого, но универсально.' },
+  { id:'sell_business', name:'Продажа бизнеса', icon:'💰', cost:0, requiresTags:[], special:'sell',
+    desc:'Продать бизнес прямо сейчас за выгодную сумму, пока он ещё жив.' },
+  { id:'restructuring', name:'Реструктуризация', icon:'🔄', cost:30, requiresTags:[],
+    resetAge:true, incomeFlat:2, desc:'Обнуляет возраст и добавляет +2 доход.' },
+  { id:'innovation_dept', name:'Инновационный отдел', icon:'💡', cost:75, requiresTags:['Tech','AI'],
+    incomePercent:0.35, desc:'Постоянный R&D. +35% доход технологиям.' },
+];
 
-/* =========================================================
-   STATE FACTORY
-========================================================= */
-function newPlayerState(name) {
-  const farmId = uid('b');
-  const houseId = uid('b');
-  const workerId = uid('c');
-  return {
-    name,
-    gold: 7, // Немного увеличили стартовый капитал
-    warehouse: { food: 2, housing: 2, medicine: 1 }, // Стартовые запасы для защиты от кризиса первого хода
-    buildings: [
-      { id: farmId,  type: 'Farm',  durability: BUILDING_DEFS.Farm.maxDurability, workerId: workerId },
-      { id: houseId, type: 'House', durability: BUILDING_DEFS.House.maxDurability, workerId: null },
-    ],
-    citizens: [
-      { id: workerId, durability: CITIZEN_MAX_DURABILITY, assignedTo: farmId },
-    ],
-  };
+const GLOBAL_DEFS = [
+  { id:'hr', name:'HR-департамент', icon:'🧑‍💼', cost:80,
+    desc:'+10% дохода всем бизнесам империи.',
+    apply(game){ game.globalMods.allPercent += 0.10; } },
+  { id:'venture_fund', name:'Венчурный фонд', icon:'💼', cost:60,
+    desc:'+80₽ капитала сразу и +15% дохода всем IT-бизнесам.',
+    apply(game){ game.capital += 80; game.globalMods.tagPercent.IT = (game.globalMods.tagPercent.IT||0) + 0.15; } },
+  { id:'gov_grant', name:'Государственный грант', icon:'🏛️', cost:10,
+    desc:'Разовая субсидия: +100₽ капитала.',
+    apply(game){ game.capital += 100; } },
+  { id:'investment_fund', name:'Инвестиционный фонд', icon:'📈', cost:90,
+    desc:'+5₽ пассивного дохода каждый ход, независимо от бизнесов.',
+    apply(game){ game.globalMods.passiveIncome += 5; } },
+  { id:'tax_breaks', name:'Налоговые льготы', icon:'🧾', cost:70,
+    desc:'+15% дохода всем бизнесам империи.',
+    apply(game){ game.globalMods.allPercent += 0.15; } },
+  { id:'national_brand', name:'Национальный бренд', icon:'🇺🇳', cost:100,
+    desc:'+25% дохода Retail и Food, если таких бизнесов на поле 3 и более.',
+    apply(game){
+      const c = game.field.filter(b=>b.def.tags.includes('Retail')||b.def.tags.includes('Food')).length;
+      if(c>=3){ game.globalMods.tagPercent.Retail=(game.globalMods.tagPercent.Retail||0)+0.25;
+                game.globalMods.tagPercent.Food=(game.globalMods.tagPercent.Food||0)+0.25; }
+      else { game.globalMods.pendingNationalBrand = true; }
+    } },
+  { id:'corp_culture', name:'Корпоративная культура', icon:'🌟', cost:65,
+    desc:'+2 к сроку жизни всех текущих бизнесов.',
+    apply(game){ game.field.forEach(b=>{ b.lifetime += 2; }); } },
+  { id:'central_logistics', name:'Централизованная логистика', icon:'🗺️', cost:75,
+    desc:'+20% дохода Production и Logistics бизнесам.',
+    apply(game){ game.globalMods.tagPercent.Production=(game.globalMods.tagPercent.Production||0)+0.20;
+                 game.globalMods.tagPercent.Logistics=(game.globalMods.tagPercent.Logistics||0)+0.20; } },
+  { id:'startup_ecosystem', name:'Экосистема стартапов', icon:'🚀', cost:85,
+    desc:'+30% дохода IT, если на поле 3+ IT-бизнеса.',
+    apply(game){
+      const c = game.field.filter(b=>b.def.tags.includes('IT')).length;
+      if(c>=3){ game.globalMods.tagPercent.IT=(game.globalMods.tagPercent.IT||0)+0.30; }
+    } },
+  { id:'financial_cushion', name:'Финансовая подушка', icon:'🛡️', cost:50,
+    desc:'+3₽ пассивного дохода каждый ход — стабильность в шторм.',
+    apply(game){ game.globalMods.passiveIncome += 3; } },
+  { id:'due_diligence', name:'Due Diligence', icon:'🔍', cost:40,
+    desc:'Следующий открытый бизнес обойдётся на 30% дешевле.',
+    apply(game){ game.globalMods.nextBusinessDiscount = 0.3; } },
+  { id:'ipo', name:'IPO: выход на биржу', icon:'🏦', cost:0,
+    requires(game){ return game.computeEmpireValue() >= 450; },
+    desc:'Требует оценку империи ≥450₽. Даёт 30% от текущей оценки империи капиталом.',
+    apply(game){ const v = game.computeEmpireValue(); game.capital += Math.round(v*0.3); } },
+  { id:'ma_deal', name:'Слияния и поглощения', icon:'🤝', cost:120,
+    desc:'+25% дохода тегу, который представлен на поле сильнее всего.',
+    apply(game){
+      const counts = {};
+      game.field.forEach(b=>b.def.tags.forEach(t=>counts[t]=(counts[t]||0)+1));
+      let best=null,bestN=0;
+      for(const t in counts){ if(counts[t]>bestN){best=t;bestN=counts[t];} }
+      if(best){ game.globalMods.tagPercent[best]=(game.globalMods.tagPercent[best]||0)+0.25; game.globalMods._maLastTag = best; }
+    } },
+  { id:'esg', name:'Устойчивое развитие (ESG)', icon:'♻️', cost:55,
+    desc:'+3 к сроку жизни и +10% дохода Food/Agriculture бизнесам.',
+    apply(game){
+      game.globalMods.tagPercent.Food=(game.globalMods.tagPercent.Food||0)+0.10;
+      game.globalMods.tagPercent.Agriculture=(game.globalMods.tagPercent.Agriculture||0)+0.10;
+      game.field.forEach(b=>{ if(b.def.tags.includes('Food')||b.def.tags.includes('Agriculture')) b.lifetime+=3; });
+    } },
+  { id:'digital_transformation', name:'Цифровая трансформация', icon:'🌐', cost:95,
+    desc:'+20% дохода IT и Service бизнесам.',
+    apply(game){ game.globalMods.tagPercent.IT=(game.globalMods.tagPercent.IT||0)+0.20;
+                 game.globalMods.tagPercent.Service=(game.globalMods.tagPercent.Service||0)+0.20; } },
+  { id:'export_contract', name:'Экспортный контракт', icon:'📦', cost:70,
+    desc:'+30₽ капитала сразу, +20% дохода Production/Industry.',
+    apply(game){ game.capital += 30;
+      game.globalMods.tagPercent.Production=(game.globalMods.tagPercent.Production||0)+0.20;
+      game.globalMods.tagPercent.Industry=(game.globalMods.tagPercent.Industry||0)+0.20; } },
+];
+
+const CHAINS = [
+  { label:'Продуктовая цепочка', steps:['farm','bakery','coffee','restaurant'] },
+  { label:'Индустриальная цепочка', steps:['factory','logistics','marketplace'] },
+  { label:'Технологическая цепочка', steps:['itstartup','softwaredev','cloud','aicompany'] },
+  { label:'Модная цепочка', steps:['tailor','boutique'] },
+  { label:'Цепочка здоровья', steps:['fitness','beauty','clinic'] },
+  { label:'Недвижимость', steps:['construction','realestate'] },
+];
+
+const BUSINESS_BY_ID = Object.fromEntries(BUSINESS_DEFS.map(d=>[d.id,d]));
+const UPGRADE_BY_ID  = Object.fromEntries(UPGRADE_DEFS.map(d=>[d.id,d]));
+const GLOBAL_BY_ID   = Object.fromEntries(GLOBAL_DEFS.map(d=>[d.id,d]));
+
+/* =========================================================================
+   Card — лёгкая обёртка вокруг определения карты для колоды/руки
+   ========================================================================= */
+let __uid = 1;
+class Card{
+  constructor(type, defId){
+    this.uid = 'c' + (__uid++);
+    this.type = type; // 'business' | 'upgrade' | 'global'
+    this.defId = defId;
+  }
+  get def(){
+    if(this.type==='business') return BUSINESS_BY_ID[this.defId];
+    if(this.type==='upgrade') return UPGRADE_BY_ID[this.defId];
+    return GLOBAL_BY_ID[this.defId];
+  }
 }
 
-function newGame() {
-  return {
-    round: 1,
-    activeTurn: 'player',
-    phase: 'ready',        // 'ready' | 'market' | 'ai-turn'
-    purchasedThisTurn: false,
-    gameOver: false,
-    winner: null,
-    lastDiceRoll: null,
-    lastEventText: '',
-    log: [],
-    player: newPlayerState('Вы'),
-    ai: newPlayerState('Соперник (ИИ)'),
-  };
+/* =========================================================================
+   Business — экземпляр открытого бизнеса на поле
+   ========================================================================= */
+class Business{
+  constructor(defId){
+    this.uid = 'b' + (__uid++);
+    this.defId = defId;
+    this.def = BUSINESS_BY_ID[defId];
+    this.age = 0;
+    this.lifetime = this.def.lifetime;
+    this.upgrades = []; // {id,name,icon,incomeFlat,incomePercent,lifetimeFlat,auraTag,auraBonus}
+    this.currentIncome = this.def.income;
+  }
+  get remainingLife(){ return Math.max(0, this.lifetime - this.age); }
 }
 
-let game = newGame();
-
-function logMsg(msg, type) {
-  game.log.unshift({ msg, type, round: game.round });
-  if (game.log.length > 80) game.log.pop();
-}
-
-/* =========================================================
-   CORE ENGINE
-========================================================= */
-function agingPhase(actor) {
-  actor.buildings.forEach(b => { b.durability -= 1; });
-  const expired = actor.buildings.filter(b => b.durability <= 0);
-  expired.forEach(b => {
-    if (b.workerId) {
-      const c = actor.citizens.find(c => c.id === b.workerId);
-      if (c) c.assignedTo = null;
-    }
-    logMsg(`${actor.name}: здание «${BUILDING_DEFS[b.type].label}» разрушилось — истёк срок службы.`, 'decay');
-  });
-  actor.buildings = actor.buildings.filter(b => b.durability > 0);
-
-  actor.citizens.forEach(c => { c.durability -= 1; });
-  const passed = actor.citizens.filter(c => c.durability <= 0);
-  passed.forEach(c => {
-    if (c.assignedTo) {
-      const b = actor.buildings.find(b => b.id === c.assignedTo);
-      if (b) b.workerId = null;
-    }
-    logMsg(`${actor.name}: житель скончался от старости.`, 'death');
-  });
-  actor.citizens = actor.citizens.filter(c => c.durability > 0);
-}
-
-function rollDicePhase(actor) {
-  const roll = 1 + Math.floor(Math.random() * 6);
-  const modifiers = { food: 1, housing: 1, medicine: 1, econCrisis: false };
-  let eventText = '';
-  switch (roll) {
-    case 1:
-      modifiers.food = 2;
-      eventText = 'Голод — в этот ход жители потребляют вдвое больше еды.';
-      break;
-    case 2:
-      modifiers.housing = 2;
-      eventText = 'Жилищный кризис — в этот ход жители потребляют вдвое больше жилья.';
-      break;
-    case 3:
-      modifiers.medicine = 2;
-      eventText = 'Эпидемия — в этот ход жители потребляют вдвое больше медицины.';
-      break;
-    case 4:
-      modifiers.econCrisis = true;
-      eventText = 'Экономический кризис — содержание каждого здания обходится на 1🪙 дороже.';
-      break;
-    case 5: {
-      if (actor.citizens.length > 0) {
-        const idx = Math.floor(Math.random() * actor.citizens.length);
-        const victim = actor.citizens[idx];
-        if (victim.assignedTo) {
-          const b = actor.buildings.find(b => b.id === victim.assignedTo);
-          if (b) b.workerId = null;
-        }
-        actor.citizens.splice(idx, 1);
-        eventText = 'Один из жителей неожиданно уехал из города.';
-      } else {
-        eventText = 'Судьба искала жителя, но город пуст.';
-      }
-      break;
-    }
-    case 6: {
-      actor.citizens.push({ id: uid('c'), durability: CITIZEN_MAX_DURABILITY, assignedTo: null });
-      eventText = 'Иммиграция — прибыл новый рабочий, пока без дела.';
-      break;
+/* =========================================================================
+   Deck — формирование и перемешивание колоды
+   ========================================================================= */
+class Deck{
+  constructor(){
+    this.cards = [];
+    BUSINESS_DEFS.forEach(d=>{ this.cards.push(new Card('business', d.id)); this.cards.push(new Card('business', d.id)); });
+    UPGRADE_DEFS.forEach(d=>{ this.cards.push(new Card('upgrade', d.id)); this.cards.push(new Card('upgrade', d.id)); });
+    GLOBAL_DEFS.forEach(d=>{ this.cards.push(new Card('global', d.id)); });
+    this.shuffle();
+  }
+  shuffle(){
+    for(let i=this.cards.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [this.cards[i],this.cards[j]] = [this.cards[j],this.cards[i]];
     }
   }
-  game.lastDiceRoll = roll;
-  game.lastEventText = eventText;
-  logMsg(`${actor.name} выбрасывает ${roll}: ${eventText}`, 'dice');
-  return modifiers;
-}
-
-function productionPhase(actor, modifiers) {
-  let grossGold = 0, grossFood = 0, grossHousing = 0, grossMedicine = 0, upkeep = 0;
-  actor.buildings.forEach(b => {
-    const def = BUILDING_DEFS[b.type];
-    const amount = b.workerId ? def.boosted : def.base;
-    if (def.resource === 'gold') grossGold += amount;
-    else if (def.resource === 'food') grossFood += amount;
-    else if (def.resource === 'housing') grossHousing += amount;
-    else if (def.resource === 'medicine') grossMedicine += amount;
-    upkeep += def.maint + (modifiers.econCrisis ? 1 : 0);
-  });
-
-  actor.warehouse.food += grossFood;
-  actor.warehouse.housing += grossHousing;
-  actor.warehouse.medicine += grossMedicine;
-  actor.gold += grossGold;
-  actor.gold -= upkeep;
-  if (actor.gold < 0) actor.gold = 0;
-
-  const n = actor.citizens.length;
-  const needs = {
-    food: n * modifiers.food,
-    housing: n * modifiers.housing,
-    medicine: n * modifiers.medicine,
-  };
-
-  let deficit = 0;
-  ['food', 'housing', 'medicine'].forEach(res => {
-    if (actor.warehouse[res] >= needs[res]) {
-      actor.warehouse[res] -= needs[res];
-    } else {
-      deficit += needs[res] - actor.warehouse[res];
-      actor.warehouse[res] = 0;
-    }
-  });
-
-  logMsg(`${actor.name} производит: 🪙${grossGold} 🌾${grossFood} 🏠${grossHousing} ⚕️${grossMedicine}. Содержание — ${upkeep}🪙.`, 'production');
-
-  if (deficit > 0) {
-    // Смягчение механики: дефицит истощает жителей (снимает durability), а не убивает мгновенно
-    actor.citizens.forEach(c => {
-      c.durability -= 1; 
-    });
-    
-    const passedAway = actor.citizens.filter(c => c.durability <= 0);
-    passedAway.forEach(c => {
-      if (c.assignedTo) {
-        const b = actor.buildings.find(b => b.id === c.assignedTo);
-        if (b) b.workerId = null;
-      }
-    });
-    actor.citizens = actor.citizens.filter(c => c.durability > 0);
-    
-    logMsg(`${actor.name}: из-за нехватки ресурсов жители истощены! Из жизни ушло: ${passedAway.length}.`, 'death');
+  draw(){
+    if(this.cards.length===0) return null;
+    return this.cards.pop();
   }
 }
 
-function buyBuilding(actor, type) {
-  const def = BUILDING_DEFS[type];
-  if (actor.gold < def.cost) return false;
-  actor.gold -= def.cost;
-  actor.buildings.push({ id: uid('b'), type, durability: def.maxDurability, workerId: null });
-  return true;
-}
-
-function buyCitizen(actor) {
-  if (actor.gold < CITIZEN_COST) return false;
-  actor.gold -= CITIZEN_COST;
-  actor.citizens.push({ id: uid('c'), durability: CITIZEN_MAX_DURABILITY, assignedTo: null });
-  return true;
-}
-
-function assignWorker(actor, citizenId, buildingId) {
-  const c = actor.citizens.find(c => c.id === citizenId);
-  const b = actor.buildings.find(b => b.id === buildingId);
-  if (!c || !b || b.workerId) return;
-  if (c.assignedTo) {
-    const prev = actor.buildings.find(bb => bb.id === c.assignedTo);
-    if (prev) prev.workerId = null;
-  }
-  c.assignedTo = buildingId;
-  b.workerId = citizenId;
-}
-
-function unassignWorker(actor, buildingId) {
-  const b = actor.buildings.find(b => b.id === buildingId);
-  if (!b || !b.workerId) return;
-  const c = actor.citizens.find(c => c.id === b.workerId);
-  if (c) c.assignedTo = null;
-  b.workerId = null;
-}
-
-/* AI Умный балансировщик цепочек */
-function aiBuyPhase(actor) {
-  function currentProduction(res) {
+/* =========================================================================
+   SynergyEngine — вычисление доходов, аур, цепочек и подсказок
+   ========================================================================= */
+const SynergyEngine = {
+  computeIncome(field, globalMods){
     let total = 0;
-    actor.buildings.forEach(b => {
-      const def = BUILDING_DEFS[b.type];
-      if (def.resource === res) total += (b.workerId ? def.boosted : def.base);
+    const details = new Map(); // uid -> {flat, percent, chainNotes:[]}
+    field.forEach(b=>{
+      let flat = b.def.income;
+      let percent = 0;
+      const notes = [];
+
+      b.upgrades.forEach(u=>{
+        if(u.incomeFlat) flat += u.incomeFlat;
+        if(u.incomePercent) percent += u.incomePercent;
+      });
+
+      (b.def.chain||[]).forEach(cb=>{
+        if(field.some(o=>o!==b && o.defId===cb.req)){
+          flat += cb.bonus;
+          notes.push(`+${cb.bonus} синергия с «${cb.label}»`);
+        }
+      });
+
+      field.forEach(o=>{
+        if(o===b) return;
+        o.upgrades.forEach(u=>{
+          if(u.auraTag && b.def.tags.includes(u.auraTag)){
+            flat += u.auraBonus;
+            notes.push(`+${u.auraBonus} аура «${u.name}» (${o.def.name})`);
+          }
+        });
+      });
+
+      b.def.tags.forEach(t=>{ percent += (globalMods.tagPercent[t]||0); });
+      percent += (globalMods.allPercent||0);
+
+      const income = Math.max(0, Math.round(flat * (1+percent)));
+      b.currentIncome = income;
+      details.set(b.uid, {flat, percent, notes});
+      total += income;
     });
-    return total;
-  }
-  
-  const n = actor.citizens.length;
-  
-  // 1. Проверка жизнеобеспечения
-  const survivalChecks = [
-    { res: 'food', type: 'Farm' },
-    { res: 'housing', type: 'House' },
-    { res: 'medicine', type: 'Hospital' },
-  ];
-  for (const { res, type } of survivalChecks) {
-    if (actor.warehouse[res] === 0 && currentProduction(res) < n) {
-      const def = BUILDING_DEFS[type];
-      if (actor.gold >= def.cost) {
-        buyBuilding(actor, type);
-        logMsg(`${actor.name} строит «${def.label}», защищаясь от кризиса.`, 'ai');
-        return;
+    total += (globalMods.passiveIncome||0);
+    return {total, details};
+  },
+
+  // Подсказки по картам в руке относительно текущего поля
+  getHandHints(hand, field){
+    const hints = {}; // uid -> {text, positive:bool}
+    hand.forEach(card=>{
+      if(card.type==='business'){
+        const def = card.def;
+        const present = (def.chain||[]).filter(cb=>field.some(o=>o.defId===cb.req));
+        if(present.length){
+          const bonus = present.reduce((s,c)=>s+c.bonus,0);
+          hints[card.uid] = { text:`🔗 +${bonus} дохода за счёт: ${present.map(p=>p.label).join(', ')}`, positive:true };
+        } else if((def.chain||[]).length){
+          hints[card.uid] = { text:`Синергия возможна с: ${def.chain.map(c=>c.label).join(', ')}`, positive:false };
+        }
+      } else if(card.type==='upgrade'){
+        const def = card.def;
+        if(def.special==='sell'){
+          hints[card.uid] = field.length ? {text:'Продайте бизнес на поле за живые деньги', positive:true} : {text:'Нет бизнесов для продажи', positive:false};
+          return;
+        }
+        const targets = field.filter(b=> def.requiresTags.length===0 || def.requiresTags.some(t=>b.def.tags.includes(t)));
+        if(targets.length){
+          targets.sort((a,b)=>b.currentIncome-a.currentIncome);
+          const best = targets[0];
+          hints[card.uid] = { text:`Лучшая цель: «${best.def.name}» (${best.def.tags.join(', ')})`, positive:true };
+        } else {
+          hints[card.uid] = { text:'⚠️ На поле нет подходящего бизнеса', positive:false };
+        }
       }
+    });
+    return hints;
+  },
+};
+
+/* =========================================================================
+   Economy — вспомогательные расчёты стоимости и итоговой оценки
+   ========================================================================= */
+const Economy = {
+  computeEmpireValue(field, capital){
+    const bizValue = field.reduce((s,b)=> s + Math.round(b.def.cost*0.3 + b.currentIncome*b.remainingLife), 0);
+    return capital + bizValue;
+  },
+  sellValue(business){
+    return Math.round(business.def.cost*0.3 + business.currentIncome*business.remainingLife*0.8);
+  }
+};
+
+/* =========================================================================
+   Game — центральное состояние и правила игры
+   ========================================================================= */
+class Game{
+  constructor(){
+    this.maxTurns = 30;
+    this.turn = 1;
+    this.capital = 150;
+    this.handMax = 5;
+    this.deck = new Deck();
+    this.hand = [];
+    this.field = [];
+    this.globalMods = { allPercent:0, tagPercent:{}, passiveIncome:0, nextBusinessDiscount:0 };
+    this.log = [];
+    this.capitalHistory = [this.capital];
+    this.turnPlayed = false;
+    this.over = false;
+    this.pendingTarget = null; // Card awaiting a business target
+    for(let i=0;i<this.handMax;i++) this._draw();
+    this._pushLog('Добро пожаловать! У вас 150₽ и 30 ходов, чтобы построить империю.', 'info');
+  }
+
+  _draw(){
+    const c = this.deck.draw();
+    if(c) this.hand.push(c);
+  }
+
+  _pushLog(text, kind){
+    this.log.push({text, kind: kind||'info'});
+    if(this.log.length>40) this.log.shift();
+  }
+
+  computeEmpireValue(){
+    return Economy.computeEmpireValue(this.field, this.capital);
+  }
+
+  cardCost(card){
+    if(card.type==='business' && this.globalMods.nextBusinessDiscount){
+      return Math.max(0, Math.round(card.def.cost * (1-this.globalMods.nextBusinessDiscount)));
     }
+    return card.def.cost;
   }
-  
-  // 2. Если есть пустое здание, сначала нанимаем человека
-  const emptySlot = actor.buildings.find(b => !b.workerId);
-  if (emptySlot && actor.gold >= CITIZEN_COST) {
-    buyCitizen(actor);
-    const newCitizen = actor.citizens[actor.citizens.length - 1];
-    assignWorker(actor, newCitizen.id, emptySlot.id);
-    logMsg(`${actor.name} нанимает рабочего в здание «${BUILDING_DEFS[emptySlot.type].label}».`, 'ai');
-    return;
+
+  canPlay(card){
+    if(this.over || this.turnPlayed) return false;
+    if(card.type==='global' && card.def.requires && !card.def.requires(this)) return false;
+    if(this.capital < this.cardCost(card)) return false;
+    if(card.type==='upgrade'){
+      const def = card.def;
+      if(def.special==='sell') return this.field.length>0;
+      if(def.requiresTags.length===0) return this.field.length>0;
+      return this.field.some(b=> def.requiresTags.some(t=>b.def.tags.includes(t)));
+    }
+    return true;
   }
-  
-  // 3. Капитализация в Банк (Только при избытке еды/жилья и наличии 16 золота на комбо Банк+Житель)
-  const stable = actor.warehouse.food > 2 && actor.warehouse.housing > 2;
-  const canAffordCombo = actor.gold >= (BUILDING_DEFS.Bank.cost + CITIZEN_COST);
-  
-  if (stable && canAffordCombo) {
-    buyBuilding(actor, 'Bank');
-    logMsg(`${actor.name} открывает «Банк» для накопления богатства.`, 'ai');
-    return;
+
+  isValidTarget(card, business){
+    if(card.type!=='upgrade') return false;
+    const def = card.def;
+    if(def.special==='sell') return true;
+    if(def.requiresTags.length===0) return true;
+    return def.requiresTags.some(t=>business.def.tags.includes(t));
   }
-  
-  logMsg(`${actor.name} решает сохранить золото до лучших времён.`, 'ai');
-}
 
-function checkWin() {
-  if (game.gameOver) return;
-  if (game.player.gold >= 50) {
-    game.gameOver = true; game.winner = 'player';
-    logMsg('Вы накопили 50 золота — ваше поселение уходит в вечность!', 'win');
-  } else if (game.ai.gold >= 50) {
-    game.gameOver = true; game.winner = 'ai';
-    logMsg('Соперник (ИИ) накопил 50 золота первым. Ваша эпоха окончена.', 'win');
-  }
-}
-
-/* Навигация ходов */
-function startPlayerTurn() {
-  if (game.gameOver || game.phase !== 'ready') return;
-  agingPhase(game.player);
-  const modifiers = rollDicePhase(game.player);
-  productionPhase(game.player, modifiers);
-  checkWin();
-  if (!game.gameOver) {
-    game.phase = 'market';
-    game.purchasedThisTurn = false;
-  }
-  render();
-}
-
-function endPlayerMarketPhase() {
-  if (game.gameOver || game.phase !== 'market') return;
-  game.phase = 'ai-turn';
-  render();
-  setTimeout(runAiTurn, 550);
-}
-
-function runAiTurn() {
-  if (game.gameOver) return;
-  agingPhase(game.ai);
-  const modifiers = rollDicePhase(game.ai);
-  productionPhase(game.ai, modifiers);
-  checkWin();
-  if (!game.gameOver) {
-    aiBuyPhase(game.ai);
-    checkWin();
-  }
-  if (!game.gameOver) {
-    game.round += 1;
-    game.activeTurn = 'player';
-    game.phase = 'ready';
-  }
-  render();
-}
-
-function playerBuyBuilding(type) {
-  if (game.phase !== 'market' || game.purchasedThisTurn || game.gameOver) return;
-  const def = BUILDING_DEFS[type];
-  if (game.player.gold < def.cost) return;
-  buyBuilding(game.player, type);
-  game.purchasedThisTurn = true;
-  logMsg(`Вы построили здание «${def.label}».`, 'buy');
-  render();
-}
-
-function playerBuyCitizen() {
-  if (game.phase !== 'market' || game.purchasedThisTurn || game.gameOver) return;
-  if (game.player.gold < CITIZEN_COST) return;
-  buyCitizen(game.player);
-  game.purchasedThisTurn = true;
-  logMsg('Вы наняли нового жителя на бирже труда.', 'buy');
-  render();
-}
-
-function playerAssign(buildingId, citizenId) {
-  if (game.phase !== 'market' || game.gameOver || !citizenId) return;
-  assignWorker(game.player, citizenId, buildingId);
-  render();
-}
-
-function playerUnassign(buildingId) {
-  if (game.phase !== 'market' || game.gameOver) return;
-  unassignWorker(game.player, buildingId);
-  render();
-}
-
-function restartGame() {
-  uidCounter = 1;
-  game = newGame();
-  document.getElementById('win-modal').classList.add('hidden');
-  render();
-}
-
-/* =========================================================
-   RENDERING ENGINE
-========================================================= */
-function tickMarks(durability, maxDurability = 4) {
-  let html = '<div class="flex gap-0.5">';
-  for (let i = 0; i < maxDurability; i++) {
-    html += `<span class="tick ${i < durability ? 'bg-brass' : 'bg-panel2 border border-line'}" style="width: 6px;"></span>`;
-  }
-  html += '</div>';
-  return html;
-}
-
-function renderComparisonStrip() {
-  const el = document.getElementById('comparison-strip');
-  function statBlock(actor, accent) {
-    return `
-      <div class="bg-panel border border-line rounded-lg p-4">
-        <div class="flex items-center justify-between mb-3">
-          <span class="font-display text-lg text-paper">${actor.name}</span>
-          <span class="font-mono text-xl text-brass">🪙 ${actor.gold}</span>
-        </div>
-        <div class="grid grid-cols-3 gap-2 text-center font-mono text-sm">
-          <div class="bg-panel2 rounded p-2">
-            <div class="text-moss text-base">🌾 ${actor.warehouse.food}</div>
-            <div class="text-[10px] text-muted mt-0.5">Еда</div>
-          </div>
-          <div class="bg-panel2 rounded p-2">
-            <div class="text-teal text-base">🏠 ${actor.warehouse.housing}</div>
-            <div class="text-[10px] text-muted mt-0.5">Жильё</div>
-          </div>
-          <div class="bg-panel2 rounded p-2">
-            <div class="text-rose text-base">⚕️ ${actor.warehouse.medicine}</div>
-            <div class="text-[10px] text-muted mt-0.5">Медицина</div>
-          </div>
-        </div>
-        <div class="mt-2 text-xs text-muted font-mono">${actor.citizens.length} жит. · ${actor.buildings.length} здан.</div>
-        <div class="mt-2 h-1.5 bg-panel2 rounded overflow-hidden">
-          <div class="h-full ${accent}" style="width:${Math.min(100, actor.gold / 50 * 100)}%"></div>
-        </div>
-      </div>`;
-  }
-  el.innerHTML = statBlock(game.player, 'bg-brass') + statBlock(game.ai, 'bg-rose');
-}
-
-function renderDicePanel() {
-  const el = document.getElementById('dice-panel');
-  if (game.lastDiceRoll) {
-    el.innerHTML = `
-      <div class="text-6xl leading-none animate-pop">${DICE_FACES[game.lastDiceRoll]}</div>
-      <p class="text-xs text-muted mt-3 max-w-[220px]">${game.lastEventText}</p>`;
-  } else {
-    el.innerHTML = `<p class="text-muted text-sm">Нажмите кнопку ниже, чтобы сделать ход.</p>`;
-  }
-}
-
-function renderLog() {
-  const el = document.getElementById('log-list');
-  const colorFor = {
-    dice: 'text-brass', production: 'text-muted', death: 'text-danger',
-    decay: 'text-[#7A8494]', buy: 'text-moss', ai: 'text-rose', win: 'text-brass font-600',
-  };
-  el.innerHTML = game.log.map(entry =>
-    `<div class="${colorFor[entry.type] || 'text-muted'} animate-rise">· Р${entry.round} — ${entry.msg}</div>`
-  ).join('');
-}
-
-function renderBuildingCard(actor, b, interactive) {
-  const def = BUILDING_DEFS[b.type];
-  const producing = b.workerId ? def.boosted : def.base;
-  const worker = b.workerId ? actor.citizens.find(c => c.id === b.workerId) : null;
-  const unassignedCitizens = actor.citizens.filter(c => !c.assignedTo);
-
-  let workerControl = '';
-  if (interactive) {
-    if (worker) {
-      workerControl = `
-        <button data-action="unassign" data-building="${b.id}"
-          class="btn-focus text-[11px] font-mono px-2 py-1 rounded bg-panel2 border border-line text-muted hover:text-paper hover:border-brass/60 transition-colors">
-          Снять рабочего
-        </button>`;
-    } else if (unassignedCitizens.length > 0) {
-      workerControl = `
-        <select data-action="assign-select" data-building="${b.id}"
-          class="assign-select text-[11px] font-mono bg-panel2 border border-line rounded px-1.5 py-1 text-paper btn-focus">
-          <option value="">+ Назначить рабочего</option>
-          ${unassignedCitizens.map(c => `<option value="${c.id}">Рабочий (осталось ${c.durability}х)</option>`).join('')}
-        </select>`;
+  // Играть карту бизнеса или глобальную карту напрямую
+  playDirectCard(card){
+    if(!this.canPlay(card)) return false;
+    const cost = this.cardCost(card);
+    if(card.type==='business'){
+      this.capital -= cost;
+      const biz = new Business(card.defId);
+      this.field.push(biz);
+      this._pushLog(`🏢 Открыт бизнес «${card.def.name}» за ${cost}₽`, 'pos');
+      if(this.globalMods.nextBusinessDiscount){ this.globalMods.nextBusinessDiscount = 0; }
+    } else if(card.type==='global'){
+      this.capital -= cost;
+      card.def.apply(this);
+      this._pushLog(`🌐 Сыграна глобальная карта «${card.def.name}»`, 'info');
     } else {
-      workerControl = `<span class="text-[11px] font-mono text-muted">Нет свободных рук</span>`;
+      return false;
     }
-  } else {
-    workerControl = worker
-      ? `<span class="text-[11px] font-mono text-muted">Занято персоналом</span>`
-      : `<span class="text-[11px] font-mono text-muted">Пустует</span>`;
+    this.hand = this.hand.filter(c=>c.uid!==card.uid);
+    this.turnPlayed = true;
+    SynergyEngine.computeIncome(this.field, this.globalMods);
+    return true;
   }
 
-  return `
-    <div class="bg-panel2 border border-line rounded-md p-3 flex items-center justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <span class="text-2xl">${def.icon}</span>
-        <div>
-          <div class="font-body font-600 text-sm text-paper">${def.label}</div>
-          <div class="font-mono text-xs ${COLOR_CLASS[def.color]}">+${producing} ${RESOURCE_LABEL_RU[def.resource]}</div>
-        </div>
-      </div>
-      <div class="flex flex-col items-end gap-1.5">
-        ${tickMarks(b.durability, def.maxDurability)}
-        ${workerControl}
-      </div>
-    </div>`;
+  // Применить карту-улучшение к конкретному бизнесу
+  playUpgradeOn(card, business){
+    if(!this.canPlay(card) || !this.isValidTarget(card, business)) return false;
+    const def = card.def;
+    const cost = this.cardCost(card);
+
+    if(def.special==='sell'){
+      const value = Economy.sellValue(business);
+      this.capital += value;
+      this.field = this.field.filter(b=>b.uid!==business.uid);
+      this._pushLog(`💰 Продан бизнес «${business.def.name}» за ${value}₽`, 'pos');
+    } else {
+      this.capital -= cost;
+      business.upgrades.push({
+        id:def.id, name:def.name, icon:def.icon,
+        incomeFlat:def.incomeFlat||0, incomePercent:def.incomePercent||0,
+        auraTag:def.auraTag||null, auraBonus:def.auraBonus||0,
+      });
+      if(def.lifetimeFlat) business.lifetime += def.lifetimeFlat;
+      if(def.resetAge) business.age = 0;
+      if(def.ageDelta) business.age = Math.max(0, business.age + def.ageDelta);
+      this._pushLog(`⚙️ «${def.name}» применено к «${business.def.name}»`, 'pos');
+    }
+
+    this.hand = this.hand.filter(c=>c.uid!==card.uid);
+    this.turnPlayed = true;
+    SynergyEngine.computeIncome(this.field, this.globalMods);
+    return true;
+  }
+
+  endTurn(){
+    if(this.over) return;
+    const {total} = SynergyEngine.computeIncome(this.field, this.globalMods);
+    this.capital += total;
+    if(total>0) this._pushLog(`📈 Доход за ход: +${total}₽`, 'pos');
+
+    const closing = [];
+    this.field.forEach(b=>{
+      b.age += 1;
+      if(b.age >= b.lifetime) closing.push(b);
+    });
+    closing.forEach(b=>{
+      this._pushLog(`🔒 «${b.def.name}» закрылся после ${b.age} ходов`, 'neg');
+    });
+    this._closingUids = closing.map(b=>b.uid);
+    this.field = this.field.filter(b=>!closing.includes(b));
+
+    this.turn += 1;
+    this.turnPlayed = false;
+    while(this.hand.length < this.handMax){
+      const before = this.hand.length;
+      this._draw();
+      if(this.hand.length===before) break; // колода пуста
+    }
+    this.capitalHistory.push(this.capital);
+    if(this.capitalHistory.length>40) this.capitalHistory.shift();
+
+    if(this.turn > this.maxTurns){
+      this.over = true;
+      this._pushLog('🏁 Игра окончена — подведём итоги.', 'info');
+    }
+  }
 }
 
-function renderTown(actor, containerId, interactive) {
-  const el = document.getElementById(containerId);
-  const unassigned = actor.citizens.filter(c => !c.assignedTo);
-  el.innerHTML = `
-    <div class="space-y-2">
-      ${actor.buildings.map(b => renderBuildingCard(actor, b, interactive)).join('')}
-    </div>
-    ${unassigned.length > 0 ? `
-      <div class="flex items-center gap-2 flex-wrap pt-1">
-        <span class="text-xs text-muted font-mono">Свободные люди:</span>
-        ${unassigned.map(c => `<span class="text-xs font-mono px-2 py-0.5 rounded bg-panel2 border border-line text-paper">🧍 раунд ${c.durability}</span>`).join('')}
-      </div>` : ''}
-  `;
-}
+/* =========================================================================
+   Renderer — отрисовка DOM
+   ========================================================================= */
+const Renderer = {
+  fmt(n){ return (n<0?'−':'') + Math.abs(Math.round(n)) + '₽'; },
 
-function renderMarket() {
-  const el = document.getElementById('market-list');
-  const hint = document.getElementById('market-hint');
-  const canBuy = game.phase === 'market' && !game.purchasedThisTurn && !game.gameOver;
-  hint.textContent = game.phase === 'market'
-    ? (game.purchasedThisTurn ? 'Покупка в этом ходу уже сделана' : 'Доступна одна покупка в этом ходу')
-    : 'Доступно во время вашей фазы рынка';
+  tagChips(tags){
+    return tags.map(t=>`<span class="tag-chip">${t}</span>`).join('');
+  },
 
-  const cards = Object.entries(BUILDING_DEFS).map(([type, def]) => {
-    const affordable = game.player.gold >= def.cost;
-    const disabled = !canBuy || !affordable;
-    return `
-      <div class="min-w-[160px] bg-panel2 border border-line rounded-md p-3 flex flex-col justify-between gap-2 shrink-0">
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="text-2xl">${def.icon}</span>
-            <span class="font-body font-600 text-sm">${def.label}</span>
-          </div>
-          <div class="font-mono text-[11px] ${COLOR_CLASS[def.color]} mt-2">
-            База: +${def.base}<br>
-            С рабочим: +${def.boosted}<br>
-            Срок: ${def.maxDurability} ходов<br>
-            Расходы: ${def.maint}🪙/ход
-          </div>
+  renderHeader(game){
+    document.getElementById('stat-capital').textContent = this.fmt(game.capital);
+    document.getElementById('stat-turn').textContent = `${Math.min(game.turn,game.maxTurns)} / ${game.maxTurns}`;
+    document.getElementById('stat-empire').textContent = this.fmt(game.computeEmpireValue());
+    document.getElementById('turn-progress-fill').style.width = Math.min(100,(game.turn-1)/game.maxTurns*100) + '%';
+
+    const btn = document.getElementById('btn-end-turn');
+    btn.classList.toggle('pulse', game.turnPlayed);
+    btn.textContent = game.over ? 'Игра окончена' : (game.turnPlayed ? 'Завершить ход →' : 'Пропустить и завершить ход');
+    btn.disabled = game.over;
+
+    this.renderSparkline(game.capitalHistory);
+  },
+
+  renderSparkline(hist){
+    const svg = document.getElementById('sparkline');
+    if(hist.length<2){ svg.innerHTML=''; return; }
+    const w=150,h=40;
+    const max = Math.max(...hist), min = Math.min(...hist);
+    const range = Math.max(1, max-min);
+    const pts = hist.map((v,i)=>{
+      const x = (i/(hist.length-1))*w;
+      const y = h - ((v-min)/range)*h*0.85 - 3;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    svg.innerHTML = `
+      <polyline points="${pts}" fill="none" stroke="#d1a24c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+      <polygon points="0,${h} ${pts} ${w},${h}" fill="url(#sparkGrad)" opacity="0.25"/>
+      <defs><linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#d1a24c"/><stop offset="100%" stop-color="#d1a24c" stop-opacity="0"/>
+      </linearGradient></defs>`;
+  },
+
+  renderField(game){
+    const el = document.getElementById('field');
+    document.getElementById('field-count').textContent = game.field.length;
+    if(game.field.length===0){
+      el.innerHTML = `<div class="empty-field">Пока пусто. Сыграйте карту бизнеса из руки, чтобы начать.</div>`;
+      return;
+    }
+    el.innerHTML = game.field.map(b=>{
+      const lifePct = Math.max(0, 100 - (b.age/b.lifetime)*100);
+      const warn = b.remainingLife<=2;
+      const upgHtml = b.upgrades.length ? `<div class="biz-upgrades">${b.upgrades.map(u=>`<span class="upg-pill" title="${u.name}">${u.icon}</span>`).join('')}</div>` : '';
+      const targetable = game.pendingTarget && game.isValidTarget(game.pendingTarget, b);
+      return `<div class="biz-card ${targetable?'targetable':''}" data-uid="${b.uid}">
+        <div class="biz-top">
+          <span class="biz-icon">${b.def.icon}</span>
+          <span class="biz-income">+${b.currentIncome}<span style="font-size:10px;opacity:.6;">/ход</span></span>
         </div>
-        <button data-action="buy" data-type="${type}" ${disabled ? 'disabled' : ''}
-          class="btn-focus mt-1 text-xs font-mono px-2 py-1.5 rounded bg-brass text-ink font-600 hover:bg-[#e3bb52] disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-          Купить — 🪙${def.cost}
-        </button>
+        <div class="biz-name">${b.def.name}</div>
+        <div class="biz-tags">${this.tagChips(b.def.tags)}</div>
+        <div class="biz-life">
+          <div class="life-bar"><div class="fill ${warn?'warn':''}" style="width:${lifePct}%"></div></div>
+          <div class="life-label"><span>Возраст ${b.age}</span><span>Осталось ${b.remainingLife} ${warn?'⚠️':''}</span></div>
+        </div>
+        ${upgHtml}
       </div>`;
-  }).join('');
+    }).join('');
+  },
 
-  const citizenAffordable = game.player.gold >= CITIZEN_COST;
-  const citizenDisabled = !canBuy || !citizenAffordable;
-  const citizenCard = `
-    <div class="min-w-[160px] bg-panel2 border border-line rounded-md p-3 flex flex-col justify-between gap-2 shrink-0">
-      <div>
-        <div class="flex items-center gap-2">
-          <span class="text-2xl">🧍</span>
-          <span class="font-body font-600 text-sm">Рабочий</span>
-        </div>
-        <div class="font-mono text-[11px] text-muted mt-2">
-          Увеличивает отдачу зданий.<br>
-          Живёт ${CITIZEN_MAX_DURABILITY} ходов.<br>
-          Потребляет ресурсы.
-        </div>
-      </div>
-      <button data-action="buy" data-type="Citizen" ${citizenDisabled ? 'disabled' : ''}
-        class="btn-focus mt-1 text-xs font-mono px-2 py-1.5 rounded bg-brass text-ink font-600 hover:bg-[#e3bb52] disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-        Нанять — 🪙${CITIZEN_COST}
-      </button>
-    </div>`;
+  renderHand(game, hints){
+    const el = document.getElementById('hand');
+    document.getElementById('hand-count').textContent = `${game.hand.length}/${game.handMax}`;
+    const banner = document.getElementById('hand-locked-banner');
+    banner.classList.toggle('show', !!game.pendingTarget);
 
-  el.innerHTML = cards + citizenCard;
+    el.innerHTML = game.hand.map(card=>{
+      const def = card.def;
+      const cost = game.cardCost(card);
+      const affordable = game.capital>=cost;
+      const playable = game.canPlay(card);
+      const disabled = !playable && !game.pendingTarget;
+      const selected = game.pendingTarget && game.pendingTarget.uid===card.uid;
+      const hint = hints[card.uid];
+      let footerStat = '';
+      let tagsHtml = '';
+      if(card.type==='business'){
+        footerStat = `<span class="c-stat">+${def.income}/ход · ${def.lifetime} ходов</span>`;
+        tagsHtml = this.tagChips(def.tags);
+      } else if(card.type==='upgrade'){
+        footerStat = `<span class="c-stat">${def.requiresTags.length? def.requiresTags.join(', ') : 'любой бизнес'}</span>`;
+      } else {
+        footerStat = `<span class="c-stat">глобально</span>`;
+      }
+      const kindLabel = card.type==='business'?'Бизнес':(card.type==='upgrade'?'Улучшение':'Глобальная');
+      return `<div class="card type-${card.type} ${disabled?'disabled':''} ${selected?'selected':''}" data-uid="${card.uid}">
+        <span class="kind-badge">${kindLabel}</span>
+        <span class="c-icon">${def.icon}</span>
+        <div class="c-name">${def.name}</div>
+        <div class="c-desc">${def.desc || def.flavor || ''}</div>
+        ${tagsHtml ? `<div class="c-tags">${tagsHtml}</div>` : ''}
+        ${hint ? `<div class="synergy-badge ${hint.positive?'':'warn'}">${hint.text}</div>` : ''}
+        <div class="c-footer">
+          <span class="c-cost ${affordable?'afford':'noafford'}">${cost===0?'бесплатно':this.fmt(cost)}</span>
+          ${footerStat}
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  renderChains(game){
+    const el = document.getElementById('chains');
+    el.innerHTML = CHAINS.map(chain=>{
+      const activeCount = chain.steps.filter(id=>game.field.some(b=>b.defId===id)).length;
+      const steps = chain.steps.map(id=>{
+        const def = BUSINESS_BY_ID[id];
+        const active = game.field.some(b=>b.defId===id);
+        return `<div class="chain-step ${active?'active':''}" title="${def.name}">${def.icon}</div>`;
+      }).join('');
+      return `<div class="chain-row">
+        <div class="chain-title"><span>${chain.label}</span><span>${activeCount}/${chain.steps.length}</span></div>
+        <div class="chain-steps">${steps}</div>
+      </div>`;
+    }).join('');
+  },
+
+  renderHints(game){
+    const el = document.getElementById('hints');
+    const items = [];
+    const tagCounts = {};
+    game.field.forEach(b=>b.def.tags.forEach(t=>tagCounts[t]=(tagCounts[t]||0)+1));
+
+    if(game.field.length===0){
+      items.push('Откройте первый бизнес — рекомендуем начать с дешёвой Фермы или Автомойки.');
+    } else {
+      const topTag = Object.entries(tagCounts).sort((a,b)=>b[1]-a[1])[0];
+      if(topTag) items.push(`Сильнее всего представлен тег <b>${topTag[0]}</b> (${topTag[1]}) — ищите улучшения под него.`);
+      const weak = game.field.filter(b=>b.remainingLife<=2);
+      if(weak.length) items.push(`⚠️ Скоро закроются: ${weak.map(b=>b.def.name).join(', ')}. Рассмотрите продление срока жизни или продажу.`);
+      const noUpg = game.field.filter(b=>b.upgrades.length===0);
+      if(noUpg.length) items.push(`${noUpg.length} бизнес(ов) без улучшений — их доход можно значительно поднять.`);
+    }
+    if(game.globalMods.nextBusinessDiscount) items.push(`🔍 Следующий бизнес дешевле на ${Math.round(game.globalMods.nextBusinessDiscount*100)}%.`);
+    if(items.length===0) items.push('Комбинируйте бизнесы одной цепочки и точечные улучшения — это даёт наибольший доход.');
+
+    el.innerHTML = items.map(t=>`<div class="hint-item">${t}</div>`).join('');
+  },
+
+  renderGlobalMods(game){
+    const el = document.getElementById('global-mods');
+    const rows = [];
+    if(game.globalMods.allPercent) rows.push([`Доход всех бизнесов`, `+${Math.round(game.globalMods.allPercent*100)}%`]);
+    Object.entries(game.globalMods.tagPercent).forEach(([tag,val])=>{
+      if(val) rows.push([`Доход тега «${tag}»`, `+${Math.round(val*100)}%`]);
+    });
+    if(game.globalMods.passiveIncome) rows.push([`Пассивный доход`, `+${game.globalMods.passiveIncome}₽/ход`]);
+    if(rows.length===0){
+      el.innerHTML = `<div class="hint-item">Пока нет активных глобальных эффектов. Сыграйте глобальную карту (золотую), чтобы усилить всю империю разом.</div>`;
+      return;
+    }
+    el.innerHTML = rows.map(([l,v])=>`<div class="global-mod-row"><span>${l}</span><span>${v}</span></div>`).join('');
+  },
+
+  renderLog(game){
+    const el = document.getElementById('log');
+    el.innerHTML = game.log.slice().reverse().map(l=>`<div class="log-line ${l.kind}">${l.text}</div>`).join('');
+  },
+
+  renderAll(game){
+    SynergyEngine.computeIncome(game.field, game.globalMods);
+    const hints = SynergyEngine.getHandHints(game.hand, game.field);
+    this.renderHeader(game);
+    this.renderField(game);
+    this.renderHand(game, hints);
+    this.renderChains(game);
+    this.renderHints(game);
+    this.renderGlobalMods(game);
+    this.renderLog(game);
+
+    document.getElementById('targeting-note').classList.toggle('show', !!game.pendingTarget);
+    document.body.classList.toggle('targeting', !!game.pendingTarget);
+  },
+
+  showGameOver(game){
+    const bizValue = game.field.reduce((s,b)=>s+Math.round(b.def.cost*0.3+b.currentIncome*b.remainingLife),0);
+    const upgCount = game.field.reduce((s,b)=>s+b.upgrades.length,0);
+    const upgBonus = upgCount*5;
+    const total = game.capital + bizValue + upgBonus;
+
+    document.getElementById('score-capital').textContent = this.fmt(game.capital);
+    document.getElementById('score-biz').textContent = this.fmt(bizValue);
+    document.getElementById('score-upg').textContent = this.fmt(upgBonus);
+    document.getElementById('score-total').textContent = this.fmt(total);
+
+    let rank = 'Уличный торговец';
+    if(total>=1600) rank = 'Магнат мирового уровня';
+    else if(total>=1100) rank = 'Владелец конгломерата';
+    else if(total>=700) rank = 'Успешный предприниматель';
+    else if(total>=400) rank = 'Растущий бизнесмен';
+    document.getElementById('modal-rank').textContent = rank;
+
+    document.getElementById('modal-overlay').classList.add('show');
+  }
+};
+
+/* =========================================================================
+   Контроллер — обработка кликов и связывание Game <-> Renderer
+   ========================================================================= */
+let game = new Game();
+
+function rerender(){
+  Renderer.renderAll(game);
+  if(game.over) Renderer.showGameOver(game);
 }
 
-function renderMainButton() {
-  const btn = document.getElementById('main-btn');
-  if (game.gameOver) {
-    btn.textContent = 'Хроника завершена';
-    btn.disabled = true;
+document.getElementById('field').addEventListener('click', (e)=>{
+  const cardEl = e.target.closest('.biz-card');
+  if(!cardEl || !game.pendingTarget) return;
+  const business = game.field.find(b=>b.uid===cardEl.dataset.uid);
+  if(!business) return;
+  const card = game.pendingTarget;
+  if(game.isValidTarget(card, business)){
+    game.playUpgradeOn(card, business);
+    game.pendingTarget = null;
+    rerender();
+  }
+});
+
+document.getElementById('hand').addEventListener('click', (e)=>{
+  const cardEl = e.target.closest('.card');
+  if(!cardEl) return;
+  const card = game.hand.find(c=>c.uid===cardEl.dataset.uid);
+  if(!card) return;
+
+  if(game.pendingTarget){
+    if(game.pendingTarget.uid===card.uid){ game.pendingTarget = null; rerender(); }
     return;
   }
-  if (game.phase === 'ready') {
-    btn.textContent = 'Бросить кубик и начать ход';
-    btn.disabled = false;
-  } else if (game.phase === 'market') {
-    btn.textContent = 'Закончить ход (передать ИИ)';
-    btn.disabled = false;
+  if(!game.canPlay(card)) return;
+
+  if(card.type==='upgrade'){
+    game.pendingTarget = card;
+    rerender();
   } else {
-    btn.textContent = 'Соперник (ИИ) управляет городом…';
-    btn.disabled = true;
-  }
-}
-
-function renderRoundBadge() {
-  const el = document.getElementById('round-badge');
-  const phaseLabel = { ready: 'Готов к ходу', market: 'Ваша фаза рынка', 'ai-turn': 'Ход ИИ' }[game.phase];
-  el.textContent = `Раунд ${game.round} · ${phaseLabel}`;
-}
-
-function renderWinModal() {
-  const modal = document.getElementById('win-modal');
-  if (!game.gameOver) { modal.classList.add('hidden'); return; }
-  modal.classList.remove('hidden');
-  const title = document.getElementById('win-title');
-  const sub = document.getElementById('win-sub');
-  if (game.winner === 'player') {
-    title.textContent = 'Победа — Золотой век!';
-    sub.textContent = `Вы триумфально накопили ${game.player.gold} золота за ${game.round} раундов.`;
-  } else {
-    title.textContent = 'Поражение — Вы в тени истории';
-    sub.textContent = `ИИ опередил вас, накопив ${game.ai.gold} золота за ${game.round} раундов.`;
-  }
-}
-
-function render() {
-  renderRoundBadge();
-  renderComparisonStrip();
-  renderDicePanel();
-  renderLog();
-  renderMainButton();
-  renderTown(game.player, 'player-town', true);
-  renderTown(game.ai, 'ai-town', false);
-  renderMarket();
-  renderWinModal();
-}
-
-/* =========================================================
-   EVENT DELEGATION
-========================================================= */
-document.getElementById('app').addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-action]');
-  if (!btn) return;
-  const action = btn.dataset.action;
-  if (action === 'main-btn') {
-    if (game.phase === 'ready') startPlayerTurn();
-    else if (game.phase === 'market') endPlayerMarketPhase();
-  } else if (action === 'buy') {
-    if (btn.dataset.type === 'Citizen') playerBuyCitizen();
-    else playerBuyBuilding(btn.dataset.type);
-  } else if (action === 'unassign') {
-    playerUnassign(btn.dataset.building);
+    game.playDirectCard(card);
+    rerender();
   }
 });
 
-document.getElementById('app').addEventListener('change', (e) => {
-  const sel = e.target.closest('[data-action="assign-select"]');
-  if (!sel) return;
-  playerAssign(sel.dataset.building, sel.value);
+document.getElementById('btn-cancel-target').addEventListener('click', ()=>{
+  game.pendingTarget = null;
+  rerender();
+});
+document.getElementById('targeting-note').addEventListener('click', ()=>{
+  game.pendingTarget = null;
+  rerender();
 });
 
-document.getElementById('win-modal').addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-action="restart"]');
-  if (btn) restartGame();
+document.getElementById('btn-end-turn').addEventListener('click', ()=>{
+  if(game.over) return;
+  game.pendingTarget = null;
+  game.endTurn();
+  rerender();
 });
 
-/* Первичный запуск */
-render();
+document.getElementById('btn-restart').addEventListener('click', ()=>{
+  document.getElementById('modal-overlay').classList.remove('show');
+  game = new Game();
+  rerender();
+});
+
+rerender();
 </script>
 </body>
 </html>
