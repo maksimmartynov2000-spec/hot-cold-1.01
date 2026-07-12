@@ -224,8 +224,10 @@ const POLITICAL_LANDMARKS = [
 ];
 
 const ALL_LANDMARKS = INFRA_LANDMARKS.concat(RESEARCH_LANDMARKS, POLITICAL_LANDMARKS);
-const START_CARDS = { hwheat:1, hpoultry:1 };
-const START_COINS = 3;
+
+// ИЗМЕНЕНО: На старте карт нет, баланс составляет 5 монет
+const START_CARDS = {};
+const START_COINS = 5;
 
 /* ======================= СОСТОЯНИЕ ИГРЫ ======================= */
 let state = null;
@@ -327,6 +329,12 @@ function resolveRoll(dice, isReroll){
       if(amount>0){ p.coins += amount; log(`  ${card.icon} ${card.name} (${p.name}): +${amount} 💰`); }
     });
   });
+
+  // ИЗМЕНЕНО: Если фаза дохода пройдена и у текущего игрока всё еще 0 монет, начисляем 1 монету
+  if(active.coins === 0) {
+    active.coins = 1;
+    log(`🎁 У ${active.name} было 0 монет после фазы дохода. Банк дарит +1 монету!`);
+  }
 
   const twoDice = dice.length===2, threeDice = dice.length===3;
   const lower2 = twoDice && [2,3].includes(total);
@@ -489,10 +497,9 @@ function runAILogic(){
       return;
     }
 
-    // 2. ФАЗА ВЫБОРА ОВЕРЛЕЯ (Критические политические решения)
+    // 2. ФАЗА ВЫБОРА ОВЕРЛЕЯ
     if(state.phase === 'pending'){
       if(state.pending.type === 'spy_choose_target' || state.pending.type === 'opp_choose_target'){
-        // ИИ выбирает живого игрока или соперника с максимальным количеством монет
         let bestTargetIdx = (state.current + 1) % state.players.length;
         let maxCoins = -1;
         state.players.forEach((pl, idx) => {
@@ -510,7 +517,6 @@ function runAILogic(){
         if(upgraded.length === 0){
           oppSkipBuilding();
         } else {
-          // Уничтожает самое дорогое улучшенное здание
           upgraded.sort((a,b) => b.cost - a.cost);
           oppDestroyBuilding(upgraded[0].id);
         }
@@ -520,15 +526,13 @@ function runAILogic(){
 
     // 3. ФАЗА ПОСТ-БРОСКА И ПОКУПОК
     if(state.phase === 'postroll'){
-      // Проверка надобности переброса (Аэропорт)
       const canReroll = (p.landmarks.airport && !state.usedReroll) || state.bonusReroll;
       if(canReroll){
         const total = state.lastRoll.reduce((a,b)=>a+b,0);
-        // Если текущий бросок не активирует ни одного нашего здания, делаем переброс
         let hasTrigger = ESTABLISHMENTS.some(c => c.activation.includes(total) && count(p, c.id) > 0);
         if(!hasTrigger){
           if(p.landmarks.airportUp){
-            rerollOne(0); // Перебрасываем первый кубик, если точечный
+            rerollOne(0);
           } else {
             rerollAll();
           }
@@ -536,27 +540,22 @@ function runAILogic(){
         }
       }
 
-      // Стратегия покупок ИИ
       if(state.purchasesRemaining > 0){
-        // Приоритет 1: Купить недостающую Политику для победы
         for(let lm of POLITICAL_LANDMARKS){
           if(!p.landmarks[lm.id] && p.coins >= lm.cost){
             if(buildLandmark(lm.id)) return;
           }
         }
 
-        // Приоритет 2: Купить важнейшую инфраструктуру / исследования
         const infraPriority = ['port', 'modernization', 'station', 'innovations', 'animalhusbandry', 'airport'];
         for(let id of infraPriority){
           const lm = ALL_LANDMARKS.find(l=>l.id === id);
           if(lm && !p.landmarks[id] && p.coins >= lm.cost){
-            // Проверка условий для улучшений инфраструктуры
             if(lm.upgradeOf && (!p.landmarks.innovations || !p.landmarks[lm.upgradeOf])) continue;
             if(buildLandmark(id)) return;
           }
         }
 
-        // Приоритет 3: Покупка / улучшение обычных предприятий (ИИ берет самое дорогое из доступных)
         let affordableCards = ESTABLISHMENTS.filter(c => {
           if(state.supply[c.id] <= 0 || p.coins < c.cost) return false;
           if(c.upgradeOf){
@@ -571,7 +570,6 @@ function runAILogic(){
         }
       }
 
-      // Если ничего не купил или ходы покупок закончились
       endTurn();
     }
   }, 900);
@@ -593,7 +591,6 @@ function render(){
   let html = `<div class="title"><h1>🎲 Мачи Коро: Добыча</h1><div class="sub">настольная версия с ИИ</div></div>`;
   html += `<div class="board"><div>`;
 
-  // Список игроков
   html += `<div class="panel"><div class="players-strip">`;
   state.players.forEach((pl,i)=>{
     html += `<div class="player-chip ${i===state.current?'current':''}">`;
@@ -611,7 +608,6 @@ function render(){
   });
   html += `</div></div>`;
 
-  // Зона кубиков
   html += `<div class="panel">`;
   if(state.pendingSpy && state.pendingSpy.targetIdx===state.current){
     html += `<div class="banner">🕵️ Этот ход под контролем шпионского центра игрока ${state.players[state.pendingSpy.ownerIdx].name}.</div>`;
@@ -652,7 +648,6 @@ function render(){
   html += `<div class="log">` + state.log.map(l=>`<div>${l}</div>`).join('') + `</div>`;
   html += `</div>`;
 
-  // Рынок предприятий
   html += `<div class="panel"><h3 class="section-title">🏙️ Рынок предприятий</h3><div class="cards-grid">`;
   ESTABLISHMENTS.forEach(c=>{
     const owned = count(p, c.id);
@@ -680,7 +675,6 @@ function render(){
   html += `</div></div>`;
   html += `</div>`;
 
-  // Правая колонка достопримечательностей
   html += `<div>`;
   html += renderLandmarkSection('🏗️ Инфраструктура', 'infra', INFRA_LANDMARKS, p, inPostroll && isHumanTurn);
   html += renderLandmarkSection('🔬 Исследования', 'research', RESEARCH_LANDMARKS, p, inPostroll && isHumanTurn);
@@ -699,7 +693,6 @@ function render(){
   app.innerHTML = html;
   if(inPending) renderPendingOverlay();
 
-  // Запуск логики ИИ, если сейчас его очередь
   if(p.isAI) {
     runAILogic();
   }
@@ -729,7 +722,7 @@ function renderLandmarkSection(title, cat, list, p, canInteract){
 
 function renderPendingOverlay(){
   const p = curPlayer();
-  if(p.isAI) return; // ИИ не отрисовывает для себя визуальный оверлей выбора
+  if(p.isAI) return;
 
   let html = `<div class="overlay"><div class="overlay-card">`;
   if(state.pending.type==='spy_choose_target'){
@@ -773,7 +766,7 @@ function renderWinner(){
 
 /* ======================= ЭКРАН НАСТРОЙКИ С ИИ ======================= */
 let setupCount = 2;
-let playerTypes = ['human', 'ai', 'ai', 'ai']; // Типы по умолчанию
+let playerTypes = ['human', 'ai', 'ai', 'ai'];
 
 function togglePlayerType(idx) {
   playerTypes[idx] = playerTypes[idx] === 'human' ? 'ai' : 'human';
