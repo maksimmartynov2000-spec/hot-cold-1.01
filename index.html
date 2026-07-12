@@ -9,7 +9,7 @@
     --wood:#7a4a2b; --wood-dark:#5c3620;
     --paper:#efe2c8; --paper-dark:#e0cfa6; --ink:#2b1d10;
     --grain:#a8790f; --grain-bg:#f3e7c4;
-    --blue-card:#2979ff; --blue-bg:#e3f2fd; /* Все карты теперь используют этот стиль */
+    --blue-card:#2979ff; --blue-bg:#e3f2fd;
     --meat:#a6432f; --meat-bg:#f7ddd6;
     --fish:#1f7a72; --fish-bg:#d9f0ec;
     --gear:#3b6475; --gear-bg:#e2ebf0;
@@ -60,7 +60,7 @@
   .turn-badge{ position:absolute; top:-9px; right:-9px; background:var(--gold); color:#3a2405; border-radius:50%; width:22px;height:22px; display:flex; align-items:center; justify-content:center; font-size:.75em; font-weight:bold; box-shadow:var(--shadow) }
 
   .dice-area{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:10px }
-  .dice animate{ display:flex; gap:8px }
+  .dice{ display:flex; gap:8px }
   .die-wrap{ display:flex; flex-direction:column; align-items:center; gap:4px }
   .die{ width:52px; height:52px; background:#fffaf0; border-radius:10px; border:3px solid var(--wood); display:flex; align-items:center; justify-content:center; font-size:1.6em; font-weight:bold; box-shadow:var(--shadow) }
   .die-reroll{ font-size:.65em; padding:2px 5px; border-radius:6px; border:1px solid var(--wood); background:#fff; cursor:pointer }
@@ -117,7 +117,6 @@
 
 <script>
 /* ======================= БАЗА ДАННЫХ ИГРЫ ======================= */
-// АБСОЛЮТНО ВСЕ КАРТЫ И УЛУЧШЕНИЯ ТЕПЕРЬ СИНИЕ (type: 'blue') И РАБОТАЮТ В ЛЮБОЙ ХОД
 const OLD_BASE = [
   { id:'hwheat',   name:'Пшеничное поле',  type:'blue',  cost:1, activation:[1],   icon:'🌾', income:1, desc:'Любой ход: +1 монета из банка' },
   { id:'hpotato',  name:'Картофельное поле',type:'blue', cost:2, activation:[4],   icon:'🥔', special:'potato', desc:'Любой ход: каждое поле приносит столько монет, сколько у вас полей (N × N)' },
@@ -189,6 +188,17 @@ function shuffle(array) {
   }
 }
 
+// Поиск следующей уникальной карты, которой сейчас нет на рынке
+function getNextUniqueCard(deck, currentMarket) {
+  for (let i = deck.length - 1; i >= 0; i--) {
+    const candidateId = deck[i];
+    if (!currentMarket.includes(candidateId)) {
+      return deck.splice(i, 1)[0];
+    }
+  }
+  return deck.pop(); // Если уникальных нет, берём любую с конца
+}
+
 function newGame(numPlayers, names, types, includeNewCards){
   const deckBase = [];
   const deckUpgrade = [];
@@ -210,34 +220,22 @@ function newGame(numPlayers, names, types, includeNewCards){
   const marketBase = [];
   const marketUpgrade = [];
 
-  let oldBasePool = [...OLD_BASE]; shuffle(oldBasePool);
-  let selectedOldBases = oldBasePool.slice(0, 4);
-  selectedOldBases.forEach(c => {
-    const idx = deckBase.indexOf(c.id);
-    if(idx > -1) { marketBase.push(deckBase.splice(idx, 1)[0]); supply[c.id]--; }
-  });
+  // Заполняем рынок базовых карт (4 уникальных стартовых объекта)
+  while (marketBase.length < 4 && deckBase.length > 0) {
+    const nextCardId = getNextUniqueCard(deckBase, marketBase);
+    if (nextCardId) {
+      marketBase.push(nextCardId);
+      supply[nextCardId]--;
+    } else break;
+  }
 
-  let selectedOldUpgrades = [];
-  selectedOldBases.forEach(b => {
-    const up = OLD_UPGRADES.find(u => u.upgradeOf === b.id);
-    if(up) selectedOldUpgrades.push(up);
-  });
-  shuffle(selectedOldUpgrades);
-  selectedOldUpgrades.slice(0,2).forEach(c => {
-    const idx = deckUpgrade.indexOf(c.id);
-    if(idx > -1) { marketUpgrade.push(deckUpgrade.splice(idx, 1)[0]); supply[c.id]--; }
-  });
-
-  if (includeNewCards) {
-    NEW_BASE.forEach(c => {
-      const idx = deckBase.indexOf(c.id);
-      if(idx > -1) { marketBase.push(deckBase.splice(idx, 1)[0]); supply[c.id]--; }
-    });
-    let newUpPool = [...NEW_UPGRADES]; shuffle(newUpPool);
-    newUpPool.slice(0, 2).forEach(c => {
-      const idx = deckUpgrade.indexOf(c.id);
-      if(idx > -1) { marketUpgrade.push(deckUpgrade.splice(idx, 1)[0]); supply[c.id]--; }
-    });
+  // Заполняем рынок улучшений (2 уникальных стартовых объекта)
+  while (marketUpgrade.length < 2 && deckUpgrade.length > 0) {
+    const nextCardId = getNextUniqueCard(deckUpgrade, marketUpgrade);
+    if (nextCardId) {
+      marketUpgrade.push(nextCardId);
+      supply[nextCardId]--;
+    } else break;
   }
 
   const players = [];
@@ -315,13 +313,8 @@ function resolveRoll(dice, isReroll){
   const active = curPlayer();
 
   state.players.forEach((p, pIdx) => {
-    // Вся экономика синяя, поэтому проверка "isMyTurn" для карт предприятий больше НЕ блокирует их активацию!
-    const isMyTurn = (pIdx === activeIdx);
-
     ALL_ESTABLISHMENTS.forEach(card => {
       if(!card.activation.includes(total)) return;
-      
-      // Поскольку абсолютно все карты синие, они срабатывают всегда в любой ход
       if(card.requiresPort && !p.landmarks.port) return;
       if(card.requiresPortUp && !p.landmarks.portUp) return;
       
@@ -331,7 +324,6 @@ function resolveRoll(dice, isReroll){
       let amount = 0;
       let labelDetails = '';
 
-      // МЕХАНИКА КАРТОФЕЛЬНЫХ ПОЛЕЙ (Эффект Синергии / Квадратичный доход)
       if(card.special === 'potato'){
         const totalPotatoes = count(p, 'hpotato');
         amount = totalPotatoes * c;
@@ -359,9 +351,7 @@ function resolveRoll(dice, isReroll){
         amount = (card.income || 0) * c;
       }
 
-      // Животноводство удваивает доходы от синих карт (теперь от всех)
       if(p.landmarks.animalhusbandry && card.type === 'blue') amount *= 2;
-      
       if(p.landmarks.engineering && (card.id.startsWith('nsea') || card.id.startsWith('ngas'))){
         if(state.isDouble || p.landmarks.stationUp) {
           amount *= 2;
@@ -441,10 +431,15 @@ function buyCard(id, isUpgrade, slotIndex){
     p.cards[id] = (p.cards[id]||0) + 1;
     log(`⚙️ ${p.name} улучшил(а) предприятие до: ${card.icon} ${card.name}`);
 
+    // Замена купленной карты на рынке улучшений строго на УНИКАЛЬНУЮ
     if(state.deckUpgrade.length > 0) {
-      const nextCardId = state.deckUpgrade.pop();
-      state.marketUpgrade[slotIndex] = nextCardId;
-      state.supply[nextCardId]--;
+      const nextCardId = getNextUniqueCard(state.deckUpgrade, state.marketUpgrade);
+      if (nextCardId) {
+        state.marketUpgrade[slotIndex] = nextCardId;
+        state.supply[nextCardId]--;
+      } else {
+        state.marketUpgrade.splice(slotIndex, 1);
+      }
     } else {
       state.marketUpgrade.splice(slotIndex, 1);
     }
@@ -453,10 +448,15 @@ function buyCard(id, isUpgrade, slotIndex){
     p.cards[id] = (p.cards[id]||0) + 1;
     log(`🛒 ${p.name} купил(а) предприятие: ${card.icon} ${card.name}`);
 
+    // Замена купленной базовой карты на рынке строго на УНИКАЛЬНУЮ
     if(state.deckBase.length > 0) {
-      const nextCardId = state.deckBase.pop();
-      state.marketBase[slotIndex] = nextCardId;
-      state.supply[nextCardId]--;
+      const nextCardId = getNextUniqueCard(state.deckBase, state.marketBase);
+      if (nextCardId) {
+        state.marketBase[slotIndex] = nextCardId;
+        state.supply[nextCardId]--;
+      } else {
+        state.marketBase.splice(slotIndex, 1);
+      }
     } else {
       state.marketBase.splice(slotIndex, 1);
     }
@@ -572,7 +572,6 @@ function render(){
   let html = `<div class="title"><h1>🎲 Мачи Коро: Тотальная Добыча</h1><div class="sub">Абсолютно все предприятия синие и работают в любой ход!</div></div>`;
   html += `<div class="board"><div>`;
 
-  // Панель игроков
   html += `<div class="panel"><div class="players-strip">`;
   state.players.forEach((pl,i) => {
     html += `<div class="player-chip ${i===state.current?'current':''}">`;
@@ -589,7 +588,6 @@ function render(){
   });
   html += `</div></div>`;
 
-  // Броски и логи
   html += `<div class="panel"><div class="dice-area">`;
   if(state.lastRoll){
     html += `<div class="dice">` + state.lastRoll.map((d,i) => {
@@ -610,8 +608,8 @@ function render(){
   if(inPost && isHuman) html += `<button class="action-btn primary" onclick="endTurn()">Передать ход</button>`;
   html += `</div><div class="log">` + state.log.map(l=>`<div>${l}</div>`).join('') + `</div></div>`;
 
-  // 1. ДИНАМИЧЕСКИЙ РЫНОК БАЗОВЫХ ПРЕДПРИЯТИЙ
-  html += `<div class="panel"><h3 class="section-title">🏙️ Рынок предприятий (Запас в колоде: ${state.deckBase.length} шт.)</h3><div class="cards-grid">`;
+  // Рынок базовых предприятий (Строго уникальные слоты)
+  html += `<div class="panel"><h3 class="section-title">🏙️ Рынок уникальных предприятий (В колоде: ${state.deckBase.length} шт.)</h3><div class="cards-grid">`;
   state.marketBase.forEach((id, index) => {
     const c = ALL_ESTABLISHMENTS.find(item => item.id === id); if(!c) return;
     const reqPortOk = !c.requiresPort || p.landmarks.port;
@@ -621,13 +619,13 @@ function render(){
     html += `<div class="card ${c.type}"><div class="icon">${c.icon}</div><div class="name">${c.name}</div>`;
     html += `<div class="activation">🎯 Шаг: ${c.activation.join('/')}</div><div class="desc">${c.desc}</div>`;
     if(c.requiresPortUp && !p.landmarks.portUp) html += `<div style="font-size:0.6em;color:red;font-weight:bold">Нужно расширение порта</div>`;
-    html += `<div class="footer"><span class="cost">${c.cost} 💰</span><span class="supply">Осталось: ${state.supply[c.id]}</span></div>`;
+    html += `<div class="footer"><span class="cost">${c.cost} 💰</span><span class="supply">В запасе: ${state.supply[c.id]}</span></div>`;
     html += `<button class="buy-btn" ${disabled?'disabled':''} onclick="buyCard('${c.id}', false, ${index})">Купить</button></div>`;
   });
   html += `</div></div>`;
 
-  // 2. ДИНАМИЧЕСКИЙ РЫНОК УЛУЧШЕНИЙ
-  html += `<div class="panel"><h3 class="section-title">⚙️ Рынок улучшений (Запас в колоде: ${state.deckUpgrade.length} шт.)</h3><div class="cards-grid">`;
+  // Рынок улучшений (Строго уникальные слоты)
+  html += `<div class="panel"><h3 class="section-title">⚙️ Рынок уникальных улучшений (В колоде: ${state.deckUpgrade.length} шт.)</h3><div class="cards-grid">`;
   state.marketUpgrade.forEach((id, index) => {
     const c = ALL_ESTABLISHMENTS.find(item => item.id === id); if(!c) return;
     const hasBase = count(p, c.upgradeOf) >= 1;
@@ -638,12 +636,11 @@ function render(){
     html += `<div class="card ${c.type}"><div class="icon">${c.icon}</div><div class="name">${c.name}</div>`;
     html += `<div class="req">Требует: 1 ${baseName}</div><div class="desc">${c.desc}</div>`;
     if(c.requiresPortUp && !p.landmarks.portUp) html += `<div style="font-size:0.6em;color:red;font-weight:bold">Нужен расш. Порт</div>`;
-    html += `<div class="footer"><span class="cost">${c.cost} 💰</span><span class="supply">Осталось: ${state.supply[c.id]}</span></div>`;
+    html += `<div class="footer"><span class="cost">${c.cost} 💰</span><span class="supply">В запасе: ${state.supply[c.id]}</span></div>`;
     html += `<button class="buy-btn" ${disabled?'disabled':''} onclick="buyCard('${c.id}', true, ${index})">Улучшить</button></div>`;
   });
   html += `</div></div></div>`;
 
-  // ПРАВАЯ КОЛОНКА: Стройка площадок
   html += `<div><div class="panel"><h3 class="section-title">🏗️ Городские постройки (Цены ×2)</h3><div class="landmarks-container">`;
   ['infra', 'research', 'political'].forEach(cat => {
     html += `<div><span class="subsection-title ${cat}">${cat.toUpperCase()}</span><div class="landmarks-grid">`;
