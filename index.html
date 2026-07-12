@@ -2,18 +2,14 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Мачи Коро — Добыча (Тотальная Синева)</title>
+<title>Мачи Коро — Добыча (Синие карты)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{
     --wood:#7a4a2b; --wood-dark:#5c3620;
     --paper:#efe2c8; --paper-dark:#e0cfa6; --ink:#2b1d10;
-    --grain:#a8790f; --grain-bg:#f3e7c4;
-    --blue-card:#2979ff; --blue-bg:#e3f2fd;
-    --meat:#a6432f; --meat-bg:#f7ddd6;
-    --fish:#1f7a72; --fish-bg:#d9f0ec;
-    --gear:#3b6475; --gear-bg:#e2ebf0;
-    --infra:#3a6ea5; --infra-bg:#dbe9f7;
+    --blue-card:#3a6ea5; --blue-card-bg:#dbe9f7; /* Все карты теперь синие */
+    --infra:#2e5b82; --infra-bg:#c6daf0;
     --research:#7a4a9e; --research-bg:#ece0f5;
     --political:#8a2b2b; --political-bg:#f2d9d9;
     --gold:#c99a2e; --shadow:0 4px 10px rgba(0,0,0,.25);
@@ -23,29 +19,21 @@
     background: radial-gradient(ellipse at top, #9a6a3f 0%, var(--wood) 55%, var(--wood-dark) 100%);
     color:var(--ink); min-height:100vh; }
   h1,h2,h3{ font-family:'Trebuchet MS','Segoe UI',sans-serif; letter-spacing:.5px; margin:0 }
-  .app{ max-width:1300px; margin:0 auto; padding:18px; }
+  .app{ max-width:1400px; margin:0 auto; padding:18px; }
   .title{ text-align:center; color:#fff3df; margin-bottom:14px; text-shadow:0 2px 4px rgba(0,0,0,.5); }
   .title h1{ font-size:2.1em; }
   .title .sub{ font-size:.85em; opacity:.8; font-style:italic; }
 
-  .setup-card{ background:var(--paper); border-radius:16px; padding:26px; max-width:520px; margin:40px auto; box-shadow:var(--shadow); border:6px solid var(--wood-dark); }
+  .setup-card{ background:var(--paper); border-radius:16px; padding:26px; max-width:480px; margin:40px auto; box-shadow:var(--shadow); border:6px solid var(--wood-dark); }
   .setup-card label{ display:block; margin:14px 0 6px; font-weight:bold }
-  .player-input-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-  .setup-card input[type=text]{ flex: 2; padding:8px 10px; border-radius:8px; border:2px solid var(--wood); font-size:1em; background:#fffaf0; }
-  .type-btn { flex: 1; padding: 8px; border-radius: 8px; border: 2px solid var(--wood); background: #fffaf0; cursor: pointer; font-weight: bold; font-size: 0.9em; }
-  .type-btn.active { background: var(--infra); color: #fff; border-color: var(--infra); }
-  .type-btn.active.ai-type { background: var(--research); border-color: var(--research); }
-  
+  .setup-card input[type=text]{ width:100%; padding:8px 10px; border-radius:8px; border:2px solid var(--wood); font-size:1em; background:#fffaf0; margin-bottom:10px; }
   .player-count-row{ display:flex; gap:8px; margin-top:6px; flex-wrap:wrap }
   .pc-btn{ flex:1; min-width:44px; padding:10px; border-radius:10px; border:2px solid var(--wood); background:#fffaf0; cursor:pointer; font-weight:bold; font-size:1em; }
   .pc-btn.active{ background:var(--gold); color:#fff; border-color:var(--gold) }
   .big-btn{ margin-top:22px; width:100%; padding:14px; font-size:1.15em; border:none; border-radius:12px; background:linear-gradient(180deg,#e2b13c,#c99a2e); color:#3a2405; font-weight:bold; cursor:pointer; box-shadow:0 3px 0 #8a6b1c; }
   .big-btn:active{ transform:translateY(2px); box-shadow:none }
 
-  .checkbox-row { display: flex; align-items: center; gap: 8px; margin: 16px 0; font-weight: bold; cursor: pointer; }
-  .checkbox-row input { width: 18px; height: 18px; cursor: pointer; }
-
-  .board{ display:grid; grid-template-columns:1.8fr 1.2fr; gap:18px; }
+  .board{ display:grid; grid-template-columns:2.2fr 1fr; gap:18px; }
   @media (max-width:1024px){ .board{ grid-template-columns:1fr } }
   .panel{ background:var(--paper); border-radius:14px; padding:16px; box-shadow:var(--shadow); border:4px solid var(--wood-dark); margin-bottom:16px }
 
@@ -53,7 +41,6 @@
   .player-chip{ flex:1; min-width:150px; background:var(--paper-dark); border-radius:10px; padding:10px; border:2px solid var(--wood); position:relative; }
   .player-chip.current{ border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,154,46,.4) inset }
   .player-chip .pname{ font-weight:bold; font-size:1em }
-  .player-chip .pname .badge { font-size: 0.75em; padding: 2px 5px; border-radius: 4px; background: rgba(0,0,0,0.1); margin-left: 4px; font-weight: normal; }
   .player-chip .coins{ color:#7a4a00; font-weight:bold; margin-top:2px }
   .player-chip .lm-row{ display:flex; gap:4px; margin-top:6px; font-size:1.1em; flex-wrap:wrap }
   .lm-icon{ opacity:.25 } .lm-icon.built{ opacity:1 }
@@ -68,46 +55,50 @@
   .action-btn.primary{ background:var(--gold); border-color:#8a6b1c; color:#3a2405 }
   .action-btn:disabled{ opacity:.4; cursor:not-allowed }
 
-  .log{ background:#fffaf0; border-radius:8px; padding:8px 10px; max-height:140px; overflow-y:auto; font-size:.85em; border:1px solid var(--wood); margin-top:10px; }
+  .log{ background:#fffaf0; border-radius:8px; padding:8px 10px; max-height:150px; overflow-y:auto; font-size:.85em; border:1px solid var(--wood) }
   .log div{ padding:2px 0; border-bottom:1px dashed #d8c7a0 }
 
-  .section-title{ margin:0 0 10px 0; font-size:1.1em; color:var(--wood-dark); border-bottom:2px solid var(--wood); padding-bottom:4px }
-  .subsection-title{ font-size:.75em; font-weight:bold; color:#fff; padding:2px 6px; border-radius:4px; display:inline-block; margin-bottom:4px }
+  .section-title{ margin:14px 0 8px; font-size:1.05em; color:var(--wood-dark); border-bottom:2px solid var(--wood); padding-bottom:4px }
+  .subsection-title{ margin:14px 0 6px; font-size:.92em; font-weight:bold; color:#fff; padding:4px 10px; border-radius:6px; display:inline-block }
   .subsection-title.infra{ background:var(--infra) }
   .subsection-title.research{ background:var(--research) }
   .subsection-title.political{ background:var(--political) }
 
-  .cards-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(135px,1fr)); gap:10px }
-  .card{ border-radius:12px; padding:10px; border:2px solid #0002; position:relative; min-height:145px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 2px 4px rgba(0,0,0,.15); }
-  .card.blue{ background:var(--blue-bg); border-color:var(--blue-card) }
-  .card .icon{ font-size:1.5em }
-  .card .name{ font-weight:bold; font-size:.82em; margin:2px 0 }
-  .card .activation{ font-size:.75em; font-weight:bold; }
-  .card .req{ font-size:.65em; font-weight:bold; color:var(--research); margin-bottom:2px; }
-  .card .desc{ font-size:.65em; opacity:.85; flex-grow:1; min-height:35px; line-height:1.2 }
+  .cards-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(145px,1fr)); gap:10px }
+  .card{ border-radius:12px; padding:10px; border:2px solid #0002; position:relative; min-height:130px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 2px 4px rgba(0,0,0,.15); }
+  
+  /* Все карты стилизованы под единый синий (общественный) тип Мачи Коро */
+  .card.blue-type{ background:var(--blue-card-bg); border-color:var(--blue-card) }
+  
+  .card .icon{ font-size:1.6em }
+  .card .name{ font-weight:bold; font-size:.85em; margin:2px 0; color:#1a365d; }
+  .card .activation{ font-size:.75em; font-weight:bold; background: rgba(58,110,165,0.15); padding: 2px 4px; border-radius: 4px; display: inline-block; }
+  .card .req{ font-size:.68em; font-weight:bold; color:var(--research) }
+  .card .desc{ font-size:.68em; opacity:.85; flex-grow:1; line-height:1.2; margin:4px 0; }
   .card .footer{ display:flex; justify-content:space-between; align-items:center; margin-top:6px }
-  .card .cost{ font-weight:bold; color:var(--wood-dark); font-size:0.9em }
-  .card .supply{ font-size:.68em; opacity:.8; font-weight: bold; color: var(--wood-dark); }
+  .card .cost{ font-weight:bold; color:var(--wood-dark) }
+  .card .supply{ font-size:.7em; opacity:.7 }
   .card .buy-btn{ font-size:.75em; padding:4px 8px; border-radius:6px; border:1px solid var(--wood); background:#fff; cursor:pointer; font-weight:bold }
   .card .buy-btn:disabled{ opacity:.35; cursor:not-allowed }
-  .card .owned-badge{ position:absolute; top:-8px; right:-8px; background:var(--wood-dark); color:#fff; border-radius:50%; min-width:22px; height:22px; padding:0 5px; display:flex; align-items:center; justify-content:center; font-size:.72em; font-weight:bold }
+  .card .owned-badge{ position:absolute; top:-8px; right:-8px; background:var(--blue-card); color:#fff; border-radius:50%; min-width:22px; height:22px; padding:0 5px; display:flex; align-items:center; justify-content:center; font-size:.72em; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
-  .landmarks-container { display:flex; flex-direction:column; gap:12px; }
-  .landmarks-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:8px; }
-  .landmark{ background:#fffaf0; border:2px solid var(--wood); border-radius:12px; padding:8px; position: relative; display:flex; flex-direction:column; justify-content:space-between; min-height:105px; }
+  .landmarks-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:10px; margin-bottom:8px }
+  .landmark{ background:#fffaf0; border:2px solid var(--wood); border-radius:12px; padding:10px }
   .landmark.built{ background:#f0e6c8; border-color:var(--gold) }
-  .landmark .name{ font-weight:bold; font-size:0.85em; }
-  .landmark .desc{ font-size:.72em; margin:4px 0; opacity:0.9; }
-  .landmark .footer{ display:flex; justify-content:space-between; align-items:center; margin-top:4px; }
+  .landmark .name{ font-weight:bold }
+  .landmark .desc{ font-size:.78em; margin:4px 0 }
+  .landmark .footer{ display:flex; justify-content:space-between; align-items:center }
 
-  .my-establishments{ display:flex; flex-wrap:wrap; gap:4px; margin-top:6px }
-  .mini-card{ background:#fff; border-radius:6px; padding:2px 5px; font-size:.7em; border:1px solid var(--wood); display:flex; gap:2px; align-items:center }
+  .my-establishments{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px }
+  .mini-card{ background:var(--blue-card-bg); color: #1a365d; border-radius:6px; padding:3px 7px; font-size:.75em; border:1px solid var(--blue-card); display:flex; gap:4px; align-items:center; font-weight: bold; }
 
   .overlay{ position:fixed; inset:0; background:rgba(20,10,0,.55); display:flex; align-items:center; justify-content:center; z-index:20 }
   .overlay-card{ background:var(--paper); border-radius:14px; padding:22px; max-width:420px; border:5px solid var(--wood-dark); box-shadow:var(--shadow) }
   .overlay-card h3{ margin-bottom:10px }
   .overlay-card .choice-btn{ display:block; width:100%; text-align:left; margin:6px 0; padding:10px; border-radius:8px; border:2px solid var(--wood); background:#fffaf0; cursor:pointer; font-weight:bold }
+  .overlay-card .choice-btn:hover{ background:#f5e6c0 }
 
+  .banner{ background:var(--research-bg); border:2px solid var(--research); border-radius:10px; padding:8px 12px; font-size:.85em; margin-bottom:10px }
   .winner-banner{ text-align:center; padding:30px; }
   .winner-banner h2{ font-size:1.8em; color:var(--gold) }
 </style>
@@ -116,70 +107,85 @@
 <div class="app" id="app"></div>
 
 <script>
-/* ======================= БАЗА ДАННЫХ ИГРЫ ======================= */
+/* ======================= БАЗА ДАННЫХ ПРЕДПРИЯТИЙ (ВСЕ СИНЕГО ТИПА) ======================= */
 const OLD_BASE = [
-  { id:'hwheat',   name:'Пшеничное поле',  type:'blue',  cost:1, activation:[1],   icon:'🌾', income:1, desc:'Любой ход: +1 монета из банка' },
-  { id:'hpotato',  name:'Картофельное поле',type:'blue', cost:2, activation:[4],   icon:'🥔', special:'potato', desc:'Любой ход: каждое поле приносит столько монет, сколько у вас полей (N × N)' },
-  { id:'hcorn',    name:'Кукурузное поле',  type:'blue',  cost:3, activation:[5],   icon:'🌽', income:2, desc:'Любой ход: +2 монеты из банка' },
-  { id:'hpoultry', name:'Птицефабрика',    type:'blue',  cost:1, activation:[2],   icon:'🐔', special:'poultry', desc:'Любой ход: +1 монета за каждый курятник в городе' },
-  { id:'hpig',     name:'Свиноферма',       type:'blue',  cost:2, activation:[3,4], icon:'🐖', income:2, desc:'Любой ход: +2 монеты из банка' },
-  { id:'hmeat',    name:'Мясная ферма',     type:'blue',  cost:5, activation:[4,5,6],icon:'🥩', special:'meatfarm', desc:'Любой ход: +2 монеты. Блокируется Птицефабрикой/Свинофермой' },
-  { id:'hfishboat',name:'Рыбацкая лодка',  type:'blue',  cost:2, activation:[1,5], icon:'🚣', income:2, requiresPort:true, desc:'Любой ход: +2 монеты (нужен Порт)' },
-  { id:'hfishnet', name:'Рыбацкие сети',   type:'blue',  cost:3, activation:[2,4,6],icon:'🕸️', income:1, requiresPort:true, desc:'Любой ход: +1 монета (нужен Порт)' },
-  { id:'hfishagency',name:'Рыболовное агентство',type:'blue',cost:8, activation:[1,3,5,7,9,11,13,15,17], icon:'🏭', income:1, requiresPort:true, desc:'Любой ход (При нечётном броске): +1 монета (нужен Порт)' },
+  { id:'hwheat',   name:'Пшеничное поле',        activation:[1],   icon:'🌾', income:2, desc:'Любой ход: +2 монеты из банка' },
+  { id:'hpotato',  name:'Картофельное поле',     activation:[4],   icon:'🥔', income:1, special:'potato', desc:'Любой ход: +1 монета за каждое ваше Картофельное поле' },
+  { id:'hcorn',    name:'Кукурузное поле',       activation:[5],   icon:'🌽', income:2, desc:'Любой ход: +2 монеты из банка' },
+  { id:'hpoultry', name:'Птицефабрика',          activation:[2],   icon:'🐔', special:'poultry', desc:'Любой ход: +1 монета за каждый курятник в городе' },
+  { id:'hpig',     name:'Свиноферма',            activation:[3,4], icon:'🐖', income:2, desc:'Любой ход: +2 монеты из банка' },
+  { id:'hmeat',    name:'Мясная ферма',          activation:[4,5,6], icon:'🥩', special:'meatfarm', desc:'Любой ход (сумма 4-6): +2 монеты. Блокируется Птицефабрикой/Свинофермой' },
+  { id:'hfishboat',name:'Рыбацкая лодка',        activation:[1,5], icon:'🚣', income:2, requiresPort:true, desc:'Любой ход: +2 монеты (нужен Порт)' },
+  { id:'hfishnet', name:'Рыбацкие сети',         activation:[2,4,6], icon:'🕸️', income:1, requiresPort:true, desc:'Любой ход: +1 монета (нужен Порт)' },
+  { id:'hfishagency',name:'Рыболовное агентство',activation:[1,3,5,7,9,11,13,15,17], icon:'🏭', income:1, requiresPort:true, desc:'Любой ход (нечётный бросок): +1 монета (нужен Порт)' }
 ];
 
 const OLD_UPGRADES = [
-  { id:'hwheatU',  name:'Улучш. пшеничное поле', type:'blue',  cost:3, activation:[1,2], icon:'🌾', income:2, upgradeOf:'hwheat', desc:'Любой ход: +2 монеты из банка' },
-  { id:'hpotatoU', name:'Улучш. картофельное поле',type:'blue',cost:6, activation:[4],   icon:'🥔', special:'potatoU', upgradeOf:'hpotato', desc:'Любой ход: каждое поле приносит по 2 монеты за каждое ваше картофельное поле' },
-  { id:'hcornU',   name:'Улучш. кукурузное поле', type:'blue', cost:9, activation:[5,6], icon:'🌽', income:2, upgradeOf:'hcorn', desc:'Любой ход: +2 монеты из банка' },
-  { id:'hpoultryU',name:'Улучш. птицефабрика',  type:'blue',  cost:3, activation:[2],   icon:'🐔', special:'poultry', upgradeOf:'hpoultry', desc:'Любой ход: +2 монеты за каждый курятник в городе' },
-  { id:'hpigU',    name:'Улучш. свиноферма',       type:'blue',  cost:6, activation:[3,4], icon:'🐖', income:3, upgradeOf:'hpig', desc:'Любой ход: +3 монеты из банка' },
-  { id:'hmeatU',   name:'Улучш. мясная ферма',      type:'blue',  cost:15,activation:[4,5,6],icon:'🥩', special:'meatfarm', upgradeOf:'hmeat', desc:'Любой ход: +3 монеты. Блокируется' },
-  { id:'hfishboatU',name:'Улучш. рыбацкая лодка',type:'blue', cost:6, activation:[1,3,5], icon:'🚣', income:2, requiresPort:true, upgradeOf:'hfishboat', desc:'Любой ход: +2 монеты (нужен Порт)' },
-  { id:'hfishnetU',name:'Улучш. рыбацкие сети', type:'blue',  cost:9, activation:[1,2,3,4,5,6], icon:'🕸️', income:1, requiresPort:true, upgradeOf:'hfishnet', desc:'Любой ход: +1 монета (нужен Порт)' },
-  { id:'hfishagencyU',name:'Улучш. рыболовное агентство',type:'blue',cost:24,activation:[1,3,5,7,9,11,13,15,17], icon:'🏭', income:2, requiresPort:true, upgradeOf:'hfishagency', desc:'Любой ход (При нечётном броске): +2 монеты' },
+  { id:'hwheatU',  name:'Улучш. пшеничное поле', activation:[1,2], icon:'🌾', income:3, upgradeOf:'hwheat', desc:'Любой ход: +3 монеты из банка' },
+  { id:'hpotatoU', name:'Улучш. картофельное поле',activation:[4],   icon:'🥔', income:2, special:'potatoU', upgradeOf:'hpotato', desc:'Любой ход: +2 монеты за каждое ваше Картофельное поле' },
+  { id:'hcornU',   name:'Улучш. кукурузное поле', activation:[5,6], icon:'🌽', income:2, upgradeOf:'hcorn', desc:'Любой ход: +2 монеты из банка' },
+  { id:'hpoultryU',name:'Улучш. птицефабрика',   activation:[2],   icon:'🐔', special:'poultryU', upgradeOf:'hpoultry', desc:'Любой ход: +2 монеты за каждый курятник в городе' },
+  { id:'hpigU',    name:'Улучш. свиноферма',      activation:[3,4], icon:'🐖', income:3, upgradeOf:'hpig', desc:'Любой ход: +3 монеты из банка' },
+  { id:'hmeatU',   name:'Улучш. мясная ферма',    activation:[4,5,6], icon:'🥩', special:'meatfarmU', upgradeOf:'hmeat', desc:'Любой ход (сумма 4-6): +3 монеты. Блокируется' },
+  { id:'hfishboatU',name:'Улучш. рыбацкая лодка',activation:[1,3,5], icon:'🚣', income:2, requiresPort:true, upgradeOf:'hfishboat', desc:'Любой ход: +2 монеты (нужен Порт)' },
+  { id:'hfishnetU',name:'Улучш. рыбацкие сети',  activation:[1,2,3,4,5,6], icon:'🕸️', income:1, requiresPort:true, upgradeOf:'hfishnet', desc:'Любой ход (1-6): +1 монета (нужен Порт)' },
+  { id:'hfishagencyU',name:'Улучш. рыболовное агентство',activation:[1,3,5,7,9,11,13,15,17], icon:'🏭', income:2, requiresPort:true, upgradeOf:'hfishagency', desc:'Любой ход (нечётный): +2 монеты (нужен Порт)' }
 ];
 
 const NEW_BASE = [
-  { id:'ncoal',  name:'Угольная шахта',    type:'blue', cost:5, activation:[7], icon:'⛏️', income:3, desc:'Любой ход: +3 монеты из банка' },
-  { id:'nwood',  name:'Лесопилка',         type:'blue', cost:7, activation:[8,9], icon:'🪓', income:4, desc:'Любой ход: +4 монеты из банка' },
-  { id:'nsea',   name:'Морская скважина',  type:'blue', cost:10, activation:[2,4,6,8,10,12,14,16,18], icon:'🌊', income:2, requiresPortUp:true, desc:'Любой ход (При чётном броске): +2 монеты (нужен расш. Порт)' },
-  { id:'ngas',   name:'Газовая скважина',  type:'blue', cost:5, activation:[10,11,12], icon:'🔥', special:'gas', desc:'Любой ход: +10 монет. По -3 💰 за каждую иную газовую скважину в игре' },
+  { id:'ncoal',  name:'Угольная шахта',    activation:[7], icon:'⛏️', income:3, desc:'Любой ход: +3 монеты из банка' },
+  { id:'nwood',  name:'Лесопилка',         activation:[8,9], icon:'🪓', income:4, desc:'Любой ход: +4 монеты из банка' },
+  { id:'nsea',   name:'Морская скважина',  activation:[2,4,6,8,10,12,14,16,18], icon:'🌊', income:2, requiresPort:true, desc:'Любой ход (чётный бросок): +2 монеты (нужен Порт)' },
+  { id:'ngas',   name:'Газовая скважина',  activation:[10,11,12], icon:'🔥', income:5, desc:'Любой ход: +5 монет из банка' }
 ];
 
 const NEW_UPGRADES = [
-  { id:'ncoalU', name:'Улучш. угольная шахта', type:'blue', cost:15, activation:[7,8], icon:'⛏️', income:3, upgradeOf:'ncoal', desc:'Любой ход: +3 монеты из банка' },
-  { id:'nwoodU', name:'Улучш. лесопилка',      type:'blue', cost:21, activation:[8,9,10], icon:'🪓', income:4, upgradeOf:'nwood', desc:'Любой ход: +4 монеты из банка' },
-  { id:'nseaU',  name:'Улучш. скважина',       type:'blue', cost:30, activation:[2,4,6,8,10,12,14,16,18], icon:'🌊', income:4, requiresPortUp:true, upgradeOf:'nsea', desc:'Любой ход (При чётном броске): +4 монеты (нужен расш. Порт)' },
-  { id:'ngasU',  name:'Улучш. газовая скважина',type:'blue', cost:15, activation:[10,11,12], icon:'🔥', special:'gasU', upgradeOf:'ngas', desc:'Любой ход: +10 монет. По -1 💰 за каждую иную газовую скважину' },
+  { id:'ncoalU', name:'Улучш. угольная шахта', activation:[7,8], icon:'⛏️', income:5, upgradeOf:'ncoal', desc:'Любой ход: +5 монет из банка' },
+  { id:'nwoodU', name:'Улучш. лесопилка',      activation:[8,9,10], icon:'🪓', income:6, upgradeOf:'nwood', desc:'Любой ход: +6 монет из банка' },
+  { id:'nseaU',  name:'Улучш. морская скважина',activation:[2,4,6,8,10,12,14,16,18], icon:'🌊', income:4, requiresPort:true, upgradeOf:'nsea', desc:'Любой ход (чётный): +4 монеты (нужен Порт)' },
+  { id:'ngasU',  name:'Улучш. газовая скважина',activation:[10,11,12], icon:'🔥', income:10, upgradeOf:'ngas', desc:'Любой ход: +10 монет из банка' }
 ];
 
-const ALL_ESTABLISHMENTS = [...OLD_BASE, ...OLD_UPGRADES, ...NEW_BASE, ...NEW_UPGRADES];
+// Цены на карты задаются отдельно
+const CARD_COSTS = {
+  hwheat:1, hpotato:2, hcorn:3, hpoultry:1, hpig:2, hmeat:5, hfishboat:2, hfishnet:3, hfishagency:8,
+  hwheatU:3, hpotatoU:6, hcornU:9, hpoultryU:3, hpigU:6, hmeatU:15, hfishboatU:6, hfishnetU:9, hfishagencyU:24,
+  ncoal:5, nwood:7, nsea:10, ngas:5,
+  ncoalU:15, nwoodU:21, nseaU:30, ngasU:15
+};
 
-const CONSTRUCTION_LANDMARKS = [
-  { id:'port',       category:'infra', cost:8,  icon:'⚓', name:'Порт', desc:'Позволяет бросать 2 кубика вместо одного' },
-  { id:'portUp',     category:'infra', cost:16,  icon:'⚓', name:'Порт: расширение', upgradeOf:'port', desc:'Дубль на 2 кубиках дарит доп. ход. Нужен для Морских скважин' },
-  { id:'station',    category:'infra', cost:16,  icon:'🚉', name:'Вокзал', desc:'Позволяет бросать 3 кубика вместо одного' },
-  { id:'stationUp',  category:'infra', cost:28, icon:'🚉', name:'Вокзал: расширение', upgradeOf:'station', desc:'Дубль на 3 кубиках активирует инженерию без дубля' },
-  { id:'airport',    category:'infra', cost:12,  icon:'✈️', name:'Аэропорт', desc:'Раз за ход можно перебросить все кубики' },
-  { id:'airportUp',  category:'infra', cost:20, icon:'✈️', name:'Аэропорт: расширение', upgradeOf:'airport', desc:'Переброс становится точечным — только 1 кубик' },
+const ALL_ESTABLISHMENTS = [...OLD_BASE, ...OLD_UPGRADES, ...NEW_BASE, ...NEW_UPGRADES].map(c => ({...c, cost: CARD_COSTS[c.id]}));
 
-  { id:'modernization',   category:'research', cost:20, icon:'⚙️', name:'Модернизация', desc:'Открывает покупку улучшенных предприятий' },
-  { id:'animalhusbandry', category:'research', cost:28, icon:'📈', name:'Животноводство', desc:'Все синие предприятия срабатывают дважды' },
-  { id:'engineering',     category:'research', cost:20, icon:'🔧', name:'Инженерия', desc:'Определенные типы предприятий срабатывают еще раз при дубле' },
-  { id:'michelin',        category:'research', cost:20, icon:'⭐', name:'Мишлен', desc:'Особые здания запускают связанные предприятия' },
-  { id:'innovations',     category:'research', cost:24, icon:'💡', name:'Инновации', desc:'Открывает покупку расширений для построек' },
-
-  { id:'senate',    category:'political', cost:24, icon:'🏛️', name:'Сенат', desc:'Открывает нижнюю и верхнюю палату на 3 кубиках' },
-  { id:'spycenter', category:'political', cost:32, icon:'🕵️', name:'Шпионский центр', desc:'Нижний стрит (1,2 или 1,2,3) — контроль чужого броска' },
-  { id:'opposition',category:'political', cost:36, icon:'✊', name:'Оппозиция', desc:'Верхний стрит — сносит улучшение соперника' },
-  { id:'coup',      category:'political', cost:40, icon:'⚡', name:'Переворот', desc:'Бросок 1, 2 или 3 — все соперники пропускают следующий ход' },
+/* ======================= ДОСТОПРИМЕЧАТЕЛЬНОСТИ ======================= */
+const INFRA_LANDMARKS = [
+  { id:'port',       category:'infra', cost:4,  icon:'⚓', name:'Порт', desc:'Позволяет бросать 2 кубика вместо одного' },
+  { id:'portUp',     category:'infra', cost:8,  icon:'⚓', name:'Порт: расширение', upgradeOf:'port', desc:'Дубль на 2 кубиках дарит дополнительный ход' },
+  { id:'station',    category:'infra', cost:8,  icon:'🚉', name:'Вокзал', desc:'Позволяет бросать 3 кубика вместо одного' },
+  { id:'stationUp',  category:'infra', cost:14, icon:'🚉', name:'Вокзал: расширение', upgradeOf:'station', desc:'Дубль на 3 кубиках дарит 2 дополнительные покупки' },
+  { id:'airport',    category:'infra', cost:6,  icon:'✈️', name:'Аэропорт', desc:'Раз за ход можно перебросить все кубики' },
+  { id:'airportUp',  category:'infra', cost:10, icon:'✈️', name:'Аэропорт: расширение', upgradeOf:'airport', desc:'Переброс становится точечным — только 1 кубик' },
 ];
 
-/* ======================= СОСТОЯНИЕ ИГРЫ ======================= */
+const RESEARCH_LANDMARKS = [
+  { id:'modernization',   category:'research', cost:10, icon:'⚙️', name:'Модернизация', desc:'Открывает покупку улучшенных предприятий' },
+  { id:'animalhusbandry', category:'research', cost:14, icon:'📈', name:'Животноводство', desc:'Все синие предприятия срабатывают дважды' },
+  { id:'engineering',     category:'research', cost:10, icon:'🔧', name:'Инженерия', desc:'Эффект дубля кубиков удваивает прибыль' },
+  { id:'michelin',        category:'research', cost:10, icon:'⭐', name:'Мишлен', desc:'Каждое улучшение приносит +1 монету бонуса' },
+  { id:'innovations',     category:'research', cost:12, icon:'💡', name:'Инновации', desc:'Открывает покупку расширений Инфраструктуры' },
+];
+
+const POLITICAL_LANDMARKS = [
+  { id:'senate',    category:'political', cost:12, icon:'🏛️', name:'Сенат', desc:'Открывает нижнюю (3-6) и верхнюю (16-18) палату на 3 кубиках' },
+  { id:'spycenter', category:'political', cost:16, icon:'🕵️', name:'Шпионский центр', desc:'Нижний стрит на 2 костях — контроль чужого броска' },
+  { id:'opposition',category:'political', cost:18, icon:'✊', name:'Оппозиция', desc:'Верхний стрит на 2 костях — сносит улучшение соперника' },
+  { id:'coup',      category:'political', cost:20, icon:'⚡', name:'Переворот', desc:'Бросок 1, 2 или 3 — все соперники пропускают следующий ход' },
+];
+
+const ALL_LANDMARKS = INFRA_LANDMARKS.concat(RESEARCH_LANDMARKS, POLITICAL_LANDMARKS);
+const START_CARDS = { hwheat:1, hpoultry:1 };
+const START_COINS = 3;
+
 let state = null;
-let aiTimeout = null;
 
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -188,7 +194,6 @@ function shuffle(array) {
   }
 }
 
-// Поиск следующей уникальной карты, которой сейчас нет на рынке
 function getNextUniqueCard(deck, currentMarket) {
   for (let i = deck.length - 1; i >= 0; i--) {
     const candidateId = deck[i];
@@ -196,91 +201,91 @@ function getNextUniqueCard(deck, currentMarket) {
       return deck.splice(i, 1)[0];
     }
   }
-  return deck.pop(); // Если уникальных нет, берём любую с конца
+  return deck.pop(); 
 }
 
-function newGame(numPlayers, names, types, includeNewCards){
-  const deckBase = [];
-  const deckUpgrade = [];
+function newGame(numPlayers, names){
   const supply = {};
+  
+  const deckBaseOld = []; OLD_BASE.forEach(c => { supply[c.id] = 6; for(let i=0; i<6; i++) deckBaseOld.push(c.id); });
+  const deckBaseNew = []; NEW_BASE.forEach(c => { supply[c.id] = 6; for(let i=0; i<6; i++) deckBaseNew.push(c.id); });
+  const deckUpgradeOld = []; OLD_UPGRADES.forEach(c => { supply[c.id] = 6; for(let i=0; i<6; i++) deckUpgradeOld.push(c.id); });
+  const deckUpgradeNew = []; NEW_UPGRADES.forEach(c => { supply[c.id] = 6; for(let i=0; i<6; i++) deckUpgradeNew.push(c.id); });
 
-  OLD_BASE.forEach(c => { supply[c.id] = 6; for(let i=0; i<6; i++) deckBase.push(c.id); });
-  if (includeNewCards) {
-    NEW_BASE.forEach(c => { supply[c.id] = 6; for(let i=0; i<6; i++) deckBase.push(c.id); });
+  shuffle(deckBaseOld); shuffle(deckBaseNew); shuffle(deckUpgradeOld); shuffle(deckUpgradeNew);
+
+  const marketBaseOld = [];
+  while(marketBaseOld.length < 4 && deckBaseOld.length > 0) {
+    let card = getNextUniqueCard(deckBaseOld, marketBaseOld);
+    if(card) { marketBaseOld.push(card); supply[card]--; }
   }
 
-  OLD_UPGRADES.forEach(c => { supply[c.id] = 2; for(let i=0; i<2; i++) deckUpgrade.push(c.id); });
-  if (includeNewCards) {
-    NEW_UPGRADES.forEach(c => { supply[c.id] = 2; for(let i=0; i<2; i++) deckUpgrade.push(c.id); });
+  const marketBaseNew = [];
+  while(marketBaseNew.length < 4 && deckBaseNew.length > 0) {
+    let card = getNextUniqueCard(deckBaseNew, marketBaseNew);
+    if(card) { marketBaseNew.push(card); supply[card]--; }
   }
 
-  shuffle(deckBase);
-  shuffle(deckUpgrade);
-
-  const marketBase = [];
-  const marketUpgrade = [];
-
-  // Заполняем рынок базовых карт (4 уникальных стартовых объекта)
-  while (marketBase.length < 4 && deckBase.length > 0) {
-    const nextCardId = getNextUniqueCard(deckBase, marketBase);
-    if (nextCardId) {
-      marketBase.push(nextCardId);
-      supply[nextCardId]--;
-    } else break;
+  const marketUpgradeOld = [];
+  while(marketUpgradeOld.length < 2 && deckUpgradeOld.length > 0) {
+    let card = getNextUniqueCard(deckUpgradeOld, marketUpgradeOld);
+    if(card) { marketUpgradeOld.push(card); supply[card]--; }
   }
 
-  // Заполняем рынок улучшений (2 уникальных стартовых объекта)
-  while (marketUpgrade.length < 2 && deckUpgrade.length > 0) {
-    const nextCardId = getNextUniqueCard(deckUpgrade, marketUpgrade);
-    if (nextCardId) {
-      marketUpgrade.push(nextCardId);
-      supply[nextCardId]--;
-    } else break;
+  const marketUpgradeNew = [];
+  while(marketUpgradeNew.length < 2 && deckUpgradeNew.length > 0) {
+    let card = getNextUniqueCard(deckUpgradeNew, marketUpgradeNew);
+    if(card) { marketUpgradeNew.push(card); supply[card]--; }
   }
 
   const players = [];
   for(let i=0; i<numPlayers; i++){
-    const lm = {}; CONSTRUCTION_LANDMARKS.forEach(l => { lm[l.id] = false; });
+    const lm = {}; ALL_LANDMARKS.forEach(l => { lm[l.id] = false; });
     players.push({
-      name: names[i], coins: 5, cards: {}, landmarks: lm, skipNext: false, isAI: types[i] === 'ai'
+      name: names[i] || ('Игрок '+(i+1)),
+      coins: START_COINS,
+      cards: {...START_CARDS},
+      landmarks: lm,
+      skipNext: false,
     });
   }
 
   return {
-    players, supply, deckBase, deckUpgrade, marketBase, marketUpgrade,
-    current: 0, log: [], phase: 'roll', includeNewCards,
+    players, supply, 
+    deckBaseOld, deckBaseNew, deckUpgradeOld, deckUpgradeNew,
+    marketBaseOld, marketBaseNew, marketUpgradeOld, marketUpgradeNew,
+    current: 0, log: [], phase: 'roll',
     lastRoll: null, usedReroll: false, bonusReroll: false, pending: null, pendingSpy: null,
-    winner: null, extraTurn: false, purchasesRemaining: 1, isDouble: false
+    winner: null, extraTurn: false, purchasesRemaining: 1,
   };
 }
 
-function log(msg){ state.log.unshift(msg); if(state.log.length>30) state.log.pop(); }
+function log(msg){ state.log.unshift(msg); if(state.log.length>40) state.log.pop(); }
 function curPlayer(){ return state.players[state.current]; }
 function count(player, id){ return player.cards[id]||0; }
 
-/* ======================= ИГРОВАЯ ЛОГИКА ======================= */
+/* ======================= ИГРОВАЯ ЛОГИКА СИНЕЙ АКТИВАЦИИ И КУБИКОВ ======================= */
 function rollDice(numDice){
   state.log = [];
   if(state.pendingSpy && state.pendingSpy.targetIdx === state.current){
-    log(`🕵️ Контроль броска: ${state.players[state.pendingSpy.ownerIdx].name} управляет костями ${curPlayer().name}`);
+    log(`🕵️ Контроль броска: ${state.players[state.pendingSpy.ownerIdx].name} управляет броском ${curPlayer().name}`);
     state.pendingSpy = null;
   }
   const dice = [];
   for(let i=0; i<numDice; i++) dice.push(1+Math.floor(Math.random()*6));
   state.lastRoll = dice;
   state.usedReroll = false;
-  state.isDouble = (numDice >= 2 && dice.every(val => val === dice[0]));
   resolveRoll(dice, false);
   render();
 }
 
 function rerollAll(){
   const p = curPlayer();
-  if(!p.landmarks.airport || state.usedReroll) return;
-  state.usedReroll = true;
+  const eligible = (p.landmarks.airport && !state.usedReroll) || state.bonusReroll;
+  if(!eligible || p.landmarks.airportUp) return;
+  if(state.bonusReroll) state.bonusReroll=false; else state.usedReroll=true;
   const dice = state.lastRoll.map(() => 1+Math.floor(Math.random()*6));
   state.lastRoll = dice;
-  state.isDouble = (dice.length >= 2 && dice.every(val => val === dice[0]));
   log('🔁 Переброшены все кубики: ' + dice.join(' + '));
   resolveRoll(dice, true);
   render();
@@ -288,104 +293,90 @@ function rerollAll(){
 
 function rerollOne(idx){
   const p = curPlayer();
-  if(!p.landmarks.airport || !p.landmarks.airportUp || state.usedReroll) return;
-  state.usedReroll = true;
+  const eligible = (p.landmarks.airport && !state.usedReroll) || state.bonusReroll;
+  if(!eligible || !p.landmarks.airportUp) return;
+  if(state.bonusReroll) state.bonusReroll=false; else state.usedReroll=true;
   const dice = [...state.lastRoll];
   dice[idx] = 1+Math.floor(Math.random()*6);
   state.lastRoll = dice;
-  state.isDouble = (dice.length >= 2 && dice.every(val => val === dice[0]));
   log(`🔁 Переброшен кубик №${idx+1}: новое значение ${dice[idx]}`);
   resolveRoll(dice, true);
   render();
 }
 
-function checkStraight(dice, targetArr) {
-  if (dice.length !== targetArr.length) return false;
-  return [...dice].sort().every((val, i) => val === [...targetArr].sort()[i]);
-}
-
 function resolveRoll(dice, isReroll){
   const total = dice.reduce((a,b)=>a+b,0);
   if(!isReroll) log('🎲 ' + curPlayer().name + ' выбросил(а): ' + dice.join(' + ') + ' = ' + total);
-  else log('   Новый результат броска: ' + total);
+  else log('   Новый результат суммы: ' + total);
 
-  const activeIdx = state.current;
   const active = curPlayer();
 
-  state.players.forEach((p, pIdx) => {
+  // Срабатывают СИНЬОРИИ (активация у всех игроков вне зависимости от того, чей сейчас ход)
+  state.players.forEach(p => {
     ALL_ESTABLISHMENTS.forEach(card => {
       if(!card.activation.includes(total)) return;
       if(card.requiresPort && !p.landmarks.port) return;
-      if(card.requiresPortUp && !p.landmarks.portUp) return;
-      
       const c = count(p, card.id);
       if(c <= 0) return;
-      
+
       let amount = 0;
-      let labelDetails = '';
-
-      if(card.special === 'potato'){
-        const totalPotatoes = count(p, 'hpotato');
-        amount = totalPotatoes * c;
-        labelDetails = ` (синергия полей: ${totalPotatoes} полей по ${totalPotatoes} 💰)`;
-      } else if(card.special === 'potatoU'){
-        const totalPotatoes = count(p, 'hpotato') + count(p, 'hpotatoU');
-        amount = (2 * totalPotatoes) * c;
-        labelDetails = ` (синергия улучш. полей: по ${2 * totalPotatoes} 💰)`;
-      } else if(card.special === 'poultry'){
-        const rate = card.id === 'hpoultry' ? 1 : 2;
+      
+      // Специфика расчёта прибыли
+      if(card.special === 'potato' || card.special === 'potatoU'){
+        const mult = card.special === 'potato' ? 1 : 2;
+        const countPotato = count(p, 'hpotato') + count(p, 'hpotatoU');
+        amount = mult * countPotato * c;
+      } else if(card.special === 'poultry' || card.special === 'poultryU'){
+        const mult = card.special === 'poultry' ? 1 : 2;
         const globalPoultry = state.players.reduce((s,pl) => s + count(pl,'hpoultry') + count(pl,'hpoultryU'), 0);
-        amount = rate * globalPoultry * c;
-      } else if(card.special === 'meatfarm'){
+        amount = mult * globalPoultry * c;
+      } else if(card.special === 'meatfarm' || card.special === 'meatfarmU'){
+        // Мясная ферма: проверяется сумма 4, 5, 6 кубиков (уже пройдено по .includes(total))
         const blocked = count(p,'hpoultry')>0 || count(p,'hpoultryU')>0 || count(p,'hpig')>0 || count(p,'hpigU')>0;
-        amount = blocked ? 0 : (card.id === 'hmeat' ? 2 : 3) * c;
-      } else if(card.special === 'gas' || card.special === 'gasU'){
-        const globalGas = state.players.reduce((s,pl) => s + count(pl,'ngas') + count(pl,'ngasU'), 0);
-        const penaltyRate = card.special === 'gas' ? 3 : 1;
-        const otherGasCount = Math.max(0, globalGas - 1); 
-        const baseIncome = 10;
-        const netEach = Math.max(0, baseIncome - (otherGasCount * penaltyRate));
-        amount = netEach * c;
-        labelDetails = ` (база 10, штраф за другие скважины: -${otherGasCount * penaltyRate} 💰)`;
+        const rate = card.special === 'meatfarm' ? 2 : 3;
+        amount = blocked ? 0 : rate * c;
+      } else if(card.id === 'nsea' || card.id === 'nseaU') {
+        if(total % 2 === 0) amount = (card.id === 'nsea' ? 2 : 4) * c;
       } else {
-        amount = (card.income || 0) * c;
+        amount = card.income * c;
       }
 
-      if(p.landmarks.animalhusbandry && card.type === 'blue') amount *= 2;
-      if(p.landmarks.engineering && (card.id.startsWith('nsea') || card.id.startsWith('ngas'))){
-        if(state.isDouble || p.landmarks.stationUp) {
-          amount *= 2;
-          labelDetails += ' [Инженерия 🔧]';
-        }
-      }
-
+      // Удваивание от Животноводства
+      if(p.landmarks.animalhusbandry) amount *= 2;
+      // Удвоение от Инженерии при дубле
+      if(p.landmarks.engineering && dice.length > 1 && dice.every(val => val === dice[0])) amount *= 2;
+      
       if(amount > 0){ 
         p.coins += amount; 
-        log(`  ${card.icon} ${card.name} (${p.name}): +${amount} 💰${labelDetails}`); 
+        log(`🔹 [Синяя карта] ${card.icon} ${card.name} принесла ${p.name}: +${amount} 💰 из банка`); 
       }
     });
   });
 
-  if(active.coins === 0) { active.coins = 1; log(`🎁 Банк выделил +1 монету антикризисной помощи ${active.name}!`); }
-
-  const lower2 = checkStraight(dice, [1, 2]);
-  const lower3 = active.landmarks.senate && checkStraight(dice, [1, 2, 3]);
-  const upper2 = checkStraight(dice, [5, 6]);
-  const upper3 = active.landmarks.senate && checkStraight(dice, [4, 5, 6]);
+  // Эффекты политических палат
+  const twoDice = dice.length===2, threeDice = dice.length===3;
+  const lower2 = twoDice && [2,3].includes(total);
+  const upper2 = twoDice && [11,12].includes(total);
+  const lower3 = threeDice && active.landmarks.senate && [3,4,5,6].includes(total);
+  const upper3 = threeDice && active.landmarks.senate && [16,17,18].includes(total);
 
   if(active.landmarks.coup && [1,2,3].includes(total)){
     state.players.forEach((p,i) => { if(i !== state.current) p.skipNext = true; });
-    log('⚡ Переворот! Соперники пропускают ход.');
+    log('⚡ Переворот: все остальные игроки пропустят следующий ход!');
   }
-  if(active.landmarks.spycenter && (lower2 || lower3) && state.players.length > 1){
-    state.pending = { type: 'spy_choose_target' };
+  if(active.landmarks.spycenter && (lower2||lower3) && state.players.length>1){
+    if(lower3){ state.bonusReroll = true; log('🕵️ Шпионский центр: назначен доп. переброс.'); }
+    if(lower2) state.pending = { type:'spy_choose_target' };
   }
-  if(active.landmarks.opposition && (upper2 || upper3) && state.players.length > 1){
-    state.pending = { type: 'opp_choose_target', destroySenate: upper3 };
+  if(active.landmarks.opposition && (upper2||upper3) && state.players.length>1){
+    state.pending = { type:'opp_choose_target', destroySenate: upper3 };
   }
 
-  if(state.isDouble && active.landmarks.portUp){
-    state.extraTurn = true; log('✨ Дополнительный ход за дубль (Порт).');
+  if(dice.length===2 && dice[0]===dice[1] && active.landmarks.portUp){
+    state.extraTurn = true; log('✨ Дубль! Назначен доп. ход.');
+  }
+  if(dice.length===3 && dice[0]===dice[1] && dice[1]===dice[2] && active.landmarks.stationUp){
+    state.purchasesRemaining += 2; log('✨ Тройной дубль! Доступно +2 покупки.');
   }
 
   state.phase = state.pending ? 'pending' : 'postroll';
@@ -393,12 +384,12 @@ function resolveRoll(dice, isReroll){
 
 function resolveSpyTarget(targetIdx){
   state.pendingSpy = { ownerIdx: state.current, targetIdx };
-  log(`🕵️ ${curPlayer().name} перехватил управление кубиками у ${state.players[targetIdx].name}`);
+  log(`🕵️ ${curPlayer().name} перехватил управление кубиками у игрока ${state.players[targetIdx].name}`);
   state.pending = null; state.phase = 'postroll'; render();
 }
 
 function oppChooseTarget(targetIdx){
-  state.pending = { type: 'opp_choose_building', targetIdx, destroySenate: state.pending.destroySenate };
+  state.pending = { type:'opp_choose_building', targetIdx, destroySenate: state.pending.destroySenate };
   render();
 }
 
@@ -406,7 +397,7 @@ function oppDestroyBuilding(cardId){
   const target = state.players[state.pending.targetIdx];
   target.cards[cardId] = Math.max(0, (target.cards[cardId]||0)-1);
   const c = ALL_ESTABLISHMENTS.find(x => x.id === cardId);
-  log(`✊ Оппозиция уничтожила улучшение «${c.name}» у игрока ${target.name}`);
+  log(`✊ Оппозиция: у ${target.name} удалено улучшение «${c.name}»`);
   finishOpposition();
 }
 
@@ -418,270 +409,224 @@ function finishOpposition(){
   state.pending = null; state.phase = 'postroll'; render();
 }
 
-function buyCard(id, isUpgrade, slotIndex){
-  if(state.purchasesRemaining <= 0) return false;
+/* ======================= РЫНКИ И ПОКУПКИ ======================= */
+function buyCard(id, marketType, slotIndex){
+  if(state.purchasesRemaining <= 0) return;
   const p = curPlayer();
   const card = ALL_ESTABLISHMENTS.find(c => c.id === id);
-  if(!card || p.coins < card.cost) return false;
+  if(!card || state.supply[id] <= 0 || p.coins < card.cost) return;
 
-  if(isUpgrade){
-    if(!p.landmarks.modernization || count(p, card.upgradeOf) < 1) return false;
+  if(card.upgradeOf){
+    if(!p.landmarks.modernization || count(p, card.upgradeOf) < 1) return;
     p.coins -= card.cost;
     p.cards[card.upgradeOf] -= 1;
     p.cards[id] = (p.cards[id]||0) + 1;
-    log(`⚙️ ${p.name} улучшил(а) предприятие до: ${card.icon} ${card.name}`);
-
-    // Замена купленной карты на рынке улучшений строго на УНИКАЛЬНУЮ
-    if(state.deckUpgrade.length > 0) {
-      const nextCardId = getNextUniqueCard(state.deckUpgrade, state.marketUpgrade);
-      if (nextCardId) {
-        state.marketUpgrade[slotIndex] = nextCardId;
-        state.supply[nextCardId]--;
-      } else {
-        state.marketUpgrade.splice(slotIndex, 1);
-      }
-    } else {
-      state.marketUpgrade.splice(slotIndex, 1);
-    }
+    state.supply[id]--;
+    const baseCard = ALL_ESTABLISHMENTS.find(c => c.id === card.upgradeOf);
+    log(`⚙️ ${p.name} провёл модернизацию: ${baseCard.name} → ${card.name}`);
   } else {
     p.coins -= card.cost;
     p.cards[id] = (p.cards[id]||0) + 1;
-    log(`🛒 ${p.name} купил(а) предприятие: ${card.icon} ${card.name}`);
-
-    // Замена купленной базовой карты на рынке строго на УНИКАЛЬНУЮ
-    if(state.deckBase.length > 0) {
-      const nextCardId = getNextUniqueCard(state.deckBase, state.marketBase);
-      if (nextCardId) {
-        state.marketBase[slotIndex] = nextCardId;
-        state.supply[nextCardId]--;
-      } else {
-        state.marketBase.splice(slotIndex, 1);
-      }
-    } else {
-      state.marketBase.splice(slotIndex, 1);
-    }
+    state.supply[id]--;
+    log(`🛒 ${p.name} купил(а): ${card.name}`);
   }
 
-  state.purchasesRemaining = 0;
+  // Замещение на рынке строго с проверкой уникальности витрины
+  let deck, market;
+  if(marketType === 'baseOld') { deck = state.deckBaseOld; market = state.marketBaseOld; }
+  else if(marketType === 'baseNew') { deck = state.deckBaseNew; market = state.marketBaseNew; }
+  else if(marketType === 'upgradeOld') { deck = state.deckUpgradeOld; market = state.marketUpgradeOld; }
+  else if(marketType === 'upgradeNew') { deck = state.deckUpgradeNew; market = state.marketUpgradeNew; }
+
+  if(deck && deck.length > 0) {
+    const nextUnique = getNextUniqueCard(deck, market);
+    if(nextUnique) { market[slotIndex] = nextUnique; state.supply[nextUnique]--; }
+    else { market.splice(slotIndex, 1); }
+  } else {
+    market.splice(slotIndex, 1);
+  }
+
+  state.purchasesRemaining--;
   render();
-  return true;
 }
 
 function buildLandmark(id){
-  if(state.purchasesRemaining <= 0) return false;
   const p = curPlayer();
-  const lm = CONSTRUCTION_LANDMARKS.find(l => l.id === id);
-  if(!lm || p.landmarks[id] || p.coins < lm.cost) return false;
-  if(lm.upgradeOf && (!p.landmarks.innovations || !p.landmarks[lm.upgradeOf])) return false;
+  const lm = ALL_LANDMARKS.find(l => l.id === id);
+  if(!lm || p.landmarks[id] || p.coins < lm.cost) return;
+  if(lm.upgradeOf && (!p.landmarks.innovations || !p.landmarks[lm.upgradeOf])) return;
 
   p.coins -= lm.cost;
   p.landmarks[id] = true;
-  log(`🏗️ ${p.name} возвёл объект: ${lm.icon} ${lm.name}`);
-  state.purchasesRemaining = 0;
+  log(`🏗️ ${p.name} возвёл: ${lm.icon} ${lm.name}`);
 
-  if(CONSTRUCTION_LANDMARKS.every(l => p.landmarks[l.id])) state.winner = p;
+  if(POLITICAL_LANDMARKS.every(l => p.landmarks[l.id])) state.winner = p;
   render();
-  return true;
 }
 
 function endTurn(){
   if(state.winner){ render(); return; }
-  if(state.extraTurn){ state.extraTurn = false; } 
-  else {
+  if(state.extraTurn){
+    log('✨ Дополнительный ход активного игрока!'); state.extraTurn = false;
+  } else {
     let next = (state.current+1)%state.players.length;
     let guard = 0;
     while(state.players[next].skipNext && guard < state.players.length){
-      log(`⏭️ ${state.players[next].name} пропускает этот круг`);
+      log(`⏭️ ${state.players[next].name} пропускает ход из-за Переворота`);
       state.players[next].skipNext = false;
       next = (next+1)%state.players.length; guard++;
     }
     state.current = next;
   }
-  state.lastRoll = null; state.usedReroll = false;
+  state.lastRoll = null; state.usedReroll = false; state.bonusReroll = false;
   state.purchasesRemaining = 1; state.phase = 'roll';
   render();
 }
 
-/* ======================= ЛОГИКА ИИ ======================= */
-function runAILogic(){
-  if(!state || state.winner) return;
-  const p = curPlayer(); if(!p.isAI) return;
-  if(aiTimeout) clearTimeout(aiTimeout);
-  
-  aiTimeout = setTimeout(() => {
-    if(state.phase === 'roll'){
-      let d = 1; if(p.landmarks.station) d = 3; else if(p.landmarks.port) d = 2;
-      rollDice(d); return;
-    }
-    if(state.phase === 'pending'){
-      let targetIdx = (state.current + 1) % state.players.length;
-      if(state.pending.type === 'spy_choose_target' || state.pending.type === 'opp_choose_target'){
-        resolveSpyTarget(targetIdx);
-      } else {
-        const target = state.players[state.pending.targetIdx];
-        const ownedUps = OLD_UPGRADES.concat(NEW_UPGRADES).filter(c => count(target, c.id) > 0);
-        if(ownedUps.length > 0) oppDestroyBuilding(ownedUps[0].id); else finishOpposition();
-      }
-      return;
-    }
-    if(state.phase === 'postroll'){
-      if(state.purchasesRemaining > 0){
-        let unbuiltLms = CONSTRUCTION_LANDMARKS.filter(l => !p.landmarks[l.id] && p.coins >= l.cost);
-        unbuiltLms = unbuiltLms.filter(l => !l.upgradeOf || (p.landmarks.innovations && p.landmarks[l.upgradeOf]));
-        if(unbuiltLms.length > 0){
-          unbuiltLms.sort((a,b) => a.cost - b.cost);
-          if(buildLandmark(unbuiltLms[0].id)) return;
-        }
-        
-        let foundAction = false;
-        for (let i = 0; i < state.marketUpgrade.length; i++) {
-          let id = state.marketUpgrade[i];
-          let c = ALL_ESTABLISHMENTS.find(x => x.id === id);
-          if(p.coins >= c.cost && p.landmarks.modernization && count(p, c.upgradeOf) > 0){
-            if(buyCard(id, true, i)) { foundAction = true; break; }
-          }
-        }
-        if (foundAction) return;
-
-        for (let i = 0; i < state.marketBase.length; i++) {
-          let id = state.marketBase[i];
-          let c = ALL_ESTABLISHMENTS.find(x => x.id === id);
-          if(p.coins >= c.cost && (!c.requiresPortUp || p.landmarks.portUp)) {
-            if(buyCard(id, false, i)) { foundAction = true; break; }
-          }
-        }
-        if (foundAction) return;
-      }
-      endTurn();
-    }
-  }, 700);
-}
-
-/* ======================= РЕНДЕР ИНТЕРФЕЙСА ======================= */
+/* ======================= ИНТЕРФЕЙС ======================= */
 const app = document.getElementById('app');
+
 function render(){
   if(!state){ renderSetup(); return; }
   if(state.winner){ renderWinner(); return; }
 
   const p = curPlayer();
-  const inRoll = state.phase==='roll';
-  const inPost = state.phase==='postroll';
-  const isHuman = !p.isAI;
-  const canReroll = p.landmarks.airport && !state.usedReroll;
+  const inRollPhase = state.phase==='roll';
+  const inPostroll = state.phase==='postroll';
+  const inPending = state.phase==='pending';
+  const canReroll = (p.landmarks.airport && !state.usedReroll) || state.bonusReroll;
 
-  let html = `<div class="title"><h1>🎲 Мачи Коро: Тотальная Добыча</h1><div class="sub">Абсолютно все предприятия синие и работают в любой ход!</div></div>`;
+  let html = `<div class="title"><h1>🎲 Мачи Коро: Добыча</h1><div class="sub">Режим: Синие общественные карты (срабатывают всегда)</div></div>`;
   html += `<div class="board"><div>`;
 
+  // Список игроков
   html += `<div class="panel"><div class="players-strip">`;
-  state.players.forEach((pl,i) => {
+  state.players.forEach((pl, i) => {
     html += `<div class="player-chip ${i===state.current?'current':''}">`;
     if(i===state.current) html += `<div class="turn-badge">▶</div>`;
-    html += `<div class="pname">${pl.name}${pl.skipNext?' 😴':''}<span class="badge">${pl.isAI?'ИИ':'Игрок'}</span></div><div class="coins">💰 ${pl.coins}</div>`;
+    html += `<div class="pname">${pl.name}${pl.skipNext?' 😴':''}</div><div class="coins">💰 ${pl.coins}</div>`;
     html += `<div class="lm-row">`;
-    CONSTRUCTION_LANDMARKS.forEach(l => { if(pl.landmarks[l.id]) html += `<span class="lm-icon built" title="${l.name}">${l.icon}</span>`; });
-    html += `</div>`;
-    html += `<div class="my-establishments">`;
-    ALL_ESTABLISHMENTS.forEach(c => {
-      const cnt = count(pl, c.id); if(cnt > 0) html += `<div class="mini-card" style="border-color:var(--blue-card)">${c.icon} x${cnt}</div>`;
-    });
+    ALL_LANDMARKS.forEach(l => { if(pl.landmarks[l.id]) html += `<span class="lm-icon built" title="${l.name}">${l.icon}</span>`; });
+    html += `</div><div class="my-establishments">`;
+    ALL_ESTABLISHMENTS.forEach(c => { const cnt=count(pl,c.id); if(cnt>0) html += `<div class="mini-card">${c.icon} x${cnt}</div>`; });
     html += `</div></div>`;
   });
   html += `</div></div>`;
 
-  html += `<div class="panel"><div class="dice-area">`;
+  // Зона кубиков
+  html += `<div class="panel">`;
+  if(state.pendingSpy && state.pendingSpy.targetIdx===state.current){
+    html += `<div class="banner">🕵️ Ход контролируется шпионом игрока ${state.players[state.pendingSpy.ownerIdx].name}.</div>`;
+  }
+  html += `<div class="dice-area">`;
   if(state.lastRoll){
-    html += `<div class="dice">` + state.lastRoll.map((d,i) => {
+    html += `<div class="dice">` + state.lastRoll.map((d, i) => {
       let cell = `<div class="die-wrap"><div class="die">${d}</div>`;
-      if(inPost && canReroll && p.landmarks.airportUp && isHuman) cell += `<button class="die-reroll" onclick="rerollOne(${i})">🔁</button>`;
+      if(inPostroll && canReroll && p.landmarks.airportUp) cell += `<button class="die-reroll" onclick="rerollOne(${i})">🔁</button>`;
       return cell + `</div>`;
     }).join('') + `</div>`;
-    html += `<div style="font-weight:bold">Сумма: ${state.lastRoll.reduce((a,b)=>a+b,0)} ${state.isDouble?'(ДУБЛЬ!):' : ':'}</div>`;
+    html += `<div style="font-weight:bold; margin-left:10px;">Сумма: ${state.lastRoll.reduce((a,b)=>a+b,0)}</div>`;
   }
-  if(inRoll && isHuman){
+  if(inRollPhase){
     html += `<button class="action-btn primary" onclick="rollDice(1)">1 кубик</button>`;
     if(p.landmarks.port) html += `<button class="action-btn primary" onclick="rollDice(2)">2 кубика</button>`;
     if(p.landmarks.station) html += `<button class="action-btn primary" onclick="rollDice(3)">3 кубика</button>`;
-  } else if(inRoll) {
-    html += `<div style="font-style:italic">🤖 Компьютер делает расчёты...</div>`;
   }
-  if(inPost && canReroll && !p.landmarks.airportUp && isHuman) html += `<button class="action-btn" onclick="rerollAll()">✈️ Переброс всех</button>`;
-  if(inPost && isHuman) html += `<button class="action-btn primary" onclick="endTurn()">Передать ход</button>`;
-  html += `</div><div class="log">` + state.log.map(l=>`<div>${l}</div>`).join('') + `</div></div>`;
+  if(inPostroll && canReroll && !p.landmarks.airportUp){
+    html += `<button class="action-btn" onclick="rerollAll()">✈️ Переброс всех</button>`;
+  }
+  html += `</div>`;
 
-  // Рынок базовых предприятий (Строго уникальные слоты)
-  html += `<div class="panel"><h3 class="section-title">🏙️ Рынок уникальных предприятий (В колоде: ${state.deckBase.length} шт.)</h3><div class="cards-grid">`;
-  state.marketBase.forEach((id, index) => {
-    const c = ALL_ESTABLISHMENTS.find(item => item.id === id); if(!c) return;
-    const reqPortOk = !c.requiresPort || p.landmarks.port;
-    const reqPortUpOk = !c.requiresPortUp || p.landmarks.portUp;
-    const disabled = !isHuman || !inPost || state.purchasesRemaining<=0 || p.coins<c.cost || !reqPortOk || !reqPortUpOk;
-    
-    html += `<div class="card ${c.type}"><div class="icon">${c.icon}</div><div class="name">${c.name}</div>`;
-    html += `<div class="activation">🎯 Шаг: ${c.activation.join('/')}</div><div class="desc">${c.desc}</div>`;
-    if(c.requiresPortUp && !p.landmarks.portUp) html += `<div style="font-size:0.6em;color:red;font-weight:bold">Нужно расширение порта</div>`;
-    html += `<div class="footer"><span class="cost">${c.cost} 💰</span><span class="supply">В запасе: ${state.supply[c.id]}</span></div>`;
-    html += `<button class="buy-btn" ${disabled?'disabled':''} onclick="buyCard('${c.id}', false, ${index})">Купить</button></div>`;
-  });
+  if(inPostroll){
+    html += `<button class="action-btn primary" onclick="endTurn()">Завершить ход →</button>`;
+    if(state.purchasesRemaining>0) html += `<div style="font-size:.8em;margin-top:4px;color:green;font-weight:bold;">Доступно действий на рынке: ${state.purchasesRemaining}</div>`;
+  }
+  html += `<div class="log">` + state.log.map(l=>`<div>${l}</div>`).join('') + `</div></div>`;
+
+  // Четыре раздельных сбалансированных рынка карт (Все карты оформлены классом blue-type)
+  html += renderMarketSection('🏙️ Базовые предприятия (Старый набор) — 4 карты', state.marketBaseOld, 'baseOld', p, inPostroll);
+  html += renderMarketSection('🌊 Новые предприятия (Шахты/Скважины) — 4 карты', state.marketBaseNew, 'baseNew', p, inPostroll);
+  html += renderMarketSection('⚙️ Улучшения предприятий (Старый набор) — 2 карты', state.marketUpgradeOld, 'upgradeOld', p, inPostroll);
+  html += renderMarketSection('🚀 Улучшения предприятий (Новое дополнение) — 2 карты', state.marketUpgradeNew, 'upgradeNew', p, inPostroll);
+
+  html += `</div>`; 
+
+  // Правая колонка
+  html += `<div>`;
+  html += renderLandmarkSection('🏗️ Инфраструктура', 'infra', INFRA_LANDMARKS, p, inPostroll);
+  html += renderLandmarkSection('🔬 Исследования', 'research', RESEARCH_LANDMARKS, p, inPostroll);
+  html += renderLandmarkSection('🏛️ Линия Политики (Победа)', 'political', POLITICAL_LANDMARKS, p, inPostroll);
   html += `</div></div>`;
 
-  // Рынок улучшений (Строго уникальные слоты)
-  html += `<div class="panel"><h3 class="section-title">⚙️ Рынок уникальных улучшений (В колоде: ${state.deckUpgrade.length} шт.)</h3><div class="cards-grid">`;
-  state.marketUpgrade.forEach((id, index) => {
-    const c = ALL_ESTABLISHMENTS.find(item => item.id === id); if(!c) return;
-    const hasBase = count(p, c.upgradeOf) >= 1;
-    const reqPortUpOk = !c.requiresPortUp || p.landmarks.portUp;
-    const disabled = !isHuman || !inPost || state.purchasesRemaining<=0 || !p.landmarks.modernization || !hasBase || p.coins<c.cost || !reqPortUpOk;
-    const baseName = ALL_ESTABLISHMENTS.find(x=>x.id===c.upgradeOf).name;
-    
-    html += `<div class="card ${c.type}"><div class="icon">${c.icon}</div><div class="name">${c.name}</div>`;
-    html += `<div class="req">Требует: 1 ${baseName}</div><div class="desc">${c.desc}</div>`;
-    if(c.requiresPortUp && !p.landmarks.portUp) html += `<div style="font-size:0.6em;color:red;font-weight:bold">Нужен расш. Порт</div>`;
-    html += `<div class="footer"><span class="cost">${c.cost} 💰</span><span class="supply">В запасе: ${state.supply[c.id]}</span></div>`;
-    html += `<button class="buy-btn" ${disabled?'disabled':''} onclick="buyCard('${c.id}', true, ${index})">Улучшить</button></div>`;
-  });
-  html += `</div></div></div>`;
+  app.innerHTML = html;
+  if(inPending) renderPendingOverlay();
+}
 
-  html += `<div><div class="panel"><h3 class="section-title">🏗️ Городские постройки (Цены ×2)</h3><div class="landmarks-container">`;
-  ['infra', 'research', 'political'].forEach(cat => {
-    html += `<div><span class="subsection-title ${cat}">${cat.toUpperCase()}</span><div class="landmarks-grid">`;
-    CONSTRUCTION_LANDMARKS.filter(l => l.category === cat).forEach(l => {
-      const built = p.landmarks[l.id];
-      let reqOk = !l.upgradeOf || (p.landmarks.innovations && p.landmarks[l.upgradeOf]);
-      const disabled = !isHuman || !inPost || state.purchasesRemaining<=0 || built || p.coins<l.cost || !reqOk;
-      
-      html += `<div class="landmark ${built?'built':''}">`;
-      html += `<div><div class="name">${l.icon} ${l.name}</div><div class="desc">${l.desc}</div>`;
-      if(l.upgradeOf && !p.landmarks[l.upgradeOf]) html += `<div style="font-size:0.65em;color:red;font-weight:bold">Требует базовое здание</div>`;
-      html += `</div><div class="footer"><span class="cost">${built?'Построено':l.cost+' 💰'}</span>`;
-      if(!built) html += `<button class="buy-btn" ${disabled?'disabled':''} onclick="buildLandmark('${l.id}')">Строить</button>`;
-      html += `</div></div>`;
-    });
+function renderMarketSection(title, marketArr, marketType, p, inPostroll) {
+  let html = `<div class="panel"><h3 class="section-title">${title}</h3><div class="cards-grid">`;
+  marketArr.forEach((id, index) => {
+    const c = ALL_ESTABLISHMENTS.find(x => x.id === id); if(!c) return;
+    const owned = count(p, c.id);
+    let disabled = !inPostroll || state.purchasesRemaining <= 0 || state.supply[c.id] <= 0 || p.coins < c.cost;
+    
+    if(c.upgradeOf) {
+      if(!p.landmarks.modernization || count(p, c.upgradeOf) < 1) disabled = true;
+    }
+    if(c.requiresPort && !p.landmarks.port) disabled = true;
+
+    html += `<div class="card blue-type">`;
+    if(owned > 0) html += `<div class="owned-badge">${owned}</div>`;
+    html += `<div class="icon">${c.icon}</div><div class="name">${c.name}</div>`;
+    html += `<div class="activation">🎯 Бросок: ${c.activation.join('/')}</div>`;
+    if(c.requiresPort) html += `<div class="req">⚓ Нужен Порт</div>`;
+    if(c.upgradeOf) {
+      const bc = ALL_ESTABLISHMENTS.find(x => x.id === c.upgradeOf);
+      html += `<div class="req">⚙️ Модерн. + 1х ${bc.name}</div>`;
+    }
+    html += `<div class="desc">${c.desc}</div>`;
+    html += `<div class="footer"><span class="cost">${c.cost} 💰</span><span class="supply">Запас: ${state.supply[c.id]}</span></div>`;
+    html += `<button class="buy-btn" ${disabled?'disabled':''} onclick="buyCard('${c.id}', '${marketType}', ${index})">${c.upgradeOf?'Улучшить':'Купить'}</button>`;
+    html += `</div>`;
+  });
+  html += `</div></div>`;
+  return html;
+}
+
+function renderLandmarkSection(title, cat, list, p, inPostroll){
+  let html = `<div class="panel"><span class="subsection-title ${cat}">${title}</span><div class="landmarks-grid" style="margin-top:10px">`;
+  list.forEach(l => {
+    const built = p.landmarks[l.id];
+    let disabled = !inPostroll || built || p.coins < l.cost;
+    if(l.upgradeOf && (!p.landmarks.innovations || !p.landmarks[l.upgradeOf])) disabled = true;
+
+    html += `<div class="landmark ${built?'built':''}">`;
+    html += `<div class="name">${l.icon} ${l.name}</div><div class="desc">${l.desc}</div>`;
+    if(l.upgradeOf && !p.landmarks[l.upgradeOf]) html += `<div class="req" style="color:red;font-size:0.7em;">⚙️ Требуется: ${l.name.replace(': расширение','')}</div>`;
+    html += `<div class="footer"><span class="cost">${built?'Построено ✅':l.cost+' 💰'}</span>`;
+    if(!built) html += `<button class="buy-btn" ${disabled?'disabled':''} onclick="buildLandmark('${l.id}')">Строить</button>`;
     html += `</div></div>`;
   });
-  html += `</div></div></div></div>`;
-  
-  app.innerHTML = html;
-  if(state.phase === 'pending') renderPendingOverlay();
-  if(p.isAI) runAILogic();
+  html += `</div></div>`;
+  return html;
 }
 
 function renderPendingOverlay(){
-  if(curPlayer().isAI) return;
   let html = `<div class="overlay"><div class="overlay-card">`;
   if(state.pending.type==='spy_choose_target'){
-    html += `<h3>🕵️ Шпионский центр — выберите цель</h3>`;
-    state.players.forEach((pl,i)=>{ if(i!==state.current) html += `<button class="choice-btn" onclick="resolveSpyTarget(${i})">${pl.name}</button>`; });
+    html += `<h3>🕵️ Выберите цель для Шпионского центра</h3>`;
+    state.players.forEach((pl,i) => { if(i!==state.current) html += `<button class="choice-btn" onclick="resolveSpyTarget(${i})">${pl.name}</button>`; });
   } else if(state.pending.type==='opp_choose_target'){
-    html += `<h3>✊ Оппозиция — выберите цель</h3>`;
-    state.players.forEach((pl,i)=>{ if(i!==state.current) html += `<button class="choice-btn" onclick="oppChooseTarget(${i})">${pl.name}</button>`; });
+    html += `<h3>✊ Оппозиция — выберите игрока</h3>`;
+    state.players.forEach((pl,i) => { if(i!==state.current) html += `<button class="choice-btn" onclick="oppChooseTarget(${i})">${pl.name}</button>`; });
   } else if(state.pending.type==='opp_choose_building'){
     const target = state.players[state.pending.targetIdx];
-    const ownedUps = OLD_UPGRADES.concat(NEW_UPGRADES).filter(c => count(target, c.id) > 0);
-    html += `<h3>✊ Какое улучшение разрушить у ${target.name}?</h3>`;
-    if(ownedUps.length === 0){
-      html += `<p>У игрока нет улучшенных предприятий.</p><button class="choice-btn" onclick="finishOpposition()">Продолжить</button>`;
+    const upgraded = OLD_UPGRADES.concat(NEW_UPGRADES).filter(c => count(target, c.id) > 0);
+    html += `<h3>✊ Какое улучшение снести у игрока ${target.name}?</h3>`;
+    if(upgraded.length===0){
+      html += `<div style="margin-bottom:10px;font-style:italic">У игрока нет улучшений для сноса.</div><button class="choice-btn" onclick="finishOpposition()">Продолжить</button>`;
     } else {
-      ownedUps.forEach(c => { html += `<button class="choice-btn" onclick="oppDestroyBuilding('${c.id}')">${c.icon} ${c.name}</button>`; });
+      upgraded.forEach(c => { html += `<button class="choice-btn" onclick="oppDestroyBuilding('${c.id}')">${c.icon} ${c.name}</button>`; });
+      html += `<button class="choice-btn" onclick="finishOpposition()">Не уничтожать</button>`;
     }
   }
   html += `</div></div>`;
@@ -689,39 +634,29 @@ function renderPendingOverlay(){
 }
 
 function renderWinner(){
-  if(aiTimeout) clearTimeout(aiTimeout);
-  app.innerHTML = `<div class="panel winner-banner"><h2>🏆 Браво, победил ${state.winner.name}!</h2><p>Инфраструктура мегаполиса завершена на 100%!</p><button class="big-btn" onclick="state=null;render()">Сыграть ещё раз</button></div>`;
+  app.innerHTML = `<div class="panel winner-banner"><h2>🏆 Поздравляем, ${state.winner.name}!</h2><p>Построена вся ветка Политики. Вы победили в Мачи Коро: Добыча!</p><button class="big-btn" onclick="state=null;render()">Начать заново</button></div>`;
 }
 
-let setupCount = 2;
-let playerTypes = ['human', 'ai', 'ai', 'ai'];
-function togglePlayerType(i){ playerTypes[i]=playerTypes[i]==='human'?'ai':'human'; render(); }
-
+let setupCount = 3;
 function renderSetup(){
-  let html = `<div class="title"><h1>🎲 Мачи Коро: Тотальная Добыча</h1></div><div class="setup-card"><h3>Создание лобби</h3><label>Количество участников</label><div class="player-count-row">`;
-  [2,3,4].forEach(n => { html += `<button class="pc-btn ${setupCount===n?'active':''}" onclick="setupCount=${n};render()">${n}</button>`; });
+  let html = `<div class="title"><h1>🎲 Мачи Коро: Добыча</h1><div class="sub">Рынки: 4/4/2/2. Все предприятия общественные (синие).</div></div>`;
+  html += `<div class="setup-card"><h3>Создание лобби</h3><label>Количество игроков</label><div class="player-count-row">`;
+  [2,3,4,5].forEach(n => { html += `<button class="pc-btn ${setupCount===n?'active':''}" onclick="setupCount=${n};render()">${n}</button>`; });
   html += `</div>`;
-  
-  html += `<label class="checkbox-row"><input type="checkbox" id="includeNewCards" checked> Добавить новые карты (скважины и шахты)</label>`;
-
-  html += `<label style="margin-top:15px">Настройка участников</label>`;
-  for(let i=0; i<setupCount; i++){
-    const isAI = playerTypes[i]==='ai';
-    html += `<div class="player-input-row"><input type="text" id="pname${i}" placeholder="${isAI?'Бот ИИ '+ (i+1):'Игрок '+(i+1)}"><button class="type-btn ${isAI?'active ai-type':''}" onclick="togglePlayerType(${i})">${isAI?'🤖 ИИ':'👤 Человек'}</button></div>`;
-  }
-  html += `<button class="big-btn" onclick="startGame()">Запустить партию</button></div>`;
+  for(let i=0; i<setupCount; i++){ html += `<label>Имя участника ${i+1}</label><input type="text" id="pname${i}" placeholder="Игрок ${i+1}">`; }
+  html += `<button class="big-btn" onclick="startGame()">Запустить игру</button></div>`;
   app.innerHTML = html;
 }
 
 function startGame(){
-  const names = [], types = [];
-  const includeNewCards = document.getElementById('includeNewCards').checked;
+  const names = [];
   for(let i=0; i<setupCount; i++){
-    let v = document.getElementById('pname'+i).value.trim();
-    if(!v) v = playerTypes[i]==='ai'?`Бот ИИ ${i+1}`:`Игрок ${i+1}`;
-    names.push(v); types.push(playerTypes[i]);
+    const v = document.getElementById('pname'+i).value.trim();
+    names.push(v || `Игрок ${i+1}`);
   }
-  state = newGame(setupCount, names, types, includeNewCards); render();
+  state = newGame(setupCount, names);
+  log('Игра успешно запущена! Удачи.');
+  render();
 }
 
 render();
