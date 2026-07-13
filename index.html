@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Орден Счета: Математическая Цитадель</title>
     <style>
         :root {
@@ -24,13 +24,17 @@
             user-select: none;
         }
 
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
         body {
             background-color: var(--bg-dark);
             color: var(--text-light);
-            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
             background: radial-gradient(circle at center, #111428 0%, #06070a 100%);
             transition: background-color 0.1s ease;
         }
@@ -46,6 +50,8 @@
             justify-content: center;
             align-items: center;
             padding: 20px;
+            padding-top: calc(20px + env(safe-area-inset-top));
+            padding-bottom: calc(20px + env(safe-area-inset-bottom));
             overflow-y: auto;
         }
 
@@ -100,7 +106,7 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 16px;
             padding: 20px;
-            max-height: 75vh;
+            max-height: 65vh;
             overflow-y: auto;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
@@ -152,12 +158,15 @@
         }
         .btn-start-game:active { transform: scale(0.98); }
 
-        /* Панель ресурсов в самой игре */
+        /* Панель ресурсов в самой игре (Защита от Челки сверху) */
         header {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 6px;
             padding: 8px;
+            padding-top: calc(8px + env(safe-area-inset-top));
+            padding-left: calc(8px + env(safe-area-inset-left));
+            padding-right: calc(8px + env(safe-area-inset-right));
             background: var(--panel-bg);
             border-bottom: 2px solid rgba(255, 215, 0, 0.15);
             z-index: 10;
@@ -178,7 +187,7 @@
         .res-val { font-size: 1.15rem; font-weight: bold; margin-top: 1px; }
         .res-inc { font-size: 0.65rem; color: #cbd5e1; opacity: 0.8; }
 
-        /* Зона примера */
+        /* Зона математики */
         .game-space {
             flex: 1;
             position: relative;
@@ -186,7 +195,8 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 15px;
+            padding: 10px;
+            min-height: 0; /* Важно для гибкого сжатия flex-элементов */
         }
 
         #cityCanvas {
@@ -314,22 +324,20 @@
             0% { transform: translate(-50%, -50%) scale(0.7); opacity: 1; }
             100% { transform: translate(-50%, -85px) scale(1.15); opacity: 0; }
         }
-        @keyframes critStay {
-            0% { transform: translate(-50%, -20px) scale(0.4); opacity: 0; }
-            15% { transform: translate(-50%, -50px) scale(1.25); opacity: 1; }
-            80% { transform: translate(-50%, -55px) scale(1.15); opacity: 1; }
-            100% { transform: translate(-50%, -120px) scale(0.8); opacity: 0; }
-        }
 
-        /* Панель улучшений */
+        /* Панель улучшений (Защита низа + Скролл) */
         .control-panel {
             background: var(--panel-bg);
             backdrop-filter: blur(15px);
             border-top: 2px solid rgba(255, 255, 255, 0.08);
             padding: 10px;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
+            padding-left: calc(10px + env(safe-area-inset-left));
+            padding-right: calc(10px + env(safe-area-inset-right));
             z-index: 10;
-            max-height: 38vh;
+            max-height: 40vh;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .panel-title {
@@ -385,10 +393,53 @@
             text-align: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.8s ease;
         }
         .win-screen.active { opacity: 1; pointer-events: auto; }
+
+        /* 
+           СПЕЦИАЛЬНЫЙ АДАПТИВ ДЛЯ АЛЬБОМНЫХ ПЛАНШЕТОВ И НИЗКИХ ЭКРАНОВ (iPad Landscape)
+           Сжимает интерфейс по вертикали, чтобы абсолютно всё помещалось без вылетов
+        */
+        @media (max-height: 650px) {
+            header {
+                grid-template-columns: repeat(4, 1fr); /* Выстраиваем ресурсы в 1 линию вместо 2х */
+                padding: 4px;
+                padding-top: calc(4px + env(safe-area-inset-top));
+            }
+            .resource-card { padding: 4px; }
+            .res-label { font-size: 0.65rem; }
+            .res-val { font-size: 0.95rem; }
+            .res-inc { font-size: 0.6rem; }
+
+            .math-box {
+                padding: 8px 12px;
+                max-width: 420px; /* Делаем чуть шире в ландшафте */
+            }
+            .math-question {
+                font-size: 1.6rem;
+                margin-bottom: 6px;
+            }
+            .timer-bar-container { margin-bottom: 8px; }
+            .btn-answer {
+                padding: 8px;
+                font-size: 1.1rem;
+            }
+            .control-panel {
+                max-height: 35vh;
+            }
+            .build-grid {
+                grid-template-columns: repeat(4, 1fr); /* Кнопки магазина в 4 колонки, чтобы занимали меньше высоты */
+            }
+            .btn-final {
+                grid-column: span 4;
+                padding: 8px;
+            }
+            .btn-build .name { font-size: 0.72rem; }
+            .btn-build .effect-desc { font-size: 0.58rem; }
+        }
     </style>
 </head>
 <body>
 
+    <!-- ЭКРАН 1: Выбор Обета -->
     <div class="modal-screen" id="startScreen">
         <h1 class="start-title">🏛️ Орден Света</h1>
         <p class="start-subtitle">Выберите Обет Научной Цели на эту эпоху:</p>
@@ -416,6 +467,7 @@
         </div>
     </div>
 
+    <!-- ЭКРАН 2: Манускрипт Познания -->
     <div class="modal-screen" id="briefingScreen" style="display: none;">
         <h1 class="start-title" style="color: var(--cyan);">📜 Манускрипт Познания</h1>
         <p class="start-subtitle">Изучите устройство Цитадели перед началом работы:</p>
@@ -460,13 +512,14 @@
             <div class="info-section-title">🔥 Важнейшее правило: Ударный Режим</div>
             <div class="info-row">
                 <div class="info-icon">⚡</div>
-                <div class="info-text"><strong>Точность превыше всего!</strong><span>Каждый правильный ответ растит вашу серию (Комбо 🔥). Серия увеличивает награду экспоненциально! Мягкий таймер дает бонус до +50% за скорость, но если время выйдет — серия НЕ сбросится, главное — отвечать верно.</span></div>
+                <div class="info-text"><strong>Точность превыше всего!</strong><span>Каждый правильный ответ растит вашу серию (Комбо 🔥). Серия увеличивает награду экспоненциально! Мягкий таймер дает бонус до +50% за скорость, но если время выйдет — серия НЕ сбросится.</span></div>
             </div>
         </div>
 
         <button class="btn-start-game" onclick="startGame()">⚔️ Вступить в Орден Счета</button>
     </div>
 
+    <!-- Ресурсы в игре -->
     <header>
         <div class="resource-card">
             <div class="res-label">🪙 Таланты</div>
@@ -490,6 +543,7 @@
         </div>
     </header>
 
+    <!-- Игровая зона -->
     <div class="game-space">
         <canvas id="cityCanvas"></canvas>
         <div class="math-box">
@@ -505,55 +559,56 @@
         </div>
     </div>
 
+    <!-- Панель магазина -->
     <div class="control-panel">
         <div class="panel-title">Строительство и Трактаты</div>
         <div class="build-grid">
             <button class="btn-build" data-type="abacus" data-cat="prod" id="btn-abacus">
                 <span class="name">🏫 Школа Писцов</span>
-                <span class="effect-desc">Дает: +1 🪙 Талант/сек</span>
+                <span class="effect-desc">Дает: +1 🪙/сек</span>
                 <span class="cost" id="cost-abacus">...</span>
                 <span class="count" id="cnt-abacus">0</span>
             </button>
             <button class="btn-build" data-type="blueprint" data-cat="prod" id="btn-blueprint">
                 <span class="name">⛏️ Каменоломня</span>
-                <span class="effect-desc">Дает: +1 🧱 Камень/сек</span>
+                <span class="effect-desc">Дает: +1 🧱/сек</span>
                 <span class="cost" id="cost-blueprint">...</span>
                 <span class="count" id="cnt-blueprint">0</span>
             </button>
             <button class="btn-build" data-type="scriptorium" data-cat="prod" id="btn-scriptorium">
                 <span class="name">📚 Архив Знаний</span>
-                <span class="effect-desc">Дает: +1 📜 Манускрипт/сек</span>
+                <span class="effect-desc">Дает: +1 📜/сек</span>
                 <span class="cost" id="cost-scriptorium">...</span>
                 <span class="count" id="cnt-scriptorium">0</span>
             </button>
             <button class="btn-build" data-type="geometry" data-cat="prod" id="btn-geometry">
                 <span class="name">🏛️ Университет</span>
-                <span class="effect-desc">Дает: +2 🪙 и +0.1% 👑/сек</span>
+                <span class="effect-desc">Дает: +2 🪙, +0.1% 👑</span>
                 <span class="cost" id="cost-geometry">...</span>
                 <span class="count" id="cnt-geometry">0</span>
             </button>
 
             <button class="btn-build" data-type="book" data-cat="upgrade" id="btn-book">
-                <span class="name">📖 Учебник Множителей</span>
-                <span class="effect-desc">Клик: +6 базовой награды</span>
+                <span class="name">📖 Учебник</span>
+                <span class="effect-desc">Клик: +6 баз. нагр.</span>
                 <span class="cost" id="cost-book">...</span>
                 <span class="count" id="cnt-book">0</span>
             </button>
             <button class="btn-build" data-type="compass" data-cat="upgrade" id="btn-compass">
-                <span class="name">📿 Счетные Четки</span>
-                <span class="effect-desc">Улучшает: Шанс Крита +8%</span>
+                <span class="name">📿 Четки</span>
+                <span class="effect-desc">Крит: Шанс +8%</span>
                 <span class="cost" id="cost-compass">...</span>
                 <span class="count" id="cnt-compass">0</span>
             </button>
             <button class="btn-build" data-type="theorem" data-cat="upgrade" id="btn-theorem">
-                <span class="name">📐 Циркуль Магистра</span>
-                <span class="effect-desc">Скидка: -6% на ВСЕ цены</span>
+                <span class="name">📐 Циркуль</span>
+                <span class="effect-desc">Скидка: -6% цен</span>
                 <span class="cost" id="cost-theorem">...</span>
                 <span class="count" id="cnt-theorem">0</span>
             </button>
             <button class="btn-build" data-type="patent" data-cat="upgrade" id="btn-patent">
-                <span class="name">📜 Королевский Патент</span>
-                <span class="effect-desc">Дает: +0.15% 👑 Славы/сек</span>
+                <span class="name">📜 Патент</span>
+                <span class="effect-desc">Дает: +0.15% 👑/сек</span>
                 <span class="cost" id="cost-patent">...</span>
                 <span class="count" id="cnt-patent">0</span>
             </button>
@@ -565,8 +620,9 @@
         </div>
     </div>
 
+    <!-- Победный Экран -->
     <div class="win-screen" id="winScreen">
-        <h1 style="color:var(--gold); font-size:2.2rem; margin-bottom:15px;">Облик Триумфа!</h1>
+        <h1 style="color:var(--gold); font-size:2.2rem; margin-bottom:15px;">Облик Триомфа!</h1>
         <p id="winDesc" style="padding:0 25px; color:#94a3b8; line-height:1.5;"></p>
         <button style="margin-top:30px; padding:12px 25px; background:var(--gold); border:none; border-radius:8px; font-weight:bold;" onclick="location.reload()">Выбрать новую цель</button>
     </div>
@@ -581,7 +637,7 @@
         };
 
         let activeMode = modes.medium;
-        let gameActive = false; // Блокировка тиков дохода до старта
+        let gameActive = false;
 
         const state = {
             gold: 100, steel: 40, scrolls: 0, glory: 0,
@@ -606,12 +662,9 @@
         const ctx = canvas.getContext('2d');
         let particles = [];
 
-        // 1 Шаг: Выбор пресета цели
         function selectMode(mKey) {
             activeMode = modes[mKey];
             document.getElementById('startScreen').style.display = 'none';
-            
-            // Показываем экран брифинга-инструкции
             document.getElementById('briefingScreen').style.display = 'flex';
             
             document.getElementById('finalName').innerText = `🏆 ${activeMode.name} 🏆`;
@@ -623,7 +676,6 @@
             document.getElementById('finalCost').innerText = reqText;
         }
 
-        // 2 Шаг: Запуск игры по кнопке из брифинга
         function startGame() {
             document.getElementById('briefingScreen').style.display = 'none';
             gameActive = true;
@@ -713,10 +765,8 @@
 
             if (chosen === correctAnswer) {
                 state.combo++;
-                
                 let comboMultiplier = 1 + (state.combo * 0.3);
                 let speedBonusPercent = 1 + (timeRemaining * 0.005); 
-                
                 let isCrit = Math.random() < state.critChance;
                 let reward = Math.floor(state.clickBase * comboMultiplier * speedBonusPercent * (isCrit ? 4 : 1));
                 state.gold += reward;
@@ -729,7 +779,7 @@
                 else badge.classList.remove('frenzy');
 
                 if(isCrit) {
-                    spawnText(`⚡ КРИТИЧЕСКИЙ СЧЕТ! +${reward} 🪙`, px, py, 'var(--gold)', true);
+                    spawnText(`⚡ КРИТ! +${reward} 🪙`, px, py, 'var(--gold)', true);
                     document.body.style.backgroundColor = "rgba(255, 215, 0, 0.22)";
                     setTimeout(() => document.body.style.backgroundColor = "var(--bg-dark)", 180);
                     buildSparks(40, 'var(--gold)');
@@ -744,7 +794,7 @@
                 badge.classList.remove('frenzy');
                 
                 state.steel = Math.max(0, state.steel - 6);
-                spawnText('Ошибка! Серия прервана. -6 🧱', px, py, '#ef4444', false);
+                spawnText('Ошибка! -6 🧱', px, py, '#ef4444', false);
                 buildSparks(12, '#ef4444');
             }
             generateMath();
@@ -759,7 +809,6 @@
             setTimeout(() => el.remove(), isCrit ? 1500 : 800);
         }
 
-        // Эффекты
         class Spark {
             constructor(x, y, color) {
                 this.x = x; this.y = y;
@@ -831,7 +880,6 @@
             else finalBtn.classList.remove('available');
         }
 
-        // Пассивный доход тикает только если игра запущена
         setInterval(() => {
             if(!gameActive) return;
             state.gold += state.income.gold;
