@@ -1,284 +1,388 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title id="docTitle">Горячо или Холодно</title>
-  <style>
-    :root {
-      --primary-color: #4a90e2;
-      --success-color: #2ecc71;
-      --danger-color: #e74c3c;
-      --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Oasis: Capital</title>
+    <style>
+        :root {
+            --bg-dark: #0a0b10;
+            --panel-bg: rgba(20, 22, 37, 0.7);
+            --neon-blue: #00f0ff;
+            --neon-green: #39ff14;
+            --neon-purple: #bd00ff;
+            --text-light: #e2e8f0;
+            --shadow-blue: 0 0 15px rgba(0, 240, 255, 0.4);
+            --shadow-green: 0 0 15px rgba(57, 255, 20, 0.4);
+            --shadow-purple: 0 0 15px rgba(189, 0, 255, 0.4);
+        }
 
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: var(--bg-gradient);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: 0;
-      color: #333;
-    }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-    .game-container {
-      background: white;
-      padding: 30px;
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-      width: 90%;
-      max-width: 400px;
-      text-align: center;
-    }
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #16192b 0%, #0a0b10 100%);
+        }
 
-    h1 {
-      color: #2c3e50;
-      margin-bottom: 10px;
-      font-size: 24px;
-    }
+        /* Хедер с ресурсами */
+        header {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 10px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 10;
+        }
 
-    p.description {
-      color: #7f8c8d;
-      font-size: 14px;
-      margin-bottom: 25px;
-    }
+        .resource-card {
+            text-align: center;
+            flex: 1;
+            margin: 0 5px;
+            padding: 8px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
 
-    .stats-container {
-      display: flex;
-      justify-content: space-around;
-      margin-bottom: 20px;
-      font-size: 14px;
-      font-weight: 600;
-      background: #f8f9fa;
-      padding: 10px;
-      border-radius: 10px;
-    }
+        .resource-card.blue { border-color: var(--neon-blue); box-shadow: var(--shadow-blue); }
+        .resource-card.green { border-color: var(--neon-green); box-shadow: var(--shadow-green); }
+        .resource-card.purple { border-color: var(--neon-purple); box-shadow: var(--shadow-purple); }
 
-    input[type="number"] {
-      width: 80%;
-      padding: 12px 20px;
-      font-size: 18px;
-      border: 2px solid #dcdde1;
-      border-radius: 10px;
-      margin-bottom: 15px;
-      outline: none;
-      transition: border-color 0.3s;
-      text-align: center;
-    }
+        .res-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
+        .res-val { font-size: 1.2rem; font-weight: bold; margin-top: 4px; }
+        .res-inc { font-size: 0.7rem; opacity: 0.7; }
 
-    input[type="number"]:focus {
-      border-color: var(--primary-color);
-    }
+        /* Игровое поле / Холст */
+        .game-space {
+            flex: 1;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
-    button {
-      background: var(--primary-color);
-      color: white;
-      border: none;
-      padding: 12px 30px;
-      font-size: 16px;
-      font-weight: bold;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: transform 0.1s, background 0.3s;
-      width: 85%;
-    }
+        #cityCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
 
-    button:hover {
-      background: #357abd;
-    }
+        /* Панель управления (Кнопки) */
+        .control-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            z-index: 10;
+            max-height: 40vh;
+            overflow-y: auto;
+        }
 
-    button:active {
-      transform: scale(0.98);
-    }
+        .panel-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+            color: #8a99ad;
+        }
 
-    button.reset-btn {
-      background: #7f8c8d;
-      margin-top: 10px;
-    }
-    button.reset-btn:hover { background: #6c7a7d; }
+        .build-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
 
-    #output {
-      margin-top: 20px;
-      font-size: 18px;
-      font-weight: 600;
-      min-height: 27px;
-    }
+        .btn-build {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px;
+            color: white;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
 
-    .history {
-      margin-top: 25px;
-      text-align: left;
-    }
+        .btn-build:active {
+            transform: scale(0.97);
+        }
 
-    .history h3 {
-      font-size: 14px;
-      color: #7f8c8d;
-      margin-bottom: 10px;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 5px;
-    }
+        .btn-build.available:hover, .btn-build.available:active {
+            background: rgba(255, 255, 255, 0.1);
+        }
 
-    .history-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      max-height: 100px;
-      overflow-y: auto;
-    }
+        .btn-build .name { font-size: 0.9rem; font-weight: bold; display: block; }
+        .btn-build .cost { font-size: 0.75rem; color: #a0aec0; margin-top: 4px; display: block; }
+        .btn-build .count { 
+            position: absolute; right: 10px; top: 10px; 
+            font-size: 0.8rem; font-weight: bold; opacity: 0.6;
+        }
 
-    .tag {
-      padding: 4px 10px;
-      border-radius: 15px;
-      font-size: 12px;
-      font-weight: bold;
-      color: white;
-    }
-    .tag.cold { background-color: #54a0ff; }
-    .tag.warm { background-color: #ff9f43; }
-    .tag.hot { background-color: #ee5253; }
-    .tag.correct { background-color: var(--success-color); }
-  </style>
+        /* Индивидуальные стили кнопок при доступности */
+        .btn-build[data-type="reactor"].available { border-color: var(--neon-blue); }
+        .btn-build[data-type="farm"].available { border-color: var(--neon-green); }
+        .btn-build[data-type="hub"].available { border-color: var(--neon-purple); }
+
+        /* Анимационный эффект вспышки при клике */
+        @keyframes pulse-eff {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.05); opacity: 0; }
+        }
+        
+        .pulse-active {
+            animation: pulse-eff 0.3s ease-out;
+        }
+    </style>
 </head>
 <body>
 
-<div class="game-container">
-  <h1>🔥 Горячо или Холодно ❄️</h1>
-  <p class="description">Загадано число от 1 до 100. Сможешь угадать?</p>
-  
-  <div class="stats-container">
-    <div>Попытки: <span id="attemptsCount">0</span></div>
-    <div>Рекорд: <span id="highScore">-</span></div>
-  </div>
+    <header>
+        <div class="resource-card blue" id="card-energy">
+            <div class="res-label">Энергия</div>
+            <div class="res-val" id="val-energy">100</div>
+            <div class="res-inc" id="inc-energy">+5/с</div>
+        </div>
+        <div class="resource-card green" id="card-materials">
+            <div class="res-label">Био-Материалы</div>
+            <div class="res-val" id="val-materials">50</div>
+            <div class="res-inc" id="inc-materials">+2/с</div>
+        </div>
+        <div class="resource-card purple" id="card-comfort">
+            <div class="res-label">Комфорт</div>
+            <div class="res-val" id="val-comfort">10%</div>
+            <div class="res-inc" id="inc-comfort">+0.5%/с</div>
+        </div>
+    </header>
 
-  <input type="number" id="userInput" min="1" max="100" placeholder="Введите число..." autofocus />
-  <button id="checkBtn" onclick="checkGuess()">Проверить</button>
-  <button id="resetBtn" class="reset-btn" onclick="resetGame()" style="display:none;">Играть снова</button>
-  
-  <div id="output"></div>
+    <div class="game-space">
+        <canvas id="cityCanvas"></canvas>
+    </div>
 
-  <div class="history">
-    <h3>История попыток:</h3>
-    <div id="historyTags" class="history-tags"></div>
-  </div>
-</div>
+    <div class="control-panel">
+        <div class="panel-title">Строительство объектов</div>
+        <div class="build-grid">
+            <button class="btn-build" data-type="reactor" id="btn-reactor">
+                <span class="name">Квантовый Реактор</span>
+                <span class="cost">Цена: 50 Мат.</span>
+                <span class="count" id="cnt-reactor">0</span>
+            </button>
+            <button class="btn-build" data-type="farm" id="btn-farm">
+                <span class="name">Био-Ферма</span>
+                <span class="cost">Цена: 40 Эн.</span>
+                <span class="count" id="cnt-farm">0</span>
+            </button>
+            <button class="btn-build" data-type="hub" id="btn-hub">
+                <span class="name">Жилой Хаб</span>
+                <span class="cost">Цена: 80 Эн. / 60 Мат.</span>
+                <span class="count" id="cnt-hub">0</span>
+            </button>
+        </div>
+    </div>
 
-<script>
-  let secretNumber;
-  let attempts = 0;
-  let gameActive = true;
+    <script>
+        // Состояние игры (Баланс и прирост)
+        const state = {
+            energy: 100,
+            materials: 50,
+            comfort: 10,
+            
+            income: {
+                energy: 2,
+                materials: 1,
+                comfort: 0.1
+            },
+            
+            buildings: {
+                reactor: { count: 0, costMat: 50, costEn: 0 },
+                farm: { count: 0, costMat: 0, costEn: 40 },
+                hub: { count: 0, costMat: 60, costEn: 80 }
+            }
+        };
 
-  // Инициализация игры
-  function initGame() {
-    secretNumber = Math.floor(Math.random() * 100) + 1;
-    attempts = 0;
-    gameActive = true;
-    document.getElementById("attemptsCount").innerText = attempts;
-    document.getElementById("output").innerText = "";
-    document.getElementById("output").style.color = "#333";
-    document.getElementById("userInput").value = "";
-    document.getElementById("userInput").disabled = false;
-    document.getElementById("checkBtn").style.display = "inline-block";
-    document.getElementById("resetBtn").style.display = "none";
-    document.getElementById("historyTags").innerHTML = "";
-    
-    // Обновление рекорда из памяти
-    const savedScore = localStorage.getItem("hotColdHighScore");
-    document.getElementById("highScore").innerText = savedScore ? savedScore : "-";
-    document.getElementById("userInput").focus();
-  }
+        // Настройка Canvas для красивой анимации частиц
+        const canvas = document.getElementById('cityCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
 
-  function checkGuess() {
-    if (!gameActive) return;
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
-    const inputField = document.getElementById("userInput");
-    const guess = parseInt(inputField.value);
-    const output = document.getElementById("output");
-    const historyTags = document.getElementById("historyTags");
+        // Класс для светящихся неоновых линий/частиц
+        class NeonParticle {
+            constructor(color) {
+                this.reset(color);
+            }
+            reset(color) {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height + 20;
+                this.speed = Math.random() * 1.5 + 0.5;
+                this.radius = Math.random() * 2 + 1;
+                this.color = color || (Math.random() > 0.5 ? '#00f0ff' : '#39ff14');
+                this.opacity = Math.random() * 0.5 + 0.5;
+            }
+            update() {
+                this.y -= this.speed;
+                if (this.y < -10) {
+                    this.reset();
+                }
+            }
+            draw() {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.opacity;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
 
-    // Валидация ввода
-    if (isNaN(guess) || guess < 1 || guess > 100) {
-      output.innerText = "⚠️ Введите корректное число от 1 до 100!";
-      output.style.color = "#e67e22";
-      return;
-    }
+        // Создаем пул частиц
+        for (let i = 0; i < 40; i++) {
+            particles.push(new NeonParticle());
+        }
 
-    attempts++;
-    document.getElementById("attemptsCount").innerText = attempts;
+        // Основной цикл анимации Canvas
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Рисуем футуристичную сетку на фоне
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
+            ctx.lineWidth = 1;
+            const gridSize = 40;
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+            }
 
-    let difference = Math.abs(secretNumber - guess);
-    let message = "";
-    let statusClass = "";
+            // Рисуем и обновляем частицы (потоки данных)
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
 
-    if (guess === secretNumber) {
-      message = `🎉 Ура! Вы угадали число ${secretNumber} за ${attempts} попыток!`;
-      output.style.color = "var(--success-color)";
-      statusClass = "correct";
-      endGame();
-    } else {
-      if (difference <= 5) {
-        message = "🥵 Очень горячо!";
-        output.style.color = "var(--danger-color)";
-        statusClass = "hot";
-      } else if (difference <= 15) {
-        message = "🔥 Горячо!";
-        output.style.color = "#e67e22";
-        statusClass = "warm";
-      } else if (difference <= 30) {
-        message = "🌤️ Тепло";
-        output.style.color = "#f1c40f";
-        statusClass = "warm";
-      } else {
-        message = "❄️ Холодно...";
-        output.style.color = "#3498db";
-        statusClass = "cold";
-      }
-      
-      // Подсказка направления
-      message += guess < secretNumber ? " (Загаданное число больше)" : " (Загаданное число меньше)";
-    }
+            requestAnimationFrame(animate);
+        }
+        animate();
 
-    output.innerText = message;
+        // Логика обновления интерфейса
+        function updateUI() {
+            document.getElementById('val-energy').innerText = Math.floor(state.energy);
+            document.getElementById('val-materials').innerText = Math.floor(state.materials);
+            document.getElementById('val-comfort').innerText = state.comfort.toFixed(1) + '%';
 
-    // Добавление тега в историю
-    const tag = document.createElement("span");
-    tag.className = `tag ${statusClass}`;
-    tag.innerText = guess;
-    historyTags.appendChild(tag);
-    historyTags.scrollTop = historyTags.scrollHeight;
+            document.getElementById('inc-energy').innerText = `+${state.income.energy}/с`;
+            document.getElementById('inc-materials').innerText = `+${state.income.materials}/с`;
+            document.getElementById('inc-comfort').innerText = `+${state.income.comfort.toFixed(1)}%/с`;
 
-    inputField.value = "";
-    inputField.focus();
-  }
+            // Проверка доступности кнопок по ресурсам
+            checkButtonAvailability('btn-reactor', state.materials >= state.buildings.reactor.costMat);
+            checkButtonAvailability('btn-farm', state.energy >= state.buildings.farm.costEn);
+            checkButtonAvailability('btn-hub', state.energy >= state.buildings.hub.costEn && state.materials >= state.buildings.hub.costMat);
+        }
 
-  function endGame() {
-    gameActive = false;
-    document.getElementById("userInput").disabled = true;
-    document.getElementById("checkBtn").style.display = "none";
-    document.getElementById("resetBtn").style.display = "inline-block";
+        function checkButtonAvailability(id, isAvailable) {
+            const btn = document.getElementById(id);
+            if (isAvailable) {
+                btn.classList.add('available');
+                btn.style.opacity = "1";
+            } else {
+                btn.classList.remove('available');
+                btn.style.opacity = "0.4";
+            }
+        }
 
-    // Проверка и сохранение рекорда
-    const currentHighScore = localStorage.getItem("hotColdHighScore");
-    if (!currentHighScore || attempts < parseInt(currentHighScore)) {
-      localStorage.setItem("hotColdHighScore", attempts);
-      document.getElementById("highScore").innerText = attempts + " (Новый!)";
-    }
-  }
+        // Игровой таймер (вызывается каждую секунду)
+        setInterval(() => {
+            state.energy += state.income.energy;
+            state.materials += state.income.materials;
+            
+            // Рост комфорта зависит от энергии и материалов
+            if(state.energy > 5 && state.materials > 5) {
+                state.comfort += state.income.comfort;
+            }
+            
+            if (state.comfort > 100) state.comfort = 100;
 
-  function resetGame() {
-    initGame();
-  }
+            updateUI();
+        }, 1000);
 
-  // Поддержка нажатия Enter
-  document.getElementById("userInput").addEventListener("keypress", function(event) {
-    if (event.key === "Enter") {
-      checkGuess();
-    }
-  });
+        // Обработка кликов (Покупка зданий)
+        document.querySelectorAll('.btn-build').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const type = button.getAttribute('data-type');
+                const bld = state.buildings[type];
 
-  // Запуск игры при загрузке страницы
-  window.onload = initGame;
-</script>
+                // Проверка условий покупки
+                if (state.energy >= bld.costEn && state.materials >= bld.costMat) {
+                    state.energy -= bld.costEn;
+                    state.materials -= bld.costMat;
+                    bld.count++;
 
+                    // Эффекты от построек
+                    if (type === 'reactor') {
+                        state.income.energy += 3;
+                        triggerVisualBoom('#00f0ff');
+                    } else if (type === 'farm') {
+                        state.income.materials += 2;
+                        triggerVisualBoom('#39ff14');
+                    } else if (type === 'hub') {
+                        state.income.comfort += 0.3;
+                        state.income.energy -= 1; // Потребляет энергию
+                        triggerVisualBoom('#bd00ff');
+                    }
+
+                    // Визуальный отклик на кнопке
+                    document.getElementById(`cnt-${type}`).innerText = bld.count;
+                    button.classList.add('pulse-active');
+                    setTimeout(() => button.classList.remove('pulse-active'), 300);
+
+                    updateUI();
+                }
+            });
+        });
+
+        // Всплеск частиц определенного цвета при покупке
+        function triggerVisualBoom(color) {
+            for (let i = 0; i < 15; i++) {
+                let p = new NeonParticle(color);
+                p.y = canvas.height / 2 + (Math.random() * 60 - 30);
+                p.x = canvas.width / 2 + (Math.random() * 60 - 30);
+                p.speed = Math.random() * 3 + 1;
+                particles.push(p);
+                // Удаляем лишние частицы, чтобы игра не тормозила
+                if(particles.length > 100) particles.shift();
+            }
+        }
+
+        // Первичная прорисовка
+        updateUI();
+    </script>
 </body>
 </html>
