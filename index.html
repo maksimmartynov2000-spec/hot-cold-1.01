@@ -270,7 +270,7 @@
 
     <div class="modal-screen" id="startScreen">
         <h1 class="start-title">🏛️ Орден Света</h1>
-        <p class="start-subtitle">Выберите Обет Научной Цели на эту эпоху (Цели увеличены х10!):</p>
+        <p class="start-subtitle">Выберите Обет Научной Цели на эту эпоху:</p>
         <div class="mode-list">
             <button class="btn-mode m-1" onclick="selectMode('easy')">
                 <span class="m-title">📜 Ученик</span>
@@ -302,7 +302,7 @@
             <div class="info-section-title">🌾 Добыча ресурсов</div>
             <div class="info-row">
                 <div class="info-icon">🪙</div>
-                <div class="info-text"><strong>Школы и Архивы</strong><span>Нанимайте писцов. Цены в Талантах КУСАЮТСЯ, а камень дороже в 2 раза!</span></div>
+                <div class="info-text"><strong>Школы и Архивы</strong><span>Нанимайте писцов. Цены в Талантах возрастают, а камень дороже в 2 раза!</span></div>
             </div>
             <div class="info-section-title">📐 Сила Ученого Клика</div>
             <div class="info-row">
@@ -364,7 +364,7 @@
     </div>
 
     <div class="control-panel">
-        <div class="shop-cat-header">🌾 Добыча Ресурсов (Цены кусаются!)</div>
+        <div class="shop-cat-header">🌾 Добыча Ресурсов</div>
         <div class="build-grid">
             <button class="btn-build" data-type="abacus" data-cat="prod" id="btn-abacus">
                 <span class="name">🏫 Школа Писцов</span>
@@ -450,7 +450,7 @@
             </button>
         </div>
 
-        <div class="shop-cat-header bless-header">✨ Благословение Славы (Цели х10)</div>
+        <div class="shop-cat-header bless-header">✨ Благословение Славы</div>
         <div class="build-grid">
             <button class="btn-build" data-type="blessIncome" data-cat="bless" id="btn-blessIncome">
                 <span class="name">✨ Аура Изобилия</span>
@@ -719,23 +719,23 @@
                 let isCrit = Math.random() < state.critChance;
                 
                 // 💥 1. РАСЧЕТ ТАЛАНТОВ (ЗОЛОТА) ЗА КЛИК:
-                // Базовый клик + Влияние Прорыва (+20% за каждый уровень)
+                // Улучшение "Ментальный прорыв" повышает на 20% именно базовый доход!
                 let baseClickWithBreakthrough = state.clickBase * (1 + mentalBreakthroughLevel * 0.20);
                 let rewardGold = Math.floor(baseClickWithBreakthrough * comboMultiplier * speedBonusPercent * (isCrit ? state.critMultiplier : 1));
                 state.gold += rewardGold;
                 
                 // 💥 2. РАСЧЕТ СЛАВЫ ЗА КЛИК:
-                // База славы (10 в минус 5 степени от текущей базы клика)
+                // База славы от исходного клика (10 в минус 5 степени)
                 let baseGloryFromClick = state.clickBase * 0.00001; 
-                // Бонус от Учебников (тоже 10 в минус 5 степени за штуку)
+                // Слава от учебников
                 let bookGloryBonus = state.buildings.book.count * 0.00001; 
                 let totalBaseGloryClick = baseGloryFromClick + bookGloryBonus;
                 
-                // Влияние Ментального Прорыва на славу (+20% за уровень)
+                // Улучшение "Ментальный прорыв" повышает базовую славу клика на 20% за уровень!
                 let breakthroughGloryMultiplier = 1 + mentalBreakthroughLevel * 0.20;
                 let finalBaseGlory = totalBaseGloryClick * breakthroughGloryMultiplier;
                 
-                // Применение комбо, скорости и крит-множителя (на славу крит влияет сбалансированно)
+                // Учет комбо, скорости и критического множителя
                 let rewardGlory = finalBaseGlory * comboMultiplier * speedBonusPercent * (isCrit ? (state.critMultiplier * 0.5 + 0.5) : 1);
                 
                 state.glory += rewardGlory;
@@ -931,16 +931,14 @@
                     }
 
                 } else if (b.currency === 'glory') {
-                    if(key === 'blessIncome' || key === 'blessClick') {
-                        answersRequired = (b.count + 1) * 100;
-                    } else {
-                        answersRequired = (b.count + 1) * 75;
-                    }
+                    // Строго: каждые 100 решенных примеров открывают новый уровень
+                    answersRequired = (b.count + 1) * 100;
                     
                     if (correctCount < answersRequired) {
                         isLockedByAnswers = true;
                     }
 
+                    // Стоимость растет по +10% за каждый купленный уровень, максимум 100%
                     currentGloryCost = (b.count + 1) * 10;
                     if (currentGloryCost > 100) currentGloryCost = 100;
 
@@ -1043,12 +1041,8 @@
                         updateUI();
                     }
                 } else if (b.currency === 'glory') {
-                    let answersRequired = 0;
-                    if(type === 'blessIncome' || type === 'blessClick') {
-                        answersRequired = (b.count + 1) * 100;
-                    } else {
-                        answersRequired = (b.count + 1) * 75;
-                    }
+                    // Каждое улучшение славы открывается строго за (b.count + 1) * 100 ответов
+                    let answersRequired = (b.count + 1) * 100;
                     if (correctCount < answersRequired) return; 
 
                     let currentGloryCost = (b.count + 1) * 10;
