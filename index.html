@@ -170,13 +170,13 @@
         .btn-answer:active { transform: scale(0.95); background: rgba(6, 182, 212, 0.2); }
 
         .floating-reward {
-            position: fixed; pointer-events: none; font-weight: 900; font-size: 1.6rem; z-index: 300;
+            position: fixed; pointer-events: none; font-weight: 900; font-size: 1.4rem; z-index: 300;
             font-family: 'Impact', 'Arial Black', sans-serif;
             text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 4px 8px rgba(0,0,0,0.7);
             animation: rewardFlySlow 1.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
         .floating-reward.crit {
-            font-size: 2.3rem;
+            font-size: 2.0rem;
             animation: critFlySlow 2.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
@@ -270,7 +270,7 @@
 
     <div class="modal-screen" id="startScreen">
         <h1 class="start-title">🏛️ Орден Света</h1>
-        <p class="start-subtitle">Выберите Обет Научной Цели на эту эпоху:</p>
+        <p class="start-subtitle">Выберите Обет Научной Цели на эту эпоху (Цели увеличены х10!):</p>
         <div class="mode-list">
             <button class="btn-mode m-1" onclick="selectMode('easy')">
                 <span class="m-title">📜 Ученик</span>
@@ -297,22 +297,22 @@
 
     <div class="modal-screen" id="briefingScreen" style="display: none;">
         <h1 class="start-title" style="color: var(--cyan);">📜 Манускрипт Познания</h1>
-        <p class="start-subtitle">Инструкция по закупкам Цитадели:</p>
+        <p class="start-subtitle">Правила Цитадели Талантов и Славы:</p>
         <div class="info-container">
             <div class="info-section-title">🌾 Добыча ресурсов</div>
             <div class="info-row">
                 <div class="info-icon">🪙</div>
-                <div class="info-text"><strong>Школы и Архивы</strong><span>Нанимайте писцов и алхимиков для автоматического прироста Талантов, Камня и Свитков.</span></div>
+                <div class="info-text"><strong>Школы и Архивы</strong><span>Нанимайте писцов. Цены в Талантах КУСАЮТСЯ, а камень дороже в 2 раза!</span></div>
             </div>
-            <div class="info-section-title">📐 Точность Разума</div>
+            <div class="info-section-title">📐 Сила Ученого Клика</div>
             <div class="info-row">
                 <div class="info-icon">🎯</div>
-                <div class="info-text"><strong>Учебники и Криты</strong><span>Увеличивают силу клика за верные ответы. Циркуль снижает текущие цены на 6%.</span></div>
+                <div class="info-text"><strong>Таланты и Слава сразу!</strong><span>Каждый верный клик приносит Таланты и Славу одновременно. Учебник увеличивает обе базы!</span></div>
             </div>
-            <div class="info-section-title">👑 Величие и Благословение</div>
+            <div class="info-section-title">👑 Величие и Прорывы</div>
             <div class="info-row">
                 <div class="info-icon">🏛️</div>
-                <div class="info-text"><strong>Университеты и Трата Славы</strong><span>Копите Славу ради победы или тратьте ее на уникальные Божественные эффекты внизу магазина!</span></div>
+                <div class="info-text"><strong>Ментальный Прорыв</strong><span>Дает мощнейшие +20% к Талантам и к Славе от клика параллельно!</span></div>
             </div>
         </div>
         <button class="btn-start-game" onclick="startGame()">⚔️ Вступить в Орден Света</button>
@@ -364,7 +364,7 @@
     </div>
 
     <div class="control-panel">
-        <div class="shop-cat-header">🌾 Добыча Ресурсов</div>
+        <div class="shop-cat-header">🌾 Добыча Ресурсов (Цены кусаются!)</div>
         <div class="build-grid">
             <button class="btn-build" data-type="abacus" data-cat="prod" id="btn-abacus">
                 <span class="name">🏫 Школа Писцов</span>
@@ -396,7 +396,7 @@
         <div class="build-grid">
             <button class="btn-build" data-type="book" data-cat="upgrade" id="btn-book">
                 <span class="name">📖 Учебник</span>
-                <span class="effect-desc">Клик: +6 баз. награды</span>
+                <span class="effect-desc">Клик: +6 баз. 🪙 и +0.00001% баз. 👑</span>
                 <span class="cost" id="cost-book">...</span>
                 <span class="meta-info" id="meta-book">Базовый клик: 12 ед.</span>
                 <span class="count" id="cnt-book">0</span>
@@ -450,7 +450,7 @@
             </button>
         </div>
 
-        <div class="shop-cat-header bless-header">✨ Благословение Славы</div>
+        <div class="shop-cat-header bless-header">✨ Благословение Славы (Цели х10)</div>
         <div class="build-grid">
             <button class="btn-build" data-type="blessIncome" data-cat="bless" id="btn-blessIncome">
                 <span class="name">✨ Аура Изобилия</span>
@@ -460,7 +460,7 @@
             </button>
             <button class="btn-build" data-type="blessClick" data-cat="bless" id="btn-blessClick">
                 <span class="name">🔥 Ментальный Прорыв</span>
-                <span class="effect-desc">Базовый клик: +20 ед.</span>
+                <span class="effect-desc">Клик 🪙 и Слава 👑: +20%</span>
                 <span class="cost" id="cost-blessClick">...</span>
                 <span class="count" id="cnt-blessClick">0</span>
             </button>
@@ -504,11 +504,11 @@
 
     <script>
         const modes = {
-            easy: { name: "📜 ОБЕТ УЧЕНИКА", targetG: 360000, targetS: 200, targetSc: 20, targetGl: 30, desc: "Спринт окончен. Основы математики изучены безукоризненно!" },
-            medium: { name: "⚔️ ОБЕТ РЫЦАРЯ СЧЕТА", targetG: 1050000, targetS: 800, targetSc: 150, targetGl: 60, desc: "Концентрация удержана! Ваша Цитадель стоит крепко." },
-            hard: { name: "🏛️ ОБЕТ МАГИСТРА", targetG: 2250000, targetS: 2500, targetSc: 600, targetGl: 100, desc: "Выдающийся результат! Вы — признанный гений счета." },
-            expert: { name: "👑 ОБЕТ ХРАНИТЕЛЯ ТАЙН", targetG: 4500000, targetS: 6000, targetSc: 2000, targetGl: 100, desc: "Древние Свитки раскрыли величайшие тайны Вселенной." },
-            marathon: { name: "🪐 ТРИУМФ АБСОЛЮТНОГО ТИТАНА", targetG: 13500000, targetS: 20000, targetSc: 8000, targetGl: 100, desc: "Великий Марафон завершен абсолютной победой разума!" }
+            easy: { name: "📜 ОБЕТ УЧЕНИКА", targetG: 3600000, targetS: 200, targetSc: 20, targetGl: 30, desc: "Спринт окончен. Основы математики изучены безукоризненно!" },
+            medium: { name: "⚔️ ОБЕТ РЫЦАРЯ СЧЕТА", targetG: 10500000, targetS: 800, targetSc: 150, targetGl: 60, desc: "Концентрация удержана! Ваша Цитадель стоит крепко." },
+            hard: { name: "🏛️ ОБЕТ МАГИСТРА", targetG: 22500000, targetS: 2500, targetSc: 600, targetGl: 100, desc: "Выдающийся результат! Вы — признанный гений счета." },
+            expert: { name: "👑 ОБЕТ ХРАНИТЕЛЯ ТАЙН", targetG: 45000000, targetS: 6000, targetSc: 2000, targetGl: 100, desc: "Древние Свитки раскрыли величайшие тайны Вселенной." },
+            marathon: { name: "🪐 ТРИУМФ АБСОЛЮТНОГО ТИТАНА", targetG: 135000000, targetS: 20000, targetSc: 8000, targetGl: 100, desc: "Великий Марафон завершен абсолютной победой разума!" }
         };
 
         for (let key in modes) {
@@ -523,31 +523,34 @@
 
         let globalProductionBonus = 1.0;
         let blessArchitectDiscount = 1.0; 
-        let speedBonusBaseFactor = 0.5; // Базовый множитель Молнии (50% при 100% таймере)
-        let comboStepBonus = 0.35;       // Базовый шаг комбо (+0.35х за каждый верный ответ)
+        let speedBonusBaseFactor = 0.5; 
+        let comboStepBonus = 0.35;       
+        
+        let mentalBreakthroughLevel = 0; 
 
         const state = {
-            gold: 150, steel: 20, scrolls: 0, glory: 0,
+            gold: 500, steel: 40, scrolls: 0, glory: 0,
             clickBase: 12, combo: 0, 
             critChance: 0.05, 
             critMultiplier: 4.0, 
             discount: 1.0,
             income: { gold: 0, steel: 0, scrolls: 0, glory: 0 },
+            
             buildings: {
-                abacus: { count: 0, baseG: 90, baseS: 0, baseSc: 0, curG: 90, curS: 0, curSc: 0, currency: 'normal' },
-                blueprint: { count: 0, baseG: 160, baseS: 5, baseSc: 0, curG: 160, curS: 5, curSc: 0, currency: 'normal' },
-                scriptorium: { count: 0, baseG: 280, baseS: 15, baseSc: 0, curG: 280, curS: 15, curSc: 0, currency: 'normal' },
-                alchemical: { count: 0, baseG: 650, baseS: 40, baseSc: 5, curG: 650, curS: 40, curSc: 5, currency: 'normal' },
+                abacus: { count: 0, baseG: 450, baseS: 0, baseSc: 0, curG: 450, curS: 0, curSc: 0, currency: 'normal' },
+                blueprint: { count: 0, baseG: 800, baseS: 10, baseSc: 0, curG: 800, curS: 10, curSc: 0, currency: 'normal' },
+                scriptorium: { count: 0, baseG: 1400, baseS: 30, baseSc: 0, curG: 1400, curS: 30, curSc: 0, currency: 'normal' },
+                alchemical: { count: 0, baseG: 3250, baseS: 80, baseSc: 5, curG: 3250, curS: 80, curSc: 5, currency: 'normal' },
                 
-                book: { count: 0, baseG: 180, baseS: 15, baseSc: 0, curG: 180, curS: 15, curSc: 0, currency: 'normal' },
-                theorem: { count: 0, baseG: 500, baseS: 30, baseSc: 15, curG: 500, curS: 30, curSc: 15, currency: 'normal' },
-                critChance: { count: 0, baseG: 280, baseS: 20, baseSc: 8, curG: 280, curS: 20, curSc: 8, currency: 'normal' }, 
-                critMult: { count: 0, baseG: 350, baseS: 25, baseSc: 12, curG: 350, curS: 25, curSc: 12, currency: 'normal' }, 
+                book: { count: 0, baseG: 900, baseS: 30, baseSc: 0, curG: 900, curS: 30, curSc: 0, currency: 'normal' },
+                theorem: { count: 0, baseG: 2500, baseS: 60, baseSc: 15, curG: 2500, curS: 60, curSc: 15, currency: 'normal' },
+                critChance: { count: 0, baseG: 1400, baseS: 40, baseSc: 8, curG: 1400, curS: 40, curSc: 8, currency: 'normal' }, 
+                critMult: { count: 0, baseG: 1750, baseS: 50, baseSc: 12, curG: 1750, curS: 50, curSc: 12, currency: 'normal' }, 
                 
-                geometry: { count: 0, baseG: 450, baseS: 40, baseSc: 15, curG: 450, curS: 40, curSc: 15, currency: 'normal' },
-                patent: { count: 0, baseG: 800, baseS: 20, baseSc: 25, curG: 800, curS: 20, curSc: 25, currency: 'normal' },
-                astral: { count: 0, baseG: 1600, baseS: 80, baseSc: 50, curG: 1600, curS: 80, curSc: 50, currency: 'normal' },
-                manifesto: { count: 0, baseG: 2500, baseS: 100, baseSc: 120, curG: 2500, curS: 100, curSc: 120, currency: 'normal' },
+                geometry: { count: 0, baseG: 2250, baseS: 80, baseSc: 15, curG: 2250, curS: 80, curSc: 15, currency: 'normal' },
+                patent: { count: 0, baseG: 4000, baseS: 40, baseSc: 25, curG: 4000, curS: 40, curSc: 25, currency: 'normal' },
+                astral: { count: 0, baseG: 8000, baseS: 160, baseSc: 50, curG: 8000, curS: 160, curSc: 50, currency: 'normal' },
+                manifesto: { count: 0, baseG: 12500, baseS: 200, baseSc: 120, curG: 12500, curS: 200, curSc: 120, currency: 'normal' },
 
                 blessIncome: { count: 0, currency: 'glory' },
                 blessClick: { count: 0, currency: 'glory' },
@@ -714,19 +717,40 @@
                 let comboMultiplier = 1 + (state.combo * comboStepBonus);
                 let speedBonusPercent = 1 + (timeRemaining * 0.01 * speedBonusBaseFactor); 
                 let isCrit = Math.random() < state.critChance;
-                let reward = Math.floor(state.clickBase * comboMultiplier * speedBonusPercent * (isCrit ? state.critMultiplier : 1));
-                state.gold += reward;
                 
+                // 💥 1. РАСЧЕТ ТАЛАНТОВ (ЗОЛОТА) ЗА КЛИК:
+                // Базовый клик + Влияние Прорыва (+20% за каждый уровень)
+                let baseClickWithBreakthrough = state.clickBase * (1 + mentalBreakthroughLevel * 0.20);
+                let rewardGold = Math.floor(baseClickWithBreakthrough * comboMultiplier * speedBonusPercent * (isCrit ? state.critMultiplier : 1));
+                state.gold += rewardGold;
+                
+                // 💥 2. РАСЧЕТ СЛАВЫ ЗА КЛИК:
+                // База славы (10 в минус 5 степени от текущей базы клика)
+                let baseGloryFromClick = state.clickBase * 0.00001; 
+                // Бонус от Учебников (тоже 10 в минус 5 степени за штуку)
+                let bookGloryBonus = state.buildings.book.count * 0.00001; 
+                let totalBaseGloryClick = baseGloryFromClick + bookGloryBonus;
+                
+                // Влияние Ментального Прорыва на славу (+20% за уровень)
+                let breakthroughGloryMultiplier = 1 + mentalBreakthroughLevel * 0.20;
+                let finalBaseGlory = totalBaseGloryClick * breakthroughGloryMultiplier;
+                
+                // Применение комбо, скорости и крит-множителя (на славу крит влияет сбалансированно)
+                let rewardGlory = finalBaseGlory * comboMultiplier * speedBonusPercent * (isCrit ? (state.critMultiplier * 0.5 + 0.5) : 1);
+                
+                state.glory += rewardGlory;
+                if (state.glory > 100) state.glory = 100;
+
                 const badge = document.getElementById('comboBadge');
                 badge.style.display = 'inline-block';
                 badge.innerText = `Серия: 🔥 x${comboMultiplier.toFixed(1)}`;
                 if (state.combo >= 5) badge.classList.add('frenzy'); else badge.classList.remove('frenzy');
 
                 if(isCrit) {
-                    spawnRewardText(`⚡ КРИТ (${state.critMultiplier.toFixed(1)}x)! +${reward} 🪙`, clickX, clickY, 'var(--gold)', true);
+                    spawnRewardText(`⚡ КРИТ! +${rewardGold} 🪙 | +${rewardGlory.toFixed(4)}% 👑`, clickX, clickY, 'var(--gold)', true);
                     buildSparks(35, 'var(--gold)');
                 } else {
-                    spawnRewardText(`+${reward} 🪙`, clickX, clickY, '#22d3ee', false); 
+                    spawnRewardText(`+${rewardGold} 🪙 | +${rewardGlory.toFixed(4)}% 👑`, clickX, clickY, '#22d3ee', false); 
                     buildSparks(12, 'var(--cyan)');
                 }
 
@@ -740,8 +764,8 @@
                 const badge = document.getElementById('comboBadge');
                 badge.style.display = 'none'; badge.classList.remove('frenzy');
                 
-                state.steel = Math.max(0, state.steel - 6);
-                spawnRewardText('Ошибка! Разрушение стен (-6 🧱)', clickX, clickY, '#f87171', false); 
+                state.steel = Math.max(0, state.steel - 12); 
+                spawnRewardText('Ошибка! Разрушение стен (-12 🧱)', clickX, clickY, '#f87171', false); 
                 buildSparks(10, '#ef4444');
             }
             generateMath();
@@ -845,7 +869,7 @@
             document.getElementById('val-gold').innerText = Math.floor(state.gold).toLocaleString();
             document.getElementById('val-steel').innerText = Math.floor(state.steel).toLocaleString();
             document.getElementById('val-scrolls').innerText = Math.floor(state.scrolls).toLocaleString();
-            document.getElementById('val-glory').innerText = state.glory.toFixed(3) + '%';
+            document.getElementById('val-glory').innerText = state.glory.toFixed(4) + '%';
 
             let currentGoldInc = state.income.gold * globalProductionBonus;
             document.getElementById('inc-gold').innerText = `+${Math.floor(currentGoldInc)}/с`;
@@ -859,10 +883,10 @@
             let nextMult = getNextCritMultGain(state.buildings.critMult.count).toFixed(2);
             document.getElementById('eff-critMult').innerText = `Крит: ${state.critMultiplier.toFixed(1)}х (+${nextMult}х)`;
 
-            document.getElementById('meta-book').innerText = `Базовый клик: ${state.clickBase} ед.`;
+            let effectiveClickDisplay = state.clickBase * (1 + mentalBreakthroughLevel * 0.20);
+            document.getElementById('meta-book').innerText = `Эфф. клик: ${Math.floor(effectiveClickDisplay)} 🪙`;
             document.getElementById('meta-theorem').innerText = `Скидка: -${((1 - state.discount * blessArchitectDiscount) * 100).toFixed(1)}%`;
 
-            // Обновление описаний динамических благословений
             document.getElementById('eff-blessArchivist').innerText = `Сила Молнии: +${(speedBonusBaseFactor * 100).toFixed(0)}%`;
             document.getElementById('eff-blessInspiration').innerText = `Шаг серии: +${comboStepBonus.toFixed(2)}х`;
 
@@ -888,7 +912,7 @@
                     let sc = Math.floor(b.curSc * totalCurrentDiscount);
 
                     if (isLockedByAnswers) {
-                        if(costEl) costEl.innerText = `⚠️ Нужно решить: ${answersRequired}`;
+                        if(costEl) costEl.innerText = `⚠️ Решить задач: ${answersRequired}`;
                     } else {
                         let str = "";
                         if(g > 0) str += `${g} 🪙 `;
@@ -921,7 +945,7 @@
                     if (currentGloryCost > 100) currentGloryCost = 100;
 
                     if (isLockedByAnswers) {
-                        if(costEl) costEl.innerText = `⚠️ Нужно решить: ${answersRequired}`;
+                        if(costEl) costEl.innerText = `⚠️ Решить задач: ${answersRequired}`;
                     } else {
                         if(costEl) costEl.innerText = `${currentGloryCost}% 👑`;
                     }
@@ -1038,15 +1062,15 @@
                             spawnRewardText(`✨ Аура Изобилия активирована!`, window.innerWidth/2, window.innerHeight/2, '#f472b6', true);
                         }
                         if (type === 'blessClick') {
-                            state.clickBase += 20; 
-                            spawnRewardText(`🔥 Разум усилен! +20 к клику`, window.innerWidth/2, window.innerHeight/2, '#f472b6', true);
+                            mentalBreakthroughLevel++; 
+                            spawnRewardText(`🔥 Ментальный Прорыв! Клик и Слава клика +20%`, window.innerWidth/2, window.innerHeight/2, '#f472b6', true);
                         }
                         if (type === 'blessQuantum') {
                             state.critMultiplier += 1.5;
                             spawnRewardText(`🌀 Квантовый Скачок: Крит стал мощнее!`, window.innerWidth/2, window.innerHeight/2, '#d8b4fe', true);
                         }
                         if (type === 'blessArchivist') {
-                            speedBonusBaseFactor += 0.05; // Модификация: +5% к силе Молнии за уровень
+                            speedBonusBaseFactor += 0.05; 
                             spawnRewardText(`🦅 Молния усилена! Множитель скорости повышен`, window.innerWidth/2, window.innerHeight/2, '#38bdf8', true);
                         }
                         if (type === 'blessArchitect') {
@@ -1054,7 +1078,7 @@
                             spawnRewardText(`🧱 Стоимость построек упала на 5%!`, window.innerWidth/2, window.innerHeight/2, '#10b981', false);
                         }
                         if (type === 'blessInspiration') {
-                            comboStepBonus += 0.10; // Модификация: +0.1х к шагу комбо
+                            comboStepBonus += 0.10; 
                             spawnRewardText(`💡 Мастерство серии повышенно! Шаг комбо вырос`, window.innerWidth/2, window.innerHeight/2, '#ffd700', true);
                         }
 
