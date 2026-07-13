@@ -503,7 +503,6 @@
             discount: 1.0,
             income: { gold: 0, steel: 0, scrolls: 0, glory: 0 },
             buildings: {
-                // Базовые цены на золото (Таланты) увеличены в 3-4 раза
                 abacus: { count: 0, baseG: 90, baseS: 0, baseSc: 0, curG: 90, curS: 0, curSc: 0, currency: 'normal' },
                 blueprint: { count: 0, baseG: 160, baseS: 5, baseSc: 0, curG: 160, curS: 5, curSc: 0, currency: 'normal' },
                 scriptorium: { count: 0, baseG: 280, baseS: 15, baseSc: 0, curG: 280, curS: 15, curSc: 0, currency: 'normal' },
@@ -514,13 +513,11 @@
                 critChance: { count: 0, baseG: 280, baseS: 20, baseSc: 8, curG: 280, curS: 20, curSc: 8, currency: 'normal' }, 
                 critMult: { count: 0, baseG: 350, baseS: 25, baseSc: 12, curG: 350, curS: 25, curSc: 12, currency: 'normal' }, 
                 
-                // Скорость получения славы урезана в 10 раз по сравнению с прошлой версией
                 geometry: { count: 0, baseG: 450, baseS: 40, baseSc: 15, curG: 450, curS: 40, curSc: 15, currency: 'normal' },
                 patent: { count: 0, baseG: 800, baseS: 20, baseSc: 25, curG: 800, curS: 20, curSc: 25, currency: 'normal' },
                 astral: { count: 0, baseG: 1600, baseS: 80, baseSc: 50, curG: 1600, curS: 80, curSc: 50, currency: 'normal' },
                 manifesto: { count: 0, baseG: 2500, baseS: 100, baseSc: 120, curG: 2500, curS: 100, curSc: 120, currency: 'normal' },
 
-                // Изменено: Шаг цены строго 10% за уровень, лимит 100%
                 blessIncome: { count: 0, currency: 'glory' },
                 blessClick: { count: 0, currency: 'glory' }
             }
@@ -596,7 +593,7 @@
                 correctAnswer = n1 - n2; text = `${n1} - ${n2}`;
             } else if (type === '*') {
                 n1 = Math.floor(Math.random() * 12) + 2; n2 = Math.floor(Math.random() * 11) + 2;
-                correctAnswer = n1 × n2; text = `${n1} × ${n2}`;
+                correctAnswer = n1 * n2; text = `${n1} × ${n2}`;
             } else { 
                 n2 = Math.floor(Math.random() * 10) + 2; correctAnswer = Math.floor(Math.random() * 11) + 2;
                 n1 = n2 * correctAnswer; text = `${n1} ÷ ${n2}`;
@@ -737,7 +734,6 @@
             let nextMult = getNextCritMultGain(state.buildings.critMult.count).toFixed(2);
             document.getElementById('eff-critMult').innerText = `Крит: ${state.critMultiplier.toFixed(1)}х (+${nextMult}х)`;
 
-            // Мелкие статы под кнопками Учебника и Циркуля
             document.getElementById('meta-book').innerText = `Базовый клик: ${state.clickBase} ед.`;
             document.getElementById('meta-theorem').innerText = `Скидка: -${((1 - state.discount) * 100).toFixed(1)}% (Множ: ${state.discount.toFixed(2)}x)`;
 
@@ -751,7 +747,6 @@
                 let isLockedByAnswers = false;
 
                 if (b.currency === 'normal') {
-                    // Обычная линейка: Каждый новый уровень требует (b.count + 1) * 10 верных примеров
                     answersRequired = (b.count + 1) * 10;
                     if (correctCount < answersRequired) {
                         isLockedByAnswers = true;
@@ -781,13 +776,11 @@
                     }
 
                 } else if (b.currency === 'glory') {
-                    // Особая линейка Благословений: 100 решенных примеров за уровень
                     answersRequired = (b.count + 1) * 100;
                     if (correctCount < answersRequired) {
                         isLockedByAnswers = true;
                     }
 
-                    // Расчет цены в Славе: линейно +10% за уровень, максимум 100%
                     currentGloryCost = (b.count + 1) * 10;
                     if (currentGloryCost > 100) currentGloryCost = 100;
 
@@ -851,7 +844,7 @@
                 
                 if (b.currency === 'normal') {
                     let answersRequired = (b.count + 1) * 10;
-                    if (correctCount < answersRequired) return; // Залочено
+                    if (correctCount < answersRequired) return; 
 
                     let g = Math.floor(b.curG * state.discount);
                     let s = Math.floor(b.curS * state.discount);
@@ -873,7 +866,6 @@
                         }
                         if(type === 'critMult') state.critMultiplier += getNextCritMultGain(b.count);
                         
-                        // Замедленный в 10 раз пассивный доход Славы
                         if(type === 'geometry') { state.income.glory += 0.003; state.income.gold += 3; }
                         if(type === 'patent') state.income.glory += 0.005;
                         if(type === 'astral') { state.income.glory += 0.015; state.clickBase += 3; }
@@ -891,7 +883,7 @@
                     }
                 } else if (b.currency === 'glory') {
                     let answersRequired = (b.count + 1) * 100;
-                    if (correctCount < answersRequired) return; // Залочено
+                    if (correctCount < answersRequired) return; 
 
                     let currentGloryCost = (b.count + 1) * 10;
                     if (currentGloryCost > 100) currentGloryCost = 100;
@@ -904,7 +896,7 @@
                             spawnRewardText(`✨ Аура Изобилия активирована!`, window.innerWidth/2, window.innerHeight/2, '#f472b6', true);
                         }
                         if (type === 'blessClick') {
-                            state.clickBase += 20; // Изменено с +15 на +20
+                            state.clickBase += 20; 
                             spawnRewardText(`🔥 Разум усилен! +20 к клику`, window.innerWidth/2, window.innerHeight/2, '#f472b6', true);
                         }
 
