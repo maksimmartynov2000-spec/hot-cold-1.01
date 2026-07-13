@@ -34,7 +34,7 @@
             background-color: var(--bg-dark);
             color: var(--text-light);
             display: flex;
-            flex-direction: column;
+            flex-direction: column; /* Жесткая вертикальная структура */
             background: radial-gradient(circle at center, #111428 0%, #06070a 100%);
         }
 
@@ -153,6 +153,7 @@
 
         /* Панель ресурсов + Общий Таймер игры */
         .top-panel-wrapper {
+            flex-shrink: 0; /* Шапка никогда не сжимается */
             background: var(--panel-bg);
             border-bottom: 2px solid rgba(255, 215, 0, 0.15);
             z-index: 10;
@@ -174,7 +175,7 @@
 
         header {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(4, 1fr); /* Сразу делаем 4 колонки в ряд для экономии места по высоте */
             gap: 6px;
             padding: 8px;
             padding-left: calc(8px + env(safe-area-inset-left));
@@ -192,20 +193,20 @@
             border: 1px solid rgba(255,255,255,0.05);
         }
 
-        .res-label { font-size: 0.75rem; color: #94a3b8; }
-        .res-val { font-size: 1.15rem; font-weight: bold; margin-top: 1px; }
-        .res-inc { font-size: 0.65rem; color: #cbd5e1; opacity: 0.8; }
+        .res-label { font-size: 0.7rem; color: #94a3b8; text-align: center; }
+        .res-val { font-size: 1.05rem; font-weight: bold; margin-top: 1px; text-align: center; }
+        .res-inc { font-size: 0.6rem; color: #cbd5e1; opacity: 0.8; text-align: center; }
 
-        /* Игровая зона */
+        /* ИГРОВАЯ ЗОНА: Теперь она динамически занимает ВСЁ свободное пространство по центру */
         .game-space {
-            flex: 1;
+            flex: 1; /* Ключевое исправление: забирает остаток высоты экрана */
             position: relative;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            justify-content: center; /* Идеальное центрирование по вертикали */
+            align-items: center;    /* Идеальное центрирование по горизонтали */
             padding: 10px;
-            min-height: 0;
+            min-height: 0; /* Предотвращает раздувание во flex-контейнерах */
         }
 
         #cityCanvas {
@@ -215,15 +216,16 @@
         }
 
         .math-box {
+            position: relative;
             z-index: 2;
-            background: rgba(5, 7, 15, 0.85);
+            background: rgba(5, 7, 15, 0.88);
             border: 2px solid var(--cyan);
             box-shadow: 0 0 25px rgba(6, 182, 212, 0.25);
             border-radius: 16px;
-            padding: 15px;
+            padding: 16px;
             text-align: center;
             width: 100%;
-            max-width: 350px;
+            max-width: 360px;
             backdrop-filter: blur(8px);
         }
 
@@ -231,7 +233,7 @@
             display: flex;
             justify-content: center;
             gap: 8px;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .combo-badge {
@@ -277,7 +279,7 @@
         }
 
         .math-question {
-            font-size: 2.1rem;
+            font-size: 2.2rem;
             font-weight: bold;
             margin-bottom: 14px;
             color: var(--text-light);
@@ -300,10 +302,11 @@
             font-weight: bold;
             cursor: pointer;
             position: relative;
+            transition: background 0.1s, transform 0.1s;
         }
         .btn-answer:active { transform: scale(0.95); background: rgba(6, 182, 212, 0.2); }
 
-        /* ЭФФЕКТНАЯ АНИМАЦИЯ ВСЦПЛЫВАЮЩИХ НАГРАД */
+        /* ВСПЛЫВАЮЩИЕ НАГРАДЫ */
         .floating-reward {
             position: fixed;
             pointer-events: none;
@@ -330,12 +333,13 @@
         @keyframes critRewardFly {
             0% { transform: translate(-50%, -20px) scale(0.4); opacity: 0; }
             20% { opacity: 1; transform: translate(-50%, -60px) scale(1.4); }
-            40% { transform: translate(-50%, -55px) scale(1.2); } /* Небольшое падение назад для веса */
+            40% { transform: translate(-50%, -55px) scale(1.2); }
             100% { transform: translate(-50%, -140px) scale(0.8); opacity: 0; }
         }
 
-        /* Панель улучшений с Категориями */
+        /* НИЖНЯЯ ПАНЕЛЬ МАГАЗИНА: Теперь аккуратно сидит внизу */
         .control-panel {
+            flex-shrink: 0; /* Магазин не сжимается, у него фиксированный приоритет */
             background: var(--panel-bg);
             backdrop-filter: blur(15px);
             border-top: 2px solid rgba(255, 255, 255, 0.08);
@@ -344,7 +348,7 @@
             padding-left: calc(10px + env(safe-area-inset-left));
             padding-right: calc(10px + env(safe-area-inset-right));
             z-index: 10;
-            max-height: 42vh;
+            max-height: 38vh; /* Уменьшили максимальную высоту, чтобы оставить больше воздуха игре */
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
         }
@@ -354,7 +358,7 @@
             text-transform: uppercase;
             color: var(--cyan);
             letter-spacing: 1px;
-            margin: 10px 0 5px 4px;
+            margin: 8px 0 4px 4px;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -372,21 +376,22 @@
         .build-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 5px;
+            gap: 6px;
         }
 
         .btn-build {
             background: rgba(255, 255, 255, 0.01);
             border: 1px solid rgba(255, 255, 255, 0.07);
             border-radius: 10px;
-            padding: 9px 7px;
+            padding: 9px 8px;
             color: white;
             text-align: left;
             position: relative;
+            cursor: pointer;
         }
         .btn-build:active { transform: scale(0.97); }
         .btn-build .name { font-size: 0.78rem; font-weight: bold; display: block; color: #f1f5f9; }
-        .btn-build .effect-desc { font-size: 0.62rem; color: #38bdf8; display: block; font-style: italic; margin-top: 1px; }
+        .btn-build .effect-desc { font-size: 0.65rem; color: #38bdf8; display: block; font-style: italic; margin-top: 1px; }
         .btn-build[data-cat="upgrade"] .effect-desc { color: var(--gold); }
         .btn-build[data-cat="glory"] .effect-desc { color: #e9d5ff; }
         .btn-build .cost { font-size: 0.65rem; color: #94a3b8; margin-top: 4px; display: block; }
@@ -402,7 +407,7 @@
             border: 1px solid var(--royal);
             text-align: center;
             padding: 12px;
-            margin-top: 8px;
+            margin-top: 6px;
         }
         .btn-final .name { color: #f3e8ff; font-size: 0.85rem; display: block; }
         .btn-final.available { box-shadow: 0 0 15px rgba(168, 85, 247, 0.6); border-color: #c084fc; }
@@ -416,32 +421,26 @@
         }
         .win-screen.active { opacity: 1; pointer-events: auto; }
 
-        /* Адаптив под низкие экраны / iPad ландшафт */
-        @media (max-height: 650px) {
-            .game-clock-bar { padding-top: calc(2px + env(safe-area-inset-top)); padding-bottom: 2px; font-size: 0.75rem; }
-            header { grid-template-columns: repeat(4, 1fr); padding: 4px; }
-            .resource-card { padding: 3px; }
+        /* Оптимизация под маленькие экраны по высоте (смартфоны в ландшафте или мелкие девайсы) */
+        @media (max-height: 600px) {
+            header { padding: 4px; gap: 4px; }
+            .resource-card { padding: 4px; }
             .res-label { font-size: 0.65rem; }
-            .res-val { font-size: 0.95rem; }
-            .res-inc { font-size: 0.58rem; }
-
-            .math-box { padding: 8px 12px; max-width: 420px; }
-            .math-question { font-size: 1.5rem; margin-bottom: 4px; }
-            .timer-bar-container { margin-bottom: 6px; }
-            .btn-answer { padding: 6px; font-size: 1.1rem; }
+            .res-val { font-size: 0.9rem; }
             
-            .control-panel { max-height: 36vh; padding: 4px; }
-            .shop-cat-header { margin: 6px 0 3px 2px; font-size: 0.68rem; }
-            .build-grid { grid-template-columns: repeat(4, 1fr); gap: 4px; }
-            .btn-build .name { font-size: 0.7rem; }
-            .btn-build .effect-desc { font-size: 0.55rem; }
-            .btn-build .count { right: 4px; top: 4px; font-size: 0.65rem; }
-            .btn-final { grid-column: span 4; padding: 8px; margin-top: 4px; }
+            .math-box { padding: 10px; max-width: 320px; }
+            .math-question { font-size: 1.6rem; margin-bottom: 6px; }
+            .btn-answer { padding: 8px; font-size: 1.1rem; border-radius: 8px; }
+
+            .control-panel { max-height: 35vh; }
+            .build-grid { grid-template-columns: repeat(3, 1fr); gap: 4px; }
+            .btn-final { grid-column: span 3; padding: 8px; }
         }
     </style>
 </head>
 <body>
 
+    <!-- ЭКРАН 1: Выбор Обета -->
     <div class="modal-screen" id="startScreen">
         <h1 class="start-title">🏛️ Орден Света</h1>
         <p class="start-subtitle">Выберите Обет Научной Цели на эту эпоху:</p>
@@ -469,6 +468,7 @@
         </div>
     </div>
 
+    <!-- ЭКРАН 2: Манускрипт Познания -->
     <div class="modal-screen" id="briefingScreen" style="display: none;">
         <h1 class="start-title" style="color: var(--cyan);">📜 Манускрипт Познания</h1>
         <p class="start-subtitle">Изучите устройство Цитадели перед началом работы:</p>
@@ -510,6 +510,7 @@
         <button class="btn-start-game" onclick="startGame()">⚔️ Вступить в Орден Счета</button>
     </div>
 
+    <!-- Шапка ресурсов -->
     <div class="top-panel-wrapper">
         <div class="game-clock-bar" id="gameClock">⏳ Время Эпохи: 00:00</div>
         <header>
@@ -524,7 +525,7 @@
                 <div class="res-inc" id="inc-steel">+0/с</div>
             </div>
             <div class="resource-card">
-                <div class="res-label">📜 Манускрипты</div>
+                <div class="res-label">📜 Свитки</div>
                 <div class="res-val" id="val-scrolls">0</div>
                 <div class="res-inc" id="inc-scrolls">+0/с</div>
             </div>
@@ -536,6 +537,7 @@
         </header>
     </div>
 
+    <!-- Игровая зона (Центральная, полностью безопасная область) -->
     <div class="game-space">
         <canvas id="cityCanvas"></canvas>
         <div class="math-box">
@@ -551,6 +553,7 @@
         </div>
     </div>
 
+    <!-- Панель магазина -->
     <div class="control-panel">
         <div class="shop-cat-header">🌾 Производство ресурсов</div>
         <div class="build-grid">
@@ -618,10 +621,11 @@
         </div>
     </div>
 
+    <!-- Победный Экран -->
     <div class="win-screen" id="winScreen">
-        <h1 style="color:var(--gold); font-size:2.2rem; margin-bottom:15px;">Облик Триумфа!</h1>
+        <h1 style="color:var(--gold); font-size:2.2rem; margin-bottom:15px;">Облик Triumpa!</h1>
         <p id="winDesc" style="padding:0 25px; color:#94a3b8; line-height:1.5;"></p>
-        <button style="margin-top:30px; padding:12px 25px; background:var(--gold); border:none; border-radius:8px; font-weight:bold;" onclick="location.reload()">Выбрать новую цель</button>
+        <button style="margin-top:30px; padding:12px 25px; background:var(--gold); border:none; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="location.reload()">Выбрать новую цель</button>
     </div>
 
     <script>
@@ -752,7 +756,6 @@
         function checkAnswer(chosen, event) {
             if(!gameActive) return;
             
-            // Вычисляем точные глобальные координаты нажатой кнопки
             let clickX = window.innerWidth / 2;
             let clickY = window.innerHeight / 2;
             if (event && event.currentTarget) {
@@ -778,7 +781,7 @@
                     spawnRewardText(`⚡ КРИТ! +${reward} 🪙`, clickX, clickY, 'var(--gold)', true);
                     buildSparks(35, 'var(--gold)');
                 } else {
-                    spawnRewardText(`+${reward} 🪙`, clickX, clickY, '#22d3ee', false); // Неоновый циан
+                    spawnRewardText(`+${reward} 🪙`, clickX, clickY, '#22d3ee', false); 
                     buildSparks(12, 'var(--cyan)');
                 }
             } else {
@@ -787,14 +790,13 @@
                 badge.style.display = 'none'; badge.classList.remove('frenzy');
                 
                 state.steel = Math.max(0, state.steel - 6);
-                spawnRewardText('Ошибка! -6 🧱', clickX, clickY, '#f87171', false); // Мягкий красный
+                spawnRewardText('Ошибка! -6 🧱', clickX, clickY, '#f87171', false); 
                 buildSparks(10, '#ef4444');
             }
             generateMath();
             updateUI();
         }
 
-        // Функция спавна красивой вылетающей анимации
         function spawnRewardText(txt, x, y, color, isCrit) {
             const el = document.createElement('div');
             el.className = isCrit ? 'floating-reward crit' : 'floating-reward';
@@ -804,11 +806,9 @@
             el.style.color = color;
             document.body.appendChild(el);
             
-            // Удаляем элемент сразу после окончания анимации
             setTimeout(() => el.remove(), isCrit ? 1300 : 900);
         }
 
-        // Задний фон (капли искр)
         class Spark {
             constructor(x, y, color) {
                 this.x = x; this.y = y;
@@ -824,11 +824,14 @@
         }
 
         function buildSparks(num, color) {
-            for(let i=0; i<num; i++) particles.push(new Spark(canvas.width/2, canvas.height/2.8, color));
+            const spaceRect = document.querySelector('.game-space').getBoundingClientRect();
+            const centerX = spaceRect.left + spaceRect.width / 2;
+            const centerY = spaceRect.top + spaceRect.height / 2;
+            for(let i=0; i<num; i++) particles.push(new Spark(centerX, centerY, color));
         }
 
         setInterval(() => {
-            if(particles.length < 15) {
+            if(particles.length < 15 && gameActive) {
                 particles.push(new Spark(Math.random() * canvas.width, canvas.height + 10, '#222533'));
             }
         }, 300);
