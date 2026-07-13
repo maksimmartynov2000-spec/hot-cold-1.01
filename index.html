@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Мачи Коро — Добыча (Кастомная сборка)</title>
+<title>ДОБЫЧА</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{
@@ -112,25 +112,25 @@
 <script>
 /* ======================= БАЗА ДАННЫХ ПРЕДПРИЯТИЙ С КАТЕГОРИЯМИ ======================= */
 const OLD_BASE = [
-  { id:'hwheat',   name:'Пшеничное поле',        activation:[1],   icon:'🌾', tag:'ear', income:2, desc:'Любой ход: +2 монеты из банка' },
-  { id:'hpotato',  name:'Картофельное поле',     activation:[4],   icon:'🥔', tag:'ear', income:1, special:'potato', desc:'Любой ход: +1 монета за каждое ваше Картофельное поле' },
-  { id:'hcorn',    name:'Кукурузное поле',       activation:[5],   icon:'🌽', tag:'ear', income:2, desc:'Любой ход: +2 монеты из банка' },
-  { id:'hpoultry', name:'Птицефабрика',          activation:[2],   icon:'🐔', tag:'meat', special:'poultry', desc:'Любой ход: +1 монета за каждый курятник в городе' },
+  { id:'hwheat',   name:'Пшеничное поле',        activation:[1],   icon:'🌾', tag:'ear', income:2, symbolCount:2, desc:'Любой ход: +2 монеты из банка' },
+  { id:'hpotato',  name:'Картофельное поле',     activation:[4],   icon:'🥔', tag:'ear', income:1, special:'potato', desc:'Любой ход: +1 монета за каждое ваше Картофельное поле (считаются и базовые, и улучшенные)' },
+  { id:'hcorn',    name:'Кукурузное поле',       activation:[5,6],   icon:'🌽', tag:'ear', income:2, desc:'Любой ход: +2 монеты из банка' },
+  { id:'hpoultry', name:'Птицефабрика',          activation:[2],   icon:'🐔', tag:'meat', special:'poultry', desc:'Любой ход: +1 монета за каждую птицефабрику (базовую или улучшенную) у любого игрока' },
   { id:'hpig',     name:'Свиноферма',            activation:[3,4], icon:'🐖', tag:'meat', income:2, desc:'Любой ход: +2 монеты из банка' },
-  { id:'hmeat',    name:'Мясная ферма',          activation:[4,5,6], icon:'🐄', tag:'meat', special:'meatfarm', desc:'Любой ход (сумма 4-6): +2 монеты. <span class="attention">Блокируется Птицефабрикой/Свинофермой</span>' },
-  { id:'hfishboat',name:'Рыбацкая лодка',        activation:[1,5], icon:'🚣', tag:'fish', income:2, requiresPort:true, desc:'Любой ход: +2 монеты <span class="attention">(нужен Порт)</span>' },
+  { id:'hmeat',    name:'Мясная ферма',          activation:[4,5,6], icon:'🐄', tag:'meat', special:'meatfarm', desc:'Любой ход: +2 монеты. <span class="attention">Доход уменьшается вдвое, если у вас есть Птицефабрика или Свиноферма</span>' },
+  { id:'hfishboat',name:'Рыбацкая лодка',        activation:[1,3,5], icon:'🚣', tag:'fish', income:2, requiresPort:true, desc:'Любой ход: +2 монеты <span class="attention">(нужен Порт)</span>' },
   { id:'hfishnet', name:'Рыбацкие сети',         activation:[2,4,6], icon:'🕸️', tag:'fish', income:1, requiresPort:true, desc:'Любой ход: +1 монета <span class="attention">(нужен Порт)</span>' },
   { id:'hfishagency',name:'Рыболовное агентство',activation:[1,3,5,7,9,11,13,15,17], icon:'🏭', tag:'fish', income:1, requiresPort:true, desc:'Любой ход (нечётный бросок): +1 монета <span class="attention">(нужен Порт)</span>' }
 ];
 
 const OLD_UPGRADES = [
-  { id:'hwheatU',  name:'Улучш. пшеничное поле', activation:[1,2], icon:'🌾', tag:'ear', income:3, upgradeOf:'hwheat', desc:'Любой ход: +3 монеты из банка' },
-  { id:'hpotatoU', name:'Улучш. картофельное поле',activation:[4],   icon:'🥔', tag:'ear', income:2, special:'potatoU', upgradeOf:'hpotato', desc:'Любой ход: +2 монеты за каждое ваше Картофельное поле' },
-  { id:'hcornU',   name:'Улучш. кукурузное поле', activation:[5,6], icon:'🌽', tag:'ear', income:2, upgradeOf:'hcorn', desc:'Любой ход: +2 монеты из банка' },
-  { id:'hpoultryU',name:'Улучш. птицефабрика',   activation:[2],   icon:'🐔', tag:'meat', special:'poultryU', upgradeOf:'hpoultry', desc:'Любой ход: +2 монеты за каждый курятник в городе' },
+  { id:'hwheatU',  name:'Улучш. пшеничное поле', activation:[1,2], icon:'🌾', tag:'ear', income:3, symbolCount:2, upgradeOf:'hwheat', desc:'Любой ход: +3 монеты из банка' },
+  { id:'hpotatoU', name:'Улучш. картофельное поле',activation:[4],   icon:'🥔', tag:'ear', income:2, special:'potatoU', upgradeOf:'hpotato', desc:'Любой ход: +2 монеты за каждое ваше Картофельное поле (считаются и базовые, и улучшенные)' },
+  { id:'hcornU',   name:'Улучш. кукурузное поле', activation:[5,6], icon:'🌽', tag:'ear', income:3, upgradeOf:'hcorn', desc:'Любой ход: +3 монеты из банка' },
+  { id:'hpoultryU',name:'Улучш. птицефабрика',   activation:[2],   icon:'🐔', tag:'meat', special:'poultryU', upgradeOf:'hpoultry', desc:'Любой ход: +2 монеты за каждую птицефабрику (базовую или улучшенную) у любого игрока' },
   { id:'hpigU',    name:'Улучш. свиноферма',      activation:[3,4], icon:'🐖', tag:'meat', income:3, upgradeOf:'hpig', desc:'Любой ход: +3 монеты из банка' },
-  { id:'hmeatU',   name:'Улучш. мясная ферма',    activation:[4,5,6], icon:'🐄', tag:'meat', special:'meatfarmU', upgradeOf:'hmeat', desc:'Любой ход (сумма 4-6): +3 монеты. <span class="attention">Блокируется</span>' },
-  { id:'hfishboatU',name:'Улучш. рыбацкая лодка',activation:[1,3,5], icon:'🚣', tag:'fish', income:2, requiresPort:true, upgradeOf:'hfishboat', desc:'Любой ход: +2 монеты <span class="attention">(нужен Порт)</span>' },
+  { id:'hmeatU',   name:'Улучш. мясная ферма',    activation:[4,5,6], icon:'🐄', tag:'meat', special:'meatfarmU', desc:'Любой ход: +4 монеты. <span class="attention">Доход уменьшается вдвое, если у вас есть Птицефабрика или Свиноферма</span>' },
+  { id:'hfishboatU',name:'Улучш. рыбацкая лодка',activation:[1,3,5], icon:'🚣', tag:'fish', income:3, requiresPort:true, upgradeOf:'hfishboat', desc:'Любой ход: +3 монеты <span class="attention">(нужен Порт)</span>' },
   { id:'hfishnetU',name:'Улучш. рыбацкие сети',  activation:[1,2,3,4,5,6], icon:'🕸️', tag:'fish', income:1, requiresPort:true, upgradeOf:'hfishnet', desc:'Любой ход (1-6): +1 монета <span class="attention">(нужен Порт)</span>' },
   { id:'hfishagencyU',name:'Улучш. рыболовное агентство',activation:[1,3,5,7,9,11,13,15,17], icon:'🏭', tag:'fish', income:2, requiresPort:true, upgradeOf:'hfishagency', desc:'Любой ход (нечётный): +2 монеты <span class="attention">(нужен Порт)</span>' }
 ];
@@ -138,15 +138,15 @@ const OLD_UPGRADES = [
 const NEW_BASE = [
   { id:'ncoal',  name:'Угольная шахта',    activation:[7], icon:'⛏️', tag:'gear', income:3, desc:'Любой ход: +3 монеты. Карта с шестерёнкой.' },
   { id:'nwood',  name:'Лесопилка',         activation:[8,9], icon:'🪓', tag:'gear', income:4, desc:'Любой ход: +4 монеты. Карта с шестерёнкой.' },
-  { id:'nsea',   name:'Морская скважина',  activation:[2,4,6,8,10,12,14,16,18], icon:'🌊', tag:'gear', income:2, requiresPort:true, desc:'Любой ход (чётный): +2 монеты <span class="attention">(нужен Порт)</span>. С шестерёнкой.' },
-  { id:'ngas',   name:'Газовая скважина',  activation:[10,11,12], icon:'🔥', tag:'gear', income:5, desc:'Любой ход: +5 монет. Карта с шестерёнкой.' }
+  { id:'nsea',   name:'Газовая скважина',  activation:[2,4,6,8,10,12,14,16,18], icon:'🌊', tag:'gear', income:2, desc:'Любой ход (чётный): +2 монеты. Карта с шестерёнкой.' },
+  { id:'ngas',   name:'Нефтяная скважина', activation:[10,11,12], icon:'🔥', tag:'gear', income:12, special:'oilwell', requiresPortUp:true, desc:'Любой ход: +12 монет минус 4 монеты за каждую другую нефтяную скважину (базовую или улучшенную) у любого игрока в игре. <span class="attention">Нужен Улучшенный порт. Доход может стать отрицательным!</span> Карта с шестерёнкой.' }
 ];
 
 const NEW_UPGRADES = [
   { id:'ncoalU', name:'Улучш. угольная шахта', activation:[7,8], icon:'⛏️', tag:'gear', income:5, upgradeOf:'ncoal', desc:'Любой ход: +5 монет. Карта с шестерёнкой.' },
   { id:'nwoodU', name:'Улучш. лесопилка',      activation:[8,9,10], icon:'🪓', tag:'gear', income:6, upgradeOf:'nwood', desc:'Любой ход: +6 монет. Карта с шестерёнкой.' },
-  { id:'nseaU',  name:'Улучш. морская скважина',activation:[2,4,6,8,10,12,14,16,18], icon:'🌊', tag:'gear', income:4, requiresPort:true, upgradeOf:'nsea', desc:'Любой ход (чётный): +4 монеты <span class="attention">(нужен Порт)</span>. С шестерёнкой.' },
-  { id:'ngasU',  name:'Улучш. газовая скважина',activation:[10,11,12], icon:'🔥', tag:'gear', income:10, upgradeOf:'ngas', desc:'Любой ход: +10 монет. Карта с шестерёнкой.' }
+  { id:'nseaU',  name:'Улучш. газовая скважина',activation:[2,4,6,8,10,12,14,16,18], icon:'🌊', tag:'gear', income:4, upgradeOf:'nsea', desc:'Любой ход (чётный): +4 монеты. Карта с шестерёнкой.' },
+  { id:'ngasU',  name:'Улучш. нефтяная скважина',activation:[10,11,12], icon:'🔥', tag:'gear', income:12, special:'oilwellU', requiresPortUp:true, upgradeOf:'ngas', desc:'Любой ход: +12 монет минус 1 монета за каждую другую нефтяную скважину (базовую или улучшенную) у любого игрока в игре. <span class="attention">Нужен Улучшенный порт.</span> Карта с шестерёнкой.' }
 ];
 
 const CARD_COSTS = {
@@ -161,27 +161,27 @@ const TAG_ICONS = { ear: '🌾', meat: '🥩', fish: '🐟', gear: '⚙️' };
 
 /* ======================= ДОСТОПРИМЕЧАТЕЛЬНОСТИ ======================= */
 const INFRA_LANDMARKS = [
-  { id:'port',       category:'infra', cost:4,  icon:'⚓', name:'Порт', desc:'Позволяет бросать 2 кубика вместо одного' },
-  { id:'portUp',     category:'infra', cost:8,  icon:'⚓', name:'Порт: расширение', upgradeOf:'port', desc:'Дубль на 2 кубиках дарит дополнительный ход' },
-  { id:'station',    category:'infra', cost:8,  icon:'🚉', name:'Вокзал', desc:'Позволяет бросать 3 кубика вместо одного' },
-  { id:'stationUp',  category:'infra', cost:14, icon:'🚉', name:'Вокзал: расширение', upgradeOf:'station', desc:'Дубль на 3 кубиках дарит 2 дополнительные покупки' },
-  { id:'airport',    category:'infra', cost:6,  icon:'✈️', name:'Аэропорт', desc:'Раз за ход можно перебросить все кубики' },
-  { id:'airportUp',  category:'infra', cost:10, icon:'✈️', name:'Аэропорт: расширение', upgradeOf:'airport', desc:'Переброс становится точечным — только 1 кубик' },
+  { id:'port',       category:'infra', cost:6,  icon:'⚓', name:'Порт', desc:'Позволяет бросать 2 кубика вместо одного' },
+  { id:'portUp',     category:'infra', cost:12,  icon:'⚓', name:'Порт: расширение', upgradeOf:'port', desc:'Дубль на 2 кубиках дарит дополнительный ход. Также открывает постройку Нефтяных скважин.' },
+  { id:'station',    category:'infra', cost:10,  icon:'🚉', name:'Вокзал', desc:'Позволяет бросать 3 кубика вместо одного' },
+  { id:'stationUp',  category:'infra', cost:20, icon:'🚉', name:'Вокзал: расширение', upgradeOf:'station', desc:'Дубль на 3 кубиках дарит 2 дополнительные покупки' },
+  { id:'airport',    category:'infra', cost:20,  icon:'✈️', name:'Аэропорт', desc:'Раз за ход можно перебросить все кубики' },
+  { id:'airportUp',  category:'infra', cost:40, icon:'✈️', name:'Аэропорт: расширение', upgradeOf:'airport', desc:'Переброс становится точечным — только 1 кубик' },
 ];
 
 const RESEARCH_LANDMARKS = [
-  { id:'modernization',   category:'research', cost:10, icon:'⚙️', name:'Модернизация', desc:'Открывает покупку улучшенных предприятий' },
-  { id:'animalhusbandry', category:'research', cost:14, icon:'📈', name:'Животноводство', desc:'Карты с символами Рыбы 🐟, Мяса 🥩 и Колоска 🌾 срабатывают <b>еще 1 раз</b>' },
-  { id:'engineering',     category:'research', cost:10, icon:'🔧', name:'Инженерия', desc:'Карты с шестерёнкой ⚙️ (новое дополнение) срабатывают дважды' },
-  { id:'michelin',        category:'research', cost:10, icon:'⭐', name:'Мишлен', desc:'Каждое улучшение приносит +1 монету бонуса' },
-  { id:'innovations',     category:'research', cost:12, icon:'💡', name:'Инновации', desc:'Открывает покупку расширений Инфраструктуры' },
+  { id:'modernization',   category:'research', cost:15, icon:'⚙️', name:'Модернизация', desc:'Открывает покупку улучшенных предприятий' },
+  { id:'animalhusbandry', category:'research', cost:25, icon:'📈', name:'Животноводство', desc:'Карты с символами Рыбы 🐟, Мяса 🥩 и Колоска 🌾 срабатывают ещё раз за каждый такой символ на карте (у большинства карт по одному символу, но у Пшеничного поля их два — оно сработает трижды)' },
+  { id:'engineering',     category:'research', cost:35, icon:'🔧', name:'Инженерия', desc:'Карты с шестерёнкой ⚙️ (новое дополнение) срабатывают дважды' },
+  { id:'michelin',        category:'research', cost:50, icon:'⭐', name:'Мишлен', desc:'Ничего не делает.' },
+  { id:'innovations',     category:'research', cost:40, icon:'💡', name:'Инновации', desc:'Открывает покупку расширений Инфраструктуры' },
 ];
 
 const POLITICAL_LANDMARKS = [
-  { id:'senate',    category:'political', cost:12, icon:'🏛️', name:'Сенат', desc:'Открывает нижнюю (3-6) и верхнюю (16-18) палату на 3 кубиках' },
-  { id:'spycenter', category:'political', cost:16, icon:'🕵️', name:'Шпионский центр', desc:'Нижний стрит на 2 костях — контроль чужого броска' },
-  { id:'opposition',category:'political', cost:18, icon:'✊', name:'Оппозиция', desc:'Верхний стрит на 2 костях — сносит улучшение соперника' },
-  { id:'coup',      category:'political', cost:20, icon:'⚡', name:'Переворот', desc:'Бросок 1, 2 или 3 — все соперники пропускают следующий ход' },
+  { id:'senate',    category:'political', cost:60, icon:'🏛️', name:'Сенат', desc:'Открывает нижнюю (3-6) и верхнюю (16-18) палату на 3 кубиках' },
+  { id:'spycenter', category:'political', cost:70, icon:'🕵️', name:'Шпионский центр', desc:'Активируется, когда владелец бросает 3 кубика и выпадает нижний стрит — 1, 2 и 3 в любом порядке. Даёт контроль над броском соперника' },
+  { id:'opposition',category:'political', cost:80, icon:'✊', name:'Оппозиция', desc:'Активируется, когда владелец бросает 3 кубика и выпадает верхний стрит — 4, 5 и 6 в любом порядке. Сносит улучшение соперника' },
+  { id:'coup',      category:'political', cost:100, icon:'⚡', name:'Переворот', desc:'Бросок 1, 2 или 3 — все соперники пропускают следующий ход' },
 ];
 
 const ALL_LANDMARKS = INFRA_LANDMARKS.concat(RESEARCH_LANDMARKS, POLITICAL_LANDMARKS);
@@ -221,25 +221,25 @@ function newGame(numPlayers, setupPlayers){
   const marketBaseOld = [];
   while(marketBaseOld.length < 4 && deckBaseOld.length > 0) {
     let card = getNextUniqueCard(deckBaseOld, marketBaseOld);
-    if(card) { marketBaseOld.push(card); supply[card]--; }
+    if(card) { marketBaseOld.push(card); }
   }
 
   const marketBaseNew = [];
   while(marketBaseNew.length < 4 && deckBaseNew.length > 0) {
     let card = getNextUniqueCard(deckBaseNew, marketBaseNew);
-    if(card) { marketBaseNew.push(card); supply[card]--; }
+    if(card) { marketBaseNew.push(card); }
   }
 
   const marketUpgradeOld = [];
   while(marketUpgradeOld.length < 2 && deckUpgradeOld.length > 0) {
     let card = getNextUniqueCard(deckUpgradeOld, marketUpgradeOld);
-    if(card) { marketUpgradeOld.push(card); supply[card]--; }
+    if(card) { marketUpgradeOld.push(card); }
   }
 
   const marketUpgradeNew = [];
   while(marketUpgradeNew.length < 2 && deckUpgradeNew.length > 0) {
     let card = getNextUniqueCard(deckUpgradeNew, marketUpgradeNew);
-    if(card) { marketUpgradeNew.push(card); supply[card]--; }
+    if(card) { marketUpgradeNew.push(card); }
   }
 
   const players = [];
@@ -308,6 +308,7 @@ function resolveRoll(dice, isReroll){
     ALL_ESTABLISHMENTS.forEach(card => {
       if(!card.activation.includes(total)) return;
       if(card.requiresPort && !p.landmarks.port) return;
+      if(card.requiresPortUp && !p.landmarks.portUp) return;
       const c = count(p, card.id);
       if(c <= 0) return;
 
@@ -322,25 +323,34 @@ function resolveRoll(dice, isReroll){
         const globalPoultry = state.players.reduce((s,pl) => s + count(pl,'hpoultry') + count(pl,'hpoultryU'), 0);
         baseAmount = mult * globalPoultry * c;
       } else if(card.special === 'meatfarm' || card.special === 'meatfarmU'){
-        const blocked = count(p,'hpoultry')>0 || count(p,'hpoultryU')>0 || count(p,'hpig')>0 || count(p,'hpigU')>0;
-        const rate = card.special === 'meatfarm' ? 2 : 3;
-        baseAmount = blocked ? 0 : rate * c;
+        const hasBlocker = count(p,'hpoultry')>0 || count(p,'hpoultryU')>0 || count(p,'hpig')>0 || count(p,'hpigU')>0;
+        const rate = card.special === 'meatfarm' ? 2 : 4;
+        const full = rate * c;
+        baseAmount = hasBlocker ? Math.floor(full/2) : full;
+      } else if(card.special === 'oilwell' || card.special === 'oilwellU'){
+        const penalty = card.special === 'oilwell' ? 4 : 1;
+        const totalWells = state.players.reduce((s,pl) => s + count(pl,'ngas') + count(pl,'ngasU'), 0);
+        const others = totalWells - 1;
+        baseAmount = (card.income - penalty*others) * c;
       } else if(card.id === 'nsea' || card.id === 'nseaU') {
         if(total % 2 === 0) baseAmount = (card.id === 'nsea' ? 2 : 4) * c;
       } else {
         baseAmount = card.income * c;
       }
 
-      if (baseAmount > 0) {
+      if (baseAmount !== 0) {
         let multiplier = 1;
         if(p.landmarks.engineering && card.tag === 'gear') multiplier += 1;
-        if(p.landmarks.animalhusbandry && ['fish', 'meat', 'ear'].includes(card.tag)) multiplier += 1;
+        if(p.landmarks.animalhusbandry && ['fish', 'meat', 'ear'].includes(card.tag)) multiplier += (card.symbolCount || 1);
         
         let finalAmount = baseAmount * multiplier;
         p.coins += finalAmount;
-        log(`🔹 ${p.name}: ${card.icon}${TAG_ICONS[card.tag]} ${card.name} приносит +${finalAmount} 💰 (x${multiplier})`);
+        const sign = finalAmount >= 0 ? '+' : '';
+        log(`🔹 ${p.name}: ${card.icon}${TAG_ICONS[card.tag]} ${card.name} приносит ${sign}${finalAmount} 💰 (x${multiplier})`);
       }
     });
+
+    if(p.coins < 0) p.coins = 0;
 
     if(p.coins === 0) {
       p.coins = 1;
@@ -385,18 +395,21 @@ function buyCard(id, marketType, slotIndex){
     log(`🛒 ${p.name} купил(а): ${card.name}`);
   }
 
-  let deck, market;
-  if(marketType === 'baseOld') { deck = state.deckBaseOld; market = state.marketBaseOld; }
-  else if(marketType === 'baseNew') { deck = state.deckBaseNew; market = state.marketBaseNew; }
-  else if(marketType === 'upgradeOld') { deck = state.deckUpgradeOld; market = state.marketUpgradeOld; }
-  else if(marketType === 'upgradeNew') { deck = state.deckUpgradeNew; market = state.marketUpgradeNew; }
+  // Слот меняется на новую карту только тогда, когда запас купленной карты закончился (0)
+  if(state.supply[id] <= 0) {
+    let deck, market;
+    if(marketType === 'baseOld') { deck = state.deckBaseOld; market = state.marketBaseOld; }
+    else if(marketType === 'baseNew') { deck = state.deckBaseNew; market = state.marketBaseNew; }
+    else if(marketType === 'upgradeOld') { deck = state.deckUpgradeOld; market = state.marketUpgradeOld; }
+    else if(marketType === 'upgradeNew') { deck = state.deckUpgradeNew; market = state.marketUpgradeNew; }
 
-  if(deck && deck.length > 0) {
-    const nextUnique = getNextUniqueCard(deck, market);
-    if(nextUnique) { market[slotIndex] = nextUnique; state.supply[nextUnique]--; }
-    else { market.splice(slotIndex, 1); }
-  } else {
-    market.splice(slotIndex, 1);
+    if(deck && deck.length > 0) {
+      const nextUnique = getNextUniqueCard(deck, market);
+      if(nextUnique) { market[slotIndex] = nextUnique; }
+      else { market.splice(slotIndex, 1); }
+    } else {
+      market.splice(slotIndex, 1);
+    }
   }
 
   state.purchasesRemaining--;
@@ -466,6 +479,7 @@ function aiTurnMarket() {
       if(card && p.coins >= card.cost && state.supply[card.id] > 0) {
         if(card.upgradeOf && (!p.landmarks.modernization || count(p, card.upgradeOf) < 1)) continue;
         if(card.requiresPort && !p.landmarks.port) continue;
+        if(card.requiresPortUp && !p.landmarks.portUp) continue;
         buyCard(card.id, type, i);
         return true;
       }
@@ -500,7 +514,7 @@ function render(){
   const inPostroll = state.phase==='postroll';
   const canReroll = (p.landmarks.airport && !state.usedReroll);
 
-  let html = `<div class="title"><h1>🎲 Мачи Коро: Кастомное Дополнение</h1><div class="sub">Рыба, Мясо, Колоски • Стартовый капитал: 5 монет</div></div>`;
+  let html = `<div class="title"><h1>🎲 ДОБЫЧА</h1><div class="sub">Рыба, Мясо, Колоски • Стартовый капитал: 5 монет</div></div>`;
   html += `<div class="board"><div>`;
 
   html += `<div class="panel"><div class="players-strip">`;
@@ -575,11 +589,12 @@ function renderMarketSection(title, marketArr, marketType, p, inPostroll) {
       if(!p.landmarks.modernization || count(p, c.upgradeOf) < 1) disabled = true;
     }
     if(c.requiresPort && !p.landmarks.port) disabled = true;
+    if(c.requiresPortUp && !p.landmarks.portUp) disabled = true;
 
     html += `<div class="card blue-type">`;
     if(owned > 0) html += `<div class="owned-badge">${owned}</div>`;
     html += `<div class="icon">${c.icon} <span class="extra-tag">${TAG_ICONS[c.tag]}</span></div><div class="name">${c.name}</div>`;
-    html += `<div class="activation">🎯 Кубы: ${c.activation.join('/')}</div>`;
+    html += `<div class="activation">🎲 ${c.activation.join('/')}</div>`;
     html += `<div class="desc">${c.desc}</div>`;
     html += `<div class="footer"><span class="cost">${c.cost} 💰</span><span class="supply">Запас: ${state.supply[c.id]}</span></div>`;
     html += `<button class="buy-btn" ${disabled?'disabled':''} onclick="buyCard('${c.id}', '${marketType}', ${index})">${c.upgradeOf?'Улучшить':'Купить'}</button>`;
@@ -635,7 +650,7 @@ function renderGuideModal() {
       // Левая колонка: Базовая карта
       html += `<div class="guide-item">`;
       html += `<b>${bc.icon} ${bc.name}</b> (Цена: ${CARD_COSTS[bc.id]}💰)<br>`;
-      html += `🎯 Кубы: [${bc.activation.join(', ')}]<br>`;
+      html += `🎲 [${bc.activation.join(', ')}]<br>`;
       html += `<span style="opacity:0.8">${bc.desc}</span>`;
       html += `</div>`;
       
@@ -643,7 +658,7 @@ function renderGuideModal() {
       html += `<div class="guide-item" style="border-left: 1px dashed #bbb; padding-left: 10px;">`;
       if(uc) {
         html += `🚀 <b>${uc.name}</b> (Цена: ${CARD_COSTS[uc.id]}💰)<br>`;
-        html += `🎯 Кубы: [${uc.activation.join(', ')}]<br>`;
+        html += `🎲 [${uc.activation.join(', ')}]<br>`;
         html += `<span style="opacity:0.8; color:#4a7c59;">${uc.desc}</span>`;
       } else {
         html += `<span style="color:#888; font-style:italic;">У этого предприятия нет улучшения</span>`;
@@ -666,7 +681,7 @@ function renderWinner(){
 let currentSetupCount = 2;
 
 function renderSetup(){
-  let html = `<div class="title"><h1>🎲 Мачи Коро: Настройка Матча</h1><div class="sub">Выберите участников, ИИ-ботов и распределите роли</div></div>`;
+  let html = `<div class="title"><h1>🎲 ДОБЫЧА</h1><div class="sub">Настройка матча: выберите участников, ИИ-ботов и распределите роли</div></div>`;
   html += `<div class="setup-card"><h3>Параметры сессии</h3>`;
   
   html += `<label>Количество участников:</label>`;
