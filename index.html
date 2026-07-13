@@ -3,24 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Цитадель: Эпоха Грааля</title>
+    <title>Математическая Цитадель</title>
     <style>
         :root {
-            --bg-dark: #0a0a0f;
-            --panel-bg: rgba(20, 20, 30, 0.85);
+            --bg-dark: #080911;
+            --panel-bg: rgba(18, 20, 38, 0.9);
             --gold: #ffd700;
-            --steel: #e6f2ff;
-            --royal-purple: #b300ff;
-            --grail-red: #ff3366;
-            --text-light: #f5f5fa;
-            --shadow-gold: 0 0 15px rgba(255, 215, 0, 0.3);
+            --steel: #8ba3b5;
+            --purple: #a855f7;
+            --cyan: #06b6d4;
+            --text-light: #f1f5f9;
         }
 
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: Georgia, serif;
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', Roboto, Georgia, serif;
             -webkit-tap-highlight-color: transparent;
             user-select: none;
         }
@@ -32,17 +30,15 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            background: radial-gradient(circle at center, #1a1a2e 0%, #050508 100%);
+            background: radial-gradient(circle at center, #131730 0%, #080911 100%);
         }
 
-        /* Верхняя панель ресурсов */
         header {
             display: flex;
             justify-content: space-around;
-            padding: 12px 8px;
+            padding: 10px 5px;
             background: var(--panel-bg);
-            backdrop-filter: blur(15px);
-            border-bottom: 2px solid rgba(255, 215, 0, 0.15);
+            border-bottom: 2px solid rgba(255, 215, 0, 0.2);
             z-index: 10;
         }
 
@@ -50,88 +46,108 @@
             text-align: center;
             flex: 1;
             margin: 0 4px;
-            padding: 6px;
+            padding: 8px 4px;
             border-radius: 10px;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.4);
             border: 1px solid rgba(255,255,255,0.05);
-            transition: all 0.3s ease;
         }
+        .resource-card.gold { border-color: var(--gold); }
+        .resource-card.steel { border-color: var(--steel); }
+        .resource-card.purple { border-color: var(--purple); }
 
-        .resource-card.gold { border-color: var(--gold); box-shadow: var(--shadow-gold); }
-        .resource-card.steel { border-color: #556677; }
-        .resource-card.purple { border-color: var(--royal-purple); }
+        .res-label { font-size: 0.65rem; text-transform: uppercase; color: #94a3b8; }
+        .res-val { font-size: 1.1rem; font-weight: bold; margin-top: 2px; }
+        .res-inc { font-size: 0.65rem; color: #cbd5e1; opacity: 0.8; }
 
-        .res-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: #a0a0b0; }
-        .res-val { font-size: 1.1rem; font-weight: bold; margin-top: 3px; }
-        .res-inc { font-size: 0.65rem; opacity: 0.8; color: #ffd700; }
-        .steel .res-inc { color: #a9b7c6; }
-        .purple .res-inc { color: #b300ff; }
-
-        /* Игровая зона кликера */
+        /* Игровая зона и математический блок */
         .game-space {
             flex: 1;
             position: relative;
-            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
         }
 
         #cityCanvas {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             z-index: 1;
         }
 
-        .click-prompt {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+        .math-box {
             z-index: 2;
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.4);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            pointer-events: none;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid var(--cyan);
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+            border-radius: 16px;
+            padding: 20px;
             text-align: center;
             width: 100%;
+            max-width: 340px;
+            backdrop-filter: blur(5px);
         }
 
-        /* Текст всплывающих кликов */
+        .math-question {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--text-light);
+            letter-spacing: 1px;
+        }
+
+        .answers-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn-answer {
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid var(--cyan);
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+        .btn-answer:active { transform: scale(0.95); background: rgba(6, 182, 212, 0.3); }
+
+        /* Всплывающие тексты */
         .floating-text {
             position: absolute;
             pointer-events: none;
             font-weight: bold;
-            font-size: 1.3rem;
-            color: var(--gold);
-            text-shadow: 0 0 8px rgba(255,215,0,0.6);
+            font-size: 1.4rem;
             z-index: 5;
             animation: floatUp 0.8s ease-out forwards;
         }
 
         @keyframes floatUp {
             0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
-            100% { transform: translate(-50%, -120px) scale(1.2); opacity: 0; }
+            100% { transform: translate(-50%, -100px) scale(1.2); opacity: 0; }
         }
 
-        /* Панель управления */
+        /* Панель магазинов (Прокручиваемая) */
         .control-panel {
             background: var(--panel-bg);
-            backdrop-filter: blur(15px);
+            backdrop-filter: blur(10px);
             border-top: 2px solid rgba(255, 255, 255, 0.1);
             padding: 12px;
             z-index: 10;
-            max-height: 45vh;
+            max-height: 42vh;
             overflow-y: auto;
         }
 
         .panel-title {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             letter-spacing: 2px;
-            color: #d3d3e0;
+            color: #94a3b8;
             text-align: center;
         }
 
@@ -144,136 +160,145 @@
         .btn-build {
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 12px 10px;
+            border-radius: 10px;
+            padding: 10px 8px;
             color: white;
             text-align: left;
             position: relative;
-            transition: all 0.2s ease;
         }
+        .btn-build:active { transform: scale(0.97); }
+        .btn-build .name { font-size: 0.8rem; font-weight: bold; display: block; color: #f8fafc; }
+        .btn-build .cost { font-size: 0.65rem; color: #94a3b8; margin-top: 2px; display: block; }
+        .btn-build .count { position: absolute; right: 8px; top: 10px; font-size: 0.75rem; font-weight: bold; opacity: 0.4; }
 
-        .btn-build:active { transform: scale(0.95); }
-        .btn-build .name { font-size: 0.85rem; font-weight: bold; display: block; }
-        .btn-build .cost { font-size: 0.7rem; color: #b0b0c0; margin-top: 3px; display: block; }
-        .btn-build .count { position: absolute; right: 10px; top: 12px; font-size: 0.8rem; font-weight: bold; opacity: 0.5; }
+        /* Цвета доступности */
+        .btn-build.available[data-res="gold"] { border-color: var(--gold); }
+        .btn-build.available[data-res="steel"] { border-color: var(--steel); }
+        .btn-build.available[data-res="mix"] { border-color: var(--purple); }
 
-        .btn-build[data-type="forge"].available { border-color: var(--gold); }
-        .btn-build[data-type="mine"].available { border-color: #778899; }
-        .btn-build[data-type="castle"].available { border-color: var(--royal-purple); }
-        
-        /* Главная цель - Кнопка Грааля */
-        .btn-grail {
+        .btn-final {
             grid-column: span 2;
-            background: linear-gradient(45deg, #2a0813, #4a0d26);
-            border: 1px solid var(--grail-red);
-            box-shadow: 0 0 10px rgba(255, 51, 102, 0.2);
+            background: linear-gradient(45deg, #1e1b4b, #4338ca);
+            border: 1px solid #6366f1;
             text-align: center;
+            padding: 14px;
         }
-        .btn-grail .name { color: #ff6688; font-size: 0.95rem; letter-spacing: 1px; }
-        .btn-grail.available {
-            background: linear-gradient(45deg, #801137, #ff3366);
-            box-shadow: 0 0 20px rgba(255, 51, 102, 0.6);
-            animation: pulseGlow 1.5s infinite alternate;
-        }
-
-        @keyframes pulseGlow {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.02); }
-        }
+        .btn-final .name { color: #c7d2fe; font-size: 0.9rem; }
+        .btn-final.available { box-shadow: 0 0 15px #6366f1; }
 
         /* Экран победы */
         .win-screen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 5, 10, 0.95);
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 20px;
-            opacity: 0; pointer-events: none;
-            transition: opacity 1s ease;
+            background: #020617; z-index: 100;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.8s ease;
         }
         .win-screen.active { opacity: 1; pointer-events: auto; }
-        .win-title { color: var(--gold); font-size: 2rem; margin-bottom: 15px; text-shadow: 0 0 20px var(--gold); }
-        .win-btn {
-            margin-top: 30px; padding: 12px 30px;
-            background: var(--gold); color: black; border: none;
-            border-radius: 8px; font-weight: bold; font-size: 1rem;
-        }
+        .win-title { color: var(--gold); font-size: 2.2rem; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="resource-card gold" id="card-gold">
+        <div class="resource-card gold">
             <div class="res-label">Золото</div>
-            <div class="res-val" id="val-gold">100</div>
-            <div class="res-inc" id="inc-gold">+2/с (+1/клик)</div>
+            <div class="res-val" id="val-gold">0</div>
+            <div class="res-inc" id="inc-gold">+0/с</div>
         </div>
-        <div class="resource-card steel" id="card-steel">
+        <div class="resource-card steel">
             <div class="res-label">Сталь</div>
-            <div class="res-val" id="val-steel">50</div>
-            <div class="res-inc" id="inc-steel">+1/с</div>
+            <div class="res-val" id="val-steel">0</div>
+            <div class="res-inc" id="inc-steel">+0/с</div>
         </div>
-        <div class="resource-card purple" id="card-glory">
+        <div class="resource-card purple">
             <div class="res-label">Слава</div>
-            <div class="res-val" id="val-glory">10%</div>
-            <div class="res-inc" id="inc-glory">+0.1%/с</div>
+            <div class="res-val" id="val-glory">0%</div>
+            <div class="res-inc" id="inc-glory">+0%/с</div>
         </div>
     </header>
 
-    <div class="game-space" id="clickZone">
-        <div class="click-prompt">⚔️ Нажимай на экран, чтобы собирать дань ⚔️</div>
+    <div class="game-space">
         <canvas id="cityCanvas"></canvas>
+        
+        <!-- Математический интерфейс клика -->
+        <div class="math-box">
+            <div class="math-question" id="mathQuestion">2 + 2</div>
+            <div class="answers-grid" id="answersGrid">
+                <button class="btn-answer">4</button>
+                <button class="btn-answer">5</button>
+                <button class="btn-answer">3</button>
+                <button class="btn-answer">6</button>
+            </div>
+        </div>
     </div>
 
     <div class="control-panel">
-        <div class="panel-title">Управление Королевством</div>
+        <div class="panel-title">Академия наук и улучшений</div>
         <div class="build-grid">
-            <button class="btn-build" data-type="forge" id="btn-forge">
-                <span class="name">Гильдия Кузнецов</span>
-                <span class="cost" id="cost-forge">Цена: 50 Сталь</span>
-                <span class="count" id="cnt-forge">0</span>
+            <button class="btn-build" data-type="abacus" data-res="steel" id="btn-abacus">
+                <span class="name">🧮 Счеты Аристотеля</span>
+                <span class="cost" id="cost-abacus">Цена: 40 Сталь</span>
+                <span class="count" id="cnt-abacus">0</span>
             </button>
-            <button class="btn-build" data-type="mine" id="btn-mine">
-                <span class="name">Королевская Шахта</span>
-                <span class="cost" id="cost-mine">Цена: 40 Золото</span>
-                <span class="count" id="cnt-mine">0</span>
+            <button class="btn-build" data-type="blueprint" data-res="gold" id="btn-blueprint">
+                <span class="name">📜 Чертежи Архимеда</span>
+                <span class="cost" id="cost-blueprint">Цена: 50 Золото</span>
+                <span class="count" id="cnt-blueprint">0</span>
             </button>
-            <button class="btn-build" data-type="castle" id="btn-castle">
-                <span class="name">Рыцарский Замок</span>
-                <span class="cost" id="cost-castle">Цена: 80 Золото / 60 Сталь</span>
-                <span class="count" id="cnt-castle">0</span>
+            <button class="btn-build" data-type="geometry" data-res="mix" id="btn-geometry">
+                <span class="name">📐 Культ Геометрии</span>
+                <span class="cost" id="cost-geometry">Цена: 80 З. / 40 С.</span>
+                <span class="count" id="cnt-geometry">0</span>
             </button>
-            
-            <button class="btn-build btn-grail" data-type="grail" id="btn-grail">
-                <span class="name">✨ ВЫКОВАТЬ СВЯЩЕННЫЙ ГРААЛЬ ✨</span>
-                <span class="cost" id="cost-grail">Требуется: 100% Славы и 5000 Золота</span>
+            <button class="btn-build" data-type="book" data-res="gold" id="btn-book">
+                <span class="name">📖 Книга Множителей</span>
+                <span class="cost" id="cost-book">Цена: 100 Золото</span>
+                <span class="count" id="cnt-book">0</span>
+            </button>
+            <button class="btn-build" data-type="theorem" data-res="steel" id="btn-theorem">
+                <span class="name">🍕 Теорема Пифагора</span>
+                <span class="cost" id="cost-theorem">Цена: 150 Сталь</span>
+                <span class="count" id="cnt-theorem">0</span>
+            </button>
+            <button class="btn-build" data-type="compass" data-res="mix" id="btn-compass">
+                <span class="name">🧭 Компас Алхимика</span>
+                <span class="cost" id="cost-compass">Цена: 200 З. / 200 С.</span>
+                <span class="count" id="cnt-compass">0</span>
+            </button>
+
+            <!-- ГЛАВНАЯ ЦЕЛЬ -->
+            <button class="btn-build btn-final" data-type="exam" data-res="mix" id="btn-exam">
+                <span class="name">🔱 СДАТЬ ЭКЗАМЕН ТИТАНОВ 🔱</span>
+                <span class="cost">Требуется: 100% Славы & 15,000 Золота</span>
             </button>
         </div>
     </div>
 
     <div class="win-screen" id="winScreen">
-        <h1 class="win-title">Королевство Спасено!</h1>
-        <p>Вы собрали все Славные Ордена и выковали Священный Грааль. Ваше имя навсегда останется в летописях истории!</p>
-        <button class="win-btn" onclick="resetGame()">Начать Эпоху Заново</button>
+        <h1 class="win-title">Абсолютный Триумф разума!</h1>
+        <p>Вы разгадали все законы вселенной, сдали Великий Экзамен и возглавили Совет Титанов.</p>
+        <button style="margin-top:20px; padding:10px 20px;" onclick="location.reload()">Начать сначала</button>
     </div>
 
     <script>
         const state = {
-            gold: 100, steel: 50, glory: 0,
-            clickPower: 1,
-            income: { gold: 1, steel: 0.5, glory: 0 },
+            gold: 150, steel: 60, glory: 0,
+            clickBase: 15,
+            critChance: 0,
+            priceDiscount: 1.0, // Множитель скидки от Пифагора
+            income: { gold: 0, steel: 0, glory: 0 },
             buildings: {
-                forge: { count: 0, baseCostSteel: 50, baseCostGold: 0, currentCostSteel: 50, currentCostGold: 0 },
-                mine: { count: 0, baseCostSteel: 0, baseCostGold: 40, currentCostSteel: 0, currentCostGold: 40 },
-                castle: { count: 0, baseCostSteel: 60, baseCostGold: 80, currentCostSteel: 60, currentCostGold: 80 }
+                abacus: { count: 0, costG: 0, costS: 40, scale: 1.15 },
+                blueprint: { count: 0, costG: 50, costS: 0, scale: 1.15 },
+                geometry: { count: 0, costG: 80, costS: 40, scale: 1.18 },
+                book: { count: 0, costG: 100, costS: 0, scale: 1.15 },
+                theorem: { count: 0, costG: 0, costS: 150, scale: 1.25 },
+                compass: { count: 0, costG: 200, costS: 200, scale: 1.3 }
             }
         };
 
+        let currentAnswer = 0;
         const canvas = document.getElementById('cityCanvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -285,176 +310,193 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        class Particle {
-            constructor(x, y, color, speedY) {
-                this.x = x;
-                this.y = y;
-                this.vx = Math.random() * 2 - 1;
-                this.vy = speedY || -(Math.random() * 1.5 + 0.5);
-                this.radius = Math.random() * 2.5 + 1;
-                this.color = color || '#ffd700';
-                this.opacity = 1;
-                this.fade = Math.random() * 0.015 + 0.01;
+        // Генератор математических вопросов
+        function generateMath() {
+            const types = ['+', '-', '*'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            let num1, num2, qText;
+
+            if (type === '+') {
+                num1 = Math.floor(Math.random() * 50) + 10;
+                num2 = Math.floor(Math.random() * 50) + 10;
+                currentAnswer = num1 + num2;
+                qText = `${num1} + ${num2}`;
+            } else if (type === '-') {
+                num1 = Math.floor(Math.random() * 80) + 20;
+                num2 = Math.floor(Math.random() * num1);
+                currentAnswer = num1 - num2;
+                qText = `${num1} - ${num2}`;
+            } else {
+                num1 = Math.floor(Math.random() * 12) + 2;
+                num2 = Math.floor(Math.random() * 12) + 2;
+                currentAnswer = num1 * num2;
+                qText = `${num1} × ${num2}`;
             }
-            update() {
-                this.x += this.vx; this.y += this.vy;
-                this.opacity -= this.fade;
+
+            document.getElementById('mathQuestion').innerText = qText;
+
+            // Генерируем фейковые ответы
+            let answers = [currentAnswer];
+            while (answers.length < 4) {
+                let fake = currentAnswer + (Math.floor(Math.random() * 15) - 7);
+                if (fake !== currentAnswer && fake >= 0 && !answers.includes(fake)) {
+                    answers.push(fake);
+                }
             }
+            answers.sort(() => Math.random() - 0.5);
+
+            const grid = document.getElementById('answersGrid');
+            grid.innerHTML = '';
+            answers.forEach(ans => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-answer';
+                btn.innerText = ans;
+                btn.onclick = () => checkAnswer(ans);
+                grid.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(chosen) {
+            const box = document.querySelector('.math-box');
+            const rect = box.getBoundingClientRect();
+            const posX = rect.left + rect.width / 2;
+            const posY = rect.top;
+
+            if (chosen === currentAnswer) {
+                // Расчет крита
+                let isCrit = Math.random() < state.critChance;
+                let reward = state.clickBase * (isCrit ? 5 : 1);
+
+                state.gold += reward;
+                spawnFloatText(`${isCrit ? '🔥 КРИТ! ' : ''}+${reward} 🪙`, posX, posY, 'var(--gold)');
+                triggerParticles(25, 'var(--cyan)');
+            } else {
+                state.steel = Math.max(0, state.steel - 5);
+                spawnFloatText('Ошибка! -5 Стали ❌', posX, posY, '#ef4444');
+                triggerParticles(10, '#ef4444');
+            }
+            generateMath();
+            updateUI();
+        }
+
+        function spawnFloatText(txt, x, y, color) {
+            const el = document.createElement('div');
+            el.className = 'floating-text';
+            el.innerText = txt;
+            el.style.left = `${x}px`; el.style.top = `${y}px`;
+            el.style.color = color;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 800);
+        }
+
+        // Система частиц
+        class Bit {
+            constructor(x, y, color) {
+                this.x = x; this.y = y;
+                this.vx = Math.random() * 4 - 2; this.vy = Math.random() * 4 - 2;
+                this.radius = Math.random() * 3 + 1; this.opacity = 1; this.color = color;
+            }
+            update() { this.x += this.vx; this.y += this.vy; this.opacity -= 0.02; }
             draw() {
-                ctx.save(); ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.shadowBlur = 6; ctx.shadowColor = this.color;
-                ctx.fillStyle = this.color; ctx.globalAlpha = Math.max(0, this.opacity);
+                ctx.save(); ctx.beginPath(); ctx.globalAlpha = Math.max(0, this.opacity);
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fillStyle = this.color;
                 ctx.fill(); ctx.restore();
             }
         }
 
-        // Фоновые медленные искры
-        setInterval(() => {
-            if(particles.length < 40) {
-                particles.push(new Particle(Math.random() * canvas.width, canvas.height + 10, Math.random() > 0.5 ? '#ffd700' : '#445566'));
-            }
-        }, 150);
+        function triggerParticles(num, color) {
+            for(let i=0; i<num; i++) particles.push(new Bit(canvas.width/2, canvas.height/3, color));
+        }
 
         function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach((p, index) => {
-                p.update(); p.draw();
-                if (p.opacity <= 0) particles.splice(index, 1);
-            });
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            particles.forEach((p,i) => { p.update(); p.draw(); if(p.opacity<=0) particles.splice(i,1); });
             requestAnimationFrame(animate);
         }
         animate();
 
-        // МЕХАНИКА КЛИКЕРА ПО ЭКРАНУ
-        document.getElementById('clickZone').addEventListener('touchstart', (e) => {
-            // Предотвращаем двойной зум на iPhone
-            e.preventDefault(); 
-            const touch = e.touches[0];
-            const rect = canvas.getBoundingClientRect();
-            const x = touch.clientX - rect.left;
-            const y = touch.clientY - rect.top;
-
-            // Награда за клик
-            state.gold += state.clickPower;
-            updateUI();
-
-            // Всплывающий текст (+Золото)
-            const text = document.createElement('div');
-            text.className = 'floating-text';
-            text.innerText = `+${state.clickPower} 🪙`;
-            text.style.left = `${touch.clientX}px`;
-            text.style.top = `${touch.clientY}px`;
-            document.body.appendChild(text);
-            setTimeout(() => text.remove(), 800);
-
-            // Искры из-под пальца
-            for(let i=0; i<6; i++) {
-                let p = new Particle(x, y, '#ffd700', (Math.random() * 4 - 2));
-                p.vx = Math.random() * 4 - 2;
-                particles.push(p);
-            }
-        });
-
+        // Обновление цен и доступности кнопок
         function updateUI() {
             document.getElementById('val-gold').innerText = Math.floor(state.gold);
             document.getElementById('val-steel').innerText = Math.floor(state.steel);
             document.getElementById('val-glory').innerText = state.glory.toFixed(1) + '%';
 
-            document.getElementById('inc-gold').innerText = `+${state.income.gold}/с (+${state.clickPower}/кл)`;
+            document.getElementById('inc-gold').innerText = `+${state.income.gold}/с`;
             document.getElementById('inc-steel').innerText = `+${state.income.steel}/с`;
-            document.getElementById('inc-glory').innerText = `+${state.income.glory.toFixed(2)}%/с`;
+            document.getElementById('inc-glory').innerText = `+${state.income.glory.toFixed(1)}%/с`;
 
-            document.getElementById('cost-forge').innerText = `Цена: ${state.buildings.forge.currentCostSteel} Сталь`;
-            document.getElementById('cost-mine').innerText = `Цена: ${state.buildings.mine.currentCostGold} Золото`;
-            document.getElementById('cost-castle').innerText = `Цена: ${state.buildings.castle.currentCostGold} З. / ${state.buildings.castle.currentCostSteel} С.`;
+            // Обновляем ценники в магазине с учетом скидки Пифагора
+            for (let key in state.buildings) {
+                let b = state.buildings[key];
+                let curG = Math.floor(b.costG * state.priceDiscount);
+                let curS = Math.floor(b.costS * state.priceDiscount);
+                
+                let text = "Цена: ";
+                if(curG > 0) text += `${curG} З. `;
+                if(curS > 0) text += `${curS} С.`;
+                document.getElementById(`cost-${key}`).innerText = text;
 
-            // Доступность обычных кнопок
-            checkButtonAvailability('btn-forge', state.steel >= state.buildings.forge.currentCostSteel);
-            checkButtonAvailability('btn-mine', state.gold >= state.buildings.mine.currentCostGold);
-            checkButtonAvailability('btn-castle', state.gold >= state.buildings.castle.currentCostGold && state.steel >= state.buildings.castle.currentCostSteel);
+                // Валидация доступности покупки
+                let canBuy = state.gold >= curG && state.steel >= curS;
+                let btn = document.getElementById(`btn-${key}`);
+                if(canBuy) btn.classList.add('available'); else btn.classList.remove('available');
+            }
 
-            // Проверка условий победы (Кнопка Грааля)
-            const canWin = state.glory >= 100 && state.gold >= 5000;
-            checkButtonAvailability('btn-grail', canWin);
-            if(canWin) document.getElementById('btn-grail').classList.add('available');
-            else document.getElementById('btn-grail').classList.remove('available');
+            // Финальный Экзамен
+            let canFinish = state.glory >= 100 && state.gold >= 15000;
+            let finalBtn = document.getElementById('btn-exam');
+            if(canFinish) finalBtn.classList.add('available'); else finalBtn.classList.remove('available');
         }
 
-        function checkButtonAvailability(id, isAvailable) {
-            const btn = document.getElementById(id);
-            if (isAvailable) { btn.classList.add('available'); btn.style.opacity = "1"; }
-            else { btn.classList.remove('available'); btn.style.opacity = "0.35"; }
-        }
-
-        // Автоматический доход раз в секунду
+        // Ежесекундный тик
         setInterval(() => {
             state.gold += state.income.gold;
             state.steel += state.income.steel;
             state.glory += state.income.glory;
-            if (state.glory > 100) state.glory = 100;
+            if(state.glory > 100) state.glory = 100;
             updateUI();
         }, 1000);
 
-        // Логика покупки апгрейдов
-        document.querySelectorAll('.btn-build').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const type = button.getAttribute('data-type');
-                if (type === 'grail') {
-                    if (state.glory >= 100 && state.gold >= 5000) {
+        // Обработчик покупок
+        document.querySelectorAll('.btn-build').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.getAttribute('data-type');
+                if(type === 'exam') {
+                    if(state.glory >= 100 && state.gold >= 15000) {
                         document.getElementById('winScreen').classList.add('active');
                     }
                     return;
                 }
 
-                const bld = state.buildings[type];
-                if (state.gold >= bld.currentCostGold && state.steel >= bld.currentCostSteel) {
-                    state.gold -= bld.currentCostGold;
-                    state.steel -= bld.currentCostSteel;
-                    bld.count++;
+                const b = state.buildings[type];
+                let curG = Math.floor(b.costG * state.priceDiscount);
+                let curS = Math.floor(b.costS * state.priceDiscount);
 
-                    if (type === 'forge') {
-                        state.income.gold += 2;
-                        state.clickPower += 1; // Кузнецы улучшают мечи -> сильнее клик!
-                        triggerBoom('#ffd700');
-                    } else if (type === 'mine') {
-                        state.income.steel += 1.5;
-                        triggerBoom('#a0b0c0');
-                    } else if (type === 'castle') {
-                        state.income.glory += 0.15;
-                        state.income.gold += 1;
-                        triggerBoom('#b300ff');
-                    }
+                if(state.gold >= curG && state.steel >= curS) {
+                    state.gold -= curG;
+                    state.steel -= curS;
+                    b.count++;
 
-                    bld.currentCostGold = Math.floor(bld.baseCostGold * Math.pow(1.18, bld.count));
-                    bld.currentCostSteel = Math.floor(bld.baseCostSteel * Math.pow(1.18, bld.count));
-                    document.getElementById(`cnt-${type}`).innerText = bld.count;
+                    // Бонусы от покупок
+                    if(type === 'abacus') state.income.gold += 2;
+                    if(type === 'blueprint') state.income.steel += 1.5;
+                    if(type === 'geometry') state.income.glory += 0.2;
+                    if(type === 'book') state.clickBase += 8; // Апгрейд клика
+                    if(type === 'theorem') state.priceDiscount *= 0.95; // 5% скидка на ВСЁ
+                    if(type === 'compass') state.critChance += 0.1; // +10% шанс крита
+
+                    // Удорожание постройки
+                    b.costG = Math.floor(b.costG * b.scale);
+                    b.costS = Math.floor(b.costS * b.scale);
+
+                    document.getElementById(`cnt-${type}`).innerText = b.count;
                     updateUI();
                 }
             });
         });
 
-        function triggerBoom(color) {
-            for (let i = 0; i < 25; i++) {
-                let p = new Particle(canvas.width/2, canvas.height/2, color, Math.random() * 4 - 2);
-                p.vx = Math.random() * 6 - 3;
-                particles.push(p);
-            }
-        }
-
-        function resetGame() {
-            state.gold = 100; state.steel = 50; state.glory = 0; state.clickPower = 1;
-            state.income = { gold: 1, steel: 0.5, glory: 0 };
-            for (let key in state.buildings) {
-                state.buildings[key].count = 0;
-                state.buildings[key].currentCostGold = state.buildings[key].baseCostGold;
-                state.buildings[key].currentCostSteel = state.buildings[key].baseCostSteel;
-                document.getElementById(`cnt-${key}`).innerText = 0;
-            }
-            document.getElementById('winScreen').classList.remove('active');
-            updateUI();
-        }
-
+        // Первичный старт
+        generateMath();
         updateUI();
     </script>
 </body>
