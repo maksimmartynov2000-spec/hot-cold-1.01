@@ -1,756 +1,284 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Эволюция: Настольная Игра</title>
-    <style>
-        :root {
-            --bg: #0d161b;
-            --panel-bg: #152530;
-            --card-bg: #1e3342;
-            --text: #e2f1f8;
-            --accent-green: #2ecc71;
-            --accent-red: #e74c3c;
-            --accent-blue: #3498db;
-            --gold: #f1c40f;
-            --purple: #9b59b6;
-        }
-        * { box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 10px;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-        
-        /* Экран настроек */
-        #setup-screen {
-            background: var(--panel-bg);
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
-            text-align: center;
-            max-width: 420px;
-            width: 100%;
-            border: 1px solid #2c4354;
-        }
-        select, button {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 8px;
-            border: none;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        select { background: #1f3545; color: white; border: 1px solid #3d5e75; }
-        button { background: var(--accent-green); color: #000; transition: 0.2s; }
-        button:hover { background: #27ae60; transform: translateY(-1px); }
-        button:disabled { background: #444; color: #777; cursor: not-allowed; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title id="docTitle">Горячо или Холодно</title>
+  <style>
+    :root {
+      --primary-color: #4a90e2;
+      --success-color: #2ecc71;
+      --danger-color: #e74c3c;
+      --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
 
-        /* Компактный игровой интерфейс во весь экран */
-        #game-screen {
-            display: none;
-            width: 100%;
-            height: 98vh;
-            grid-template-columns: 1fr 320px;
-            gap: 12px;
-        }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-gradient);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      color: #333;
+    }
 
-        .main-board { 
-            display: grid; 
-            grid-template-rows: auto auto 1fr auto; 
-            gap: 10px; 
-            height: 100%;
-            overflow: hidden;
-        }
-        
-        .status-bar {
-            background: var(--panel-bg);
-            padding: 10px 15px;
-            border-radius: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid #253b4b;
-        }
-        .status-bar h2 { margin: 0; font-size: 18px; }
+    .game-container {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
 
-        /* Кормовая база */
-        .food-bank {
-            background: #172d3d;
-            padding: 10px;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 15px;
-            border: 1px dashed var(--gold);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        .food-token {
-            width: 16px;
-            height: 16px;
-            background: var(--gold);
-            border-radius: 50%;
-            box-shadow: 0 0 6px var(--gold);
-            display: inline-block;
-        }
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+      font-size: 24px;
+    }
 
-        /* Стол обитания видов */
-        .ecosystems-scroll {
-            background: #0f1c24;
-            border-radius: 10px;
-            padding: 10px;
-            border: 1px solid #1f3341;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .ecosystem {
-            background: var(--panel-bg);
-            border-radius: 8px;
-            padding: 8px;
-            border: 1px solid #233948;
-        }
-        .ecosystem h3 { margin: 0 0 6px 0; font-size: 13px; color: #8ab4f8; }
-        .animals-container {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-        }
+    p.description {
+      color: #7f8c8d;
+      font-size: 14px;
+      margin-bottom: 25px;
+    }
 
-        /* Новые горизонтальные карточки животных */
-        .animal-card {
-            background: var(--card-bg);
-            border: 2px solid #34495e;
-            border-radius: 8px;
-            min-width: 180px;
-            padding: 8px;
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .animal-card.fed { border-color: var(--accent-green); }
-        .animal-card.hungry { border-color: var(--accent-red); }
-        .animal-card.selected { border-color: var(--gold); box-shadow: 0 0 10px var(--gold); }
-        
-        /* Генеративные картинки ДНК животного */
-        .animal-avatar {
-            width: 42px;
-            height: 42px;
-            border-radius: 6px;
-            background: #111;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            border: 1px solid #456;
-        }
+    .stats-container {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 10px;
+    }
 
-        .animal-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-        .animal-info .title { font-weight: bold; font-size: 12px; }
-        .animal-info .food { font-size: 11px; color: var(--gold); }
-        .animal-traits { display: flex; flex-direction: column; gap: 2px; max-height: 55px; overflow-y: auto; }
+    input[type="number"] {
+      width: 80%;
+      padding: 12px 20px;
+      font-size: 18px;
+      border: 2px solid #dcdde1;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      outline: none;
+      transition: border-color 0.3s;
+      text-align: center;
+    }
 
-        /* Бейджи свойств */
-        .trait-badge {
-            font-size: 10px;
-            padding: 2px 4px;
-            border-radius: 3px;
-            text-align: center;
-            font-weight: bold;
-            color: #fff;
-        }
-        .trait-badge.predator { background: var(--accent-red); }
-        .trait-badge.swimming { background: var(--accent-blue); }
-        .trait-badge.big { background: var(--purple); }
-        .trait-badge.camouflage { background: #16a085; }
+    input[type="number"]:focus {
+      border-color: var(--primary-color);
+    }
 
-        /* Компактная рука игрока */
-        .player-hand {
-            background: var(--panel-bg);
-            padding: 10px;
-            border-radius: 10px;
-            border: 1px solid #253b4b;
-        }
-        .player-hand h3 { margin: 0 0 6px 0; font-size: 13px; }
-        .hand-cards { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
-        
-        .trait-card {
-            background: var(--card-bg);
-            border: 1px solid #3d5e75;
-            border-radius: 6px;
-            min-width: 140px;
-            max-width: 140px;
-            padding: 8px;
-            font-size: 12px;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            height: 105px;
-        }
-        .trait-card:hover { border-color: var(--accent-blue); background: #253f52; }
-        .trait-card.selected { border-color: var(--gold); box-shadow: 0 0 8px var(--gold); }
-        .card-icon { font-size: 18px; margin-bottom: 3px; }
+    button {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.3s;
+      width: 85%;
+    }
 
-        /* Правая панель управления */
-        .side-panel {
-            background: var(--panel-bg);
-            border-radius: 10px;
-            padding: 15px;
-            border: 1px solid #253b4b;
-            display: grid;
-            grid-template-rows: auto auto 1fr auto;
-            gap: 10px;
-            height: 100%;
-        }
-        .log {
-            background: #090f14;
-            border-radius: 6px;
-            padding: 8px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 11px;
-            border: 1px solid #1a2c3a;
-            line-height: 1.4;
-        }
-        .deck-info {
-            font-size: 12px;
-            color: #8ab4f8;
-            background: #11202c;
-            padding: 6px;
-            border-radius: 4px;
-            text-align: center;
-        }
-    </style>
+    button:hover {
+      background: #357abd;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button.reset-btn {
+      background: #7f8c8d;
+      margin-top: 10px;
+    }
+    button.reset-btn:hover { background: #6c7a7d; }
+
+    #output {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: 600;
+      min-height: 27px;
+    }
+
+    .history {
+      margin-top: 25px;
+      text-align: left;
+    }
+
+    .history h3 {
+      font-size: 14px;
+      color: #7f8c8d;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 5px;
+    }
+
+    .history-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-height: 100px;
+      overflow-y: auto;
+    }
+
+    .tag {
+      padding: 4px 10px;
+      border-radius: 15px;
+      font-size: 12px;
+      font-weight: bold;
+      color: white;
+    }
+    .tag.cold { background-color: #54a0ff; }
+    .tag.warm { background-color: #ff9f43; }
+    .tag.hot { background-color: #ee5253; }
+    .tag.correct { background-color: var(--success-color); }
+  </style>
 </head>
 <body>
 
-    <!-- ЭКРАН НАСТРОЕК -->
-    <div id="setup-screen">
-        <h1 style="color:var(--accent-green); margin: 0 0 5px 0; font-size: 28px;">🧬 ЭВОЛЮЦИЯ</h1>
-        <p style="color:#8af; margin:0 0 20px 0; font-size: 14px;">Классическое настольное издание</p>
-        <hr style="border-color:#2c4354; margin:15px 0;">
-        <label for="ai-count" style="font-size:13px; display:block; margin-bottom:8px;">Количество ИИ-соперников за столом:</label>
-        <select id="ai-count">
-            <option value="1">1 Соперник (Дуэль)</option>
-            <option value="2">2 Соперника</option>
-            <option value="3" selected>3 Соперника (Вчетвером)</option>
-        </select>
-        <button onclick="startGame()">Запустить симуляцию</button>
-    </div>
+<div class="game-container">
+  <h1>🔥 Горячо или Холодно ❄️</h1>
+  <p class="description">Загадано число от 1 до 100. Сможешь угадать?</p>
+  
+  <div class="stats-container">
+    <div>Попытки: <span id="attemptsCount">0</span></div>
+    <div>Рекорд: <span id="highScore">-</span></div>
+  </div>
 
-    <!-- ИГРОВОЙ ЭКРАН -->
-    <div id="game-screen">
-        <!-- Главное поле -->
-        <div class="main-board">
-            <div class="status-bar">
-                <div><h2>Текущая фаза: <span id="current-phase" style="color:var(--accent-blue);">Развитие</span></h2></div>
-                <div id="turn-display" style="font-weight:bold; font-size: 14px;">Раунд: 1</div>
-            </div>
+  <input type="number" id="userInput" min="1" max="100" placeholder="Введите число..." autofocus />
+  <button id="checkBtn" onclick="checkGuess()">Проверить</button>
+  <button id="resetBtn" class="reset-btn" onclick="resetGame()" style="display:none;">Играть снова</button>
+  
+  <div id="output"></div>
 
-            <!-- Зона корма -->
-            <div class="food-bank" id="food-zone">
-                <strong>🍇 Кормовая база экосистемы: <span id="food-count">0</span> шт.</strong>
-                <div id="food-tokens-container"></div>
-            </div>
+  <div class="history">
+    <h3>История попыток:</h3>
+    <div id="historyTags" class="history-tags"></div>
+  </div>
+</div>
 
-            <!-- Скролл-зона биомов -->
-            <div id="ecosystems-container" class="ecosystems-scroll"></div>
+<script>
+  let secretNumber;
+  let attempts = 0;
+  let gameActive = true;
 
-            <!-- Карты игрока -->
-            <div class="player-hand">
-                <h3 style="display:flex; justify-content:space-between;">
-                    <span>🎴 Ваша рука карт</span>
-                    <small style="color:#aaa; font-weight:normal;">Выбрать карту $\rightarrow$ клик на «Создать» или на своё существо</small>
-                </h3>
-                <div id="my-hand" class="hand-cards"></div>
-            </div>
-        </div>
+  // Инициализация игры
+  function initGame() {
+    secretNumber = Math.floor(Math.random() * 100) + 1;
+    attempts = 0;
+    gameActive = true;
+    document.getElementById("attemptsCount").innerText = attempts;
+    document.getElementById("output").innerText = "";
+    document.getElementById("output").style.color = "#333";
+    document.getElementById("userInput").value = "";
+    document.getElementById("userInput").disabled = false;
+    document.getElementById("checkBtn").style.display = "inline-block";
+    document.getElementById("resetBtn").style.display = "none";
+    document.getElementById("historyTags").innerHTML = "";
+    
+    // Обновление рекорда из памяти
+    const savedScore = localStorage.getItem("hotColdHighScore");
+    document.getElementById("highScore").innerText = savedScore ? savedScore : "-";
+    document.getElementById("userInput").focus();
+  }
 
-        <!-- Панель управления справа -->
-        <div class="side-panel">
-            <h3 style="margin:0; font-size: 16px;">🎮 Действия</h3>
-            
-            <div id="controls">
-                <button id="btn-pass" onclick="playerPass()" style="background:#e67e22; color:white; margin:0;">Завершить ход / Пас</button>
-            </div>
+  function checkGuess() {
+    if (!gameActive) return;
 
-            <div class="deck-info" id="deck-count">Осталось карт в колоде: 84</div>
+    const inputField = document.getElementById("userInput");
+    const guess = parseInt(inputField.value);
+    const output = document.getElementById("output");
+    const historyTags = document.getElementById("historyTags");
 
-            <div id="log" class="log"></div>
+    // Валидация ввода
+    if (isNaN(guess) || guess < 1 || guess > 100) {
+      output.innerText = "⚠️ Введите корректное число от 1 до 100!";
+      output.style.color = "#e67e22";
+      return;
+    }
 
-            <div id="score-board" style="font-size:12px; background:#1b2d3a; padding:8px; border-radius:6px;">
-                <strong style="color:var(--gold);">🧬 Эволюционный архив очков:</strong>
-                <div id="scores-list" style="margin-top:4px;"></div>
-            </div>
-        </div>
-    </div>
+    attempts++;
+    document.getElementById("attemptsCount").innerText = attempts;
 
-    <script>
-        // Свойства оригинальной игры с визуальными иконками и цветами
-        const TRAITS = [
-            { id: "predator", name: "Хищник", icon: "🔺", desc: "Может атаковать других. Нужна +1 еда." },
-            { id: "swimming", name: "Водоплавающее", icon: "💧", desc: "Защита от сухопутных хищников." },
-            { id: "big", name: "Большое", icon: "🐘", desc: "Защита от мелких хищников. Нужна +1 еда." },
-            { id: "camouflage", name: "Камуфляж", icon: "🍃", desc: "Нельзя атаковать без особых свойств." }
-        ];
+    let difference = Math.abs(secretNumber - guess);
+    let message = "";
+    let statusClass = "";
 
-        // Эмодзи для генерации уникального вида животного на основе его свойств
-        const ANIMAL_ICONS = ["🦎", "🐢", "🦖", "🐸", "🦔", "🐍", "🦑", "🦀"];
+    if (guess === secretNumber) {
+      message = `🎉 Ура! Вы угадали число ${secretNumber} за ${attempts} попыток!`;
+      output.style.color = "var(--success-color)";
+      statusClass = "correct";
+      endGame();
+    } else {
+      if (difference <= 5) {
+        message = "🥵 Очень горячо!";
+        output.style.color = "var(--danger-color)";
+        statusClass = "hot";
+      } else if (difference <= 15) {
+        message = "🔥 Горячо!";
+        output.style.color = "#e67e22";
+        statusClass = "warm";
+      } else if (difference <= 30) {
+        message = "🌤️ Тепло";
+        output.style.color = "#f1c40f";
+        statusClass = "warm";
+      } else {
+        message = "❄️ Холодно...";
+        output.style.color = "#3498db";
+        statusClass = "cold";
+      }
+      
+      // Подсказка направления
+      message += guess < secretNumber ? " (Загаданное число больше)" : " (Загаданное число меньше)";
+    }
 
-        let players = [];
-        let deck = [];
-        let phase = "development"; 
-        let foodBank = 0;
-        let round = 1;
-        let activePlayerIndex = 0;
-        let selectedHandCardIndex = null;
-        let selectedPredatorAnimal = null;
+    output.innerText = message;
 
-        // Создание колоды по канону игры (много карт каждого типа)
-        function initDeck() {
-            deck = [];
-            for (let i = 0; i < 21; i++) {
-                TRAITS.forEach(t => deck.push({ ...t }));
-            }
-            // Перемешивание
-            deck.sort(() => Math.random() - 0.5);
-        }
+    // Добавление тега в историю
+    const tag = document.createElement("span");
+    tag.className = `tag ${statusClass}`;
+    tag.innerText = guess;
+    historyTags.appendChild(tag);
+    historyTags.scrollTop = historyTags.scrollHeight;
 
-        function startGame() {
-            const aiCount = parseInt(document.getElementById('ai-count').value);
-            document.getElementById('setup-screen').style.display = 'none';
-            document.getElementById('game-screen').style.display = 'grid';
+    inputField.value = "";
+    inputField.focus();
+  }
 
-            initDeck();
+  function endGame() {
+    gameActive = false;
+    document.getElementById("userInput").disabled = true;
+    document.getElementById("checkBtn").style.display = "none";
+    document.getElementById("resetBtn").style.display = "inline-block";
 
-            players = [];
-            players.push({ id: 0, name: "Вы (Игрок)", isAI: false, hand: [], animals: [], score: 0, passed: false });
-            for (let i = 1; i <= aiCount; i++) {
-                players.push({ id: i, name: `ИИ Противник ${i}`, isAI: true, hand: [], animals: [], score: 0, passed: false });
-            }
+    // Проверка и сохранение рекорда
+    const currentHighScore = localStorage.getItem("hotColdHighScore");
+    if (!currentHighScore || attempts < parseInt(currentHighScore)) {
+      localStorage.setItem("hotColdHighScore", attempts);
+      document.getElementById("highScore").innerText = attempts + " (Новый!)";
+    }
+  }
 
-            // Стартовая раздача по 6 карт
-            players.forEach(p => {
-                for (let k = 0; k < 6; k++) {
-                    if (deck.length > 0) p.hand.push(deck.pop());
-                }
-            });
+  function resetGame() {
+    initGame();
+  }
 
-            logMessage("🌿 Эволюционный отбор запущен! Фаза Развития. Играйте карты из руки.");
-            initRound();
-        }
+  // Поддержка нажатия Enter
+  document.getElementById("userInput").addEventListener("keypress", function(event) {
+    if (event.key === "Enter") {
+      checkGuess();
+    }
+  });
 
-        function initRound() {
-            phase = "development";
-            players.forEach(p => p.passed = false);
-            
-            document.getElementById('current-phase').innerText = "Развитие";
-            document.getElementById('current-phase').style.color = "var(--accent-blue)";
-            document.getElementById('food-zone').style.borderColor = "transparent";
+  // Запуск игры при загрузке страницы
+  window.onload = initGame;
+</script>
 
-            // Страховка: если у игрока нет карт и стола, выдаем карту спасения
-            players.forEach(p => {
-                if (p.hand.length === 0 && p.animals.length === 0 && deck.length > 0) {
-                    p.hand.push(deck.pop());
-                }
-            });
-
-            activePlayerIndex = 0;
-            selectedHandCardIndex = null;
-            selectedPredatorAnimal = null;
-            updateUI();
-        }
-
-        function updateUI() {
-            document.getElementById('turn-display').innerText = `Раунд: ${round}`;
-            document.getElementById('deck-count').innerText = `Осталось карт в колоде: ${deck.length}`;
-            
-            // Отрисовка стола биомов
-            const container = document.getElementById('ecosystems-container');
-            container.innerHTML = '';
-
-            players.forEach(p => {
-                const eco = document.createElement('div');
-                eco.className = 'ecosystem';
-                eco.innerHTML = `<h3>🐾 Биом: ${p.name} <span style="color:#779cb2;">(карт: ${p.hand.length})</span></h3>`;
-                
-                const animsContainer = document.createElement('div');
-                animsContainer.className = 'animals-container';
-
-                p.animals.forEach((animal, aIdx) => {
-                    const reqFood = calculateRequiredFood(animal);
-                    const isFed = animal.currentFood >= reqFood;
-                    
-                    const card = document.createElement('div');
-                    card.className = `animal-card ${isFed ? 'fed' : 'hungry'}`;
-                    if (selectedPredatorAnimal && selectedPredatorAnimal.player === p.id && selectedPredatorAnimal.index === aIdx) {
-                        card.classList.add('selected');
-                    }
-
-                    // Подбор иконки в зависимости от свойств
-                    let avatarIcon = ANIMAL_ICONS[aIdx % ANIMAL_ICONS.length];
-                    if (animal.traits.some(t => t.id === 'predator')) avatarIcon = "🐅";
-                    if (animal.traits.some(t => t.id === 'swimming')) avatarIcon = "🦈";
-
-                    let traitsHTML = animal.traits.map(t => `<div class="trait-badge ${t.id}">${t.icon} ${t.name}</div>`).join('');
-                    
-                    card.innerHTML = `
-                        <div class="animal-avatar">${avatarIcon}</div>
-                        <div class="animal-info">
-                            <div class="title">Вид #${aIdx + 1}</div>
-                            <div class="food">🍖 ${animal.currentFood}/${reqFood}</div>
-                        </div>
-                        <div class="animal-traits">${traitsHTML}</div>
-                    `;
-
-                    card.onclick = () => handleAnimalClick(p.id, aIdx);
-                    animsContainer.appendChild(card);
-                });
-
-                if (p.animals.length === 0) {
-                    animsContainer.innerHTML = `<div style="color:#4a5f70; padding:5px; font-size:12px; font-style:italic;">Популяции вымерли</div>`;
-                }
-
-                eco.appendChild(animsContainer);
-                container.appendChild(eco);
-            });
-
-            // Отрисовка руки карт игрока
-            const handContainer = document.getElementById('my-hand');
-            handContainer.innerHTML = '';
-            players[0].hand.forEach((card, idx) => {
-                const cDiv = document.createElement('div');
-                cDiv.className = 'trait-card';
-                if (selectedHandCardIndex === idx) cDiv.classList.add('selected');
-                
-                cDiv.innerHTML = `
-                    <div>
-                        <div class="card-icon">${card.icon}</div>
-                        <strong>${card.name}</strong>
-                    </div>
-                    <button onclick="playAsAnimal(${idx}); event.stopPropagation();" style="font-size:11px; padding:3px; margin:0;">Создать Вид</button>
-                `;
-                cDiv.onclick = () => {
-                    selectedHandCardIndex = (selectedHandCardIndex === idx) ? null : idx;
-                    updateUI();
-                };
-                handContainer.appendChild(cDiv);
-            });
-
-            // Кормовая база
-            document.getElementById('food-count').innerText = foodBank;
-            const ftc = document.getElementById('food-tokens-container');
-            ftc.innerHTML = '';
-            for (let i = 0; i < foodBank; i++) {
-                const token = document.createElement('div');
-                token.className = 'food-token';
-                ftc.appendChild(token);
-            }
-
-            // Таблица результатов
-            document.getElementById('scores-list').innerHTML = players.map(p => `<div>${p.name}: <b>${p.score}</b> очков</div>`).join('');
-        }
-
-        function calculateRequiredFood(animal) {
-            let base = 1;
-            animal.traits.forEach(t => {
-                if (t.id === 'predator' || t.id === 'big') base += 1;
-            });
-            return base;
-        }
-
-        function playAsAnimal(cardIdx) {
-            if (phase !== "development" || activePlayerIndex !== 0) return;
-            let human = players[0];
-            human.hand.splice(cardIdx, 1);
-            human.animals.push({ traits: [], currentFood: 0 });
-            selectedHandCardIndex = null;
-            logMessage("🐣 Вы вывели на поле новое базовое существо.");
-            nextTurn();
-        }
-
-        function handleAnimalClick(playerId, animalIdx) {
-            // Развитие: Прикрепление гена/свойства
-            if (phase === "development" && selectedHandCardIndex !== null && playerId === 0) {
-                let human = players[0];
-                let trait = human.hand[selectedHandCardIndex];
-                let targetAnimal = human.animals[animalIdx];
-
-                if (targetAnimal.traits.some(t => t.id === trait.id)) {
-                    logMessage("❌ У этого вида уже развито данное свойство!");
-                    return;
-                }
-
-                targetAnimal.traits.push(trait);
-                human.hand.splice(selectedHandCardIndex, 1);
-                selectedHandCardIndex = null;
-                logMessage(`🧬 Вы привили свойство <b>${trait.name}</b> Виду #${animalIdx + 1}.`);
-                nextTurn();
-                return;
-            }
-
-            // Питание: Выбор атакующего хищника
-            if (phase === "feeding" && playerId === 0 && activePlayerIndex === 0) {
-                let animal = players[0].animals[animalIdx];
-                if (animal.traits.some(t => t.id === 'predator')) {
-                    if (animal.currentFood >= calculateRequiredFood(animal)) {
-                        logMessage("❌ Этот хищник полностью сыт и ленив.");
-                        return;
-                    }
-                    selectedPredatorAnimal = { player: 0, index: animalIdx };
-                    logMessage("⚔️ Вы выбрали охотника. Нажмите на любое доступное животное для нападения.");
-                    updateUI();
-                    return;
-                }
-            }
-
-            // Питание: Клик на жертву
-            if (phase === "feeding" && selectedPredatorAnimal !== null) {
-                executeAttack(selectedPredatorAnimal, { player: playerId, index: animalIdx });
-            }
-        }
-
-        function executeAttack(attackerObj, defenderObj) {
-            if (attackerObj.player === defenderObj.player && attackerObj.index === defenderObj.index) return;
-            
-            let attacker = players[attackerObj.player].animals[attackerObj.index];
-            let defender = players[defenderObj.player].animals[defenderObj.index];
-
-            if (!defender) { // Защита от багов удаления
-                selectedPredatorAnimal = null;
-                updateUI();
-                return; 
-            }
-
-            // Защитные механики
-            if (defender.traits.some(t => t.id === 'swimming') && !attacker.traits.some(t => t.id === 'swimming')) {
-                logMessage("🛡️ Защита: Водоплавающее существо скрылось на глубине от сухопутного хищника!");
-                selectedPredatorAnimal = null;
-                return;
-            }
-            if (defender.traits.some(t => t.id === 'big') && !attacker.traits.some(t => t.id === 'big')) {
-                logMessage("🛡️ Защита: Существо слишком Большое, этот хищник не может его одолеть!");
-                selectedPredatorAnimal = null;
-                return;
-            }
-            if (defender.traits.some(t => t.id === 'camouflage')) {
-                logMessage("🛡️ Защита: Камуфляж помог существу слить с местностью. Охота сорвалась.");
-                selectedPredatorAnimal = null;
-                nextTurn();
-                return;
-            }
-
-            // Атака успешна
-            logMessage(`💥 Хищник (${players[attackerObj.player].name}) растерзал Существо #${defenderObj.index + 1} игрока ${players[defenderObj.player].name}!`);
-            players[defenderObj.player].animals.splice(defenderObj.index, 1);
-            
-            attacker.currentFood = Math.min(calculateRequiredFood(attacker), attacker.currentFood + 2);
-            selectedPredatorAnimal = null;
-            
-            // Проверка условий окончания фазы сразу после гибели существа
-            checkFeedingPhaseAutopass();
-            nextTurn();
-        }
-
-        function playerPass() {
-            if (activePlayerIndex !== 0) return;
-            players[0].passed = true;
-            logMessage("⏸️ Вы спасовали в текущей фазе.");
-            nextTurn();
-        }
-
-        function checkFeedingPhaseAutopass() {
-            // Игроки без голодных существ пасуют автоматически
-            players.forEach(p => {
-                let hasHungry = p.animals.some(a => a.currentFood < calculateRequiredFood(a));
-                if (!hasHungry) p.passed = true;
-            });
-        }
-
-        function nextTurn() {
-            if (players.every(p => p.passed)) {
-                endPhase();
-                return;
-            }
-
-            activePlayerIndex = (activePlayerIndex + 1) % players.length;
-            let activePlayer = players[activePlayerIndex];
-
-            if (activePlayer.passed) {
-                nextTurn();
-                return;
-            }
-
-            if (activePlayer.isAI) {
-                setTimeout(() => runAILogic(activePlayer), 500);
-            } else {
-                updateUI();
-            }
-        }
-
-        function runAILogic(ai) {
-            if (phase === "development") {
-                if (ai.hand.length > 0) {
-                    if (ai.animals.length === 0 || (ai.hand.length > 2 && Math.random() > 0.5)) {
-                        ai.hand.pop();
-                        ai.animals.push({ traits: [], currentFood: 0 });
-                        logMessage(`🤖 ${ai.name} вывел новый вид.`);
-                    } else {
-                        let trait = ai.hand.pop();
-                        let randAnimal = ai.animals[Math.floor(Math.random() * ai.animals.length)];
-                        if (randAnimal && !randAnimal.traits.some(t => t.id === trait.id)) {
-                            randAnimal.traits.push(trait);
-                            logMessage(`🤖 ${ai.name} развил свойство <b>${trait.name}</b>.`);
-                        } else {
-                            ai.hand.push(trait);
-                            ai.passed = true;
-                            logMessage(`🤖 ${ai.name} пасует.`);
-                        }
-                    }
-                } else {
-                    ai.passed = true;
-                    logMessage(`🤖 ${ai.name} пасует.`);
-                }
-            } else if (phase === "feeding") {
-                checkFeedingPhaseAutopass();
-                if (ai.passed) { nextTurn(); return; }
-
-                let hungryAnimal = ai.animals.find(a => a.currentFood < calculateRequiredFood(a));
-                if (hungryAnimal) {
-                    if (foodBank > 0) {
-                        foodBank--;
-                        hungryAnimal.currentFood++;
-                        logMessage(`🍇 ${ai.name} покормил существо из общей экосистемы.`);
-                    } else if (hungryAnimal.traits.some(t => t.id === 'predator')) {
-                        // Поиск жертвы ИИ
-                        let targets = [];
-                        players.forEach(p => {
-                            p.animals.forEach((target, tIdx) => {
-                                if (p.id !== ai.id) targets.push({ pId: p.id, idx: tIdx, obj: target });
-                            });
-                        });
-
-                        // Фильтр защищенных целей
-                        let validTargets = targets.filter(t => {
-                            if (t.obj.traits.some(tr => tr.id === 'swimming') && !hungryAnimal.traits.some(tr => tr.id === 'swimming')) return false;
-                            if (t.obj.traits.some(tr => tr.id === 'big') && !hungryAnimal.traits.some(tr => tr.id === 'big')) return false;
-                            return true;
-                        });
-
-                        if (validTargets.length > 0) {
-                            let target = validTargets[0];
-                            logMessage(`🔴 <b>Хищник ИИ (${ai.name})</b> вышел на охоту!`);
-                            players[target.pId].animals.splice(target.idx, 1);
-                            hungryAnimal.currentFood = Math.min(calculateRequiredFood(hungryAnimal), hungryAnimal.currentFood + 2);
-                        } else {
-                            ai.passed = true;
-                        }
-                    } else {
-                        ai.passed = true;
-                    }
-                } else {
-                    ai.passed = true;
-                }
-            }
-            nextTurn();
-        }
-
-        function endPhase() {
-            if (phase === "development") {
-                phase = "feeding";
-                document.getElementById('current-phase').innerText = "Питание (Ресурсы)";
-                document.getElementById('current-phase').style.color = "var(--gold)";
-                document.getElementById('food-zone').style.borderColor = "var(--gold)";
-
-                // Бросок кубика по правилам
-                let dice = Math.floor(Math.random() * 6) + 1;
-                foodBank = dice + players.length;
-                logMessage(`🎲 Растительность выросла! Кубик дал кормовую базу: <b>${foodBank} ед. еды</b>.`);
-                
-                checkFeedingPhaseAutopass();
-
-                // Действие клика на еду для игрока-человека
-                document.getElementById('food-zone').onclick = () => {
-                    if (phase === "feeding" && activePlayerIndex === 0 && !players[0].passed) {
-                        let hungry = players[0].animals.find(a => a.currentFood < calculateRequiredFood(a));
-                        if (hungry && foodBank > 0) {
-                            foodBank--;
-                            hungry.currentFood++;
-                            logMessage("🍇 Вы взяли 1 ед. еды из общего запаса.");
-                            checkFeedingPhaseAutopass();
-                            nextTurn();
-                        }
-                    }
-                };
-
-                nextTurn();
-            } else if (phase === "feeding") {
-                // Вымирание
-                logMessage("🍂 Наступила суровая зима... Слабые виды погибают.");
-                
-                players.forEach(p => {
-                    let survivors = p.animals.filter(a => a.currentFood >= calculateRequiredFood(a));
-                    let starved = p.animals.length - survivors.length;
-                    if (starved > 0) logMessage(`💀 В биоме ${p.name} вымерло видов от голода: ${starved}`);
-                    
-                    p.score += survivors.length; // Копим победные очки
-                    survivors.forEach(a => a.currentFood = 0);
-                    p.animals = survivors;
-                });
-
-                // Раздача карт на новый раунд
-                if (deck.length < players.length * 3) {
-                    endGame();
-                    return;
-                }
-
-                players.forEach(p => {
-                    let cardsToDraw = p.animals.length + 1;
-                    for (let i = 0; i < cardsToDraw; i++) {
-                        if (deck.length > 0) p.hand.push(deck.pop());
-                    }
-                });
-
-                round++;
-                if (round > 4) { 
-                    endGame(); 
-                } else {
-                    initRound();
-                }
-            }
-        }
-
-        function endGame() {
-            alert("Эволюционный цикл завершен!");
-            let winner = [...players].sort((a,b) => b.score - a.score)[0];
-            logMessage(`🏆 <b>ФИНАЛ СИМУЛЯЦИИ! Победил вид игрока: ${winner.name} со счетом ${winner.score}!</b>`);
-            document.getElementById('controls').innerHTML = `<button onclick="location.reload()">Начать новую эру</button>`;
-            updateUI();
-        }
-
-        function logMessage(msg) {
-            const log = document.getElementById('log');
-            log.innerHTML += `<div>${msg}</div>`;
-            log.scrollTop = log.scrollHeight;
-        }
-    </script>
 </body>
 </html>
