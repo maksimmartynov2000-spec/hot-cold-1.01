@@ -3,303 +3,671 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Синдикат: Остров Доверия</title>
+    <title>Гномы: Золото Предателей</title>
     <style>
         :root {
-            --bg-color: #1a1a1a;
-            --card-bg: #2d2d2d;
-            --text-color: #ffffff;
-            --accent: #e74c3c;
+            --bg: #141416;
+            --panel-bg: #202024;
+            --text: #e2e8f0;
+            --gold: #f1c40f;
+            --danger: #e74c3c;
+            --safe: #2ecc71;
+            --accent: #9b59b6;
         }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
             margin: 0;
             padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-        h1, h2 { margin: 5px 0; text-align: center; }
-        .game-container {
+        h1 { margin: 0 0 5px 0; font-size: 26px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        
+        .status-bar {
+            background: #2d3436;
+            border-left: 4px solid var(--gold);
+            padding: 12px 20px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 1100px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .game-grid {
             display: grid;
-            grid-template-columns: 300px 1fr 300px;
+            grid-template-columns: 300px 1fr;
             gap: 20px;
             width: 100%;
-            max-width: 1200px;
+            max-width: 1100px;
         }
-        .panel {
-            background: var(--card-bg);
+
+        .side-panel {
+            background: var(--panel-bg);
+            border-radius: 12px;
             padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-        }
-        /* Игровое поле в стиле Монополии */
-        .board {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-template-rows: repeat(4, 1fr);
-            gap: 10px;
-            aspect-ratio: 1;
-            background: #333;
-            padding: 10px;
-            border-radius: 8px;
-        }
-        .cell {
-            background: #444;
-            border: 2px solid #555;
-            border-radius: 6px;
+            border: 1px solid #333;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            padding: 8px;
-            font-size: 12px;
+            gap: 15px;
+        }
+
+        .main-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Шахты */
+        .mines-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        .mine-card {
+            background: #2d2d35;
+            border: 2px solid #444;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
             position: relative;
         }
-        .cell.corner { background: #555; font-weight: bold; }
-        .cell-players {
-            display: flex;
-            gap: 4px;
-            flex-wrap: wrap;
-            margin-top: 5px;
+        .mine-card:hover:not(.explored) {
+            border-color: var(--gold);
+            transform: translateY(-2px);
         }
-        .player-token {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            border: 1px solid white;
+        .mine-card.explored {
+            background: #1e272e;
+            border-color: #555;
+            cursor: not-allowed;
+        }
+        .mine-progress {
+            background: #111;
+            height: 8px;
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            background: var(--safe);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Карты в руке при выборе */
+        .cards-choice {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        .tunnel-card {
+            background: #34495e;
+            border: 2px solid #5d6d7e;
+            border-radius: 8px;
+            padding: 20px;
+            width: 130px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .tunnel-card:hover {
+            transform: translateY(-5px);
+            border-color: white;
+        }
+        .tunnel-card.gold-path { border-bottom: 6px solid var(--safe); }
+        .tunnel-card.empty-path { border-bottom: 6px solid #7f8c8d; }
+        .tunnel-card.trap-path { border-bottom: 6px solid var(--danger); }
+
+        /* Игроки */
+        .player-row {
+            background: #2a2a30;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #3a3a42;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .player-row.is-chief { border: 1px solid var(--gold); background: #332f21; }
+        .player-row.is-guide { border: 1px solid var(--accent); background: #2e243a; }
+        
+        .badge {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
             display: inline-block;
         }
-        /* Кнопки и интерфейс */
+
         button {
             background: #3498db;
             color: white;
             border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
+            padding: 12px;
+            border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
+            font-size: 14px;
             width: 100%;
-            margin-bottom: 10px;
-            transition: 0.2s;
+            transition: background 0.2s;
         }
-        button:hover { background: #2980b9; }
-        button:disabled { background: #555; cursor: not-allowed; }
-        .btn-sabotage { background: var(--accent); }
-        .btn-sabotage:hover { background: #c0392b; }
-        
-        .player-card {
-            background: #3a3a3a;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 6px;
-            border-left: 5px solid #fff;
-        }
+        button:hover:not(:disabled) { background: #2980b9; }
+        button:disabled { background: #444; color: #777; cursor: not-allowed; }
+
         .log {
-            height: 200px;
+            background: #000;
+            border-radius: 8px;
+            padding: 12px;
+            height: 180px;
             overflow-y: auto;
-            background: #111;
-            padding: 10px;
-            font-size: 13px;
-            border-radius: 5px;
             font-family: monospace;
+            font-size: 13px;
+            border: 1px solid #333;
         }
-        .resource-list { font-size: 13px; margin: 5px 0; }
+
+        /* Модальные окна */
         .modal {
-            position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.8);
-            z-index: 100;
-            display: none;
-            width: 320px;
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: var(--panel-bg); padding: 25px; border-radius: 12px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8); z-index: 100; display: none;
+            width: 360px; border: 1px solid #444;
         }
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 99; display: none;
+            background: rgba(0,0,0,0.8); z-index: 99; display: none;
         }
     </style>
 </head>
 <body>
 
-    <h1>Синдикат: Остров Доверия</h1>
-    <h3 id="round-display" style="color: #bbb;">Раунд: 1 | Ход: Игрок (Вы)</h3>
-
-    <div class="game-container">
-        <div class="panel">
-            <h2>Синдикат</h2>
-            <div id="players-status"></div>
-            <hr style="border-color:#444;">
-            <h3>Ваша Скрытая Роль:</h3>
-            <div id="role-card" style="font-weight:bold; font-size:18px; text-align:center; padding:10px; background:#444; border-radius:5px;"></div>
+    <div class="status-bar">
+        <div>
+            <h1>Гномы: Золото Предателей</h1>
+            <span id="game-step" style="color: #f1c40f; font-weight: bold;">Шаг: Выберите Проводника для экспедиции</span>
         </div>
-
-        <div id="board" class="board">
-            </div>
-
-        <div class="panel" style="display:flex; flex-direction:column; justify-content:space-between;">
-            <div>
-                <h2>Действия</h2>
-                <button id="btn-roll" onclick="playTurn()">Бросить кубик</button>
-                <button id="btn-build" onclick="buildFactory()" disabled>Построить Фабрику (50 Монет, 3 Дерева, 3 Кирпича)</button>
-                <button id="btn-trade" onclick="openTrade()" disabled>Предложить сделку ИИ</button>
-                <button id="btn-vote" onclick="openVote()">Собрать Совет (Голосование)</button>
-                <button id="btn-sabotage" class="btn-sabotage" onclick="triggerSabotage()" style="display:none;">Совершить Саботаж (-20 монет у всех)</button>
-            </div>
-            <div>
-                <h3>История событий</h3>
-                <div id="log" class="log"></div>
-            </div>
+        <div style="text-align: right;">
+            <div>Прогресс Саботажа: <span id="sabotage-score" style="color:var(--danger); font-weight:bold;">0/3</span></div>
+            <div id="my-role" style="font-weight: bold; margin-top: 4px;">Ваша роль: Загрузка...</div>
         </div>
     </div>
 
+    <div class="game-grid">
+        <!-- ЛЕВАЯ ПАНЕЛЬ: Список Гномов и их подозрительность -->
+        <div class="side-panel">
+            <h3 style="margin:0 0 5px 0;">⛏️ Члены Экспедиции</h3>
+            <div id="players-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+            
+            <hr style="border-color:#333; margin:10px 0;">
+            <button id="btn-call-vote" onclick="openAccuseModal()">⚖️ Собрать Трибунал</button>
+            
+            <h3 style="margin:10px 0 5px 0;">📜 Протокол Шахты</h3>
+            <div id="log" class="log"></div>
+        </div>
+
+        <!-- ЦЕНТРАЛЬНАЯ ОБЛАСТЬ: Игровой процесс -->
+        <div class="main-area">
+            <!-- Три шахты, куда копаем -->
+            <h3>🗺️ Выберите цель (Шахта для копания)</h3>
+            <div class="mines-container">
+                <div class="mine-card" id="mine-0" onclick="selectMine(0)">
+                    <h2 style="margin:0; color:#bdc3c7;">Шахта Альфа</h2>
+                    <div class="mine-progress"><div id="pb-0" class="progress-bar"></div></div>
+                    <small id="status-0" style="color:#aaa; display:block; margin-top:5px;">Глубина: 0/3</small>
+                </div>
+                <div class="mine-card" id="mine-1" onclick="selectMine(1)">
+                    <h2 style="margin:0; color:#bdc3c7;">Шахта Бета</h2>
+                    <div class="mine-progress"><div id="pb-1" class="progress-bar"></div></div>
+                    <small id="status-1" style="color:#aaa; display:block; margin-top:5px;">Глубина: 0/3</small>
+                </div>
+                <div class="mine-card" id="mine-2" onclick="selectMine(2)">
+                    <h2 style="margin:0; color:#bdc3c7;">Шахта Гамма</h2>
+                    <div class="mine-progress"><div id="pb-2" class="progress-bar"></div></div>
+                    <small id="status-2" style="color:#aaa; display:block; margin-top:5px;">Глубина: 0/3</small>
+                </div>
+            </div>
+
+            <!-- Зона скрытого выбора карт (Секретный Гитлер стайл) -->
+            <div id="action-zone" style="background:var(--panel-bg); padding:20px; border-radius:12px; border:1px solid #333; display:none;">
+                <h3 id="action-title" style="margin-top:0; text-align:center;"></h3>
+                <p id="action-desc" style="text-align:center; color:#aaa; font-size:14px;"></p>
+                <div id="cards-container" class="cards-choice"></div>
+            </div>
+            
+            <!-- Кнопка перехода к ходу ИИ -->
+            <button id="btn-next-round" onclick="startNewRound()" style="display:none; background:var(--safe);">Начать следующий раунд</button>
+        </div>
+    </div>
+
+    <!-- Модалка: Выбор Проводника -->
     <div id="overlay" class="overlay"></div>
-    <div id="trade-modal" class="modal">
-        <h3>Торговля с ИИ</h3>
-        <p>Обменять 20 Монет на 2 случайных ресурса у случайного игрока?</p>
-        <button onclick="executeTrade()">Да, предложить</button>
-        <button onclick="closeModal()" style="background:#7f8c8d;">Отмена</button>
+    <div id="guide-modal" class="modal">
+        <h3>🧭 Выберите Проводника</h3>
+        <p style="font-size:13px; color:#aaa;">Вы как Бригадир получите 3 карты туннелей, сбросите одну плохую и передадите 2 карты этому гному.</p>
+        <div id="guide-options" style="display:flex; flex-direction:column; gap:10px;"></div>
     </div>
 
-    <div id="vote-modal" class="modal">
-        <h3>Кого вы подозреваете?</h3>
-        <p>Игрок под арестом теряет право строить на 2 раунда.</p>
-        <div id="vote-options"></div>
-        <button onclick="closeModal()" style="background:#7f8c8d; margin-top:10px;">Отмена</button>
+    <!-- Модалка: Обвинение -->
+    <div id="accuse-modal" class="modal">
+        <h3>⚖️ Кого вы считаете Саботажником?</h3>
+        <p style="font-size:13px; color:#aaa;">Если гномы проголосуют ЗА, роль игрока раскроется. Ошибка будет стоить честным гномам победы!</p>
+        <div id="accuse-options" style="display:flex; flex-direction:column; gap:10px;"></div>
+        <button onclick="closeModals()" style="background:#7f8c8d; margin-top:10px;">Отмена</button>
     </div>
 
     <script>
-        // Конфигурация клеток поля (периметр 4x4 = 12 клеток)
-        const boardLayout = [
-            { id: 0, name: "СТАРТ (+20 Монет)", type: "start" },
-            { id: 1, name: "Лесопилка (+Дерево)", type: "resource", res: "wood" },
-            { id: 2, name: "Кирпичный Завод (+Кирпич)", type: "resource", res: "brick" },
-            { id: 3, name: "Казначейство (+10 Монет)", type: "money", amt: 10 },
-            { id: 4, name: "Лесопилка (+Дерево)", type: "resource", res: "wood" },
-            { id: 5, name: "Налоги (-10 Монет)", type: "tax", amt: 10 },
-            { id: 6, name: "Кирпичный Завод (+Кирпич)", type: "resource", res: "brick" },
-            { id: 7, name: "Рыночная Площадь (+20 Монет)", type: "money", amt: 20 },
-            { id: 8, name: "Заброшенная Шахта", type: "empty" },
-            { id: 9, name: "Лесопилка (+Дерево)", type: "resource", res: "wood" },
-            { id: 10, name: "Кирпичный Завод (+Кирпич)", type: "resource", res: "brick" },
-            { id: 11, name: "Центральный Банк (+30 Монет)", type: "money", amt: 30 }
-        ];
-
-        // Порядок отображения клеток на CSS Grid по периметру 4x4
-        const gridPositions = [
-            {r:1, c:1}, {r:1, c:2}, {r:1, c:3}, {r:1, c:4},
-            {r:2, c:4}, {r:3, c:4}, {r:4, c:4}, {r:4, c:3},
-            {r:4, c:2}, {r:4, c:1}, {r:3, c:1}, {r:2, c:1}
-        ];
-
-        // Инициализация игроков
+        // Игроки
         let players = [
-            { id: 0, name: "Вы (Игрок)", color: "#3498db", pos: 0, coins: 50, wood: 2, brick: 2, score: 0, isSaboteur: false, isAI: false, arrestedTurns: 0, suspicion: 0 },
-            { id: 1, name: "ИИ Боб", color: "#2ecc71", pos: 0, coins: 50, wood: 2, brick: 2, score: 0, isSaboteur: false, isAI: true, arrestedTurns: 0, suspicion: 10 },
-            { id: 2, name: "ИИ Алиса", color: "#9b59b6", pos: 0, coins: 50, wood: 2, brick: 2, score: 0, isSaboteur: false, isAI: true, arrestedTurns: 0, suspicion: 10 },
-            { id: 3, name: "ИИ Дилан", color: "#f1c40f", pos: 0, coins: 50, wood: 2, brick: 2, score: 0, isSaboteur: false, isAI: true, arrestedTurns: 0, suspicion: 10 }
+            { id: 0, name: "Вы (Гном)", isAI: false, isSaboteur: false, suspicion: 0, failedExpeditions: 0 },
+            { id: 1, name: "Торрин", isAI: true, isSaboteur: false, suspicion: 5, failedExpeditions: 0 },
+            { id: 2, name: "Бомбур", isAI: true, isSaboteur: false, suspicion: 5, failedExpeditions: 0 },
+            { id: 3, name: "Глоин", isAI: true, isSaboteur: false, suspicion: 5, failedExpeditions: 0 },
+            { id: 4, name: "Дулин", isAI: true, isSaboteur: false, suspicion: 5, failedExpeditions: 0 }
         ];
 
-        let currentPlayerIndex = 0;
-        let round = 1;
-        let saboteurId = 0;
+        let mines = [
+            { id: 0, name: "Альфа", progress: 0, isGold: false },
+            { id: 1, name: "Бета", progress: 0, isGold: false },
+            { id: 2, name: "Гамма", progress: 0, isGold: false }
+        ];
 
-        // Старт игры
+        let sabotageScore = 0; // Если Саботаж равен 3, саботажники выиграли
+        let currentChiefId = 0;
+        let currentGuideId = -1;
+        let chosenMineId = -1;
+        let roundCounter = 1;
+        
+        // Временная "рука" карт для механики передачи
+        let currentDrawnCards = []; 
+
         function initGame() {
-            // Назначение скрытой роли Саботажника
-            saboteurId = Math.floor(Math.random() * 4);
-            players[saboteurId].isSaboteur = true;
+            // Назначаем скрытую жилу золота
+            let goldMineIndex = Math.floor(Math.random() * 3);
+            mines[goldMineIndex].isGold = true;
 
+            // Назначаем Саботажника
+            let saboteurIndex = Math.floor(Math.random() * 5);
+            players[saboteurIndex].isSaboteur = true;
+
+            // Настройка отображения роли игрока
+            const roleBox = document.getElementById('my-role');
             if (players[0].isSaboteur) {
-                document.getElementById('role-card').innerText = "САБОТАЖНИК 😈";
-                document.getElementById('role-card').style.color = "var(--accent)";
-                document.getElementById('btn-sabotage').style.display = "block";
+                roleBox.innerText = "Ваша роль: 😈 САБОТАЖНИК";
+                roleBox.style.color = "var(--danger)";
+                logMessage(`🤫 Вы — Саботажник! Ваша цель: запутать гномов. Настоящее золото находится в **Шахте ${mines[goldMineIndex].name}**! Не дайте им докопать её до конца.`);
             } else {
-                document.getElementById('role-card').innerText = "МИРНЫЙ ПАРТНЕР 😇";
-                document.getElementById('role-card').style.color = "#2ecc71";
+                roleBox.innerText = "Ваша роль: 😇 ЧЕСТНЫЙ ГНОМ";
+                roleBox.style.color = "var(--safe)";
+                logMessage("⛏️ Вы — Честный Гном. Ваша цель: найти Золотую Жилу в одной из трех шахт. Опасайтесь скрытого Вредителя!");
             }
 
-            renderBoard();
+            currentChiefId = Math.floor(Math.random() * 5); // Случайный первый бригадир
             updateUI();
-            logMessage("🚨 Игра началась! Цель Мирных: набрать 10 очков (строя фабрики) или вычислить Саботажника. Цель Саботажника: скрытно разорять игроков.");
+            setupRoundState();
         }
 
-        // Рендер доски
-        function renderBoard() {
-            const boardEl = document.getElementById('board');
-            boardEl.innerHTML = '';
+        function setupRoundState() {
+            document.getElementById('btn-next-round').style.display = 'none';
+            document.getElementById('action-zone').style.display = 'none';
             
-            // Создаем массив ячеек в правильном порядке сетки 4x4
-            let gridCells = Array(16).fill(null);
-            
-            boardLayout.forEach((cell, index) => {
-                const pos = gridPositions[index];
-                const cellIndex = (pos.r - 1) * 4 + (pos.c - 1);
-                gridCells[cellIndex] = { ...cell, originalIndex: index };
-            });
-
-            for (let i = 0; i < 16; i++) {
-                const cellDiv = document.createElement('div');
-                if (gridCells[i] === null) {
-                    cellDiv.style.background = "transparent";
-                } else {
-                    const cell = gridCells[i];
-                    cellDiv.className = `cell ${cell.type === 'start' ? 'corner' : ''}`;
-                    cellDiv.innerHTML = `<div><b>${cell.name}</b></div><div class="cell-players" id="cell-${cell.originalIndex}"></div>`;
-                }
-                boardEl.appendChild(cellDiv);
+            if (currentChiefId === 0) {
+                document.getElementById('game-step').innerText = "Ваш ход (Бригадир)! Нажмите на любую шахту, чтобы начать экспедицию.";
+            } else {
+                document.getElementById('game-step').innerText = `Ход Бригадира: ${players[currentChiefId].name}. Он выбирает шахту...`;
+                setTimeout(aiChiefSelectsMine, 1500);
             }
-            updateTokens();
-        }
-
-        function updateTokens() {
-            // Очищаем старые фишки
-            boardLayout.forEach((_, index) => {
-                const el = document.getElementById(`cell-${index}`);
-                if (el) el.innerHTML = '';
-            });
-            // Ставим новые
-            players.forEach(p => {
-                const cellEl = document.getElementById(`cell-${p.pos}`);
-                if (cellEl) {
-                    const token = document.createElement('div');
-                    token.className = 'player-token';
-                    token.style.backgroundColor = p.color;
-                    token.title = p.name;
-                    cellEl.appendChild(token);
-                }
-            });
+            updateUI();
         }
 
         function updateUI() {
-            const statusEl = document.getElementById('players-status');
-            statusEl.innerHTML = '';
-
+            // Список игроков
+            const listEl = document.getElementById('players-list');
+            listEl.innerHTML = '';
             players.forEach(p => {
-                const card = document.createElement('div');
-                card.className = 'player-card';
-                card.style.borderLeftColor = p.color;
+                const div = document.createElement('div');
+                div.className = `player-row ${p.id === currentChiefId ? 'is-chief' : ''} ${p.id === currentGuideId ? 'is-guide' : ''}`;
                 
-                // Для ИИ скрываем роль, но выводим уровень подозрений окружающих
-                let statusText = p.arrestedTurns > 0 ? `<b style="color:red;">[ПОД АРЕСТОМ ${p.arrestedTurns}х]</b>` : '';
-                card.innerHTML = `
-                    <strong>${p.name} ${statusText}</strong><br>
-                    <div class="resource-list">💰 Монеты: ${p.coins} | 🪵 Дерево: ${p.wood} | 🧱 Кирпич: ${p.brick}</div>
-                    <strong>🏭 Постройки (Очки): ${p.score} / 10</strong><br>
-                    <small style="color:#aaa;">Подозрения общества: ${p.id !== 0 ? p.suspicion + '%' : '—'}</small>
+                let badges = '';
+                if (p.id === currentChiefId) badges += `<span class="badge" style="background:var(--gold); color:#000;">БРИГАДИР</span> `;
+                if (p.id === currentGuideId) badges += `<span class="badge" style="background:var(--accent);">ПРОВОДНИК</span> `;
+                if (p.id === 0) badges += `<span class="badge" style="background:#1e90ff;">ВЫ</span> `;
+
+                div.innerHTML = `
+                    <div><strong>${p.name}</strong> ${badges}</div>
+                    <div style="font-size:12px; color:#aaa;">Подозрительность отряда: <b style="color:coral;">${p.suspicion}%</b></div>
                 `;
-                statusEl.appendChild(card);
+                listEl.appendChild(div);
             });
 
-            // Кнопки управления для игрока
-            const human = players[0];
-            document.getElementById('btn-build').disabled = !(human.coins >= 50 && human.wood >= 3 && human.brick >= 3 && human.arrestedTurns === 0);
-            document.getElementById('btn-trade').disabled = (human.coins < 20);
-            document.getElementById('round-display').innerText = `Раунд: ${round} | Ходит: ${players[currentPlayerIndex].name}`;
+            // Обновление прогресс-баров шахт
+            mines.forEach(m => {
+                document.getElementById(`pb-${m.id}`).style.width = (m.progress / 3 * 100) + '%';
+                document.getElementById(`status-${m.id}`).innerText = `Глубина: ${m.progress}/3`;
+            });
+
+            document.getElementById('sabotage-score').innerText = `${sabotageScore}/3`;
+        }
+
+        // ЛОГИКА: Выбор Шахты
+        function selectMine(id) {
+            if (currentChiefId !== 0) return; // Не ваш ход
+            chosenMineId = id;
+            logMessage(`⛏️ Вы, как Бригадир, объявили целью Экспедиции <b>Шахту ${mines[id].name}</b>.`);
+            openGuideModal();
+        }
+
+        function aiChiefSelectsMine() {
+            let chief = players[currentChiefId];
+            // ИИ выбирает недокопанную шахту. Саботажник умышленно может выбрать ложную.
+            let availableMines = mines.filter(m => m.progress < 3);
+            let selected = availableMines[Math.floor(Math.random() * availableMines.length)];
+            
+            if (chief.isSaboteur) {
+                // Саботажник ИИ пытается вести туда, где НЕТ золота, если они еще не докопаны
+                let fakeMines = availableMines.filter(m => !m.isGold);
+                if (fakeMines.length > 0) selected = fakeMines[Math.floor(Math.random() * fakeMines.length)];
+            }
+
+            chosenMineId = selected.id;
+            logMessage(`⛏️ Бригадир <b>${chief.name}</b> направляет отряд в <b>Шахту ${selected.name}</b>.`);
+            
+            // Теперь ИИ выбирает Проводника
+            setTimeout(aiChiefSelectsGuide, 1200);
+        }
+
+        // ЛОГИКА: Выбор Проводника
+        function openGuideModal() {
+            document.getElementById('overlay').style.display = 'block';
+            const modal = document.getElementById('guide-modal');
+            modal.style.display = 'block';
+            
+            const container = document.getElementById('guide-options');
+            container.innerHTML = '';
+
+            players.forEach(p => {
+                if (p.id !== 0) { // Нельзя выбрать себя
+                    const btn = document.createElement('button');
+                    btn.innerText = `Назначить: ${p.name} (Подозрение: ${p.suspicion}%)`;
+                    btn.onclick = () => humanSelectsGuide(p.id);
+                    container.appendChild(btn);
+                }
+            });
+        }
+
+        function humanSelectsGuide(id) {
+            closeModals();
+            currentGuideId = id;
+            logMessage(`🧭 Вы назначили гнома <b>${players[id].name}</b> Проводником раунда.`);
+            updateUI();
+            
+            // Генерируем 3 карты для Бригадира (Вас)
+            generateSecretCards();
+        }
+
+        function aiChiefSelectsGuide() {
+            let chief = players[currentChiefId];
+            // ИИ выбирает проводника с наименьшим подозрением (если честный), или своего сообщника/цель подставы (если вредитель)
+            let candidates = players.filter(p => p.id !== currentChiefId);
+            candidates.sort((a, b) => a.suspicion - b.suspicion);
+            
+            let chosenGuide = candidates[0]; // По умолчанию самый надежный
+
+            if (chief.isSaboteur && Math.random() < 0.6) {
+                // Саботажник подставляет честного игрока с высоким подозрением
+                candidates.sort((a,b) => b.suspicion - a.suspicion);
+                chosenGuide = candidates[0];
+            }
+
+            currentGuideId = chosenGuide.id;
+            logMessage(`🧭 Бригадир назначил гнома <b>${chosenGuide.name}</b> Проводником.`);
+            updateUI();
+
+            setTimeout(executeAiDrafting, 1200);
+        }
+
+        // МЕХАНИКА "SECRET HITLER" КАРТ
+        function generateSecretCards() {
+            // Пул карт: Хороший Путь, Пустышка (ничего), Обвал/Ловушка
+            // Саботажнику выгодно подкидывать Обвалы
+            currentDrawnCards = [];
+            let r = Math.random();
+            
+            // Генерируем колоду из 3 карт в зависимости от рандома
+            if (r < 0.4) {
+                currentDrawnCards = ["Хороший Путь", "Хороший Путь", "Обвал Шахты"];
+            } else if (r < 0.7) {
+                currentDrawnCards = ["Хороший Путь", "Обвал Шахты", "Обвал Шахты"];
+            } else {
+                currentDrawnCards = ["Хороший Путь", "Пустой туннель", "Обвал Шахты"];
+            }
+
+            // Показываем интерфейс скрытого сброса для игрока
+            document.getElementById('action-zone').style.display = 'block';
+            document.getElementById('action-title').innerText = "🔥 Секретный выбор Бригадира";
+            document.getElementById('action-desc').innerText = "Перед вами 3 карты из колоды. НАЖМИТЕ на ОДНУ карту, чтобы ТАЙНО СЖЕЧЬ её (убрать из игры). Оставшиеся две вы передадите Проводнику.";
+
+            const container = document.getElementById('cards-container');
+            container.innerHTML = '';
+
+            currentDrawnCards.forEach((card, idx) => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = `tunnel-card ${card === 'Хороший Путь' ? 'gold-path' : card === 'Обвал Шахты' ? 'trap-path' : 'empty-path'}`;
+                cardDiv.innerText = card;
+                cardDiv.onclick = () => humanDiscardsCard(idx);
+                container.appendChild(cardDiv);
+            });
+        }
+
+        function humanDiscardsCard(discardIndex) {
+            let discarded = currentDrawnCards.splice(discardIndex, 1)[0];
+            logMessage(`🔏 Вы тайно сожгли одну карту и передали две оставшиеся гному <b>${players[currentGuideId].name}</b>.`);
+            
+            document.getElementById('action-zone').style.display = 'none';
+            
+            // Теперь Проводник-ИИ делает выбор из оставшихся двух карт
+            setTimeout(() => aiGuideChoice(currentDrawnCards), 1200);
+        }
+
+        function aiGuideChoice(twoCards) {
+            let guide = players[currentGuideId];
+            let finalCard = "";
+
+            if (guide.isSaboteur) {
+                // Саботажник всегда выберет Обвал, если он есть
+                if (twoCards.includes("Обвал Шахты")) {
+                    finalCard = "Обвал Шахты";
+                } else {
+                    finalCard = twoCards[0];
+                }
+            } else {
+                // Честный гном выберет лучший путь
+                if (twoCards.includes("Хороший Путь")) {
+                    finalCard = "Хороший Путь";
+                } else if (twoCards.includes("Пустой туннель")) {
+                    finalCard = "Пустой туннель";
+                } else {
+                    finalCard = "Обвал Шахты"; // Если Бригадир дал два обвала, выбора нет
+                }
+            }
+
+            applyTunnelResult(finalCard);
+        }
+
+        // ИИ БРИГАДИР ПЕРЕДАЕТ КАРТЫ
+        function executeAiDrafting() {
+            let chief = players[currentChiefId];
+            let guide = players[currentGuideId];
+            
+            // ИИ генерирует 3 карты
+            let pool = ["Хороший Путь", "Обвал Шахты", "Хороший Путь"];
+            if (Math.random() > 0.5) pool = ["Хороший Путь", "Обвал Шахты", "Обвал Шахты"];
+
+            // Бригадир убирает одну карту
+            if (chief.isSaboteur) {
+                // Если Бригадир — саботажник, он сожжет ХОРОШИЙ путь, чтобы вынудить проводника выкопать обвал
+                let idx = pool.indexOf("Хороший Путь");
+                if (idx !== -1) pool.splice(idx, 1);
+                else pool.pop();
+            } else {
+                // Честный ИИ уберет Обвал
+                let idx = pool.indexOf("Обвал Шахты");
+                if (idx !== -1) pool.splice(idx, 1);
+                else pool.pop();
+            }
+
+            logMessage(`🔏 Бригадир <b>${chief.name}</b> тайно передал 2 карты Проводнику.`);
+
+            // Если Проводник — ИГРОК (Вы)
+            if (currentGuideId === 0) {
+                document.getElementById('action-zone').style.display = 'block';
+                document.getElementById('action-title').innerText = "🧭 Секретный Выбор Проводника (Ваш Ход!)";
+                document.getElementById('action-desc').innerText = `Бригадир ${chief.name} передал вам эти две карты. НАЖМИТЕ на ту карту, которую вы решите ОФИЦИАЛЬНО ВЫКОПАТЬ в шахте.`;
+                
+                const container = document.getElementById('cards-container');
+                container.innerHTML = '';
+
+                pool.forEach((card) => {
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = `tunnel-card ${card === 'Хороший Путь' ? 'gold-path' : 'trap-path'}`;
+                    cardDiv.innerText = card;
+                    cardDiv.onclick = () => {
+                        document.getElementById('action-zone').style.display = 'none';
+                        logMessage(`⛏️ Вы решили сыграть карту: <b>${card}</b>`);
+                        applyTunnelResult(card);
+                    };
+                    container.appendChild(cardDiv);
+                });
+            } else {
+                // ИИ выбирает сам за Проводника
+                aiGuideChoice(pool);
+            }
+        }
+
+        // РЕЗУЛЬТАТ ТУННЕЛЯ
+        function applyTunnelResult(card) {
+            let targetMine = mines[chosenMineId];
+            
+            if (card === "Хороший Путь") {
+                targetMine.progress += 1;
+                logMessage(`🟩 <b>Успех!</b> Проводник прорубил отличный туннель в Шахте ${targetMine.name}. Глубина увеличена.`);
+            } else if (card === "Пустой туннель") {
+                logMessage(`⬜ <b>Пусто:</b> Никакого продвижения вперед в этом раунде.`);
+            } else if (card === "Обвал Шахты") {
+                sabotageScore += 1;
+                logMessage(`🚨 <b>ОБВАЛ КРИЗИС!</b> В Шахте ${targetMine.name} произошел крупный завал. Счет Саботажа растет!`);
+                
+                // Взаимоотношения: Из-за кризиса подозрения к Бригадиру и Проводнику этого раунда растут у всех гномов!
+                players[currentChiefId].suspicion += 20;
+                players[currentGuideId].suspicion += 20;
+            }
+
+            updateUI();
+            checkEndGameConditions();
+            
+            document.getElementById('btn-next-round').style.display = 'block';
+            document.getElementById('game-step').innerText = "Раунд завершен. Нажмите кнопку внизу для продолжения.";
+        }
+
+        function startNewRound() {
+            roundCounter++;
+            // Передаем роль Бригадира следующему по кругу в стиле Мафии
+            currentChiefId = (currentChiefId + 1) % 5;
+            currentGuideId = -1;
+            setupRoundState();
+        }
+
+        // ТРИБУНАЛ (ГОЛОСОВАНИЕ ИЗ SECRET HITLER)
+        function openAccuseModal() {
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('accuse-modal').style.display = 'block';
+            
+            const container = document.getElementById('accuse-options');
+            container.innerHTML = '';
+
+            players.forEach(p => {
+                if (p.id !== 0) {
+                    const btn = document.createElement('button');
+                    btn.innerText = `Арестовать: ${p.name} (Подозрение: ${p.suspicion}%)`;
+                    btn.onclick = () => runTribunal(p.id);
+                    container.appendChild(btn);
+                }
+            });
+        }
+
+        function runTribunal(targetId) {
+            closeModals();
+            logMessage(`⚖️ <b>Судебный совет!</b> Вы обвинили гнома <b>${players[targetId].name}</b> в саботаже.`);
+            
+            let votesFor = 1; // Ваш голос ЗА
+            
+            // ИИ голосуют на основе подозрений. Если подозрение цели > 30%, ИИ поддержит арест
+            players.forEach(p => {
+                if (p.isAI && p.id !== targetId) {
+                    if (players[targetId].suspicion >= 30 || (p.isSaboteur && !players[targetId].isSaboteur && Math.random() > 0.4)) {
+                        votesFor++;
+                    }
+                }
+            });
+
+            logMessage(`📊 Итоги голосования отряда: За изоляцию — ${votesFor} из 5 гномов.`);
+
+            if (votesFor >= 3) {
+                // Арест состоялся
+                if (players[targetId].isSaboteur) {
+                    logMessage(`🎉 <b>ПОБЕДА ЧЕСТНЫХ ГНОМОВ!</b> ${players[targetId].name} действительно оказался Саботажником! Шахты спасены.`);
+                    alert(`Победа! Вы вычислили Саботажника (${players[targetId].name}). Экспедиция в безопасности.`);
+                    location.reload();
+                } else {
+                    logMessage(`❌ <b>Катастрофическая ошибка!</b> ${players[targetId].name} был честным работягой. Отряд расколот, Саботажники получают +1 очко.`);
+                    sabotageScore += 1;
+                    players[targetId].suspicion = 0; // Снимаем подозрения, он чист
+                    updateUI();
+                    checkEndGameConditions();
+                }
+            } else {
+                logMessage(`⚖️ Недостаточно улик. Обвинения с ${players[targetId].name} сняты.`);
+            }
+        }
+
+        function checkEndGameConditions() {
+            // Условие победы гномов
+            mines.forEach(m => {
+                if (m.progress >= 3) {
+                    if (m.isGold) {
+                        alert("🎉 ПОБЕДА ЧЕСТНЫХ ГНОМОВ! Вы прорубили путь и нашли Золотую Жилу!");
+                        location.reload();
+                    } else {
+                        logMessage(`ℹ️ Вы докопали Шахту ${m.name} до конца, но она оказалась пустой! Золота здесь нет.`);
+                        m.progress = 3; // помечаем закрытой
+                        // Подозрения к Бригадиру, который вел сюда отряд, взлетают!
+                        players[currentChiefId].suspicion += 30;
+                    }
+                }
+            });
+
+            // Условие победы Саботажников
+            if (sabotageScore >= 3) {
+                let realSab = players.find(p => p.isSaboteur);
+                alert(`😈 ПОБЕДА САБОТАЖНИКОВ! В шахтах произошло слишком много обвалов. Настоящим предателем был: ${realSab.name}.`);
+                location.reload();
+            }
+        }
+
+        function closeModals() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('guide-modal').style.display = 'none';
+            document.getElementById('accuse-modal').style.display = 'none';
         }
 
         function logMessage(msg) {
@@ -308,213 +676,6 @@
             log.scrollTop = log.scrollHeight;
         }
 
-        // Логика хода игрока
-        function playTurn() {
-            document.getElementById('btn-roll').disabled = true;
-            let activePlayer = players[currentPlayerIndex];
-
-            if (activePlayer.arrestedTurns > 0) {
-                logMessage(`🔒 ${activePlayer.name} пропускает активность (под арестом). Осталось раундов: ${activePlayer.arrestedTurns - 1}`);
-                activePlayer.arrestedTurns--;
-                nextTurn();
-                return;
-            }
-
-            let dice = Math.floor(Math.random() * 3) + 1; // Кубик 1-3 для динамики на маленьком поле
-            activePlayer.pos = (activePlayer.pos + dice) % boardLayout.length;
-            
-            let cell = boardLayout[activePlayer.pos];
-            logMessage(`🎲 ${activePlayer.name} выбросил ${dice} и встал на клетку: <b>${cell.name}</b>`);
-
-            // Эффект клетки
-            if (cell.type === 'resource') {
-                activePlayer[cell.res] += 1;
-                logMessage(`➕ ${activePlayer.name} получает 1 ед. ресурса [${cell.res}]`);
-            } else if (cell.type === 'money') {
-                activePlayer.coins += cell.amt;
-            } else if (cell.type === 'tax') {
-                activePlayer.coins = Math.max(0, activePlayer.coins - cell.amt);
-                logMessage(`💸 ${activePlayer.name} оплатил налог ${cell.amt} монет.`);
-            } else if (cell.type === 'start') {
-                activePlayer.coins += 20;
-            }
-
-            updateTokens();
-            updateUI();
-
-            // Если это Саботажник-ИИ, с шансом 35% он вредит
-            if (activePlayer.isAI && activePlayer.isSaboteur && Math.random() < 0.35) {
-                aiSabotage(activePlayer);
-            }
-
-            // Логика ИИ по строительству
-            if (activePlayer.isAI && activePlayer.coins >= 50 && activePlayer.wood >= 3 && activePlayer.brick >= 3) {
-                activePlayer.coins -= 50; activePlayer.wood -= 3; activePlayer.brick -= 3;
-                activePlayer.score += 2;
-                logMessage(`🏭 <b>${activePlayer.name}</b> построил Фабрику и получил 2 очка!`);
-                checkWinCondition();
-            }
-
-            setTimeout(nextTurn, 1500);
-        }
-
-        function nextTurn() {
-            currentPlayerIndex = (currentPlayerIndex + 1) % 4;
-            if (currentPlayerIndex === 0) {
-                round++;
-                document.getElementById('btn-roll').disabled = false;
-            }
-            updateUI();
-
-            if (currentPlayerIndex !== 0) {
-                // Ход искусственного интеллекта
-                setTimeout(playTurn, 1000);
-            }
-        }
-
-        // Действия Человека: Строительство
-        function buildFactory() {
-            let p = players[0];
-            p.coins -= 50; p.wood -= 3; p.brick -= 3;
-            p.score += 2;
-            logMessage(`🏭 Вы построили Фабрику! (+2 Очка)`);
-            updateUI();
-            checkWinCondition();
-        }
-
-        // Саботаж (доступно игроку, если он предатель)
-        function triggerSabotage() {
-            players.forEach(p => {
-                if (p.id !== 0) p.coins = Math.max(0, p.coins - 20);
-            });
-            logMessage(`🚨 <b>Кризис!</b> Кто-то совершил скрытый саботаж! Все ИИ-игроки потеряли по 20 монет.`);
-            document.getElementById('btn-sabotage').disabled = true;
-            
-            // ИИ начинают подозревать друг друга и игрока сильнее после кризиса
-            players.forEach(p => { if(p.id !== 0) p.suspicion += Math.floor(Math.random() * 20) + 10; });
-            updateUI();
-        }
-
-        // Внутренний саботаж со стороны ИИ
-        function aiSabotage(aiPlayer) {
-            players.forEach(p => {
-                if (p.id !== aiPlayer.id) p.coins = Math.max(0, p.coins - 15);
-            });
-            logMessage(`📉 <b>Прошелся слух:</b> На рынке совершен поджог складов! Все понесли убытки.`);
-            // При саботаже ИИ случайным образом растет уровень подозрений к невиновным
-            players.forEach(p => {
-                if(p.id !== 0 && Math.random() > 0.5) p.suspicion += 15;
-            });
-        }
-
-        // Торговля
-        function openTrade() {
-            document.getElementById('overlay').style.display = 'block';
-            document.getElementById('trade-modal').style.display = 'block';
-        }
-
-        function executeTrade() {
-            closeModal();
-            let partner = players[Math.floor(Math.random() * 3) + 1]; // Случайный ИИ
-            players[0].coins -= 20;
-            
-            // ИИ принимает сделку, если доверяет (подозрение < 50)
-            if (partner.suspicion < 50 && (partner.wood > 0 || partner.brick > 0)) {
-                partner.coins += 20;
-                players[0].wood += 1;
-                players[0].brick += 1;
-                logMessage(`🤝 Успешная сделка! Сделка с ${partner.name} принесла вам ресурсы.`);
-                // Улучшение отношений
-                partner.suspicion = Math.max(0, partner.suspicion - 10);
-            } else {
-                players[0].coins += 20; // Возврат
-                logMessage(`❌ ${partner.name} отклонил предложение о торговле из-за недоверия.`);
-            }
-            updateUI();
-        }
-
-        // Голосование (Мафия-механика)
-        function openVote() {
-            document.getElementById('overlay').style.display = 'block';
-            const voteModal = document.getElementById('vote-modal');
-            voteModal.style.display = 'block';
-            
-            const opts = document.getElementById('vote-options');
-            opts.innerHTML = '';
-            
-            players.forEach(p => {
-                if (p.id !== 0) {
-                    const btn = document.createElement('button');
-                    btn.innerText = `Обвинить: ${p.name}`;
-                    btn.onclick = () => executeVote(p.id);
-                    opts.appendChild(btn);
-                }
-            });
-        }
-
-        function executeVote(targetId) {
-            closeModal();
-            logMessage(`📢 Вы созвали Совет Синдиката и выдвинули обвинения против ${players[targetId].name}!`);
-            
-            // ИИ голосуют на основе своих подозрений
-            let votes = [0, 0, 0, 0];
-            votes[targetId]++; // Ваш голос
-            
-            players.forEach(p => {
-                if (p.isAI) {
-                    // ИИ голосует за того, у кого максимальное подозрение, либо против Саботажника с малым шансом
-                    let target = 0;
-                    let maxSusp = -1;
-                    players.forEach(pSub => {
-                        if(pSub.id !== p.id && pSub.suspicion > maxSusp) {
-                            maxSusp = pSub.suspicion;
-                            target = pSub.id;
-                        }
-                    });
-                    votes[target]++;
-                }
-            });
-
-            // Находим лидера голосования
-            let maxVotes = 0;
-            let votedOutId = -1;
-            votes.forEach((v, idx) => {
-                if (v > maxVotes) { maxVotes = v; votedOutId = idx; }
-            });
-
-            logMessage(`📊 Результаты трибунала: Игрок под подозрением — <b>${players[votedOutId].name}</b> (${maxVotes} голосов).`);
-            
-            if (players[votedOutId].isSaboteur) {
-                logMessage(`🎉 Успех! <b>${players[votedOutId].name}</b> действительно был Саботажником! Он изолирован. Мирные победили!`);
-                setTimeout(() => alert("Победа Мирных Партнеров! Саботажник раскрыт."), 500);
-            } else {
-                logMessage(`⛔ Ошибка! <b>${players[votedOutId].name}</b> был честным партнером. Он отправлен под домашний арест на 2 раунда и теряет ресурсы.`);
-                players[votedOutId].arrestedTurns = 2;
-                players[votedOutId].coins = Math.floor(players[votedOutId].coins / 2);
-            }
-            updateUI();
-        }
-
-        function closeModal() {
-            document.getElementById('overlay').style.display = 'none';
-            document.getElementById('trade-modal').style.display = 'none';
-            document.getElementById('vote-modal').style.display = 'none';
-        }
-
-        function checkWinCondition() {
-            players.forEach(p => {
-                if (p.score >= 10) {
-                    if (p.isSaboteur) {
-                        alert(`Игра окончена! Саботажник (${p.name}) победил, захватив контроль над островом!`);
-                    } else {
-                        alert(`Игра окончена! Честный игрок (${p.name}) победил, построив сильный бизнес!`);
-                    }
-                    location.reload();
-                }
-            });
-        }
-
-        // Запуск
         window.onload = initGame;
     </script>
 </body>
