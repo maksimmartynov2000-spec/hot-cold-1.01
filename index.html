@@ -32,9 +32,65 @@
             flex-direction: column;
             overflow: hidden;
             background: radial-gradient(circle at center, #111428 0%, #06070a 100%);
+            transition: background-color 0.1s ease;
         }
 
-        /* Панель ресурсов (Верхняя) */
+        /* Экран выбора режима */
+        .start-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, #111324 0%, #030408 100%);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .start-title {
+            color: var(--gold);
+            font-size: 1.8rem;
+            text-align: center;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(255,215,0,0.2);
+        }
+
+        .start-subtitle {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+
+        .mode-list {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-mode {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 15px;
+            color: white;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-mode:active { transform: scale(0.98); }
+        .btn-mode.m-1 { border-left: 4px solid #10b981; }
+        .btn-mode.m-2 { border-left: 4px solid #3b82f6; }
+        .btn-mode.m-3 { border-left: 4px solid var(--gold); }
+        .btn-mode.m-4 { border-left: 4px solid var(--royal); }
+        .btn-mode.m-5 { border-left: 4px solid #ef4444; }
+
+        .btn-mode .m-title { font-weight: bold; font-size: 1rem; display: block; margin-bottom: 2px; }
+        .btn-mode .m-desc { font-size: 0.75rem; color: #94a3b8; display: block; }
+
+        /* Панель ресурсов */
         header {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -55,13 +111,12 @@
             background: rgba(0, 0, 0, 0.4);
             border: 1px solid rgba(255,255,255,0.05);
         }
-        .resource-card.span-2 { grid-column: span 2; flex-direction: row; gap: 15px; }
 
-        .res-label { font-size: 0.75rem; color: #94a3b8; display: flex; align-items: center; gap: 4px; }
+        .res-label { font-size: 0.75rem; color: #94a3b8; }
         .res-val { font-size: 1.15rem; font-weight: bold; margin-top: 1px; }
         .res-inc { font-size: 0.65rem; color: #cbd5e1; opacity: 0.8; }
 
-        /* Игровая зона */
+        /* Зона кликера */
         .game-space {
             flex: 1;
             position: relative;
@@ -78,7 +133,6 @@
             z-index: 1;
         }
 
-        /* Математический блок */
         .math-box {
             z-index: 2;
             background: rgba(5, 7, 15, 0.85);
@@ -92,17 +146,48 @@
             backdrop-filter: blur(8px);
         }
 
+        .badge-container {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
         .combo-badge {
-            display: inline-block;
             background: linear-gradient(45deg, #ef4444, #f59e0b);
             color: white;
             padding: 2px 10px;
             border-radius: 20px;
             font-size: 0.75rem;
             font-weight: bold;
-            margin-bottom: 8px;
             box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
-            transition: all 0.2s;
+        }
+
+        .speed-badge {
+            background: linear-gradient(45deg, #06b6d4, #3b82f6);
+            color: white;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        /* Полоса таймера */
+        .timer-bar-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .timer-bar {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #06b6d4, #10b981);
+            box-shadow: 0 0 8px #06b6d4;
+            transition: width 0.1s linear;
         }
 
         .math-question {
@@ -110,7 +195,6 @@
             font-weight: bold;
             margin-bottom: 12px;
             color: var(--text-light);
-            text-shadow: 0 0 10px rgba(255,255,255,0.1);
         }
 
         .answers-grid {
@@ -132,7 +216,7 @@
         }
         .btn-answer:active { transform: scale(0.95); background: rgba(6, 182, 212, 0.25); }
 
-        /* Всплывающий текст */
+        /* Замедленная Эпическая анимация КРИТА */
         .floating-text {
             position: absolute;
             pointer-events: none;
@@ -141,19 +225,31 @@
             z-index: 5;
             animation: floatUp 0.8s ease-out forwards;
         }
+        .floating-text.crit-anim {
+            font-size: 2.2rem;
+            text-shadow: 0 0 20px var(--gold), 0 0 40px var(--gold);
+            animation: critStay 1.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
         @keyframes floatUp {
             0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
             100% { transform: translate(-50%, -90px) scale(1.2); opacity: 0; }
         }
+        @keyframes critStay {
+            0% { transform: translate(-50%, -20px) scale(0.5); opacity: 0; }
+            20% { transform: translate(-50%, -60px) scale(1.2); opacity: 1; }
+            75% { transform: translate(-50%, -65px) scale(1.1); opacity: 1; }
+            100% { transform: translate(-50%, -130px) scale(0.8); opacity: 0; }
+        }
 
-        /* Прокручиваемый магазин */
+        /* Магазин */
         .control-panel {
             background: var(--panel-bg);
             backdrop-filter: blur(15px);
             border-top: 2px solid rgba(255, 255, 255, 0.08);
             padding: 10px;
             z-index: 10;
-            max-height: 40vh;
+            max-height: 38vh;
             overflow-y: auto;
         }
 
@@ -180,15 +276,17 @@
             color: white;
             text-align: left;
             position: relative;
-            transition: opacity 0.2s, border-color 0.2s;
         }
         .btn-build:active { transform: scale(0.97); }
         .btn-build .name { font-size: 0.8rem; font-weight: bold; display: block; color: #f1f5f9; }
-        .btn-build .cost { font-size: 0.65rem; color: #94a3b8; margin-top: 3px; display: block; }
+        
+        /* Добавленные строчки подробного описания наград */
+        .btn-build .effect-desc { font-size: 0.62rem; color: #38bdf8; display: block; font-style: italic; margin-top: 1px; }
+        .btn-build[data-cat="upgrade"] .effect-desc { color: var(--gold); }
+        
+        .btn-build .cost { font-size: 0.65rem; color: #94a3b8; margin-top: 4px; display: block; }
         .btn-build .count { position: absolute; right: 8px; top: 10px; font-size: 0.75rem; font-weight: bold; opacity: 0.3; }
 
-        /* Подсветка доступности */
-        .btn-build.available { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.03); }
         .btn-build.available[data-cat="prod"] { border-color: #38bdf8; }
         .btn-build.available[data-cat="upgrade"] { border-color: var(--gold); }
 
@@ -197,13 +295,12 @@
             background: linear-gradient(45deg, #1e1b4b, #4c1d95);
             border: 1px solid var(--royal);
             text-align: center;
-            padding: 14px;
+            padding: 12px;
             margin-top: 4px;
         }
-        .btn-final .name { color: #f3e8ff; font-size: 0.85rem; letter-spacing: 1px; }
-        .btn-final.available { box-shadow: 0 0 15px rgba(168, 85, 247, 0.5); border-color: #c084fc; }
+        .btn-final .name { color: #f3e8ff; font-size: 0.85rem; display: block; }
+        .btn-final.available { box-shadow: 0 0 15px rgba(168, 85, 247, 0.6); border-color: #c084fc; }
 
-        /* Экран финала */
         .win-screen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -216,23 +313,50 @@
 </head>
 <body>
 
+    <div class="start-screen" id="startScreen">
+        <h1 class="start-title">🏛 shrink Орден Счета</h1>
+        <p class="start-subtitle">Выберите Обет Научной Цели на эту эпоху:</p>
+        <div class="mode-list">
+            <button class="btn-mode m-1" onclick="selectMode('easy')">
+                <span class="m-title">📜 Ученик (Спринт)</span>
+                <span class="m-desc">Цель: 2,000 🪙 и 20% Славы. Разминочная игра.</span>
+            </button>
+            <button class="btn-mode m-2" onclick="selectMode('medium')">
+                <span class="m-title">⚔️ Рыцарь Счета (Обычная)</span>
+                <span class="m-desc">Цель: 5,000 🪙 и 50% Славы. Классический темп.</span>
+            </button>
+            <button class="btn-mode m-3" onclick="selectMode('hard')">
+                <span class="m-title">🏛️ Магистр Цитадели (Вызов)</span>
+                <span class="m-desc">Цель: 10,000 🪙 и 100% Славы. Требует хорошей стратегии.</span>
+            </button>
+            <button class="btn-mode m-4" onclick="selectMode('expert')">
+                <span class="m-title">👑 Хранитель Тайн (Большая игра)</span>
+                <span class="m-desc">Цель: 25,000 🪙, 5,000 📜 и 100% Славы.</span>
+            </button>
+            <button class="btn-mode m-5" onclick="selectMode('marathon')">
+                <span class="m-title">🪐 Абсолютный Титан (Марафон)</span>
+                <span class="m-desc">Цель: 100,000 🪙, 25,000 🧱, 10,000 📜 и 100% Славы.</span>
+            </button>
+        </div>
+    </div>
+
     <header>
-        <div class="resource-card gold">
+        <div class="resource-card">
             <div class="res-label">🪙 Таланты</div>
             <div class="res-val" id="val-gold">0</div>
             <div class="res-inc" id="inc-gold">+0/с</div>
         </div>
-        <div class="resource-card stone">
+        <div class="resource-card">
             <div class="res-label">🧱 Камень</div>
             <div class="res-val" id="val-steel">0</div>
             <div class="res-inc" id="inc-steel">+0/с</div>
         </div>
-        <div class="resource-card scroll">
+        <div class="resource-card">
             <div class="res-label">📜 Манускрипты</div>
             <div class="res-val" id="val-scrolls">0</div>
             <div class="res-inc" id="inc-scrolls">+0/с</div>
         </div>
-        <div class="resource-card purple">
+        <div class="resource-card">
             <div class="res-label">👑 Слава Ордена</div>
             <div class="res-val" id="val-glory">0%</div>
             <div class="res-inc" id="inc-glory">+0%/с</div>
@@ -241,9 +365,16 @@
 
     <div class="game-space">
         <canvas id="cityCanvas"></canvas>
-        
         <div class="math-box">
-            <div class="combo-badge" id="comboBadge" style="display:none;">Серия: 🔥 х1</div>
+            <div class="badge-container">
+                <div class="combo-badge" id="comboBadge" style="display:none;">Серия: 🔥 х1</div>
+                <div class="speed-badge" id="speedBadge">Молния: ⚡ х2.0</div>
+            </div>
+            
+            <div class="timer-bar-container">
+                <div class="timer-bar" id="timerBar"></div>
+            </div>
+
             <div class="math-question" id="mathQuestion">Загрузка...</div>
             <div class="answers-grid" id="answersGrid"></div>
         </div>
@@ -254,69 +385,83 @@
         <div class="build-grid">
             <button class="btn-build" data-type="abacus" data-cat="prod" id="btn-abacus">
                 <span class="name">🏫 Школа Писцов</span>
-                <span class="cost" id="cost-abacus">Загрузка...</span>
+                <span class="effect-desc">Дает: +1 🪙 Талант/сек</span>
+                <span class="cost" id="cost-abacus">...</span>
                 <span class="count" id="cnt-abacus">0</span>
             </button>
             <button class="btn-build" data-type="blueprint" data-cat="prod" id="btn-blueprint">
                 <span class="name">⛏️ Каменоломня</span>
-                <span class="cost" id="cost-blueprint">Загрузка...</span>
+                <span class="effect-desc">Дает: +1 🧱 Камень/сек</span>
+                <span class="cost" id="cost-blueprint">...</span>
                 <span class="count" id="cnt-blueprint">0</span>
             </button>
             <button class="btn-build" data-type="scriptorium" data-cat="prod" id="btn-scriptorium">
                 <span class="name">📚 Архив Знаний</span>
-                <span class="cost" id="cost-scriptorium">Загрузка...</span>
+                <span class="effect-desc">Дает: +1 📜 Манускрипт/сек</span>
+                <span class="cost" id="cost-scriptorium">...</span>
                 <span class="count" id="cnt-scriptorium">0</span>
             </button>
             <button class="btn-build" data-type="geometry" data-cat="prod" id="btn-geometry">
                 <span class="name">🏛️ Университет</span>
-                <span class="cost" id="cost-geometry">Загрузка...</span>
+                <span class="effect-desc">Дает: +2 🪙 и +0.1% 👑/сек</span>
+                <span class="cost" id="cost-geometry">...</span>
                 <span class="count" id="cnt-geometry">0</span>
             </button>
 
             <button class="btn-build" data-type="book" data-cat="upgrade" id="btn-book">
                 <span class="name">📖 Учебник Множителей</span>
-                <span class="cost" id="cost-book">Загрузка...</span>
+                <span class="effect-desc">Клик: +6 базовой награды</span>
+                <span class="cost" id="cost-book">...</span>
                 <span class="count" id="cnt-book">0</span>
             </button>
             <button class="btn-build" data-type="compass" data-cat="upgrade" id="btn-compass">
                 <span class="name">📿 Счетные Четки</span>
-                <span class="cost" id="cost-compass">Загрузка...</span>
+                <span class="effect-desc">Улучшает: Шанс Крита +8%</span>
+                <span class="cost" id="cost-compass">...</span>
                 <span class="count" id="cnt-compass">0</span>
             </button>
             <button class="btn-build" data-type="theorem" data-cat="upgrade" id="btn-theorem">
                 <span class="name">📐 Циркуль Магистра</span>
-                <span class="cost" id="cost-theorem">Загрузка...</span>
+                <span class="effect-desc">Скидка: -6% на ВСЕ цены</span>
+                <span class="cost" id="cost-theorem">...</span>
                 <span class="count" id="cnt-theorem">0</span>
             </button>
             <button class="btn-build" data-type="patent" data-cat="upgrade" id="btn-patent">
                 <span class="name">📜 Королевский Патент</span>
-                <span class="cost" id="cost-patent">Загрузка...</span>
+                <span class="effect-desc">Дает: +0.15% 👑 Славы/сек</span>
+                <span class="cost" id="cost-patent">...</span>
                 <span class="count" id="cnt-patent">0</span>
             </button>
 
             <button class="btn-build btn-final" data-type="exam" id="btn-exam">
-                <span class="name">🏆 СДАТЬ ВЕЛИКИЙ ЭКЗАМЕН КОРОЛЯ 🏆</span>
-                <span class="cost">Требуется: 100% Славы & 10,000 🪙</span>
+                <span class="name" id="finalName">🏆 СДАТЬ ВЕЛИКИЙ ЭКЗАМЕН 🏆</span>
+                <span class="cost" id="finalCost">Выбираем обет...</span>
             </button>
         </div>
     </div>
 
     <div class="win-screen" id="winScreen">
-        <h1 style="color:var(--gold); font-size:2rem; margin-bottom:15px;">Орден Прославлен!</h1>
-        <p style="padding:0 20px; color:#94a3b8;">Вы безупречно сдали королевский экзамен. Король объявляет ваш Орден Счета главным научным достоянием эпохи!</p>
-        <button style="margin-top:30px; padding:12px 25px; background:var(--gold); border:none; border-radius:8px; font-weight:bold;" onclick="location.reload()">Начать Новую Эпоху</button>
+        <h1 style="color:var(--gold); font-size:2.2rem; margin-bottom:15px;">Облик Триумфа!</h1>
+        <p id="winDesc" style="padding:0 25px; color:#94a3b8; line-height:1.5;"></p>
+        <button style="margin-top:30px; padding:12px 25px; background:var(--gold); border:none; border-radius:8px; font-weight:bold;" onclick="location.reload()">Выбрать новую цель</button>
     </div>
 
     <script>
+        const modes = {
+            easy: { name: "📜 ОБЕТ УЧЕНИКА", targetG: 2000, targetS: 0, targetSc: 0, targetGl: 20, desc: "Вы завершили Спринт Ученика! Основы математики заложены идеально." },
+            medium: { name: "⚔️ ОБЕТ РЫЦАРЯ СЧЕТА", targetG: 5000, targetS: 0, targetSc: 0, targetGl: 50, desc: "Вы с честью выполнили Обет Рыцаря! Ваша Цитадель процветает." },
+            hard: { name: "🏛️ ОБЕТ МАГИСТРА", targetG: 10000, targetS: 0, targetSc: 0, targetGl: 100, desc: "Великолепно! Вы подтвердили звание истинного Магистра Математического Ордена." },
+            expert: { name: "👑 ОБЕТ ХРАНИТЕЛЯ ТАЙН", targetG: 25000, targetS: 0, targetSc: 5000, targetGl: 100, desc: "Поразительно! Все древние Манускрипты разгаданы, тайны открыты вам." },
+            marathon: { name: "🪐 ТРИУМФ АБСОЛЮТНОГО ТИТАНА", targetG: 100000, targetS: 25000, targetSc: 10000, targetGl: 100, desc: "Невероятно! Это был великий Марафон. Вы создали Империю Разума!" }
+        };
+
+        let activeMode = modes.medium;
+
         const state = {
             gold: 100, steel: 40, scrolls: 0, glory: 0,
-            clickBase: 12,
-            combo: 0,
-            critChance: 0,
-            discount: 1.0,
+            clickBase: 12, combo: 0, critChance: 0, discount: 1.0,
             income: { gold: 0, steel: 0, scrolls: 0, glory: 0 },
             buildings: {
-                // Базовая стоимость ресурсов прописана тут явными цифрами
                 abacus: { count: 0, baseG: 0, baseS: 30, baseSc: 0, curG: 0, curS: 30, curSc: 0 },
                 blueprint: { count: 0, baseG: 40, baseS: 0, baseSc: 0, curG: 40, curS: 0, curSc: 0 },
                 scriptorium: { count: 0, baseG: 60, baseS: 30, baseSc: 0, curG: 60, curS: 30, curSc: 0 },
@@ -329,26 +474,68 @@
         };
 
         let correctAnswer = 0;
+        let timeRemaining = 100; 
+        let timerInterval = null;
         const canvas = document.getElementById('cityCanvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
 
+        function selectMode(mKey) {
+            activeMode = modes[mKey];
+            document.getElementById('startScreen').style.display = 'none';
+            
+            document.getElementById('finalName').innerText = `🏆 ${activeMode.name} 🏆`;
+            let reqText = "Требуется: ";
+            if(activeMode.targetG > 0) reqText += `${activeMode.targetG} 🪙 `;
+            if(activeMode.targetS > 0) reqText += `${activeMode.targetS} 🧱 `;
+            if(activeMode.targetSc > 0) reqText += `${activeMode.targetSc} 📜 `;
+            if(activeMode.targetGl > 0) reqText += `${activeMode.targetGl}% 👑`;
+            document.getElementById('finalCost').innerText = reqText;
+
+            resizeCanvas();
+            generateMath();
+            updateUI();
+        }
+
         function resizeCanvas() {
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight;
+            canvas.width = canvas.parentElement ? canvas.parentElement.clientWidth : window.innerWidth;
+            canvas.height = canvas.parentElement ? canvas.parentElement.clientHeight : window.innerHeight;
         }
         window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
 
-        // Умная генерация математики (включая деление без остатка)
+        // Математика + запуск шкалы таймера скорости
         function generateMath() {
+            clearInterval(timerInterval);
+            timeRemaining = 100;
+            document.getElementById('timerBar').style.width = '100%';
+            document.getElementById('timerBar').style.background = 'linear-gradient(90deg, #06b6d4, #10b981)';
+            document.getElementById('speedBadge').innerText = `Молния: ⚡ х2.0`;
+
+            // Уменьшение полосы времени (на ответ даётся примерно 6 секунд)
+            timerInterval = setInterval(() => {
+                timeRemaining -= 1.6; 
+                if(timeRemaining <= 0) {
+                    timeRemaining = 0;
+                    document.getElementById('speedBadge').innerText = `Молния: ⚡ х1.0`;
+                }
+                document.getElementById('timerBar').style.width = `${timeRemaining}%`;
+                
+                let currentSpeedMult = 1 + (timeRemaining / 100);
+                if (timeRemaining > 0) {
+                    document.getElementById('speedBadge').innerText = `Молния: ⚡ х${currentSpeedMult.toFixed(1)}`;
+                }
+                if(timeRemaining < 35) {
+                    document.getElementById('timerBar').style.background = '#ef4444';
+                }
+            }, 100);
+
             const types = ['+', '-', '*', '/'];
             const type = types[Math.floor(Math.random() * types.length)];
             let n1, n2, text;
 
             if (type === '+') {
-                n1 = Math.floor(Math.random() * 60) + 10;
-                n2 = Math.floor(Math.random() * 60) + 10;
+                n1 = Math.floor(Math.random() * 55) + 10;
+                n2 = Math.floor(Math.random() * 55) + 10;
                 correctAnswer = n1 + n2; text = `${n1} + ${n2}`;
             } else if (type === '-') {
                 n1 = Math.floor(Math.random() * 90) + 10;
@@ -356,13 +543,12 @@
                 correctAnswer = n1 - n2; text = `${n1} - ${n2}`;
             } else if (type === '*') {
                 n1 = Math.floor(Math.random() * 11) + 2;
-                n2 = Math.floor(Math.random() * 12) + 2;
+                n2 = Math.floor(Math.random() * 11) + 2;
                 correctAnswer = n1 * n2; text = `${n1} × ${n2}`;
-            } else { // ДЕЛЕНИЕ БЕЗ ОСТАТКА
-                n2 = Math.floor(Math.random() * 10) + 2; // делитель
-                correctAnswer = Math.floor(Math.random() * 11) + 2; // целое частное
-                n1 = n2 * correctAnswer; // гарантирует деление без остатка
-                text = `${n1} ÷ ${n2}`;
+            } else { 
+                n2 = Math.floor(Math.random() * 9) + 2;
+                correctAnswer = Math.floor(Math.random() * 11) + 2;
+                n1 = n2 * correctAnswer; text = `${n1} ÷ ${n2}`;
             }
 
             document.getElementById('mathQuestion').innerText = text;
@@ -394,47 +580,55 @@
             if (chosen === correctAnswer) {
                 state.combo++;
                 
-                // Рассчитываем множитель комбо
-                let comboBonus = 1 + (state.combo * 0.2); // +20% за каждый шаг комбо
+                // Расчёт итоговой награды: База * Множитель Комбо * Множитель Таймера Скорости
+                let comboBonus = 1 + (state.combo * 0.2);
+                let speedBonus = 1 + (timeRemaining / 100); 
                 let isCrit = Math.random() < state.critChance;
-                let reward = Math.floor(state.clickBase * comboBonus * (isCrit ? 4 : 1));
-
+                
+                let reward = Math.floor(state.clickBase * comboBonus * speedBonus * (isCrit ? 4 : 1));
                 state.gold += reward;
                 
-                // Визуальный значок комбо
                 const badge = document.getElementById('comboBadge');
                 badge.style.display = 'inline-block';
                 badge.innerText = `Серия: 🔥 х${state.combo}`;
 
-                spawnText(`${isCrit ? '⚡ КРИТ! ' : ''}+${reward} 🪙`, px, py, 'var(--gold)');
-                buildSparks(20, 'var(--cyan)');
+                if(isCrit) {
+                    // Медленная эпическая вспышка КРИТА
+                    spawnText(`⚡ КРИТ! +${reward} 🪙`, px, py, 'var(--gold)', true);
+                    document.body.style.backgroundColor = "rgba(255, 215, 0, 0.25)";
+                    setTimeout(() => document.body.style.backgroundColor = var(--bg-dark), 150);
+                    buildSparks(35, 'var(--gold)');
+                } else {
+                    spawnText(`+${reward} 🪙`, px, py, 'var(--cyan)', false);
+                    buildSparks(15, 'var(--cyan)');
+                }
             } else {
                 state.combo = 0;
                 document.getElementById('comboBadge').style.display = 'none';
                 state.steel = Math.max(0, state.steel - 6);
-                spawnText('Ошибка! -6 🧱', px, py, '#ef4444');
+                spawnText('Ошибка! -6 🧱', px, py, '#ef4444', false);
                 buildSparks(10, '#ef4444');
             }
             generateMath();
             updateUI();
         }
 
-        function spawnText(txt, x, y, color) {
+        function spawnText(txt, x, y, color, isCrit) {
             const el = document.createElement('div');
-            el.className = 'floating-text';
+            el.className = isCrit ? 'floating-text crit-anim' : 'floating-text';
             el.innerText = txt; el.style.left = `${x}px`; el.style.top = `${y}px`; el.style.color = color;
             document.body.appendChild(el);
-            setTimeout(() => el.remove(), 800);
+            setTimeout(() => el.remove(), isCrit ? 1400 : 800);
         }
 
-        // Анимация частиц
+        // Система частиц
         class Spark {
             constructor(x, y, color) {
                 this.x = x; this.y = y;
-                this.vx = Math.random() * 4 - 2; this.vy = Math.random() * 4 - 2;
-                this.radius = Math.random() * 2 + 1; this.opacity = 1; this.color = color;
+                this.vx = Math.random() * 5 - 2.5; this.vy = Math.random() * 5 - 2.5;
+                this.radius = Math.random() * 2.5 + 1; this.opacity = 1; this.color = color;
             }
-            update() { this.x += this.vx; this.y += this.vy; this.opacity -= 0.025; }
+            update() { this.x += this.vx; this.y += this.vy; this.opacity -= 0.02; }
             draw() {
                 ctx.save(); ctx.beginPath(); ctx.globalAlpha = Math.max(0, this.opacity);
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fillStyle = this.color;
@@ -446,12 +640,11 @@
             for(let i=0; i<num; i++) particles.push(new Spark(canvas.width/2, canvas.height/2.8, color));
         }
 
-        // Постоянный фоновый поток летящих знаний
         setInterval(() => {
-            if(particles.length < 30) {
-                particles.push(new Spark(Math.random() * canvas.width, canvas.height + 10, Math.random() > 0.6 ? '#f59e0b' : '#475569'));
+            if(particles.length < 20) {
+                particles.push(new Spark(Math.random() * canvas.width, canvas.height + 10, Math.random() > 0.6 ? '#f59e0b' : '#334155'));
             }
-        }, 200);
+        }, 250);
 
         function animate() {
             ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -460,7 +653,6 @@
         }
         animate();
 
-        // Обновление цен интерфейса с красивыми иконками вместо сокращений букв
         function updateUI() {
             document.getElementById('val-gold').innerText = Math.floor(state.gold);
             document.getElementById('val-steel').innerText = Math.floor(state.steel);
@@ -478,25 +670,29 @@
                 let s = Math.floor(b.curS * state.discount);
                 let sc = Math.floor(b.curSc * state.discount);
 
-                // Форматируем красивую строку цены с графическими смайликами ресурсов
                 let str = "";
                 if(g > 0) str += `${g} 🪙 `;
                 if(s > 0) str += `${s} 🧱 `;
                 if(sc > 0) str += `${sc} 📜`;
                 document.getElementById(`cost-${key}`).innerText = str;
 
-                // Сверяем возможность купить по ресурсам
                 let canBuy = state.gold >= g && state.steel >= s && state.scrolls >= sc;
                 let btn = document.getElementById(`btn-${key}`);
-                if(canBuy) btn.classList.add('available'); else btn.classList.remove('available');
+                if(btn) {
+                    if(canBuy) btn.classList.add('available'); else btn.classList.remove('available');
+                }
             }
 
-            let canWin = state.glory >= 100 && state.gold >= 10000;
-            if(canWin) document.getElementById('btn-exam').classList.add('available');
-            else document.getElementById('btn-exam').classList.remove('available');
+            let winCondition = state.gold >= activeMode.targetG && 
+                               state.steel >= activeMode.targetS && 
+                               state.scrolls >= activeMode.targetSc && 
+                               state.glory >= activeMode.targetGl;
+
+            let finalBtn = document.getElementById('btn-exam');
+            if(winCondition) finalBtn.classList.add('available');
+            else finalBtn.classList.remove('available');
         }
 
-        // Авто-доход каждую секунду
         setInterval(() => {
             state.gold += state.income.gold;
             state.steel += state.income.steel;
@@ -506,13 +702,18 @@
             updateUI();
         }, 1000);
 
-        // Логика магазинов
         document.querySelectorAll('.btn-build').forEach(btn => {
             btn.addEventListener('click', () => {
                 const type = btn.getAttribute('data-type');
                 if(type === 'exam') {
-                    if(state.glory >= 100 && state.gold >= 10000) {
+                    let winCondition = state.gold >= activeMode.targetG && 
+                                       state.steel >= activeMode.targetS && 
+                                       state.scrolls >= activeMode.targetSc && 
+                                       state.glory >= activeMode.targetGl;
+                    if(winCondition) {
+                        document.getElementById('winDesc').innerText = activeMode.desc;
                         document.getElementById('winScreen').classList.add('active');
+                        clearInterval(timerInterval);
                     }
                     return;
                 }
@@ -526,17 +727,15 @@
                     state.gold -= g; state.steel -= s; state.scrolls -= sc;
                     b.count++;
 
-                    // Механики улучшений
                     if(type === 'abacus') state.income.gold += 1;
                     if(type === 'blueprint') state.income.steel += 1;
                     if(type === 'scriptorium') state.income.scrolls += 1;
                     if(type === 'geometry') { state.income.glory += 0.1; state.income.gold += 2; }
                     if(type === 'book') state.clickBase += 6; 
                     if(type === 'compass') state.critChance += 0.08; 
-                    if(type === 'theorem') state.discount *= 0.94; // Дает скидку 6% на всё
+                    if(type === 'theorem') state.discount *= 0.94; 
                     if(type === 'patent') state.income.glory += 0.15;
 
-                    // Удорожание стоимости следующего здания (+16%)
                     b.curG = Math.floor(b.baseG * Math.pow(1.16, b.count));
                     b.curS = Math.floor(b.baseS * Math.pow(1.16, b.count));
                     b.curSc = Math.floor(b.baseSc * Math.pow(1.16, b.count));
@@ -546,9 +745,6 @@
                 }
             });
         });
-
-        generateMath();
-        updateUI();
     </script>
 </body>
 </html>
