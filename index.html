@@ -2,27 +2,27 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Oasis: Capital</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Цитадель: Эпоха Грааля</title>
     <style>
         :root {
-            --bg-dark: #0a0b10;
-            --panel-bg: rgba(20, 22, 37, 0.7);
-            --neon-blue: #00f0ff;
-            --neon-green: #39ff14;
-            --neon-purple: #bd00ff;
-            --text-light: #e2e8f0;
-            --shadow-blue: 0 0 15px rgba(0, 240, 255, 0.4);
-            --shadow-green: 0 0 15px rgba(57, 255, 20, 0.4);
-            --shadow-purple: 0 0 15px rgba(189, 0, 255, 0.4);
+            --bg-dark: #0a0a0f;
+            --panel-bg: rgba(20, 20, 30, 0.85);
+            --gold: #ffd700;
+            --steel: #e6f2ff;
+            --royal-purple: #b300ff;
+            --grail-red: #ff3366;
+            --text-light: #f5f5fa;
+            --shadow-gold: 0 0 15px rgba(255, 215, 0, 0.3);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: Georgia, serif;
             -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
 
         body {
@@ -32,46 +32,46 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            background: radial-gradient(circle at center, #16192b 0%, #0a0b10 100%);
+            background: radial-gradient(circle at center, #1a1a2e 0%, #050508 100%);
         }
 
-        /* Хедер с ресурсами */
+        /* Верхняя панель ресурсов */
         header {
             display: flex;
             justify-content: space-around;
-            padding: 15px 10px;
+            padding: 12px 8px;
             background: var(--panel-bg);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-bottom: 2px solid rgba(255, 215, 0, 0.15);
             z-index: 10;
         }
 
         .resource-card {
             text-align: center;
             flex: 1;
-            margin: 0 5px;
-            padding: 8px;
-            border-radius: 8px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid transparent;
+            margin: 0 4px;
+            padding: 6px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255,255,255,0.05);
             transition: all 0.3s ease;
         }
 
-        .resource-card.blue { border-color: var(--neon-blue); box-shadow: var(--shadow-blue); }
-        .resource-card.green { border-color: var(--neon-green); box-shadow: var(--shadow-green); }
-        .resource-card.purple { border-color: var(--neon-purple); box-shadow: var(--shadow-purple); }
+        .resource-card.gold { border-color: var(--gold); box-shadow: var(--shadow-gold); }
+        .resource-card.steel { border-color: #556677; }
+        .resource-card.purple { border-color: var(--royal-purple); }
 
-        .res-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
-        .res-val { font-size: 1.2rem; font-weight: bold; margin-top: 4px; }
-        .res-inc { font-size: 0.7rem; opacity: 0.7; }
+        .res-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: #a0a0b0; }
+        .res-val { font-size: 1.1rem; font-weight: bold; margin-top: 3px; }
+        .res-inc { font-size: 0.65rem; opacity: 0.8; color: #ffd700; }
+        .steel .res-inc { color: #a9b7c6; }
+        .purple .res-inc { color: #b300ff; }
 
-        /* Игровое поле / Холст */
+        /* Игровая зона кликера */
         .game-space {
             flex: 1;
             position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            cursor: pointer;
         }
 
         #cityCanvas {
@@ -83,141 +83,197 @@
             z-index: 1;
         }
 
-        /* Панель управления (Кнопки) */
+        .click-prompt {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            pointer-events: none;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* Текст всплывающих кликов */
+        .floating-text {
+            position: absolute;
+            pointer-events: none;
+            font-weight: bold;
+            font-size: 1.3rem;
+            color: var(--gold);
+            text-shadow: 0 0 8px rgba(255,215,0,0.6);
+            z-index: 5;
+            animation: floatUp 0.8s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
+            100% { transform: translate(-50%, -120px) scale(1.2); opacity: 0; }
+        }
+
+        /* Панель управления */
         .control-panel {
             background: var(--panel-bg);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 15px;
+            backdrop-filter: blur(15px);
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+            padding: 12px;
             z-index: 10;
-            max-height: 40vh;
+            max-height: 45vh;
             overflow-y: auto;
         }
 
         .panel-title {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             text-transform: uppercase;
             margin-bottom: 10px;
-            letter-spacing: 1px;
-            color: #8a99ad;
+            letter-spacing: 2px;
+            color: #d3d3e0;
+            text-align: center;
         }
 
         .build-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 8px;
         }
 
         .btn-build {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 12px 10px;
             color: white;
             text-align: left;
-            cursor: pointer;
-            transition: all 0.2s ease;
             position: relative;
-            overflow: hidden;
+            transition: all 0.2s ease;
         }
 
-        .btn-build:active {
-            transform: scale(0.97);
-        }
+        .btn-build:active { transform: scale(0.95); }
+        .btn-build .name { font-size: 0.85rem; font-weight: bold; display: block; }
+        .btn-build .cost { font-size: 0.7rem; color: #b0b0c0; margin-top: 3px; display: block; }
+        .btn-build .count { position: absolute; right: 10px; top: 12px; font-size: 0.8rem; font-weight: bold; opacity: 0.5; }
 
-        .btn-build.available:hover, .btn-build.available:active {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .btn-build .name { font-size: 0.9rem; font-weight: bold; display: block; }
-        .btn-build .cost { font-size: 0.75rem; color: #a0aec0; margin-top: 4px; display: block; }
-        .btn-build .count { 
-            position: absolute; right: 10px; top: 10px; 
-            font-size: 0.8rem; font-weight: bold; opacity: 0.6;
-        }
-
-        /* Индивидуальные стили кнопок при доступности */
-        .btn-build[data-type="reactor"].available { border-color: var(--neon-blue); }
-        .btn-build[data-type="farm"].available { border-color: var(--neon-green); }
-        .btn-build[data-type="hub"].available { border-color: var(--neon-purple); }
-
-        /* Анимационный эффект вспышки при клике */
-        @keyframes pulse-eff {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(1.05); opacity: 0; }
-        }
+        .btn-build[data-type="forge"].available { border-color: var(--gold); }
+        .btn-build[data-type="mine"].available { border-color: #778899; }
+        .btn-build[data-type="castle"].available { border-color: var(--royal-purple); }
         
-        .pulse-active {
-            animation: pulse-eff 0.3s ease-out;
+        /* Главная цель - Кнопка Грааля */
+        .btn-grail {
+            grid-column: span 2;
+            background: linear-gradient(45deg, #2a0813, #4a0d26);
+            border: 1px solid var(--grail-red);
+            box-shadow: 0 0 10px rgba(255, 51, 102, 0.2);
+            text-align: center;
+        }
+        .btn-grail .name { color: #ff6688; font-size: 0.95rem; letter-spacing: 1px; }
+        .btn-grail.available {
+            background: linear-gradient(45deg, #801137, #ff3366);
+            box-shadow: 0 0 20px rgba(255, 51, 102, 0.6);
+            animation: pulseGlow 1.5s infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.02); }
+        }
+
+        /* Экран победы */
+        .win-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 5, 10, 0.95);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            opacity: 0; pointer-events: none;
+            transition: opacity 1s ease;
+        }
+        .win-screen.active { opacity: 1; pointer-events: auto; }
+        .win-title { color: var(--gold); font-size: 2rem; margin-bottom: 15px; text-shadow: 0 0 20px var(--gold); }
+        .win-btn {
+            margin-top: 30px; padding: 12px 30px;
+            background: var(--gold); color: black; border: none;
+            border-radius: 8px; font-weight: bold; font-size: 1rem;
         }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="resource-card blue" id="card-energy">
-            <div class="res-label">Энергия</div>
-            <div class="res-val" id="val-energy">100</div>
-            <div class="res-inc" id="inc-energy">+5/с</div>
+        <div class="resource-card gold" id="card-gold">
+            <div class="res-label">Золото</div>
+            <div class="res-val" id="val-gold">100</div>
+            <div class="res-inc" id="inc-gold">+2/с (+1/клик)</div>
         </div>
-        <div class="resource-card green" id="card-materials">
-            <div class="res-label">Био-Материалы</div>
-            <div class="res-val" id="val-materials">50</div>
-            <div class="res-inc" id="inc-materials">+2/с</div>
+        <div class="resource-card steel" id="card-steel">
+            <div class="res-label">Сталь</div>
+            <div class="res-val" id="val-steel">50</div>
+            <div class="res-inc" id="inc-steel">+1/с</div>
         </div>
-        <div class="resource-card purple" id="card-comfort">
-            <div class="res-label">Комфорт</div>
-            <div class="res-val" id="val-comfort">10%</div>
-            <div class="res-inc" id="inc-comfort">+0.5%/с</div>
+        <div class="resource-card purple" id="card-glory">
+            <div class="res-label">Слава</div>
+            <div class="res-val" id="val-glory">10%</div>
+            <div class="res-inc" id="inc-glory">+0.1%/с</div>
         </div>
     </header>
 
-    <div class="game-space">
+    <div class="game-space" id="clickZone">
+        <div class="click-prompt">⚔️ Нажимай на экран, чтобы собирать дань ⚔️</div>
         <canvas id="cityCanvas"></canvas>
     </div>
 
     <div class="control-panel">
-        <div class="panel-title">Строительство объектов</div>
+        <div class="panel-title">Управление Королевством</div>
         <div class="build-grid">
-            <button class="btn-build" data-type="reactor" id="btn-reactor">
-                <span class="name">Квантовый Реактор</span>
-                <span class="cost">Цена: 50 Мат.</span>
-                <span class="count" id="cnt-reactor">0</span>
+            <button class="btn-build" data-type="forge" id="btn-forge">
+                <span class="name">Гильдия Кузнецов</span>
+                <span class="cost" id="cost-forge">Цена: 50 Сталь</span>
+                <span class="count" id="cnt-forge">0</span>
             </button>
-            <button class="btn-build" data-type="farm" id="btn-farm">
-                <span class="name">Био-Ферма</span>
-                <span class="cost">Цена: 40 Эн.</span>
-                <span class="count" id="cnt-farm">0</span>
+            <button class="btn-build" data-type="mine" id="btn-mine">
+                <span class="name">Королевская Шахта</span>
+                <span class="cost" id="cost-mine">Цена: 40 Золото</span>
+                <span class="count" id="cnt-mine">0</span>
             </button>
-            <button class="btn-build" data-type="hub" id="btn-hub">
-                <span class="name">Жилой Хаб</span>
-                <span class="cost">Цена: 80 Эн. / 60 Мат.</span>
-                <span class="count" id="cnt-hub">0</span>
+            <button class="btn-build" data-type="castle" id="btn-castle">
+                <span class="name">Рыцарский Замок</span>
+                <span class="cost" id="cost-castle">Цена: 80 Золото / 60 Сталь</span>
+                <span class="count" id="cnt-castle">0</span>
+            </button>
+            
+            <button class="btn-build btn-grail" data-type="grail" id="btn-grail">
+                <span class="name">✨ ВЫКОВАТЬ СВЯЩЕННЫЙ ГРААЛЬ ✨</span>
+                <span class="cost" id="cost-grail">Требуется: 100% Славы и 5000 Золота</span>
             </button>
         </div>
     </div>
 
+    <div class="win-screen" id="winScreen">
+        <h1 class="win-title">Королевство Спасено!</h1>
+        <p>Вы собрали все Славные Ордена и выковали Священный Грааль. Ваше имя навсегда останется в летописях истории!</p>
+        <button class="win-btn" onclick="resetGame()">Начать Эпоху Заново</button>
+    </div>
+
     <script>
-        // Состояние игры (Баланс и прирост)
         const state = {
-            energy: 100,
-            materials: 50,
-            comfort: 10,
-            
-            income: {
-                energy: 2,
-                materials: 1,
-                comfort: 0.1
-            },
-            
+            gold: 100, steel: 50, glory: 0,
+            clickPower: 1,
+            income: { gold: 1, steel: 0.5, glory: 0 },
             buildings: {
-                reactor: { count: 0, costMat: 50, costEn: 0 },
-                farm: { count: 0, costMat: 0, costEn: 40 },
-                hub: { count: 0, costMat: 60, costEn: 80 }
+                forge: { count: 0, baseCostSteel: 50, baseCostGold: 0, currentCostSteel: 50, currentCostGold: 0 },
+                mine: { count: 0, baseCostSteel: 0, baseCostGold: 40, currentCostSteel: 0, currentCostGold: 40 },
+                castle: { count: 0, baseCostSteel: 60, baseCostGold: 80, currentCostSteel: 60, currentCostGold: 80 }
             }
         };
 
-        // Настройка Canvas для красивой анимации частиц
         const canvas = document.getElementById('cityCanvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -229,159 +285,176 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // Класс для светящихся неоновых линий/частиц
-        class NeonParticle {
-            constructor(color) {
-                this.reset(color);
-            }
-            reset(color) {
-                this.x = Math.random() * canvas.width;
-                this.y = canvas.height + 20;
-                this.speed = Math.random() * 1.5 + 0.5;
-                this.radius = Math.random() * 2 + 1;
-                this.color = color || (Math.random() > 0.5 ? '#00f0ff' : '#39ff14');
-                this.opacity = Math.random() * 0.5 + 0.5;
+        class Particle {
+            constructor(x, y, color, speedY) {
+                this.x = x;
+                this.y = y;
+                this.vx = Math.random() * 2 - 1;
+                this.vy = speedY || -(Math.random() * 1.5 + 0.5);
+                this.radius = Math.random() * 2.5 + 1;
+                this.color = color || '#ffd700';
+                this.opacity = 1;
+                this.fade = Math.random() * 0.015 + 0.01;
             }
             update() {
-                this.y -= this.speed;
-                if (this.y < -10) {
-                    this.reset();
-                }
+                this.x += this.vx; this.y += this.vy;
+                this.opacity -= this.fade;
             }
             draw() {
-                ctx.save();
-                ctx.beginPath();
+                ctx.save(); ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = this.color;
-                ctx.fillStyle = this.color;
-                ctx.globalAlpha = this.opacity;
-                ctx.fill();
-                ctx.restore();
+                ctx.shadowBlur = 6; ctx.shadowColor = this.color;
+                ctx.fillStyle = this.color; ctx.globalAlpha = Math.max(0, this.opacity);
+                ctx.fill(); ctx.restore();
             }
         }
 
-        // Создаем пул частиц
-        for (let i = 0; i < 40; i++) {
-            particles.push(new NeonParticle());
-        }
+        // Фоновые медленные искры
+        setInterval(() => {
+            if(particles.length < 40) {
+                particles.push(new Particle(Math.random() * canvas.width, canvas.height + 10, Math.random() > 0.5 ? '#ffd700' : '#445566'));
+            }
+        }, 150);
 
-        // Основной цикл анимации Canvas
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Рисуем футуристичную сетку на фоне
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
-            ctx.lineWidth = 1;
-            const gridSize = 40;
-            for (let x = 0; x < canvas.width; x += gridSize) {
-                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-            }
-            for (let y = 0; y < canvas.height; y += gridSize) {
-                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-            }
-
-            // Рисуем и обновляем частицы (потоки данных)
-            particles.forEach(p => {
-                p.update();
-                p.draw();
+            particles.forEach((p, index) => {
+                p.update(); p.draw();
+                if (p.opacity <= 0) particles.splice(index, 1);
             });
-
             requestAnimationFrame(animate);
         }
         animate();
 
-        // Логика обновления интерфейса
+        // МЕХАНИКА КЛИКЕРА ПО ЭКРАНУ
+        document.getElementById('clickZone').addEventListener('touchstart', (e) => {
+            // Предотвращаем двойной зум на iPhone
+            e.preventDefault(); 
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+
+            // Награда за клик
+            state.gold += state.clickPower;
+            updateUI();
+
+            // Всплывающий текст (+Золото)
+            const text = document.createElement('div');
+            text.className = 'floating-text';
+            text.innerText = `+${state.clickPower} 🪙`;
+            text.style.left = `${touch.clientX}px`;
+            text.style.top = `${touch.clientY}px`;
+            document.body.appendChild(text);
+            setTimeout(() => text.remove(), 800);
+
+            // Искры из-под пальца
+            for(let i=0; i<6; i++) {
+                let p = new Particle(x, y, '#ffd700', (Math.random() * 4 - 2));
+                p.vx = Math.random() * 4 - 2;
+                particles.push(p);
+            }
+        });
+
         function updateUI() {
-            document.getElementById('val-energy').innerText = Math.floor(state.energy);
-            document.getElementById('val-materials').innerText = Math.floor(state.materials);
-            document.getElementById('val-comfort').innerText = state.comfort.toFixed(1) + '%';
+            document.getElementById('val-gold').innerText = Math.floor(state.gold);
+            document.getElementById('val-steel').innerText = Math.floor(state.steel);
+            document.getElementById('val-glory').innerText = state.glory.toFixed(1) + '%';
 
-            document.getElementById('inc-energy').innerText = `+${state.income.energy}/с`;
-            document.getElementById('inc-materials').innerText = `+${state.income.materials}/с`;
-            document.getElementById('inc-comfort').innerText = `+${state.income.comfort.toFixed(1)}%/с`;
+            document.getElementById('inc-gold').innerText = `+${state.income.gold}/с (+${state.clickPower}/кл)`;
+            document.getElementById('inc-steel').innerText = `+${state.income.steel}/с`;
+            document.getElementById('inc-glory').innerText = `+${state.income.glory.toFixed(2)}%/с`;
 
-            // Проверка доступности кнопок по ресурсам
-            checkButtonAvailability('btn-reactor', state.materials >= state.buildings.reactor.costMat);
-            checkButtonAvailability('btn-farm', state.energy >= state.buildings.farm.costEn);
-            checkButtonAvailability('btn-hub', state.energy >= state.buildings.hub.costEn && state.materials >= state.buildings.hub.costMat);
+            document.getElementById('cost-forge').innerText = `Цена: ${state.buildings.forge.currentCostSteel} Сталь`;
+            document.getElementById('cost-mine').innerText = `Цена: ${state.buildings.mine.currentCostGold} Золото`;
+            document.getElementById('cost-castle').innerText = `Цена: ${state.buildings.castle.currentCostGold} З. / ${state.buildings.castle.currentCostSteel} С.`;
+
+            // Доступность обычных кнопок
+            checkButtonAvailability('btn-forge', state.steel >= state.buildings.forge.currentCostSteel);
+            checkButtonAvailability('btn-mine', state.gold >= state.buildings.mine.currentCostGold);
+            checkButtonAvailability('btn-castle', state.gold >= state.buildings.castle.currentCostGold && state.steel >= state.buildings.castle.currentCostSteel);
+
+            // Проверка условий победы (Кнопка Грааля)
+            const canWin = state.glory >= 100 && state.gold >= 5000;
+            checkButtonAvailability('btn-grail', canWin);
+            if(canWin) document.getElementById('btn-grail').classList.add('available');
+            else document.getElementById('btn-grail').classList.remove('available');
         }
 
         function checkButtonAvailability(id, isAvailable) {
             const btn = document.getElementById(id);
-            if (isAvailable) {
-                btn.classList.add('available');
-                btn.style.opacity = "1";
-            } else {
-                btn.classList.remove('available');
-                btn.style.opacity = "0.4";
-            }
+            if (isAvailable) { btn.classList.add('available'); btn.style.opacity = "1"; }
+            else { btn.classList.remove('available'); btn.style.opacity = "0.35"; }
         }
 
-        // Игровой таймер (вызывается каждую секунду)
+        // Автоматический доход раз в секунду
         setInterval(() => {
-            state.energy += state.income.energy;
-            state.materials += state.income.materials;
-            
-            // Рост комфорта зависит от энергии и материалов
-            if(state.energy > 5 && state.materials > 5) {
-                state.comfort += state.income.comfort;
-            }
-            
-            if (state.comfort > 100) state.comfort = 100;
-
+            state.gold += state.income.gold;
+            state.steel += state.income.steel;
+            state.glory += state.income.glory;
+            if (state.glory > 100) state.glory = 100;
             updateUI();
         }, 1000);
 
-        // Обработка кликов (Покупка зданий)
+        // Логика покупки апгрейдов
         document.querySelectorAll('.btn-build').forEach(button => {
             button.addEventListener('click', (e) => {
                 const type = button.getAttribute('data-type');
-                const bld = state.buildings[type];
+                if (type === 'grail') {
+                    if (state.glory >= 100 && state.gold >= 5000) {
+                        document.getElementById('winScreen').classList.add('active');
+                    }
+                    return;
+                }
 
-                // Проверка условий покупки
-                if (state.energy >= bld.costEn && state.materials >= bld.costMat) {
-                    state.energy -= bld.costEn;
-                    state.materials -= bld.costMat;
+                const bld = state.buildings[type];
+                if (state.gold >= bld.currentCostGold && state.steel >= bld.currentCostSteel) {
+                    state.gold -= bld.currentCostGold;
+                    state.steel -= bld.currentCostSteel;
                     bld.count++;
 
-                    // Эффекты от построек
-                    if (type === 'reactor') {
-                        state.income.energy += 3;
-                        triggerVisualBoom('#00f0ff');
-                    } else if (type === 'farm') {
-                        state.income.materials += 2;
-                        triggerVisualBoom('#39ff14');
-                    } else if (type === 'hub') {
-                        state.income.comfort += 0.3;
-                        state.income.energy -= 1; // Потребляет энергию
-                        triggerVisualBoom('#bd00ff');
+                    if (type === 'forge') {
+                        state.income.gold += 2;
+                        state.clickPower += 1; // Кузнецы улучшают мечи -> сильнее клик!
+                        triggerBoom('#ffd700');
+                    } else if (type === 'mine') {
+                        state.income.steel += 1.5;
+                        triggerBoom('#a0b0c0');
+                    } else if (type === 'castle') {
+                        state.income.glory += 0.15;
+                        state.income.gold += 1;
+                        triggerBoom('#b300ff');
                     }
 
-                    // Визуальный отклик на кнопке
+                    bld.currentCostGold = Math.floor(bld.baseCostGold * Math.pow(1.18, bld.count));
+                    bld.currentCostSteel = Math.floor(bld.baseCostSteel * Math.pow(1.18, bld.count));
                     document.getElementById(`cnt-${type}`).innerText = bld.count;
-                    button.classList.add('pulse-active');
-                    setTimeout(() => button.classList.remove('pulse-active'), 300);
-
                     updateUI();
                 }
             });
         });
 
-        // Всплеск частиц определенного цвета при покупке
-        function triggerVisualBoom(color) {
-            for (let i = 0; i < 15; i++) {
-                let p = new NeonParticle(color);
-                p.y = canvas.height / 2 + (Math.random() * 60 - 30);
-                p.x = canvas.width / 2 + (Math.random() * 60 - 30);
-                p.speed = Math.random() * 3 + 1;
+        function triggerBoom(color) {
+            for (let i = 0; i < 25; i++) {
+                let p = new Particle(canvas.width/2, canvas.height/2, color, Math.random() * 4 - 2);
+                p.vx = Math.random() * 6 - 3;
                 particles.push(p);
-                // Удаляем лишние частицы, чтобы игра не тормозила
-                if(particles.length > 100) particles.shift();
             }
         }
 
-        // Первичная прорисовка
+        function resetGame() {
+            state.gold = 100; state.steel = 50; state.glory = 0; state.clickPower = 1;
+            state.income = { gold: 1, steel: 0.5, glory: 0 };
+            for (let key in state.buildings) {
+                state.buildings[key].count = 0;
+                state.buildings[key].currentCostGold = state.buildings[key].baseCostGold;
+                state.buildings[key].currentCostSteel = state.buildings[key].baseCostSteel;
+                document.getElementById(`cnt-${key}`).innerText = 0;
+            }
+            document.getElementById('winScreen').classList.remove('active');
+            updateUI();
+        }
+
         updateUI();
     </script>
 </body>
