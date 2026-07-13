@@ -35,8 +35,8 @@
             transition: background-color 0.1s ease;
         }
 
-        /* Стартовый экран */
-        .start-screen {
+        /* Общий стиль для стартовых экранов */
+        .modal-screen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at center, #111324 0%, #030408 100%);
@@ -46,6 +46,7 @@
             justify-content: center;
             align-items: center;
             padding: 20px;
+            overflow-y: auto;
         }
 
         .start-title {
@@ -60,11 +61,12 @@
             color: #94a3b8;
             font-size: 0.85rem;
             margin-bottom: 20px;
+            text-align: center;
         }
 
         .mode-list {
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -90,7 +92,67 @@
         .btn-mode .m-title { font-weight: bold; font-size: 1rem; display: block; margin-bottom: 2px; }
         .btn-mode .m-desc { font-size: 0.75rem; color: #94a3b8; display: block; }
 
-        /* Ресурсы */
+        /* Экран Брифинга / Справочника ресурсов */
+        .info-container {
+            width: 100%;
+            max-width: 450px;
+            background: rgba(15, 18, 32, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            max-height: 75vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .info-section-title {
+            color: var(--cyan);
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 15px 0 8px 0;
+            border-bottom: 1px solid rgba(6, 182, 212, 0.2);
+            padding-bottom: 4px;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .info-icon {
+            font-size: 1.3rem;
+            background: rgba(255,255,255,0.05);
+            padding: 6px;
+            border-radius: 8px;
+            min-width: 35px;
+            text-align: center;
+        }
+
+        .info-text strong { color: #f1f5f9; display: block; font-size: 0.9rem; margin-bottom: 2px;}
+        .info-text span { color: #94a3b8; }
+
+        .btn-start-game {
+            width: 100%;
+            max-width: 450px;
+            background: linear-gradient(45deg, #0284c7, #06b6d4);
+            border: none;
+            color: white;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 12px;
+            margin-top: 15px;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+        }
+        .btn-start-game:active { transform: scale(0.98); }
+
+        /* Панель ресурсов в самой игре */
         header {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -189,7 +251,6 @@
             border: none;
         }
 
-        /* Полоса времени фокусировки */
         .timer-bar-container {
             width: 100%;
             height: 5px;
@@ -229,11 +290,11 @@
             font-size: 1.25rem;
             font-weight: bold;
             cursor: pointer;
-            transition: transform 0.1s, background 0.1s, border-color 0.2s;
+            transition: transform 0.1s, background 0.1s;
         }
         .btn-answer:active { transform: scale(0.95); background: rgba(6, 182, 212, 0.2); }
 
-        /* Анимации всплывающего текста */
+        /* Всплывающие анимации */
         .floating-text {
             position: absolute;
             pointer-events: none;
@@ -297,10 +358,8 @@
         }
         .btn-build:active { transform: scale(0.97); }
         .btn-build .name { font-size: 0.8rem; font-weight: bold; display: block; color: #f1f5f9; }
-        
         .btn-build .effect-desc { font-size: 0.62rem; color: #38bdf8; display: block; font-style: italic; margin-top: 1px; }
         .btn-build[data-cat="upgrade"] .effect-desc { color: var(--gold); }
-        
         .btn-build .cost { font-size: 0.65rem; color: #94a3b8; margin-top: 4px; display: block; }
         .btn-build .count { position: absolute; right: 8px; top: 10px; font-size: 0.75rem; font-weight: bold; opacity: 0.3; }
 
@@ -330,7 +389,7 @@
 </head>
 <body>
 
-    <div class="start-screen" id="startScreen">
+    <div class="modal-screen" id="startScreen">
         <h1 class="start-title">🏛️ Орден Света</h1>
         <p class="start-subtitle">Выберите Обет Научной Цели на эту эпоху:</p>
         <div class="mode-list">
@@ -355,6 +414,57 @@
                 <span class="m-desc">Цель: 100,000 🪙, 25,000 🧱, 10,000 📜 и 100% Славы.</span>
             </button>
         </div>
+    </div>
+
+    <div class="modal-screen" id="briefingScreen" style="display: none;">
+        <h1 class="start-title" style="color: var(--cyan);">📜 Манускрипт Познания</h1>
+        <p class="start-subtitle">Изучите устройство Цитадели перед началом работы:</p>
+        
+        <div class="info-container">
+            <div class="info-section-title">✨ Базовые Ресурсы Цитадели</div>
+            <div class="info-row">
+                <div class="info-icon">🪙</div>
+                <div class="info-text"><strong>Таланты (Золото)</strong><span>Главная валюта Ордена. Добывается правильными ответами. Нужна для покупки всех зданий и трактатов.</span></div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon">🧱</div>
+                <div class="info-text"><strong>Строительный Камень</strong><span>Материал для расширения Цитадели. Производится Каменоломнями. Внимание: Ошибки в примерах разрушают стены (-6 🧱)!</span></div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon">📜</div>
+                <div class="info-text"><strong>Манускрипты</strong><span>Древние свитки знаний. Генерируются Архивами. Открывают доступ к высоким целям и продвинутым наукам.</span></div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon">👑</div>
+                <div class="info-text"><strong>Слава Ордена (%)</strong><span>Признание королевства. Пассивно растет от Университетов и Патентов. Обязательное условие для сдачи Экзамена.</span></div>
+            </div>
+
+            <div class="info-section-title">📐 Великие Архитектуры и Улучшения</div>
+            <div class="info-row">
+                <div class="info-icon">🏫</div>
+                <div class="info-text"><strong>Школа Писцов / Каменоломня / Архив</strong><span>Постройки автоматического дохода. Генерируют ресурсы каждую секунду, приближая вас к цели пассивно.</span></div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon">📖</div>
+                <div class="info-text"><strong>Учебник Множителей</strong><span>Увеличивает силу вашего ума. Каждая покупка добавляет +6 к базовой награде за клик (правильный ответ).</span></div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon">📿</div>
+                <div class="info-text"><strong>Счетные Четки (Криты)</strong><span>Повышают вероятность критического счета на 8%. Критический удар умножает текущую награду в 4 раза!</span></div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon">📐</div>
+                <div class="info-text"><strong>Циркуль Магистра (Скидки)</strong><span>Оптимизирует логистику. Снижает стоимость вообще ВСЕХ зданий и улучшений в магазине на 6% (эффект складывается!).</span></div>
+            </div>
+            
+            <div class="info-section-title">🔥 Важнейшее правило: Ударный Режим</div>
+            <div class="info-row">
+                <div class="info-icon">⚡</div>
+                <div class="info-text"><strong>Точность превыше всего!</strong><span>Каждый правильный ответ растит вашу серию (Комбо 🔥). Серия увеличивает награду экспоненциально! Мягкий таймер дает бонус до +50% за скорость, но если время выйдет — серия НЕ сбросится, главное — отвечать верно.</span></div>
+            </div>
+        </div>
+
+        <button class="btn-start-game" onclick="startGame()">⚔️ Вступить в Орден Счета</button>
     </div>
 
     <header>
@@ -387,11 +497,9 @@
                 <div class="combo-badge" id="comboBadge" style="display:none;">Серия: 🔥 х1.0</div>
                 <div class="speed-badge" id="speedBadge">Скорость: +0%</div>
             </div>
-            
             <div class="timer-bar-container">
                 <div class="timer-bar" id="timerBar"></div>
             </div>
-
             <div class="math-question" id="mathQuestion">Загрузка...</div>
             <div class="answers-grid" id="answersGrid"></div>
         </div>
@@ -458,7 +566,7 @@
     </div>
 
     <div class="win-screen" id="winScreen">
-        <h1 style="color:var(--gold); font-size:2.2rem; margin-bottom:15px;">Облик Триаумфа!</h1>
+        <h1 style="color:var(--gold); font-size:2.2rem; margin-bottom:15px;">Облик Триумфа!</h1>
         <p id="winDesc" style="padding:0 25px; color:#94a3b8; line-height:1.5;"></p>
         <button style="margin-top:30px; padding:12px 25px; background:var(--gold); border:none; border-radius:8px; font-weight:bold;" onclick="location.reload()">Выбрать новую цель</button>
     </div>
@@ -473,6 +581,7 @@
         };
 
         let activeMode = modes.medium;
+        let gameActive = false; // Блокировка тиков дохода до старта
 
         const state = {
             gold: 100, steel: 40, scrolls: 0, glory: 0,
@@ -497,9 +606,13 @@
         const ctx = canvas.getContext('2d');
         let particles = [];
 
+        // 1 Шаг: Выбор пресета цели
         function selectMode(mKey) {
             activeMode = modes[mKey];
             document.getElementById('startScreen').style.display = 'none';
+            
+            // Показываем экран брифинга-инструкции
+            document.getElementById('briefingScreen').style.display = 'flex';
             
             document.getElementById('finalName').innerText = `🏆 ${activeMode.name} 🏆`;
             let reqText = "Требуется: ";
@@ -508,7 +621,12 @@
             if(activeMode.targetSc > 0) reqText += `${activeMode.targetSc} 📜 `;
             if(activeMode.targetGl > 0) reqText += `${activeMode.targetGl}% 👑`;
             document.getElementById('finalCost').innerText = reqText;
+        }
 
+        // 2 Шаг: Запуск игры по кнопке из брифинга
+        function startGame() {
+            document.getElementById('briefingScreen').style.display = 'none';
+            gameActive = true;
             resizeCanvas();
             generateMath();
             updateUI();
@@ -521,20 +639,19 @@
         window.addEventListener('resize', resizeCanvas);
 
         function generateMath() {
+            if(!gameActive) return;
             clearInterval(timerInterval);
             timeRemaining = 100;
             document.getElementById('timerBar').style.width = '100%';
             document.getElementById('timerBar').style.backgroundColor = 'var(--cyan)';
             
-            // Комфортный таймер на 15 секунд (снимает спешку, но мотивирует к фокусу)
             timerInterval = setInterval(() => {
+                if(!gameActive) return;
                 timeRemaining -= 0.65; 
-                if(timeRemaining <= 0) {
-                    timeRemaining = 0;
-                }
+                if(timeRemaining <= 0) timeRemaining = 0;
                 document.getElementById('timerBar').style.width = `${timeRemaining}%`;
                 
-                let currentSpeedBonus = Math.floor(timeRemaining * 0.5); // Максимум +50% к награде
+                let currentSpeedBonus = Math.floor(timeRemaining * 0.5); 
                 let sBadge = document.getElementById('speedBadge');
                 if (currentSpeedBonus > 0) {
                     sBadge.className = "speed-badge active-speed";
@@ -588,6 +705,7 @@
         }
 
         function checkAnswer(chosen) {
+            if(!gameActive) return;
             const box = document.querySelector('.math-box');
             const r = box.getBoundingClientRect();
             const px = r.left + r.width / 2;
@@ -596,10 +714,8 @@
             if (chosen === correctAnswer) {
                 state.combo++;
                 
-                // РАСЧЕТ ДОМИНИРОВАНИЯ КОМБО:
-                // Сила комбо растет экспоненциально (х1, х1.3, х1.6, х1.9...). Ошибаться невыгодно!
                 let comboMultiplier = 1 + (state.combo * 0.3);
-                let speedBonusPercent = 1 + (timeRemaining * 0.005); // Влияние скорости ограничено (+50% максимум)
+                let speedBonusPercent = 1 + (timeRemaining * 0.005); 
                 
                 let isCrit = Math.random() < state.critChance;
                 let reward = Math.floor(state.clickBase * comboMultiplier * speedBonusPercent * (isCrit ? 4 : 1));
@@ -609,14 +725,10 @@
                 badge.style.display = 'inline-block';
                 badge.innerText = `Серия: 🔥 x${comboMultiplier.toFixed(1)}`;
                 
-                if (state.combo >= 5) {
-                    badge.classList.add('frenzy');
-                } else {
-                    badge.classList.remove('frenzy');
-                }
+                if (state.combo >= 5) badge.classList.add('frenzy');
+                else badge.classList.remove('frenzy');
 
                 if(isCrit) {
-                    // Яркая, зафиксированная вспышка критической удачи
                     spawnText(`⚡ КРИТИЧЕСКИЙ СЧЕТ! +${reward} 🪙`, px, py, 'var(--gold)', true);
                     document.body.style.backgroundColor = "rgba(255, 215, 0, 0.22)";
                     setTimeout(() => document.body.style.backgroundColor = "var(--bg-dark)", 180);
@@ -647,7 +759,7 @@
             setTimeout(() => el.remove(), isCrit ? 1500 : 800);
         }
 
-        // Эффекты фона
+        // Эффекты
         class Spark {
             constructor(x, y, color) {
                 this.x = x; this.y = y;
@@ -719,7 +831,9 @@
             else finalBtn.classList.remove('available');
         }
 
+        // Пассивный доход тикает только если игра запущена
         setInterval(() => {
+            if(!gameActive) return;
             state.gold += state.income.gold;
             state.steel += state.income.steel;
             state.scrolls += state.income.scrolls;
@@ -730,6 +844,7 @@
 
         document.querySelectorAll('.btn-build').forEach(btn => {
             btn.addEventListener('click', () => {
+                if(!gameActive) return;
                 const type = btn.getAttribute('data-type');
                 if(type === 'exam') {
                     let winCondition = state.gold >= activeMode.targetG && 
@@ -737,6 +852,7 @@
                                        state.scrolls >= activeMode.targetSc && 
                                        state.glory >= activeMode.targetGl;
                     if(winCondition) {
+                        gameActive = false;
                         document.getElementById('winDesc').innerText = activeMode.desc;
                         document.getElementById('winScreen').classList.add('active');
                         clearInterval(timerInterval);
