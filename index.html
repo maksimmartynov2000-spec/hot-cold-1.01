@@ -3,722 +3,519 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Machi Koro: Синдикат</title>
+    <title>Синдикат: Остров Доверия</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;500;700&display=swap');
-
         :root {
-            --bg-main: #0b0f19;
-            --bg-panel: #131a2c;
-            --bg-card: #1e2640;
-            --accent: #00f0ff;
-            --accent-neon: #00ff66;
-            --text-main: #f1f5f9;
-            --text-muted: #64748b;
-            
-            --blue-glow: rgba(0, 240, 255, 0.2);
-            --green-glow: rgba(0, 255, 102, 0.2);
-            --red-glow: rgba(ff, 0, 85, 0.2);
-            --purple-glow: rgba(186, 85, 211, 0.2);
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #ffffff;
+            --accent: #e74c3c;
         }
-
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             margin: 0;
-            padding: 25px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-            width: 100%;
-            max-width: 1200px;
-        }
-
-        header h1 {
-            font-family: 'Orbitron', sans-serif;
-            color: var(--accent);
-            letter-spacing: 2px;
-            margin: 0 0 5px 0;
-            text-shadow: 0 0 10px var(--blue-glow);
-        }
-
-        header p {
-            color: var(--text-muted);
-            margin: 0;
-            font-size: 0.95rem;
-        }
-
-        .game-grid {
+        h1, h2 { margin: 5px 0; text-align: center; }
+        .game-container {
             display: grid;
-            grid-template-columns: 1fr 340px;
-            gap: 25px;
-            width: 100%;
-            max-width: 1200px;
-        }
-
-        .dashboard {
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-        }
-
-        /* Панели игроков */
-        .hud-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 300px 1fr 300px;
             gap: 20px;
+            width: 100%;
+            max-width: 1200px;
         }
-
-        .hud-card {
-            background: var(--bg-panel);
-            border: 1px solid #24304f;
-            border-radius: 12px;
-            padding: 20px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        }
-
-        .hud-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 4px; height: 100%;
-        }
-
-        .player-hud::before { background: var(--accent-neon); }
-        .ai-hud::before { background: #ff0055; }
-
-        .hud-card h3 {
-            margin: 0 0 15px 0;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.1rem;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .hud-stat {
-            font-size: 1.4rem;
-            font-weight: bold;
-            color: #fff;
-            margin-bottom: 10px;
-        }
-
-        .hud-substats {
-            display: flex;
-            gap: 15px;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            margin-bottom: 15px;
-        }
-
-        .hud-assets {
-            font-size: 0.8rem;
-            background: rgba(0,0,0,0.2);
-            padding: 8px;
-            border-radius: 6px;
-            color: #cbd5e1;
-            min-height: 34px;
-        }
-
-        /* Панель управления ходом */
-        .control-panel {
-            background: var(--bg-panel);
-            border: 1px solid #24304f;
-            border-radius: 12px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .dice-display {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2.2rem;
-            background: #0b0f19;
-            border: 2px solid var(--accent);
-            color: var(--accent);
-            width: 65px;
-            height: 65px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            box-shadow: 0 0 15px var(--blue-glow);
-        }
-
-        .btn {
-            font-family: 'Inter', sans-serif;
-            font-weight: 600;
-            background: var(--accent);
-            color: #000;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 240, 255, 0.4);
-        }
-
-        .btn:disabled {
-            background: #1e2640;
-            color: var(--text-muted);
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .btn-sec {
-            background: transparent;
-            border: 1px solid var(--text-muted);
-            color: var(--text-main);
-        }
-        .btn-sec:hover:not(:disabled) {
-            background: rgba(255,255,255,0.05);
-            color: #fff;
-        }
-
-        /* Рынок из 5 случайных карт */
-        .market-header {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.1rem;
-            color: #cbd5e1;
-            margin: 10px 0 5px 0;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .market-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 15px;
-        }
-
-        .card {
-            background: var(--bg-card);
-            border: 1px solid #2e3a5f;
-            border-radius: 10px;
+        .panel {
+            background: var(--card-bg);
             padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        /* Игровое поле в стиле Монополии */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 10px;
+            aspect-ratio: 1;
+            background: #333;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .cell {
+            background: #444;
+            border: 2px solid #555;
+            border-radius: 6px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            min-height: 210px;
-            transition: all 0.3s ease;
+            padding: 8px;
+            font-size: 12px;
             position: relative;
         }
-
-        .card:hover:not(.disabled) {
-            transform: translateY(-5px);
-            border-color: var(--accent);
+        .cell.corner { background: #555; font-weight: bold; }
+        .cell-players {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-top: 5px;
         }
-
-        .card.disabled { opacity: 0.3; }
-
-        .card-dice {
-            position: absolute;
-            top: 10px; right: 10px;
-            background: rgba(255,255,255,0.1);
-            padding: 3px 8px;
-            border-radius: 20px;
-            font-size: 0.75rem;
+        .player-token {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 1px solid white;
+            display: inline-block;
+        }
+        /* Кнопки и интерфейс */
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
             font-weight: bold;
-            font-family: 'Orbitron', sans-serif;
+            width: 100%;
+            margin-bottom: 10px;
+            transition: 0.2s;
         }
-
-        .card.blue { border-bottom: 4px solid #00f0ff; box-shadow: inset 0 -10px 20px rgba(0, 240, 255, 0.05); }
-        .card.green { border-bottom: 4px solid #00ff66; box-shadow: inset 0 -10px 20px rgba(0, 255, 102, 0.05); }
-        .card.red { border-bottom: 4px solid #ff0055; box-shadow: inset 0 -10px 20px rgba(255, 0, 85, 0.05); }
-        .card.purple { border-bottom: 4px solid #ba55d3; box-shadow: inset 0 -10px 20px rgba(186, 85, 211, 0.05); }
-
-        .card-title { font-weight: bold; font-size: 0.95rem; margin-bottom: 8px; padding-right: 25px; }
-        .card-desc { font-size: 0.8rem; color: #94a3b8; flex-grow: 1; line-height: 1.3; }
-        .card-cost { margin-top: 15px; font-weight: bold; color: #ffd700; font-size: 0.85rem; }
-
-        /* Панель аналитики (Очищаемый Лог) */
-        .log-sidebar {
-            background: var(--bg-panel);
-            border: 1px solid #24304f;
-            border-radius: 12px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        }
-
-        .log-sidebar h3 {
-            font-family: 'Orbitron', sans-serif;
-            margin: 0 0 15px 0;
-            font-size: 1rem;
-            border-bottom: 1px solid #24304f;
-            padding-bottom: 10px;
-            color: var(--accent);
-        }
-
-        .log-box {
-            flex-grow: 1;
-            overflow-y: auto;
-            font-size: 0.8rem;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-height: 520px;
-        }
-
-        .log-node {
-            padding: 8px 10px;
-            border-radius: 6px;
-            background: #0b0f19;
-            border-left: 3px solid #cbd5e1;
-            line-height: 1.4;
-        }
-        .log-node.system { border-color: var(--accent); color: #93c5fd; }
-        .log-node.player { border-color: var(--accent-neon); }
-        .log-node.ai { border-color: #ff0055; }
-
-        /* Модалка политики */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(3, 7, 18, 0.9);
-            justify-content: center; align-items: center;
-            z-index: 999;
-            backdrop-filter: blur(4px);
-        }
-
-        .modal-body {
-            background: var(--bg-panel);
-            border: 2px solid var(--accent);
-            padding: 30px;
-            border-radius: 16px;
-            max-width: 480px;
-            width: 90%;
-            text-align: center;
-            box-shadow: 0 0 30px var(--blue-glow);
-        }
-
-        .modal-body h2 { font-family: 'Orbitron', sans-serif; color: var(--accent); margin-top: 0; }
+        button:hover { background: #2980b9; }
+        button:disabled { background: #555; cursor: not-allowed; }
+        .btn-sabotage { background: var(--accent); }
+        .btn-sabotage:hover { background: #c0392b; }
         
-        .law-card {
-            background: #0b0f19;
-            border: 1px solid #24304f;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
+        .player-card {
+            background: #3a3a3a;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border-left: 5px solid #fff;
         }
-        .law-card h4 { margin: 0 0 10px 0; color: #ffd700; font-size: 1.1rem; }
-        .law-card p { margin: 0; font-size: 0.9rem; color: #cbd5e1; line-height: 1.4; }
+        .log {
+            height: 200px;
+            overflow-y: auto;
+            background: #111;
+            padding: 10px;
+            font-size: 13px;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .resource-list { font-size: 13px; margin: 5px 0; }
+        .modal {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            z-index: 100;
+            display: none;
+            width: 320px;
+        }
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 99; display: none;
+        }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>СИНДИКАТ: ЭПОХА ЗАГОВОРОВ</h1>
-    <p>Модифицированная экономическая стратегия • Броски кубиков и теневая политика</p>
-</header>
+    <h1>Синдикат: Остров Доверия</h1>
+    <h3 id="round-display" style="color: #bbb;">Раунд: 1 | Ход: Игрок (Вы)</h3>
 
-<div class="game-grid">
-    <div class="dashboard">
-        <!-- Статусы игроков -->
-        <div class="hud-container">
-            <div class="hud-card player-hud">
-                <h3>ИГРОК (ВЫ)</h3>
-                <div class="hud-stat"><span id="p-coins">3</span> 💰</div>
-                <div class="hud-substats">
-                    <span>Генералы: <strong id="p-army" style="color:#fff;">0</strong> 🪖</span>
-                    <span>Шпионы: <strong id="p-spies" style="color:#fff;">0</strong> 🕵️‍♂️</span>
-                </div>
-                <div class="hud-assets" id="p-assets">Загрузка активов...</div>
-            </div>
-            
-            <div class="hud-card ai-hud">
-                <h3>СИНДИКАТ ИИ</h3>
-                <div class="hud-stat"><span id="a-coins">3</span> 💰</div>
-                <div class="hud-substats">
-                    <span>Генералы: <strong id="a-army" style="color:#fff;">0</strong> 🪖</span>
-                    <span>Шпионы: <strong id="a-spies" style="color:#fff;">0</strong> 🕵️‍♂️</span>
-                </div>
-                <div class="hud-assets" id="a-assets">Загрузка активов...</div>
-            </div>
+    <div class="game-container">
+        <div class="panel">
+            <h2>Синдикат</h2>
+            <div id="players-status"></div>
+            <hr style="border-color:#444;">
+            <h3>Ваша Скрытая Роль:</h3>
+            <div id="role-card" style="font-weight:bold; font-size:18px; text-align:center; padding:10px; background:#444; border-radius:5px;"></div>
         </div>
 
-        <!-- Управление -->
-        <div class="control-panel">
+        <div id="board" class="board">
+            </div>
+
+        <div class="panel" style="display:flex; flex-direction:column; justify-content:space-between;">
             <div>
-                <div id="turn-title" style="font-family:'Orbitron', sans-serif; font-weight:bold; font-size:1.1rem; color:var(--accent-neon);">ВАШ ХОД</div>
-                <div id="round-title" style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Раунд: 1 | До сессии парламента: 3</div>
+                <h2>Действия</h2>
+                <button id="btn-roll" onclick="playTurn()">Бросить кубик</button>
+                <button id="btn-build" onclick="buildFactory()" disabled>Построить Фабрику (50 Монет, 3 Дерева, 3 Кирпича)</button>
+                <button id="btn-trade" onclick="openTrade()" disabled>Предложить сделку ИИ</button>
+                <button id="btn-vote" onclick="openVote()">Собрать Совет (Голосование)</button>
+                <button id="btn-sabotage" class="btn-sabotage" onclick="triggerSabotage()" style="display:none;">Совершить Саботаж (-20 монет у всех)</button>
             </div>
-            <div style="display: flex; gap: 20px; align-items: center;">
-                <div class="dice-display" id="dice-node">-</div>
-                <button class="btn" id="roll-action" onclick="game.roll()">Бросить кубик</button>
-                <button class="btn btn-sec" id="end-action" onclick="game.nextTurn()" disabled>Завершить ход</button>
+            <div>
+                <h3>История событий</h3>
+                <div id="log" class="log"></div>
             </div>
-        </div>
-
-        <!-- Витрина из 5 динамических карт -->
-        <div>
-            <div class="market-header">
-                <span>АКТИВНЫЙ РЫНОК (ПЯТЬ ДОСТУПНЫХ ЛОТОВ)</span>
-                <span id="deck-count" style="color: var(--accent); font-size:0.85rem;">Остаток в колоде: 45</span>
-            </div>
-            <div class="market-grid" id="market-node"></div>
         </div>
     </div>
 
-    <!-- Аналитика круга (Очищаемый лог) -->
-    <div class="log-sidebar">
-        <h3>АНАЛИТИКА КРУГА</h3>
-        <div class="log-box" id="log-node-box"></div>
+    <div id="overlay" class="overlay"></div>
+    <div id="trade-modal" class="modal">
+        <h3>Торговля с ИИ</h3>
+        <p>Обменять 20 Монет на 2 случайных ресурса у случайного игрока?</p>
+        <button onclick="executeTrade()">Да, предложить</button>
+        <button onclick="closeModal()" style="background:#7f8c8d;">Отмена</button>
     </div>
-</div>
 
-<!-- Окно Парламента -->
-<div class="modal" id="parliament-view">
-    <div class="modal-body">
-        <h2>🏛️ ГОЛОСОВАНИЕ В ПАРЛАМЕНТЕ</h2>
-        <p style="color:var(--text-muted); font-size:0.85rem;">Для принятия требуется абсолютное большинство фракций</p>
-        <div class="law-card">
-            <h4 id="law-name">Закон...</h4>
-            <p id="law-details">Описание...</p>
-        </div>
-        <div style="display:flex; gap:15px; justify-content:center;">
-            <button class="btn" style="background:var(--accent-neon);" onclick="game.castVote(true)">ЗА [👍]</button>
-            <button class="btn" style="background:#ff0055; color:#fff;" onclick="game.castVote(false)">ПРОТИВ [👎]</button>
-        </div>
+    <div id="vote-modal" class="modal">
+        <h3>Кого вы подозреваете?</h3>
+        <p>Игрок под арестом теряет право строить на 2 раунда.</p>
+        <div id="vote-options"></div>
+        <button onclick="closeModal()" style="background:#7f8c8d; margin-top:10px;">Отмена</button>
     </div>
-</div>
 
-<script>
-// Полный пул всех доступных в игре типов зданий (всего 10 видов для разнообразия колоды)
-const MASTER_DECK_TEMPLATES = [
-    { id: 'field', name: 'Пшеничное поле', cost: 1, dice: [1], type: 'blue', desc: 'Любой ход: вы получаете 1 💰 из бюджета.', action: (g, o) => g.modifyCoins(o, 1) },
-    { id: 'farm', name: 'Фермерский эко-хаб', cost: 2, dice: [2], type: 'blue', desc: 'Любой ход: вы получаете 1 💰 из бюджета.', action: (g, o) => g.modifyCoins(o, 1) },
-    { id: 'bakery', name: 'Кибер-пекарня', cost: 1, dice: [2, 3], type: 'green', desc: 'Свой ход: приносит вам 2 💰.', action: (g, o) => { if(g.activeTurn === o) g.modifyCoins(o, 2); } },
-    { id: 'cafe', name: 'Нон-стоп Кафе', cost: 2, dice: [3], type: 'red', desc: 'Чужой ход: изымает 1 💰 у текущего активного игрока.', action: (g, o) => { if(g.activeTurn !== o) g.transferCoins(o, g.activeTurn, 1); } },
-    { id: 'shop', name: 'Мегамаркет', cost: 3, dice: [4], type: 'green', desc: 'Свой ход: генерирует чистую прибыль в 3 💰.', action: (g, o) => { if(g.activeTurn === o) g.modifyCoins(o, 3); } },
-    { id: 'forest', name: 'Техно-лесхоз', cost: 3, dice: [5], type: 'blue', desc: 'Любой ход: стабильный приход 1 💰.', action: (g, o) => g.modifyCoins(o, 1) },
-    { id: 'barracks', name: 'Штаб Наемников', cost: 4, dice: [6], type: 'purple', desc: 'Свой ход: вербует 1 Генерала 🪖 для обороны и рейдов.', action: (g, o) => { if(g.activeTurn === o) g.modifyAsset(o, 'army', 1); } },
-    { id: 'spy_net', name: 'Синдикат Информации', cost: 4, dice: [5], type: 'purple', desc: 'Свой ход: вербует 1 Шпиона 🕵️‍♂️ для проведения заговоров.', action: (g, o) => { if(g.activeTurn === o) g.modifyAsset(o, 'spies', 1); } },
-    { id: 'raid', name: 'Военный Трибунал', cost: 5, dice: [6], type: 'red', desc: 'Чужой ход: забирает у врага по 2 💰 за каждого вашего Генерала.', action: (g, o) => { if(g.activeTurn !== o) { let sum = g.data[o].army * 2; g.transferCoins(o, g.activeTurn, sum); } } },
-    { id: 'sabotage', name: 'Кибер-диверсия', cost: 5, dice: [4], type: 'purple', desc: 'Свой ход: если у вас шпионов больше, ворует 4 💰 напрямую.', action: (g, o) => { if(g.activeTurn === o) { let opp = o === 'player' ? 'ai' : 'player'; if(g.data[o].spies > g.data[opp].spies) g.transferCoins(o, opp, 4); } } }
-];
+    <script>
+        // Конфигурация клеток поля (периметр 4x4 = 12 клеток)
+        const boardLayout = [
+            { id: 0, name: "СТАРТ (+20 Монет)", type: "start" },
+            { id: 1, name: "Лесопилка (+Дерево)", type: "resource", res: "wood" },
+            { id: 2, name: "Кирпичный Завод (+Кирпич)", type: "resource", res: "brick" },
+            { id: 3, name: "Казначейство (+10 Монет)", type: "money", amt: 10 },
+            { id: 4, name: "Лесопилка (+Дерево)", type: "resource", res: "wood" },
+            { id: 5, name: "Налоги (-10 Монет)", type: "tax", amt: 10 },
+            { id: 6, name: "Кирпичный Завод (+Кирпич)", type: "resource", res: "brick" },
+            { id: 7, name: "Рыночная Площадь (+20 Монет)", type: "money", amt: 20 },
+            { id: 8, name: "Заброшенная Шахта", type: "empty" },
+            { id: 9, name: "Лесопилка (+Дерево)", type: "resource", res: "wood" },
+            { id: 10, name: "Кирпичный Завод (+Кирпич)", type: "resource", res: "brick" },
+            { id: 11, name: "Центральный Банк (+30 Монет)", type: "money", amt: 30 }
+        ];
 
-const LAWS_POOL = [
-    { title: "Закон о Ремилитаризации", desc: "Все платят по 1 💰 налога государству за каждого имеющегося Генерала.", run: (g) => g.applyLawFine('army', 1) },
-    { title: "Земельный Грант", desc: "Все Пшеничные поля и Эко-хабы приносят на +1 💰 больше при любых бросках.", run: (g) => { g.globalBonuses['field'] = 1; g.globalBonuses['farm'] = 1; } },
-    { title: "Антишпионский Пакт", desc: "Все шпионы ликвидируются, игроки получают компенсацию 2 💰 за каждого ликвидированного.", run: (g) => { g.modifyCoins('player', g.data.player.spies*2); g.data.player.spies = 0; g.modifyCoins('ai', g.data.ai.spies*2); g.data.ai.spies = 0; } },
-    { title: "Смена Экономических Элит", desc: "Богатейший по монетам фракционер обязан перевести 3 💰 отстающему.", run: (g) => { if(g.data.player.coins > g.data.ai.coins) g.transferCoins('ai', 'player', 3); else if(g.data.ai.coins > g.data.player.coins) g.transferCoins('player', 'ai', 3); } }
-];
+        // Порядок отображения клеток на CSS Grid по периметру 4x4
+        const gridPositions = [
+            {r:1, c:1}, {r:1, c:2}, {r:1, c:3}, {r:1, c:4},
+            {r:2, c:4}, {r:3, c:4}, {r:4, c:4}, {r:4, c:3},
+            {r:4, c:2}, {r:4, c:1}, {r:3, c:1}, {r:2, c:1}
+        ];
 
-class GameManager {
-    constructor() {
-        this.data = {
-            player: { coins: 3, army: 0, spies: 0, cards: { field: 1 } },
-            ai: { coins: 3, army: 0, spies: 0, cards: { field: 1 } }
-        };
-        this.globalBonuses = {};
-        this.round = 1;
-        this.parliamentCounter = 3;
-        this.activeTurn = 'player';
-        
-        this.hasRolled = false;
-        this.hasBought = false;
-        
-        this.deck = [];
-        this.marketSlots = [];
-        this.activeLaw = null;
+        // Инициализация игроков
+        let players = [
+            { id: 0, name: "Вы (Игрок)", color: "#3498db", pos: 0, coins: 50, wood: 2, brick: 2, score: 0, isSaboteur: false, isAI: false, arrestedTurns: 0, suspicion: 0 },
+            { id: 1, name: "ИИ Боб", color: "#2ecc71", pos: 0, coins: 50, wood: 2, brick: 2, score: 0, isSaboteur: false, isAI: true, arrestedTurns: 0, suspicion: 10 },
+            { id: 2, name: "ИИ Алиса", color: "#9b59b6", pos: 0, coins: 50, wood: 2, brick: 2, score: 0, isSaboteur: false, isAI: true, arrestedTurns: 0, suspicion: 10 },
+            { id: 3, name: "ИИ Дилан", color: "#f1c40f", pos: 0, coins: 50, wood: 2, brick: 2, score: 0, isSaboteur: false, isAI: true, arrestedTurns: 0, suspicion: 10 }
+        ];
 
-        this.buildDeck();
-        this.replenishMarket();
-        this.renderUI();
-        
-        this.pushLog("Новая игра запущена. Сформирован свежий пул контрактов на рынке.", "system");
-    }
+        let currentPlayerIndex = 0;
+        let round = 1;
+        let saboteurId = 0;
 
-    // Сохраняет логи ТОЛЬКО за последний полный круг (ход игрока + ход ИИ)
-    pushLog(text, type = 'system') {
-        const box = document.getElementById('log-node-box');
-        
-        // Если это начало нового круга (ход игрока после хода ИИ) - чистим лог
-        if (this.activeTurn === 'player' && !this.hasRolled && box.children.length > 5) {
-            box.innerHTML = '';
-            let marker = document.createElement('div');
-            marker.className = 'log-node system';
-            marker.innerText = `--- НАЧАЛО КРУГА ${this.round} ---`;
-            box.appendChild(marker);
-        }
+        // Старт игры
+        function initGame() {
+            // Назначение скрытой роли Саботажника
+            saboteurId = Math.floor(Math.random() * 4);
+            players[saboteurId].isSaboteur = true;
 
-        const node = document.createElement('div');
-        node.className = `log-node ${type}`;
-        node.innerText = text;
-        box.appendChild(node);
-        box.scrollTop = box.scrollHeight;
-    }
-
-    buildDeck() {
-        // Создаем большую колоду из 50 карт (по 5 штук каждого типа)
-        this.deck = [];
-        for (let i = 0; i < 5; i++) {
-            MASTER_DECK_TEMPLATES.forEach(tmpl => {
-                this.deck.push({ ...tmpl });
-            });
-        }
-        // Перемешивание колоды
-        this.deck.sort(() => Math.random() - 0.5);
-    }
-
-    replenishMarket() {
-        // Заполняем рынок строго до 5 карт из колоды
-        while (this.marketSlots.length < 5 && this.deck.length > 0) {
-            this.marketSlots.push(this.deck.pop());
-        }
-        document.getElementById('deck-count').innerText = `Остаток в колоде: ${this.deck.length}`;
-    }
-
-    renderUI() {
-        // Монеты и Силы
-        document.getElementById('p-coins').innerText = this.data.player.coins;
-        document.getElementById('p-army').innerText = this.data.player.army;
-        document.getElementById('p-spies').innerText = this.data.player.spies;
-        
-        document.getElementById('a-coins').innerText = this.data.ai.coins;
-        document.getElementById('a-army').innerText = this.data.ai.army;
-        document.getElementById('a-spies').innerText = this.data.ai.spies;
-
-        // Списки недвижимости
-        document.getElementById('p-assets').innerText = Object.entries(this.data.player.cards)
-            .map(([id, num]) => `${MASTER_DECK_TEMPLATES.find(c=>c.id===id).name} (x${num})`).join(', ') || 'Нет недвижимости';
-        document.getElementById('a-assets').innerText = Object.entries(this.data.ai.cards)
-            .map(([id, num]) => `${MASTER_DECK_TEMPLATES.find(c=>c.id===id).name} (x${num})`).join(', ') || 'Нет недвижимости';
-
-        // Метки ходов
-        const isPlayer = this.activeTurn === 'player';
-        const titleEl = document.getElementById('turn-title');
-        titleEl.innerText = isPlayer ? "ВАШ ХОД" : "ХОД ОППОНЕНТА (ИИ)";
-        titleEl.style.color = isPlayer ? "var(--accent-neon)" : "#ff0055";
-        
-        document.getElementById('round-title').innerText = `Раунд: ${this.round} | До сессии парламента: ${this.parliamentCounter}`;
-
-        // Кнопки
-        document.getElementById('roll-action').disabled = !isPlayer || this.hasRolled;
-        document.getElementById('end-action').disabled = !isPlayer || !this.hasRolled;
-
-        // Генерация карточек рынка
-        const mNode = document.getElementById('market-node');
-        mNode.innerHTML = '';
-
-        this.marketSlots.forEach((card, idx) => {
-            const cardBox = document.createElement('div');
-            cardBox.className = `card ${card.type}`;
-            
-            const activeCash = this.data[this.activeTurn].coins;
-            const canBuy = isPlayer && this.hasRolled && !this.hasBought && activeCash >= card.cost;
-            
-            if(!canBuy) cardBox.classList.add('disabled');
-
-            cardBox.innerHTML = `
-                <div class="card-dice">${card.dice.join(',')}</div>
-                <div class="card-title">${card.name}</div>
-                <div class="card-desc">${card.desc}</div>
-                <div class="card-cost">${card.cost} 💰</div>
-                <button class="btn" style="margin-top:12px; padding:6px; font-size:0.8rem; width:100%;" 
-                    ${!canBuy ? 'disabled' : ''} onclick="game.purchaseCard(${idx})">Купить актив</button>
-            `;
-            mNode.appendChild(cardBox);
-        });
-
-        this.validateGameOver();
-    }
-
-    modifyCoins(target, val) {
-        this.data[target].coins += val;
-        this.pushLog(`${target === 'player' ? 'Игрок' : 'ИИ'} начислил в бюджет +${val} 💰`, target);
-    }
-
-    transferCoins(rec, los, val) {
-        let actual = Math.min(this.data[los].coins, val);
-        this.data[los].coins -= actual;
-        this.data[rec].coins += actual;
-        if(actual > 0) {
-            this.pushLog(`${rec === 'player' ? 'Игрок' : 'ИИ'} перехватил ${actual} 💰 у соперника`, rec);
-        }
-    }
-
-    modifyAsset(target, type, val) {
-        this.data[target][type] += val;
-        this.pushLog(`${target === 'player' ? 'Игрок' : 'ИИ'} расширил влияние: +${val} к ${type==='army'?'Генералам':'Шпионам'}`, target);
-    }
-
-    applyLawFine(type, fee) {
-        ['player', 'ai'].forEach(p => {
-            let totalTax = this.data[p][type] * fee;
-            this.data[p].coins = Math.max(0, this.data[p].coins - totalTax);
-            this.pushLog(`Правопорядок: [${p}] выплатил пошлину ${totalTax} 💰 в сектор безопасности`, 'system');
-        });
-    }
-
-    roll() {
-        if(this.hasRolled) return;
-        this.hasRolled = true;
-
-        let num = Math.floor(Math.random() * 6) + 1;
-        document.getElementById('dice-node').innerText = num;
-        this.pushLog(`На кубике контроля выпало значение: [ ${num} ]`, 'system');
-
-        // Обрабатываем карты по правилам
-        const phases = ['red', 'blue', 'green', 'purple'];
-        phases.forEach(ph => {
-            // Проверяем карты у игрока
-            Object.entries(this.data.player.cards).forEach(([cId, count]) => {
-                let match = MASTER_DECK_TEMPLATES.find(c => c.id === cId);
-                if(match && match.dice.includes(num) && match.type === ph) {
-                    for(let i=0; i<count; i++) {
-                        match.action(this, 'player');
-                        if(this.globalBonuses[cId]) this.modifyCoins('player', this.globalBonuses[cId]);
-                    }
-                }
-            });
-            // Проверяем карты у ИИ
-            Object.entries(this.data.ai.cards).forEach(([cId, count]) => {
-                let match = MASTER_DECK_TEMPLATES.find(c => c.id === cId);
-                if(match && match.dice.includes(num) && match.type === ph) {
-                    for(let i=0; i<count; i++) {
-                        match.action(this, 'ai');
-                        if(this.globalBonuses[cId]) this.modifyCoins('ai', this.globalBonuses[cId]);
-                    }
-                }
-            });
-        });
-
-        this.renderUI();
-    }
-
-    purchaseCard(index) {
-        if(!this.hasRolled || this.hasBought) return;
-        let card = this.marketSlots[index];
-        let buyer = this.activeTurn;
-
-        if(this.data[buyer].coins >= card.cost) {
-            this.data[buyer].coins -= card.cost;
-            this.data[buyer].cards[card.id] = (this.data[buyer].cards[card.id] || 0) + 1;
-            this.hasBought = true;
-            
-            this.pushLog(`${buyer === 'player' ? 'Игрок' : 'ИИ'} выкупил с рынка "${card.name}"`, buyer);
-            
-            // Убираем карту из слота и мгновенно заполняем новой картой из колоды
-            this.marketSlots.splice(index, 1);
-            this.replenishMarket();
-            
-            this.renderUI();
-        }
-    }
-
-    nextTurn() {
-        this.hasRolled = false;
-        this.hasBought = false;
-        document.getElementById('dice-node').innerText = '-';
-
-        if(this.activeTurn === 'player') {
-            this.activeTurn = 'ai';
-            this.renderUI();
-            setTimeout(() => this.aiRoutine(), 1000);
-        } else {
-            this.activeTurn = 'player';
-            this.parliamentCounter--;
-            
-            if(this.parliamentCounter <= 0) {
-                this.launchParliament();
+            if (players[0].isSaboteur) {
+                document.getElementById('role-card').innerText = "САБОТАЖНИК 😈";
+                document.getElementById('role-card').style.color = "var(--accent)";
+                document.getElementById('btn-sabotage').style.display = "block";
             } else {
-                this.round++;
-                this.renderUI();
+                document.getElementById('role-card').innerText = "МИРНЫЙ ПАРТНЕР 😇";
+                document.getElementById('role-card').style.color = "#2ecc71";
             }
-        }
-    }
 
-    launchParliament() {
-        this.activeLaw = LAWS_POOL[Math.floor(Math.random() * LAWS_POOL.length)];
-        document.getElementById('law-name').innerText = this.activeLaw.title;
-        document.getElementById('law-details').innerText = this.activeLaw.desc;
-        document.getElementById('parliament-view').style.display = 'flex';
-    }
-
-    castVote(pVote) {
-        document.getElementById('parliament-view').style.display = 'none';
-        
-        let aiVote = true;
-        if(this.activeLaw.title === "Закон о Ремилитаризации" && this.data.ai.army > 1) aiVote = false;
-        if(this.activeLaw.title === "Смена Экономических Элит" && this.data.ai.coins > this.data.player.coins) aiVote = false;
-
-        this.pushLog(`Парламент: Голосование по "${this.activeLaw.title}". Игрок: [${pVote?'ЗА':'ПРОТИВ'}], ИИ: [${aiVote?'ЗА':'ПРОТИВ'}]`, 'system');
-
-        if(pVote && aiVote) {
-            this.activeLaw.run(this);
-            this.pushLog(`Указ "${this.activeLaw.title}" ратифицирован обеими сторонами.`, 'system');
-        } else if(!pVote && !aiVote) {
-            this.pushLog(`Указ ветирован большинством голосов фракций.`, 'system');
-        } else {
-            let res = Math.random() > 0.5;
-            this.pushLog(`Голоса разделились. Комитет Сената выносит вердикт: ${res ? 'Принять' : 'Отклонить'}`, 'system');
-            if(res) this.activeLaw.run(this);
+            renderBoard();
+            updateUI();
+            logMessage("🚨 Игра началась! Цель Мирных: набрать 10 очков (строя фабрики) или вычислить Саботажника. Цель Саботажника: скрытно разорять игроков.");
         }
 
-        this.parliamentCounter = 3;
-        this.round++;
-        this.renderUI();
-    }
+        // Рендер доски
+        function renderBoard() {
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+            
+            // Создаем массив ячеек в правильном порядке сетки 4x4
+            let gridCells = Array(16).fill(null);
+            
+            boardLayout.forEach((cell, index) => {
+                const pos = gridPositions[index];
+                const cellIndex = (pos.r - 1) * 4 + (pos.c - 1);
+                gridCells[cellIndex] = { ...cell, originalIndex: index };
+            });
 
-    aiRoutine() {
-        this.pushLog("ИИ просчитывает вероятности доходов...", "ai");
-        this.roll();
+            for (let i = 0; i < 16; i++) {
+                const cellDiv = document.createElement('div');
+                if (gridCells[i] === null) {
+                    cellDiv.style.background = "transparent";
+                } else {
+                    const cell = gridCells[i];
+                    cellDiv.className = `cell ${cell.type === 'start' ? 'corner' : ''}`;
+                    cellDiv.innerHTML = `<div><b>${cell.name}</b></div><div class="cell-players" id="cell-${cell.originalIndex}"></div>`;
+                }
+                boardEl.appendChild(cellDiv);
+            }
+            updateTokens();
+        }
 
-        // Поиск карт из 5 доступных на рынке, которые ИИ может себе позволить
-        let affordable = [];
-        this.marketSlots.forEach((c, index) => {
-            if(c.cost <= this.data.ai.coins) affordable.push({card: c, idx: index});
-        });
+        function updateTokens() {
+            // Очищаем старые фишки
+            boardLayout.forEach((_, index) => {
+                const el = document.getElementById(`cell-${index}`);
+                if (el) el.innerHTML = '';
+            });
+            // Ставим новые
+            players.forEach(p => {
+                const cellEl = document.getElementById(`cell-${p.pos}`);
+                if (cellEl) {
+                    const token = document.createElement('div');
+                    token.className = 'player-token';
+                    token.style.backgroundColor = p.color;
+                    token.title = p.name;
+                    cellEl.appendChild(token);
+                }
+            });
+        }
 
-        if(affordable.length > 0) {
-            // Приоритет агрессии: если у игрока много денег, ИИ ищет красные/пурпурные карты на рынке
-            let combat = affordable.find(a => a.card.type === 'red' || a.card.type === 'purple');
-            if(combat && this.data.player.coins > 5) {
-                this.purchaseCard(combat.idx);
-            } else {
-                // Иначе просто берет самое дорогое из доступного
-                affordable.sort((a,b) => b.card.cost - a.card.cost);
-                this.purchaseCard(affordable[0].idx);
+        function updateUI() {
+            const statusEl = document.getElementById('players-status');
+            statusEl.innerHTML = '';
+
+            players.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'player-card';
+                card.style.borderLeftColor = p.color;
+                
+                // Для ИИ скрываем роль, но выводим уровень подозрений окружающих
+                let statusText = p.arrestedTurns > 0 ? `<b style="color:red;">[ПОД АРЕСТОМ ${p.arrestedTurns}х]</b>` : '';
+                card.innerHTML = `
+                    <strong>${p.name} ${statusText}</strong><br>
+                    <div class="resource-list">💰 Монеты: ${p.coins} | 🪵 Дерево: ${p.wood} | 🧱 Кирпич: ${p.brick}</div>
+                    <strong>🏭 Постройки (Очки): ${p.score} / 10</strong><br>
+                    <small style="color:#aaa;">Подозрения общества: ${p.id !== 0 ? p.suspicion + '%' : '—'}</small>
+                `;
+                statusEl.appendChild(card);
+            });
+
+            // Кнопки управления для игрока
+            const human = players[0];
+            document.getElementById('btn-build').disabled = !(human.coins >= 50 && human.wood >= 3 && human.brick >= 3 && human.arrestedTurns === 0);
+            document.getElementById('btn-trade').disabled = (human.coins < 20);
+            document.getElementById('round-display').innerText = `Раунд: ${round} | Ходит: ${players[currentPlayerIndex].name}`;
+        }
+
+        function logMessage(msg) {
+            const log = document.getElementById('log');
+            log.innerHTML += `<div>${msg}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // Логика хода игрока
+        function playTurn() {
+            document.getElementById('btn-roll').disabled = true;
+            let activePlayer = players[currentPlayerIndex];
+
+            if (activePlayer.arrestedTurns > 0) {
+                logMessage(`🔒 ${activePlayer.name} пропускает активность (под арестом). Осталось раундов: ${activePlayer.arrestedTurns - 1}`);
+                activePlayer.arrestedTurns--;
+                nextTurn();
+                return;
+            }
+
+            let dice = Math.floor(Math.random() * 3) + 1; // Кубик 1-3 для динамики на маленьком поле
+            activePlayer.pos = (activePlayer.pos + dice) % boardLayout.length;
+            
+            let cell = boardLayout[activePlayer.pos];
+            logMessage(`🎲 ${activePlayer.name} выбросил ${dice} и встал на клетку: <b>${cell.name}</b>`);
+
+            // Эффект клетки
+            if (cell.type === 'resource') {
+                activePlayer[cell.res] += 1;
+                logMessage(`➕ ${activePlayer.name} получает 1 ед. ресурса [${cell.res}]`);
+            } else if (cell.type === 'money') {
+                activePlayer.coins += cell.amt;
+            } else if (cell.type === 'tax') {
+                activePlayer.coins = Math.max(0, activePlayer.coins - cell.amt);
+                logMessage(`💸 ${activePlayer.name} оплатил налог ${cell.amt} монет.`);
+            } else if (cell.type === 'start') {
+                activePlayer.coins += 20;
+            }
+
+            updateTokens();
+            updateUI();
+
+            // Если это Саботажник-ИИ, с шансом 35% он вредит
+            if (activePlayer.isAI && activePlayer.isSaboteur && Math.random() < 0.35) {
+                aiSabotage(activePlayer);
+            }
+
+            // Логика ИИ по строительству
+            if (activePlayer.isAI && activePlayer.coins >= 50 && activePlayer.wood >= 3 && activePlayer.brick >= 3) {
+                activePlayer.coins -= 50; activePlayer.wood -= 3; activePlayer.brick -= 3;
+                activePlayer.score += 2;
+                logMessage(`🏭 <b>${activePlayer.name}</b> построил Фабрику и получил 2 очка!`);
+                checkWinCondition();
+            }
+
+            setTimeout(nextTurn, 1500);
+        }
+
+        function nextTurn() {
+            currentPlayerIndex = (currentPlayerIndex + 1) % 4;
+            if (currentPlayerIndex === 0) {
+                round++;
+                document.getElementById('btn-roll').disabled = false;
+            }
+            updateUI();
+
+            if (currentPlayerIndex !== 0) {
+                // Ход искусственного интеллекта
+                setTimeout(playTurn, 1000);
             }
         }
 
-        setTimeout(() => this.nextTurn(), 1000);
-    }
-
-    validateGameOver() {
-        let pWin = this.data.player.coins >= 25 || this.data.player.army >= 5;
-        let aWin = this.data.ai.coins >= 25 || this.data.ai.army >= 5;
-
-        if (pWin || aWin) {
-            setTimeout(() => {
-                if(pWin && aWin) alert("Глобальный паритет. Заключено мирное соглашение корпораций.");
-                else if(pWin) alert("Победа! Вы полностью подчинили себе экономику и военные структуры города!");
-                else alert("Поражение. ИИ Синдикат монополизировал власть. Ваш совет директоров распущен.");
-                location.reload();
-            }, 300);
+        // Действия Человека: Строительство
+        function buildFactory() {
+            let p = players[0];
+            p.coins -= 50; p.wood -= 3; p.brick -= 3;
+            p.score += 2;
+            logMessage(`🏭 Вы построили Фабрику! (+2 Очка)`);
+            updateUI();
+            checkWinCondition();
         }
-    }
-}
 
-// Старт
-const game = new GameManager();
-</script>
+        // Саботаж (доступно игроку, если он предатель)
+        function triggerSabotage() {
+            players.forEach(p => {
+                if (p.id !== 0) p.coins = Math.max(0, p.coins - 20);
+            });
+            logMessage(`🚨 <b>Кризис!</b> Кто-то совершил скрытый саботаж! Все ИИ-игроки потеряли по 20 монет.`);
+            document.getElementById('btn-sabotage').disabled = true;
+            
+            // ИИ начинают подозревать друг друга и игрока сильнее после кризиса
+            players.forEach(p => { if(p.id !== 0) p.suspicion += Math.floor(Math.random() * 20) + 10; });
+            updateUI();
+        }
 
+        // Внутренний саботаж со стороны ИИ
+        function aiSabotage(aiPlayer) {
+            players.forEach(p => {
+                if (p.id !== aiPlayer.id) p.coins = Math.max(0, p.coins - 15);
+            });
+            logMessage(`📉 <b>Прошелся слух:</b> На рынке совершен поджог складов! Все понесли убытки.`);
+            // При саботаже ИИ случайным образом растет уровень подозрений к невиновным
+            players.forEach(p => {
+                if(p.id !== 0 && Math.random() > 0.5) p.suspicion += 15;
+            });
+        }
+
+        // Торговля
+        function openTrade() {
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('trade-modal').style.display = 'block';
+        }
+
+        function executeTrade() {
+            closeModal();
+            let partner = players[Math.floor(Math.random() * 3) + 1]; // Случайный ИИ
+            players[0].coins -= 20;
+            
+            // ИИ принимает сделку, если доверяет (подозрение < 50)
+            if (partner.suspicion < 50 && (partner.wood > 0 || partner.brick > 0)) {
+                partner.coins += 20;
+                players[0].wood += 1;
+                players[0].brick += 1;
+                logMessage(`🤝 Успешная сделка! Сделка с ${partner.name} принесла вам ресурсы.`);
+                // Улучшение отношений
+                partner.suspicion = Math.max(0, partner.suspicion - 10);
+            } else {
+                players[0].coins += 20; // Возврат
+                logMessage(`❌ ${partner.name} отклонил предложение о торговле из-за недоверия.`);
+            }
+            updateUI();
+        }
+
+        // Голосование (Мафия-механика)
+        function openVote() {
+            document.getElementById('overlay').style.display = 'block';
+            const voteModal = document.getElementById('vote-modal');
+            voteModal.style.display = 'block';
+            
+            const opts = document.getElementById('vote-options');
+            opts.innerHTML = '';
+            
+            players.forEach(p => {
+                if (p.id !== 0) {
+                    const btn = document.createElement('button');
+                    btn.innerText = `Обвинить: ${p.name}`;
+                    btn.onclick = () => executeVote(p.id);
+                    opts.appendChild(btn);
+                }
+            });
+        }
+
+        function executeVote(targetId) {
+            closeModal();
+            logMessage(`📢 Вы созвали Совет Синдиката и выдвинули обвинения против ${players[targetId].name}!`);
+            
+            // ИИ голосуют на основе своих подозрений
+            let votes = [0, 0, 0, 0];
+            votes[targetId]++; // Ваш голос
+            
+            players.forEach(p => {
+                if (p.isAI) {
+                    // ИИ голосует за того, у кого максимальное подозрение, либо против Саботажника с малым шансом
+                    let target = 0;
+                    let maxSusp = -1;
+                    players.forEach(pSub => {
+                        if(pSub.id !== p.id && pSub.suspicion > maxSusp) {
+                            maxSusp = pSub.suspicion;
+                            target = pSub.id;
+                        }
+                    });
+                    votes[target]++;
+                }
+            });
+
+            // Находим лидера голосования
+            let maxVotes = 0;
+            let votedOutId = -1;
+            votes.forEach((v, idx) => {
+                if (v > maxVotes) { maxVotes = v; votedOutId = idx; }
+            });
+
+            logMessage(`📊 Результаты трибунала: Игрок под подозрением — <b>${players[votedOutId].name}</b> (${maxVotes} голосов).`);
+            
+            if (players[votedOutId].isSaboteur) {
+                logMessage(`🎉 Успех! <b>${players[votedOutId].name}</b> действительно был Саботажником! Он изолирован. Мирные победили!`);
+                setTimeout(() => alert("Победа Мирных Партнеров! Саботажник раскрыт."), 500);
+            } else {
+                logMessage(`⛔ Ошибка! <b>${players[votedOutId].name}</b> был честным партнером. Он отправлен под домашний арест на 2 раунда и теряет ресурсы.`);
+                players[votedOutId].arrestedTurns = 2;
+                players[votedOutId].coins = Math.floor(players[votedOutId].coins / 2);
+            }
+            updateUI();
+        }
+
+        function closeModal() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('trade-modal').style.display = 'none';
+            document.getElementById('vote-modal').style.display = 'none';
+        }
+
+        function checkWinCondition() {
+            players.forEach(p => {
+                if (p.score >= 10) {
+                    if (p.isSaboteur) {
+                        alert(`Игра окончена! Саботажник (${p.name}) победил, захватив контроль над островом!`);
+                    } else {
+                        alert(`Игра окончена! Честный игрок (${p.name}) победил, построив сильный бизнес!`);
+                    }
+                    location.reload();
+                }
+            });
+        }
+
+        // Запуск
+        window.onload = initGame;
+    </script>
 </body>
 </html>
