@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Орден Счета: Математическая Цитадель</title>
+    <title>Орден Света: Математическая Цитадель</title>
     <style>
         :root {
             --bg-dark: #07080e;
@@ -36,7 +36,6 @@
             background: radial-gradient(circle at center, #111428 0%, #06070a 100%);
         }
 
-        /* Экраны меню */
         .modal-screen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -100,7 +99,6 @@
             font-weight: bold; border-radius: 12px; margin-top: 15px; cursor: pointer;
         }
 
-        /* Панель ресурсов */
         .top-panel-wrapper {
             flex-shrink: 0; background: var(--panel-bg);
             border-bottom: 2px solid rgba(255, 215, 0, 0.15); z-index: 10;
@@ -128,7 +126,6 @@
         .res-val { font-size: 1.05rem; font-weight: bold; margin-top: 1px; }
         .res-inc { font-size: 0.6rem; color: #cbd5e1; opacity: 0.8; }
 
-        /* Игровая зона */
         .game-space {
             flex: 1; position: relative; display: flex; flex-direction: column;
             justify-content: center; align-items: center; padding: 10px; min-height: 0;
@@ -171,7 +168,6 @@
         }
         .btn-answer:active { transform: scale(0.95); background: rgba(6, 182, 212, 0.2); }
 
-        /* Всплывающий текст */
         .floating-reward {
             position: fixed; pointer-events: none; font-weight: 900; font-size: 1.6rem; z-index: 300;
             font-family: 'Impact', 'Arial Black', sans-serif;
@@ -198,7 +194,6 @@
             100% { transform: translate(-50%, -90px) scale(0.8); opacity: 0; }
         }
 
-        /* МАГАЗИН */
         .control-panel {
             flex-shrink: 0; background: var(--panel-bg); backdrop-filter: blur(15px);
             border-top: 2px solid rgba(255, 255, 255, 0.08); padding: 8px;
@@ -234,7 +229,12 @@
         .btn-build[data-cat="glory"] .effect-desc { color: #e9d5ff; }
         .btn-build[data-cat="bless"] .effect-desc { color: #fbcfe8; }
         .btn-build .cost { font-size: 0.65rem; color: #94a3b8; margin-top: 4px; display: block; }
+        .btn-build .meta-info { font-size: 0.58rem; color: #a1a1aa; display: block; margin-top: 2px; opacity: 0.85; font-weight: normal; }
         .btn-build .count { position: absolute; right: 8px; top: 8px; font-size: 0.75rem; font-weight: bold; opacity: 0.3; }
+
+        /* Состояния кнопок */
+        .btn-build.locked { border-color: #ef4444 !important; background: rgba(239, 68, 68, 0.03) !important; cursor: not-allowed; }
+        .btn-build.locked .cost { color: #ef4444 !important; font-weight: bold; }
 
         .btn-build.available[data-cat="prod"] { border-color: #38bdf8; }
         .btn-build.available[data-cat="upgrade"] { border-color: var(--gold); }
@@ -268,7 +268,6 @@
 </head>
 <body>
 
-    <!-- ВЫБОР ОБЕТА -->
     <div class="modal-screen" id="startScreen">
         <h1 class="start-title">🏛️ Орден Света</h1>
         <p class="start-subtitle">Выберите Обет Научной Цели на эту эпоху:</p>
@@ -283,7 +282,7 @@
             </button>
             <button class="btn-mode m-3" onclick="selectMode('hard')">
                 <span class="m-title">🏛️ Магистр Цитадели (~15 минут)</span>
-                <span class="m-desc">Це|ль: 75k 🪙, 2.5k 🧱, 600 📜, 100% Славы.</span>
+                <span class="m-desc">Цель: 75k 🪙, 2.5k 🧱, 600 📜, 100% Славы.</span>
             </button>
             <button class="btn-mode m-4" onclick="selectMode('expert')">
                 <span class="m-title">👑 Хранитель Тайн (~20 минут)</span>
@@ -296,7 +295,6 @@
         </div>
     </div>
 
-    <!-- МАНУСКРИПТ: ТЕПЕРЬ ТУТ ПОЛНЫЙ ПЕРЕЧЕНЬ ПОКУПОК -->
     <div class="modal-screen" id="briefingScreen" style="display: none;">
         <h1 class="start-title" style="color: var(--cyan);">📜 Манускрипт Познания</h1>
         <p class="start-subtitle">Инструкция по закупкам Цитадели:</p>
@@ -320,7 +318,6 @@
         <button class="btn-start-game" onclick="startGame()">⚔️ Вступить в Орден Света</button>
     </div>
 
-    <!-- Шапка ресурсов -->
     <div class="top-panel-wrapper">
         <div class="game-clock-bar" id="gameClock">⏳ Время Эпохи: 00:00</div>
         <header>
@@ -347,7 +344,6 @@
         </header>
     </div>
 
-    <!-- Игровая зона -->
     <div class="game-space">
         <canvas id="cityCanvas"></canvas>
         <div class="math-box">
@@ -367,7 +363,6 @@
         </div>
     </div>
 
-    <!-- Магазин -->
     <div class="control-panel">
         <div class="shop-cat-header">🌾 Добыча Ресурсов</div>
         <div class="build-grid">
@@ -403,12 +398,14 @@
                 <span class="name">📖 Учебник</span>
                 <span class="effect-desc">Клик: +6 баз. награды</span>
                 <span class="cost" id="cost-book">...</span>
+                <span class="meta-info" id="meta-book">Базовый клик: 12 ед.</span>
                 <span class="count" id="cnt-book">0</span>
             </button>
             <button class="btn-build" data-type="theorem" data-cat="upgrade" id="btn-theorem">
                 <span class="name">📐 Циркуль Магистра</span>
-                <span class="effect-desc">Скидка: -6% на текущие цены</span>
+                <span class="effect-desc">Скидка: -6% на тек. цены</span>
                 <span class="cost" id="cost-theorem">...</span>
+                <span class="meta-info" id="meta-theorem">Скидка: -0.0%</span>
                 <span class="count" id="cnt-theorem">0</span>
             </button>
             <button class="btn-build" data-type="critChance" data-cat="upgrade" id="btn-critChance">
@@ -429,31 +426,30 @@
         <div class="build-grid">
             <button class="btn-build" data-type="geometry" data-cat="glory" id="btn-geometry">
                 <span class="name">🏛️ Университет</span>
-                <span class="effect-desc">Дает: +3 🪙 и +0.03% 👑/с</span>
+                <span class="effect-desc">Дает: +3 🪙 и +0.003% 👑/с</span>
                 <span class="cost" id="cost-geometry">...</span>
                 <span class="count" id="cnt-geometry">0</span>
             </button>
             <button class="btn-build" data-type="patent" data-cat="glory" id="btn-patent">
                 <span class="name">📜 Королевский Патент</span>
-                <span class="effect-desc">Дает: +0.05% 👑 Славы/с</span>
+                <span class="effect-desc">Дает: +0.005% 👑 Славы/с</span>
                 <span class="cost" id="cost-patent">...</span>
                 <span class="count" id="cnt-patent">0</span>
             </button>
             <button class="btn-build" data-type="astral" data-cat="glory" id="btn-astral">
                 <span class="name">🌌 Астральное Знамение</span>
-                <span class="effect-desc">Дает: +0.15% 👑/с и +3 клик</span>
+                <span class="effect-desc">Дает: +0.015% 👑/с и +3 клик</span>
                 <span class="cost" id="cost-astral">...</span>
                 <span class="count" id="cnt-astral">0</span>
             </button>
             <button class="btn-build" data-type="manifesto" data-cat="glory" id="btn-manifesto">
                 <span class="name">📜 Королевский Манифест</span>
-                <span class="effect-desc">Дает: +0.45% 👑 Славы/с</span>
+                <span class="effect-desc">Дает: +0.045% 👑 Славы/с</span>
                 <span class="cost" id="cost-manifesto">...</span>
                 <span class="count" id="cnt-manifesto">0</span>
             </button>
         </div>
 
-        <!-- НОВЫЙ БЛОК: УНИКАЛЬНЫЕ УЛУЧШЕНИЯ ЗА СЛАВУ -->
         <div class="shop-cat-header bless-header">✨ Благословение Славы (Трата Валюты)</div>
         <div class="build-grid">
             <button class="btn-build" data-type="blessIncome" data-cat="bless" id="btn-blessIncome">
@@ -464,7 +460,7 @@
             </button>
             <button class="btn-build" data-type="blessClick" data-cat="bless" id="btn-blessClick">
                 <span class="name">🔥 Ментальный Прорыв</span>
-                <span class="effect-desc">Базовый клик: +15 ед.</span>
+                <span class="effect-desc">Базовый клик: +20 ед.</span>
                 <span class="cost" id="cost-blessClick">...</span>
                 <span class="count" id="cnt-blessClick">0</span>
             </button>
@@ -476,7 +472,6 @@
         </div>
     </div>
 
-    <!-- Экран Победы -->
     <div class="win-screen" id="winScreen">
         <h1 style="color:var(--gold); font-size:2.2rem; margin-bottom:15px;">Триумф Цитадели!</h1>
         <p id="winDesc" style="padding:0 25px; color:#94a3b8; line-height:1.5; font-size: 1.1rem;"></p>
@@ -498,35 +493,36 @@
         let correctCount = 0;
         let wrongCount = 0;
 
-        // Множитель глобального баффа от Ауры Изобилия
         let globalProductionBonus = 1.0;
 
         const state = {
-            gold: 60, steel: 20, scrolls: 0, glory: 0,
+            gold: 150, steel: 20, scrolls: 0, glory: 0,
             clickBase: 12, combo: 0, 
             critChance: 0.05, 
             critMultiplier: 4.0, 
             discount: 1.0,
             income: { gold: 0, steel: 0, scrolls: 0, glory: 0 },
             buildings: {
-                abacus: { count: 0, baseG: 25, baseS: 0, baseSc: 0, curG: 25, curS: 0, curSc: 0, currency: 'normal' },
-                blueprint: { count: 0, baseG: 45, baseS: 5, baseSc: 0, curG: 45, curS: 5, curSc: 0, currency: 'normal' },
-                scriptorium: { count: 0, baseG: 80, baseS: 15, baseSc: 0, curG: 80, curS: 15, curSc: 0, currency: 'normal' },
-                alchemical: { count: 0, baseG: 180, baseS: 40, baseSc: 5, curG: 180, curS: 40, curSc: 5, currency: 'normal' },
+                // Базовые цены на золото (Таланты) увеличены в 3-4 раза
+                abacus: { count: 0, baseG: 90, baseS: 0, baseSc: 0, curG: 90, curS: 0, curSc: 0, currency: 'normal' },
+                blueprint: { count: 0, baseG: 160, baseS: 5, baseSc: 0, curG: 160, curS: 5, curSc: 0, currency: 'normal' },
+                scriptorium: { count: 0, baseG: 280, baseS: 15, baseSc: 0, curG: 280, curS: 15, curSc: 0, currency: 'normal' },
+                alchemical: { count: 0, baseG: 650, baseS: 40, baseSc: 5, curG: 650, curS: 40, curSc: 5, currency: 'normal' },
                 
-                book: { count: 0, baseG: 50, baseS: 15, baseSc: 0, curG: 50, curS: 15, curSc: 0, currency: 'normal' },
-                theorem: { count: 0, baseG: 140, baseS: 30, baseSc: 15, curG: 140, curS: 30, curSc: 15, currency: 'normal' },
-                critChance: { count: 0, baseG: 80, baseS: 20, baseSc: 8, curG: 80, curS: 20, curSc: 8, currency: 'normal' }, 
-                critMult: { count: 0, baseG: 100, baseS: 25, baseSc: 12, curG: 100, curS: 25, curSc: 12, currency: 'normal' }, 
+                book: { count: 0, baseG: 180, baseS: 15, baseSc: 0, curG: 180, curS: 15, curSc: 0, currency: 'normal' },
+                theorem: { count: 0, baseG: 500, baseS: 30, baseSc: 15, curG: 500, curS: 30, curSc: 15, currency: 'normal' },
+                critChance: { count: 0, baseG: 280, baseS: 20, baseSc: 8, curG: 280, curS: 20, curSc: 8, currency: 'normal' }, 
+                critMult: { count: 0, baseG: 350, baseS: 25, baseSc: 12, curG: 350, curS: 25, curSc: 12, currency: 'normal' }, 
                 
-                geometry: { count: 0, baseG: 120, baseS: 40, baseSc: 15, curG: 120, curS: 40, curSc: 15, currency: 'normal' },
-                patent: { count: 0, baseG: 220, baseS: 20, baseSc: 25, curG: 220, curS: 20, curSc: 25, currency: 'normal' },
-                astral: { count: 0, baseG: 450, baseS: 80, baseSc: 50, curG: 450, curS: 80, curSc: 50, currency: 'normal' },
-                manifesto: { count: 0, baseG: 700, baseS: 100, baseSc: 120, curG: 700, curS: 100, curSc: 120, currency: 'normal' },
+                // Скорость получения славы урезана в 10 раз по сравнению с прошлой версией
+                geometry: { count: 0, baseG: 450, baseS: 40, baseSc: 15, curG: 450, curS: 40, curSc: 15, currency: 'normal' },
+                patent: { count: 0, baseG: 800, baseS: 20, baseSc: 25, curG: 800, curS: 20, curSc: 25, currency: 'normal' },
+                astral: { count: 0, baseG: 1600, baseS: 80, baseSc: 50, curG: 1600, curS: 80, curSc: 50, currency: 'normal' },
+                manifesto: { count: 0, baseG: 2500, baseS: 100, baseSc: 120, curG: 2500, curS: 100, curSc: 120, currency: 'normal' },
 
-                // Покупки за Славу (Стоимость указана в процентах славы, скидка не работает)
-                blessIncome: { count: 0, baseGloryCost: 8, curGloryCost: 8, currency: 'glory' },
-                blessClick: { count: 0, baseGloryCost: 12, curGloryCost: 12, currency: 'glory' }
+                // Изменено: Шаг цены строго 10% за уровень, лимит 100%
+                blessIncome: { count: 0, currency: 'glory' },
+                blessClick: { count: 0, currency: 'glory' }
             }
         };
 
@@ -600,7 +596,7 @@
                 correctAnswer = n1 - n2; text = `${n1} - ${n2}`;
             } else if (type === '*') {
                 n1 = Math.floor(Math.random() * 12) + 2; n2 = Math.floor(Math.random() * 11) + 2;
-                correctAnswer = n1 * n2; text = `${n1} × ${n2}`;
+                correctAnswer = n1 × n2; text = `${n1} × ${n2}`;
             } else { 
                 n2 = Math.floor(Math.random() * 10) + 2; correctAnswer = Math.floor(Math.random() * 11) + 2;
                 n1 = n2 * correctAnswer; text = `${n1} ÷ ${n2}`;
@@ -730,11 +726,10 @@
             document.getElementById('val-scrolls').innerText = Math.floor(state.scrolls).toLocaleString();
             document.getElementById('val-glory').innerText = state.glory.toFixed(1) + '%';
 
-            // Отображение дохода с учетом Ауры Изобилия
             document.getElementById('inc-gold').innerText = `+${Math.floor(state.income.gold * globalProductionBonus)}/с`;
             document.getElementById('inc-steel').innerText = `+${Math.floor(state.income.steel * globalProductionBonus)}/с`;
             document.getElementById('inc-scrolls').innerText = `+${(state.income.scrolls * globalProductionBonus).toFixed(1)}/с`;
-            document.getElementById('inc-glory').innerText = `+${state.income.glory.toFixed(2)}%/с`;
+            document.getElementById('inc-glory').innerText = `+${state.income.glory.toFixed(3)}%/с`;
 
             let nextChance = (getNextCritChanceGain(state.buildings.critChance.count) * 100).toFixed(1);
             document.getElementById('eff-critChance').innerText = `Шанс: ${(state.critChance*100).toFixed(0)}% (+${nextChance}%)`;
@@ -742,32 +737,74 @@
             let nextMult = getNextCritMultGain(state.buildings.critMult.count).toFixed(2);
             document.getElementById('eff-critMult').innerText = `Крит: ${state.critMultiplier.toFixed(1)}х (+${nextMult}х)`;
 
+            // Мелкие статы под кнопками Учебника и Циркуля
+            document.getElementById('meta-book').innerText = `Базовый клик: ${state.clickBase} ед.`;
+            document.getElementById('meta-theorem').innerText = `Скидка: -${((1 - state.discount) * 100).toFixed(1)}% (Множ: ${state.discount.toFixed(2)}x)`;
+
             for (let key in state.buildings) {
                 let b = state.buildings[key];
                 let btn = document.getElementById(`btn-${key}`);
                 let costEl = document.getElementById(`cost-${key}`);
-                let canBuy = false;
+                
+                let answersRequired = 0;
+                let currentGloryCost = 0;
+                let isLockedByAnswers = false;
 
                 if (b.currency === 'normal') {
+                    // Обычная линейка: Каждый новый уровень требует (b.count + 1) * 10 верных примеров
+                    answersRequired = (b.count + 1) * 10;
+                    if (correctCount < answersRequired) {
+                        isLockedByAnswers = true;
+                    }
+
                     let g = Math.floor(b.curG * state.discount);
                     let s = Math.floor(b.curS * state.discount);
                     let sc = Math.floor(b.curSc * state.discount);
 
-                    let str = "";
-                    if(g > 0) str += `${g} 🪙 `;
-                    if(s > 0) str += `${s} 🧱 `;
-                    if(sc > 0) str += `${sc} 📜`;
-                    if(costEl) costEl.innerText = str;
+                    if (isLockedByAnswers) {
+                        if(costEl) costEl.innerText = `⚠️ Нужно решить: ${answersRequired}`;
+                    } else {
+                        let str = "";
+                        if(g > 0) str += `${g} 🪙 `;
+                        if(s > 0) str += `${s} 🧱 `;
+                        if(sc > 0) str += `${sc} 📜`;
+                        if(costEl) costEl.innerText = str;
+                    }
 
-                    canBuy = state.gold >= g && state.steel >= s && state.scrolls >= sc;
+                    if(btn) {
+                        btn.classList.remove('available', 'locked');
+                        if (isLockedByAnswers) {
+                            btn.classList.add('locked');
+                        } else if (state.gold >= g && state.steel >= s && state.scrolls >= sc) {
+                            btn.classList.add('available');
+                        }
+                    }
+
                 } else if (b.currency === 'glory') {
-                    // Для благословений цена пишется в процентах Славы
-                    if(costEl) costEl.innerText = `${b.curGloryCost}% 👑`;
-                    canBuy = state.glory >= b.curGloryCost;
-                }
+                    // Особая линейка Благословений: 100 решенных примеров за уровень
+                    answersRequired = (b.count + 1) * 100;
+                    if (correctCount < answersRequired) {
+                        isLockedByAnswers = true;
+                    }
 
-                if(btn) {
-                    if(canBuy) btn.classList.add('available'); else btn.classList.remove('available');
+                    // Расчет цены в Славе: линейно +10% за уровень, максимум 100%
+                    currentGloryCost = (b.count + 1) * 10;
+                    if (currentGloryCost > 100) currentGloryCost = 100;
+
+                    if (isLockedByAnswers) {
+                        if(costEl) costEl.innerText = `⚠️ Нужно решить: ${answersRequired}`;
+                    } else {
+                        if(costEl) costEl.innerText = `${currentGloryCost}% 👑`;
+                    }
+
+                    if(btn) {
+                        btn.classList.remove('available', 'locked');
+                        if (isLockedByAnswers) {
+                            btn.classList.add('locked');
+                        } else if (state.glory >= currentGloryCost) {
+                            btn.classList.add('available');
+                        }
+                    }
                 }
             }
 
@@ -813,6 +850,9 @@
                 const b = state.buildings[type];
                 
                 if (b.currency === 'normal') {
+                    let answersRequired = (b.count + 1) * 10;
+                    if (correctCount < answersRequired) return; // Залочено
+
                     let g = Math.floor(b.curG * state.discount);
                     let s = Math.floor(b.curS * state.discount);
                     let sc = Math.floor(b.curSc * state.discount);
@@ -833,10 +873,11 @@
                         }
                         if(type === 'critMult') state.critMultiplier += getNextCritMultGain(b.count);
                         
-                        if(type === 'geometry') { state.income.glory += 0.03; state.income.gold += 3; }
-                        if(type === 'patent') state.income.glory += 0.05;
-                        if(type === 'astral') { state.income.glory += 0.15; state.clickBase += 3; }
-                        if(type === 'manifesto') state.income.glory += 0.45;
+                        // Замедленный в 10 раз пассивный доход Славы
+                        if(type === 'geometry') { state.income.glory += 0.003; state.income.gold += 3; }
+                        if(type === 'patent') state.income.glory += 0.005;
+                        if(type === 'astral') { state.income.glory += 0.015; state.clickBase += 3; }
+                        if(type === 'manifesto') state.income.glory += 0.045;
 
                         b.count++;
                         let priceMult = (type === 'critChance' || type === 'critMult') ? 1.38 : ((type === 'manifesto' || type === 'astral') ? 1.42 : 1.18);
@@ -849,21 +890,25 @@
                         updateUI();
                     }
                 } else if (b.currency === 'glory') {
-                    // ЛОГИКА ТРАТЫ СЛАВЫ
-                    if (state.glory >= b.curGloryCost) {
-                        state.glory -= b.curGloryCost;
+                    let answersRequired = (b.count + 1) * 100;
+                    if (correctCount < answersRequired) return; // Залочено
+
+                    let currentGloryCost = (b.count + 1) * 10;
+                    if (currentGloryCost > 100) currentGloryCost = 100;
+
+                    if (state.glory >= currentGloryCost) {
+                        state.glory -= currentGloryCost;
                         
                         if (type === 'blessIncome') {
-                            globalProductionBonus += 0.25; // +25% к добыче
+                            globalProductionBonus += 0.25; 
                             spawnRewardText(`✨ Аура Изобилия активирована!`, window.innerWidth/2, window.innerHeight/2, '#f472b6', true);
                         }
                         if (type === 'blessClick') {
-                            state.clickBase += 15; // +15 к клику
-                            spawnRewardText(`🔥 Разум усилен! +15 к клику`, window.innerWidth/2, window.innerHeight/2, '#f472b6', true);
+                            state.clickBase += 20; // Изменено с +15 на +20
+                            spawnRewardText(`🔥 Разум усилен! +20 к клику`, window.innerWidth/2, window.innerHeight/2, '#f472b6', true);
                         }
 
                         b.count++;
-                        b.curGloryCost = Math.floor(b.baseGloryCost * Math.pow(1.5, b.count)); // Увеличиваем стоимость в Славе
                         document.getElementById(`cnt-${type}`).innerText = b.count;
                         updateUI();
                     }
