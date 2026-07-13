@@ -36,10 +36,9 @@
             display: flex;
             flex-direction: column;
             background: radial-gradient(circle at center, #111428 0%, #06070a 100%);
-            transition: background-color 0.1s ease;
         }
 
-        /* Общий стиль для стартовых экранов */
+        /* Стартовые экраны */
         .modal-screen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -86,19 +85,16 @@
             color: white;
             text-align: left;
             cursor: pointer;
-            transition: all 0.2s;
         }
-        .btn-mode:active { transform: scale(0.98); }
         .btn-mode.m-1 { border-left: 4px solid #10b981; }
         .btn-mode.m-2 { border-left: 4px solid #3b82f6; }
         .btn-mode.m-3 { border-left: 4px solid var(--gold); }
         .btn-mode.m-4 { border-left: 4px solid var(--royal); }
         .btn-mode.m-5 { border-left: 4px solid #ef4444; }
-
         .btn-mode .m-title { font-weight: bold; font-size: 1rem; display: block; margin-bottom: 2px; }
         .btn-mode .m-desc { font-size: 0.75rem; color: #94a3b8; display: block; }
 
-        /* Экран Брифинга / Справочника ресурсов */
+        /* Брифинг */
         .info-container {
             width: 100%;
             max-width: 450px;
@@ -108,7 +104,6 @@
             padding: 20px;
             max-height: 65vh;
             overflow-y: auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         .info-section-title {
@@ -138,7 +133,6 @@
             min-width: 35px;
             text-align: center;
         }
-
         .info-text strong { color: #f1f5f9; display: block; font-size: 0.9rem; margin-bottom: 2px;}
         .info-text span { color: #94a3b8; }
 
@@ -156,20 +150,35 @@
             cursor: pointer;
             box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
         }
-        .btn-start-game:active { transform: scale(0.98); }
 
-        /* Панель ресурсов в самой игре (Защита от Челки сверху) */
+        /* Панель ресурсов + Общий Таймер игры */
+        .top-panel-wrapper {
+            background: var(--panel-bg);
+            border-bottom: 2px solid rgba(255, 215, 0, 0.15);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-clock-bar {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--gold);
+            background: rgba(0, 0, 0, 0.25);
+            padding: 4px 0;
+            font-weight: bold;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            padding-top: calc(4px + env(safe-area-inset-top));
+        }
+
         header {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 6px;
             padding: 8px;
-            padding-top: calc(8px + env(safe-area-inset-top));
             padding-left: calc(8px + env(safe-area-inset-left));
             padding-right: calc(8px + env(safe-area-inset-right));
-            background: var(--panel-bg);
-            border-bottom: 2px solid rgba(255, 215, 0, 0.15);
-            z-index: 10;
         }
 
         .resource-card {
@@ -187,7 +196,7 @@
         .res-val { font-size: 1.15rem; font-weight: bold; margin-top: 1px; }
         .res-inc { font-size: 0.65rem; color: #cbd5e1; opacity: 0.8; }
 
-        /* Зона математики */
+        /* Игровая зона */
         .game-space {
             flex: 1;
             position: relative;
@@ -196,7 +205,7 @@
             justify-content: center;
             align-items: center;
             padding: 10px;
-            min-height: 0; /* Важно для гибкого сжатия flex-элементов */
+            min-height: 0;
         }
 
         #cityCanvas {
@@ -233,18 +242,10 @@
             font-size: 0.8rem;
             font-weight: bold;
             box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
-            transition: transform 0.2s;
         }
-        
         .combo-badge.frenzy {
             background: linear-gradient(45deg, #a855f7, #ec4899);
             box-shadow: 0 0 20px rgba(168, 85, 247, 0.8);
-            animation: pulse 1s infinite alternate;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.08); }
         }
 
         .speed-badge {
@@ -271,10 +272,8 @@
         }
 
         .timer-bar {
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             background: var(--cyan);
-            transition: width 0.1s linear, background-color 0.3s;
         }
 
         .math-question {
@@ -300,11 +299,9 @@
             font-size: 1.25rem;
             font-weight: bold;
             cursor: pointer;
-            transition: transform 0.1s, background 0.1s;
         }
         .btn-answer:active { transform: scale(0.95); background: rgba(6, 182, 212, 0.2); }
 
-        /* Всплывающие анимации */
         .floating-text {
             position: absolute;
             pointer-events: none;
@@ -313,11 +310,10 @@
             z-index: 5;
             animation: floatUp 0.8s ease-out forwards;
         }
-        
         .floating-text.crit-anim {
             font-size: 2.3rem;
-            text-shadow: 0 0 20px var(--gold), 0 0 40px var(--gold);
-            animation: critStay 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            text-shadow: 0 0 20px var(--gold);
+            animation: floatUp 1.2s ease-out forwards;
         }
 
         @keyframes floatUp {
@@ -325,54 +321,71 @@
             100% { transform: translate(-50%, -85px) scale(1.15); opacity: 0; }
         }
 
-        /* Панель улучшений (Защита низа + Скролл) */
+        /* Панель улучшений с Категориями */
         .control-panel {
             background: var(--panel-bg);
             backdrop-filter: blur(15px);
             border-top: 2px solid rgba(255, 255, 255, 0.08);
-            padding: 10px;
+            padding: 8px;
             padding-bottom: calc(10px + env(safe-area-inset-bottom));
             padding-left: calc(10px + env(safe-area-inset-left));
             padding-right: calc(10px + env(safe-area-inset-right));
             z-index: 10;
-            max-height: 40vh;
+            max-height: 42vh;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
         }
 
-        .panel-title {
-            font-size: 0.8rem;
+        /* Заголовки-разделители для групп товаров */
+        .shop-cat-header {
+            font-size: 0.72rem;
             text-transform: uppercase;
-            margin-bottom: 8px;
-            letter-spacing: 2px;
-            color: #94a3b8;
-            text-align: center;
+            color: var(--cyan);
+            letter-spacing: 1px;
+            margin: 10px 0 5px 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: bold;
+            opacity: 0.9;
         }
+        .shop-cat-header::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(6, 182, 212, 0.15);
+        }
+        .shop-cat-header.upg-header { color: var(--gold); }
+        .shop-cat-header.upg-header::after { background: rgba(255, 215, 0, 0.15); }
+        .shop-cat-header.glory-header { color: var(--royal); }
+        .shop-cat-header.glory-header::after { background: rgba(168, 85, 247, 0.15); }
 
         .build-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 6px;
+            gap: 5px;
         }
 
         .btn-build {
             background: rgba(255, 255, 255, 0.01);
             border: 1px solid rgba(255, 255, 255, 0.07);
-            border-radius: 12px;
-            padding: 10px 8px;
+            border-radius: 10px;
+            padding: 9px 7px;
             color: white;
             text-align: left;
             position: relative;
         }
         .btn-build:active { transform: scale(0.97); }
-        .btn-build .name { font-size: 0.8rem; font-weight: bold; display: block; color: #f1f5f9; }
+        .btn-build .name { font-size: 0.78rem; font-weight: bold; display: block; color: #f1f5f9; }
         .btn-build .effect-desc { font-size: 0.62rem; color: #38bdf8; display: block; font-style: italic; margin-top: 1px; }
         .btn-build[data-cat="upgrade"] .effect-desc { color: var(--gold); }
+        .btn-build[data-cat="glory"] .effect-desc { color: #e9d5ff; }
         .btn-build .cost { font-size: 0.65rem; color: #94a3b8; margin-top: 4px; display: block; }
-        .btn-build .count { position: absolute; right: 8px; top: 10px; font-size: 0.75rem; font-weight: bold; opacity: 0.3; }
+        .btn-build .count { position: absolute; right: 8px; top: 8px; font-size: 0.75rem; font-weight: bold; opacity: 0.3; }
 
         .btn-build.available[data-cat="prod"] { border-color: #38bdf8; }
         .btn-build.available[data-cat="upgrade"] { border-color: var(--gold); }
+        .btn-build.available[data-cat="glory"] { border-color: var(--royal); }
 
         .btn-final {
             grid-column: span 2;
@@ -380,7 +393,7 @@
             border: 1px solid var(--royal);
             text-align: center;
             padding: 12px;
-            margin-top: 4px;
+            margin-top: 8px;
         }
         .btn-final .name { color: #f3e8ff; font-size: 0.85rem; display: block; }
         .btn-final.available { box-shadow: 0 0 15px rgba(168, 85, 247, 0.6); border-color: #c084fc; }
@@ -394,52 +407,35 @@
         }
         .win-screen.active { opacity: 1; pointer-events: auto; }
 
-        /* 
-           СПЕЦИАЛЬНЫЙ АДАПТИВ ДЛЯ АЛЬБОМНЫХ ПЛАНШЕТОВ И НИЗКИХ ЭКРАНОВ (iPad Landscape)
-           Сжимает интерфейс по вертикали, чтобы абсолютно всё помещалось без вылетов
-        */
+        /* Адаптив под низкие экраны / iPad ландшафт */
         @media (max-height: 650px) {
+            .game-clock-bar { padding-top: calc(2px + env(safe-area-inset-top)); padding-bottom: 2px; font-size: 0.75rem; }
             header {
-                grid-template-columns: repeat(4, 1fr); /* Выстраиваем ресурсы в 1 линию вместо 2х */
+                grid-template-columns: repeat(4, 1fr);
                 padding: 4px;
-                padding-top: calc(4px + env(safe-area-inset-top));
             }
-            .resource-card { padding: 4px; }
+            .resource-card { padding: 3px; }
             .res-label { font-size: 0.65rem; }
             .res-val { font-size: 0.95rem; }
-            .res-inc { font-size: 0.6rem; }
+            .res-inc { font-size: 0.58rem; }
 
-            .math-box {
-                padding: 8px 12px;
-                max-width: 420px; /* Делаем чуть шире в ландшафте */
-            }
-            .math-question {
-                font-size: 1.6rem;
-                margin-bottom: 6px;
-            }
-            .timer-bar-container { margin-bottom: 8px; }
-            .btn-answer {
-                padding: 8px;
-                font-size: 1.1rem;
-            }
-            .control-panel {
-                max-height: 35vh;
-            }
-            .build-grid {
-                grid-template-columns: repeat(4, 1fr); /* Кнопки магазина в 4 колонки, чтобы занимали меньше высоты */
-            }
-            .btn-final {
-                grid-column: span 4;
-                padding: 8px;
-            }
-            .btn-build .name { font-size: 0.72rem; }
-            .btn-build .effect-desc { font-size: 0.58rem; }
+            .math-box { padding: 8px 12px; max-width: 420px; }
+            .math-question { font-size: 1.5rem; margin-bottom: 4px; }
+            .timer-bar-container { margin-bottom: 6px; }
+            .btn-answer { padding: 6px; font-size: 1.1rem; }
+            
+            .control-panel { max-height: 36vh; padding: 4px; }
+            .shop-cat-header { margin: 6px 0 3px 2px; font-size: 0.68rem; }
+            .build-grid { grid-template-columns: repeat(4, 1fr); gap: 4px; }
+            .btn-build .name { font-size: 0.7rem; }
+            .btn-build .effect-desc { font-size: 0.55rem; }
+            .btn-build .count { right: 4px; top: 4px; font-size: 0.65rem; }
+            .btn-final { grid-column: span 4; padding: 8px; margin-top: 4px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- ЭКРАН 1: Выбор Обета -->
     <div class="modal-screen" id="startScreen">
         <h1 class="start-title">🏛️ Орден Света</h1>
         <p class="start-subtitle">Выберите Обет Научной Цели на эту эпоху:</p>
@@ -467,7 +463,6 @@
         </div>
     </div>
 
-    <!-- ЭКРАН 2: Манускрипт Познания -->
     <div class="modal-screen" id="briefingScreen" style="display: none;">
         <h1 class="start-title" style="color: var(--cyan);">📜 Манускрипт Познания</h1>
         <p class="start-subtitle">Изучите устройство Цитадели перед началом работы:</p>
@@ -476,74 +471,65 @@
             <div class="info-section-title">✨ Базовые Ресурсы Цитадели</div>
             <div class="info-row">
                 <div class="info-icon">🪙</div>
-                <div class="info-text"><strong>Таланты (Золото)</strong><span>Главная валюта Ордена. Добывается правильными ответами. Нужна для покупки всех зданий и трактатов.</span></div>
+                <div class="info-text"><strong>Таланты (Золото)</strong><span>Валюта Ордена. Добывается правильными ответами и постройками.</span></div>
             </div>
             <div class="info-row">
                 <div class="info-icon">🧱</div>
-                <div class="info-text"><strong>Строительный Камень</strong><span>Материал для расширения Цитадели. Производится Каменоломнями. Внимание: Ошибки в примерах разрушают стены (-6 🧱)!</span></div>
+                <div class="info-text"><strong>Строительный Камень</strong><span>Материал для стен. Внимание: Ошибки разрушают стены (-6 🧱)!</span></div>
             </div>
             <div class="info-row">
                 <div class="info-icon">📜</div>
-                <div class="info-text"><strong>Манускрипты</strong><span>Древние свитки знаний. Генерируются Архивами. Открывают доступ к высоким целям и продвинутым наукам.</span></div>
+                <div class="info-text"><strong>Манускрипты</strong><span>Свитки знаний. Открывают высокие технологии.</span></div>
             </div>
             <div class="info-row">
                 <div class="info-icon">👑</div>
-                <div class="info-text"><strong>Слава Ордена (%)</strong><span>Признание королевства. Пассивно растет от Университетов и Патентов. Обязательное условие для сдачи Экзамена.</span></div>
+                <div class="info-text"><strong>Слава Ордена (%)</strong><span>Признание королевства. Обязательно для сдачи Экзамена.</span></div>
             </div>
 
-            <div class="info-section-title">📐 Великие Архитектуры и Улучшения</div>
+            <div class="info-section-title">📐 Строительство и Улучшения</div>
             <div class="info-row">
-                <div class="info-icon">🏫</div>
-                <div class="info-text"><strong>Школа Писцов / Каменоломня / Архив</strong><span>Постройки автоматического дохода. Генерируют ресурсы каждую секунду, приближая вас к цели пассивно.</span></div>
-            </div>
-            <div class="info-row">
-                <div class="info-icon">📖</div>
-                <div class="info-text"><strong>Учебник Множителей</strong><span>Увеличивает силу вашего ума. Каждая покупка добавляет +6 к базовой награде за клик (правильный ответ).</span></div>
-            </div>
-            <div class="info-row">
-                <div class="info-icon">📿</div>
-                <div class="info-text"><strong>Счетные Четки (Криты)</strong><span>Повышают вероятность критического счета на 8%. Критический удар умножает текущую награду в 4 раза!</span></div>
+                <div class="info-icon">🌾</div>
+                <div class="info-text"><strong>Производство ресурсов</strong><span>Автоматические постройки пассивного дохода ресурсов в секунду.</span></div>
             </div>
             <div class="info-row">
                 <div class="info-icon">📐</div>
-                <div class="info-text"><strong>Циркуль Магистра (Скидки)</strong><span>Оптимизирует логистику. Снижает стоимость вообще ВСЕХ зданий и улучшений в магазине на 6% (эффект складывается!).</span></div>
+                <div class="info-text"><strong>Сила ума и Точность</strong><span>Клик-улучшения. Повышают базовый доход с примера, скидки и шанс х4 крита.</span></div>
             </div>
-            
-            <div class="info-section-title">🔥 Важнейшее правило: Ударный Режим</div>
             <div class="info-row">
-                <div class="info-icon">⚡</div>
-                <div class="info-text"><strong>Точность превыше всего!</strong><span>Каждый правильный ответ растит вашу серию (Комбо 🔥). Серия увеличивает награду экспоненциально! Мягкий таймер дает бонус до +50% за скорость, но если время выйдет — серия НЕ сбросится.</span></div>
+                <div class="info-icon">👑</div>
+                <div class="info-text"><strong>Величие Ордена</strong><span>Науки, генерирующие проценты Славы.</span></div>
             </div>
         </div>
 
         <button class="btn-start-game" onclick="startGame()">⚔️ Вступить в Орден Счета</button>
     </div>
 
-    <!-- Ресурсы в игре -->
-    <header>
-        <div class="resource-card">
-            <div class="res-label">🪙 Таланты</div>
-            <div class="res-val" id="val-gold">0</div>
-            <div class="res-inc" id="inc-gold">+0/с</div>
-        </div>
-        <div class="resource-card">
-            <div class="res-label">🧱 Камень</div>
-            <div class="res-val" id="val-steel">0</div>
-            <div class="res-inc" id="inc-steel">+0/с</div>
-        </div>
-        <div class="resource-card">
-            <div class="res-label">📜 Манускрипты</div>
-            <div class="res-val" id="val-scrolls">0</div>
-            <div class="res-inc" id="inc-scrolls">+0/с</div>
-        </div>
-        <div class="resource-card">
-            <div class="res-label">👑 Слава Ордена</div>
-            <div class="res-val" id="val-glory">0%</div>
-            <div class="res-inc" id="inc-glory">+0%/с</div>
-        </div>
-    </header>
+    <div class="top-panel-wrapper">
+        <div class="game-clock-bar" id="gameClock">⏳ Время Эпохи: 00:00</div>
+        <header>
+            <div class="resource-card">
+                <div class="res-label">🪙 Таланты</div>
+                <div class="res-val" id="val-gold">0</div>
+                <div class="res-inc" id="inc-gold">+0/с</div>
+            </div>
+            <div class="resource-card">
+                <div class="res-label">🧱 Камень</div>
+                <div class="res-val" id="val-steel">0</div>
+                <div class="res-inc" id="inc-steel">+0/с</div>
+            </div>
+            <div class="resource-card">
+                <div class="res-label">📜 Манускрипты</div>
+                <div class="res-val" id="val-scrolls">0</div>
+                <div class="res-inc" id="inc-scrolls">+0/с</div>
+            </div>
+            <div class="resource-card">
+                <div class="res-label">👑 Слава</div>
+                <div class="res-val" id="val-glory">0%</div>
+                <div class="res-inc" id="inc-glory">+0%/с</div>
+            </div>
+        </header>
+    </div>
 
-    <!-- Игровая зона -->
     <div class="game-space">
         <canvas id="cityCanvas"></canvas>
         <div class="math-box">
@@ -559,9 +545,9 @@
         </div>
     </div>
 
-    <!-- Панель магазина -->
     <div class="control-panel">
-        <div class="panel-title">Строительство и Трактаты</div>
+        
+        <div class="shop-cat-header">🌾 Производство ресурсов</div>
         <div class="build-grid">
             <button class="btn-build" data-type="abacus" data-cat="prod" id="btn-abacus">
                 <span class="name">🏫 Школа Писцов</span>
@@ -581,34 +567,41 @@
                 <span class="cost" id="cost-scriptorium">...</span>
                 <span class="count" id="cnt-scriptorium">0</span>
             </button>
-            <button class="btn-build" data-type="geometry" data-cat="prod" id="btn-geometry">
-                <span class="name">🏛️ Университет</span>
-                <span class="effect-desc">Дает: +2 🪙, +0.1% 👑</span>
-                <span class="cost" id="cost-geometry">...</span>
-                <span class="count" id="cnt-geometry">0</span>
-            </button>
+        </div>
 
+        <div class="shop-cat-header upg-header">📐 Сила ума и Точность</div>
+        <div class="build-grid">
             <button class="btn-build" data-type="book" data-cat="upgrade" id="btn-book">
                 <span class="name">📖 Учебник</span>
-                <span class="effect-desc">Клик: +6 баз. нагр.</span>
+                <span class="effect-desc">Клик: +6 баз. награды</span>
                 <span class="cost" id="cost-book">...</span>
                 <span class="count" id="cnt-book">0</span>
             </button>
             <button class="btn-build" data-type="compass" data-cat="upgrade" id="btn-compass">
-                <span class="name">📿 Четки</span>
-                <span class="effect-desc">Крит: Шанс +8%</span>
+                <span class="name">📿 Счетные Четки</span>
+                <span class="effect-desc">Крит: Шанс х4 равен +8%</span>
                 <span class="cost" id="cost-compass">...</span>
                 <span class="count" id="cnt-compass">0</span>
             </button>
             <button class="btn-build" data-type="theorem" data-cat="upgrade" id="btn-theorem">
-                <span class="name">📐 Циркуль</span>
-                <span class="effect-desc">Скидка: -6% цен</span>
+                <span class="name">📐 Циркуль Магистра</span>
+                <span class="effect-desc">Скидка: -6% на все цены</span>
                 <span class="cost" id="cost-theorem">...</span>
                 <span class="count" id="cnt-theorem">0</span>
             </button>
-            <button class="btn-build" data-type="patent" data-cat="upgrade" id="btn-patent">
-                <span class="name">📜 Патент</span>
-                <span class="effect-desc">Дает: +0.15% 👑/сек</span>
+        </div>
+
+        <div class="shop-cat-header glory-header">👑 Величие и Слава Ордена</div>
+        <div class="build-grid">
+            <button class="btn-build" data-type="geometry" data-cat="glory" id="btn-geometry">
+                <span class="name">🏛️ Университет</span>
+                <span class="effect-desc">Дает: +2 🪙 и +0.1% 👑/с</span>
+                <span class="cost" id="cost-geometry">...</span>
+                <span class="count" id="cnt-geometry">0</span>
+            </button>
+            <button class="btn-build" data-type="patent" data-cat="glory" id="btn-patent">
+                <span class="name">📜 Королевский Патент</span>
+                <span class="effect-desc">Дает: +0.15% 👑 Славы/с</span>
                 <span class="cost" id="cost-patent">...</span>
                 <span class="count" id="cnt-patent">0</span>
             </button>
@@ -620,9 +613,8 @@
         </div>
     </div>
 
-    <!-- Победный Экран -->
     <div class="win-screen" id="winScreen">
-        <h1 style="color:var(--gold); font-size:2.2rem; margin-bottom:15px;">Облик Триомфа!</h1>
+        <h1 style="color:var(--gold); font-size:2.2rem; margin-bottom:15px;">Облик Триумфа!</h1>
         <p id="winDesc" style="padding:0 25px; color:#94a3b8; line-height:1.5;"></p>
         <button style="margin-top:30px; padding:12px 25px; background:var(--gold); border:none; border-radius:8px; font-weight:bold;" onclick="location.reload()">Выбрать новую цель</button>
     </div>
@@ -638,6 +630,7 @@
 
         let activeMode = modes.medium;
         let gameActive = false;
+        let totalSeconds = 0; // Общее время раунда
 
         const state = {
             gold: 100, steel: 40, scrolls: 0, glory: 0,
@@ -679,6 +672,7 @@
         function startGame() {
             document.getElementById('briefingScreen').style.display = 'none';
             gameActive = true;
+            totalSeconds = 0; // Сброс таймера игры
             resizeCanvas();
             generateMath();
             updateUI();
@@ -695,7 +689,6 @@
             clearInterval(timerInterval);
             timeRemaining = 100;
             document.getElementById('timerBar').style.width = '100%';
-            document.getElementById('timerBar').style.backgroundColor = 'var(--cyan)';
             
             timerInterval = setInterval(() => {
                 if(!gameActive) return;
@@ -719,20 +712,16 @@
             let n1, n2, text;
 
             if (type === '+') {
-                n1 = Math.floor(Math.random() * 55) + 10;
-                n2 = Math.floor(Math.random() * 55) + 10;
+                n1 = Math.floor(Math.random() * 55) + 10; n2 = Math.floor(Math.random() * 55) + 10;
                 correctAnswer = n1 + n2; text = `${n1} + ${n2}`;
             } else if (type === '-') {
-                n1 = Math.floor(Math.random() * 90) + 10;
-                n2 = Math.floor(Math.random() * n1);
+                n1 = Math.floor(Math.random() * 90) + 10; n2 = Math.floor(Math.random() * n1);
                 correctAnswer = n1 - n2; text = `${n1} - ${n2}`;
             } else if (type === '*') {
-                n1 = Math.floor(Math.random() * 11) + 2;
-                n2 = Math.floor(Math.random() * 11) + 2;
+                n1 = Math.floor(Math.random() * 11) + 2; n2 = Math.floor(Math.random() * 11) + 2;
                 correctAnswer = n1 * n2; text = `${n1} × ${n2}`;
             } else { 
-                n2 = Math.floor(Math.random() * 9) + 2;
-                correctAnswer = Math.floor(Math.random() * 11) + 2;
+                n2 = Math.floor(Math.random() * 9) + 2; correctAnswer = Math.floor(Math.random() * 11) + 2;
                 n1 = n2 * correctAnswer; text = `${n1} ÷ ${n2}`;
             }
 
@@ -749,8 +738,7 @@
             grid.innerHTML = '';
             arr.forEach(ans => {
                 const b = document.createElement('button');
-                b.className = 'btn-answer';
-                b.innerText = ans;
+                b.className = 'btn-answer'; b.innerText = ans;
                 b.onclick = () => checkAnswer(ans);
                 grid.appendChild(b);
             });
@@ -774,28 +762,23 @@
                 const badge = document.getElementById('comboBadge');
                 badge.style.display = 'inline-block';
                 badge.innerText = `Серия: 🔥 x${comboMultiplier.toFixed(1)}`;
-                
-                if (state.combo >= 5) badge.classList.add('frenzy');
-                else badge.classList.remove('frenzy');
+                if (state.combo >= 5) badge.classList.add('frenzy'); else badge.classList.remove('frenzy');
 
                 if(isCrit) {
                     spawnText(`⚡ КРИТ! +${reward} 🪙`, px, py, 'var(--gold)', true);
-                    document.body.style.backgroundColor = "rgba(255, 215, 0, 0.22)";
-                    setTimeout(() => document.body.style.backgroundColor = "var(--bg-dark)", 180);
-                    buildSparks(40, 'var(--gold)');
+                    buildSparks(35, 'var(--gold)');
                 } else {
                     spawnText(`+${reward} 🪙`, px, py, 'var(--cyan)', false);
-                    buildSparks(15, 'var(--cyan)');
+                    buildSparks(12, 'var(--cyan)');
                 }
             } else {
                 state.combo = 0;
                 const badge = document.getElementById('comboBadge');
-                badge.style.display = 'none';
-                badge.classList.remove('frenzy');
+                badge.style.display = 'none'; badge.classList.remove('frenzy');
                 
                 state.steel = Math.max(0, state.steel - 6);
                 spawnText('Ошибка! -6 🧱', px, py, '#ef4444', false);
-                buildSparks(12, '#ef4444');
+                buildSparks(10, '#ef4444');
             }
             generateMath();
             updateUI();
@@ -806,9 +789,10 @@
             el.className = isCrit ? 'floating-text crit-anim' : 'floating-text';
             el.innerText = txt; el.style.left = `${x}px`; el.style.top = `${y}px`; el.style.color = color;
             document.body.appendChild(el);
-            setTimeout(() => el.remove(), isCrit ? 1500 : 800);
+            setTimeout(() => el.remove(), isCrit ? 1200 : 800);
         }
 
+        // Искра
         class Spark {
             constructor(x, y, color) {
                 this.x = x; this.y = y;
@@ -828,10 +812,10 @@
         }
 
         setInterval(() => {
-            if(particles.length < 20) {
-                particles.push(new Spark(Math.random() * canvas.width, canvas.height + 10, Math.random() > 0.6 ? '#f59e0b' : '#334155'));
+            if(particles.length < 15) {
+                particles.push(new Spark(Math.random() * canvas.width, canvas.height + 10, '#222533'));
             }
-        }, 250);
+        }, 300);
 
         function animate() {
             ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -839,6 +823,12 @@
             requestAnimationFrame(animate);
         }
         animate();
+
+        function formatTime(sec) {
+            let m = Math.floor(sec / 60).toString().padStart(2, '0');
+            let s = (sec % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
 
         function updateUI() {
             document.getElementById('val-gold').innerText = Math.floor(state.gold);
@@ -861,7 +851,8 @@
                 if(g > 0) str += `${g} 🪙 `;
                 if(s > 0) str += `${s} 🧱 `;
                 if(sc > 0) str += `${sc} 📜`;
-                document.getElementById(`cost-${key}`).innerText = str;
+                let costEl = document.getElementById(`cost-${key}`);
+                if(costEl) costEl.innerText = str;
 
                 let canBuy = state.gold >= g && state.steel >= s && state.scrolls >= sc;
                 let btn = document.getElementById(`btn-${key}`);
@@ -876,12 +867,18 @@
                                state.glory >= activeMode.targetGl;
 
             let finalBtn = document.getElementById('btn-exam');
-            if(winCondition) finalBtn.classList.add('available');
-            else finalBtn.classList.remove('available');
+            if(winCondition) finalBtn.classList.add('available'); else finalBtn.classList.remove('available');
         }
 
+        // Основной Ежесекундный Тик (Ресурсы + Таймер игры)
         setInterval(() => {
             if(!gameActive) return;
+            
+            // Таймер эпохи
+            totalSeconds++;
+            document.getElementById('gameClock').innerText = `⏳ Время Эпохи: ${formatTime(totalSeconds)}`;
+
+            // Доход ресурсов
             state.gold += state.income.gold;
             state.steel += state.income.steel;
             state.scrolls += state.income.scrolls;
@@ -901,9 +898,9 @@
                                        state.glory >= activeMode.targetGl;
                     if(winCondition) {
                         gameActive = false;
-                        document.getElementById('winDesc').innerText = activeMode.desc;
-                        document.getElementById('winScreen').classList.add('active');
                         clearInterval(timerInterval);
+                        document.getElementById('winDesc').innerText = `${activeMode.desc}\nВремя прохождения: ${formatTime(totalSeconds)}`;
+                        document.getElementById('winScreen').classList.add('active');
                     }
                     return;
                 }
