@@ -34,7 +34,7 @@
             background-color: var(--bg-dark);
             color: var(--text-light);
             display: flex;
-            flex-direction: column; /* Жесткая вертикальная структура */
+            flex-direction: column;
             background: radial-gradient(circle at center, #111428 0%, #06070a 100%);
         }
 
@@ -151,9 +151,9 @@
             box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
         }
 
-        /* Панель ресурсов + Общий Таймер игры */
+        /* Шапка ресурсов */
         .top-panel-wrapper {
-            flex-shrink: 0; /* Шапка никогда не сжимается */
+            flex-shrink: 0;
             background: var(--panel-bg);
             border-bottom: 2px solid rgba(255, 215, 0, 0.15);
             z-index: 10;
@@ -175,7 +175,7 @@
 
         header {
             display: grid;
-            grid-template-columns: repeat(4, 1fr); /* Сразу делаем 4 колонки в ряд для экономии места по высоте */
+            grid-template-columns: repeat(4, 1fr);
             gap: 6px;
             padding: 8px;
             padding-left: calc(8px + env(safe-area-inset-left));
@@ -197,16 +197,16 @@
         .res-val { font-size: 1.05rem; font-weight: bold; margin-top: 1px; text-align: center; }
         .res-inc { font-size: 0.6rem; color: #cbd5e1; opacity: 0.8; text-align: center; }
 
-        /* ИГРОВАЯ ЗОНА: Теперь она динамически занимает ВСЁ свободное пространство по центру */
+        /* Игровая зона */
         .game-space {
-            flex: 1; /* Ключевое исправление: забирает остаток высоты экрана */
+            flex: 1;
             position: relative;
             display: flex;
             flex-direction: column;
-            justify-content: center; /* Идеальное центрирование по вертикали */
-            align-items: center;    /* Идеальное центрирование по горизонтали */
+            justify-content: center;
+            align-items: center;
             padding: 10px;
-            min-height: 0; /* Предотвращает раздувание во flex-контейнерах */
+            min-height: 0;
         }
 
         #cityCanvas {
@@ -337,9 +337,9 @@
             100% { transform: translate(-50%, -140px) scale(0.8); opacity: 0; }
         }
 
-        /* НИЖНЯЯ ПАНЕЛЬ МАГАЗИНА: Теперь аккуратно сидит внизу */
+        /* НИЖНЯЯ ПАНЕЛЬ МАГАЗИНА */
         .control-panel {
-            flex-shrink: 0; /* Магазин не сжимается, у него фиксированный приоритет */
+            flex-shrink: 0;
             background: var(--panel-bg);
             backdrop-filter: blur(15px);
             border-top: 2px solid rgba(255, 255, 255, 0.08);
@@ -348,7 +348,7 @@
             padding-left: calc(10px + env(safe-area-inset-left));
             padding-right: calc(10px + env(safe-area-inset-right));
             z-index: 10;
-            max-height: 38vh; /* Уменьшили максимальную высоту, чтобы оставить больше воздуха игре */
+            max-height: 40vh;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
         }
@@ -421,7 +421,6 @@
         }
         .win-screen.active { opacity: 1; pointer-events: auto; }
 
-        /* Оптимизация под маленькие экраны по высоте (смартфоны в ландшафте или мелкие девайсы) */
         @media (max-height: 600px) {
             header { padding: 4px; gap: 4px; }
             .resource-card { padding: 4px; }
@@ -432,7 +431,7 @@
             .math-question { font-size: 1.6rem; margin-bottom: 6px; }
             .btn-answer { padding: 8px; font-size: 1.1rem; border-radius: 8px; }
 
-            .control-panel { max-height: 35vh; }
+            .control-panel { max-height: 38vh; }
             .build-grid { grid-template-columns: repeat(3, 1fr); gap: 4px; }
             .btn-final { grid-column: span 3; padding: 8px; }
         }
@@ -440,7 +439,6 @@
 </head>
 <body>
 
-    <!-- ЭКРАН 1: Выбор Обета -->
     <div class="modal-screen" id="startScreen">
         <h1 class="start-title">🏛️ Орден Света</h1>
         <p class="start-subtitle">Выберите Обет Научной Цели на эту эпоху:</p>
@@ -468,7 +466,6 @@
         </div>
     </div>
 
-    <!-- ЭКРАН 2: Манускрипт Познания -->
     <div class="modal-screen" id="briefingScreen" style="display: none;">
         <h1 class="start-title" style="color: var(--cyan);">📜 Манускрипт Познания</h1>
         <p class="start-subtitle">Изучите устройство Цитадели перед началом работы:</p>
@@ -491,26 +488,11 @@
                 <div class="info-icon">👑</div>
                 <div class="info-text"><strong>Слава Ордена (%)</strong><span>Признание королевства. Обязательно для сдачи Экзамена.</span></div>
             </div>
-
-            <div class="info-section-title">📐 Строительство и Улучшения</div>
-            <div class="info-row">
-                <div class="info-icon">🌾</div>
-                <div class="info-text"><strong>Производство ресурсов</strong><span>Автоматические постройки пассивного дохода ресурсов в секунду.</span></div>
-            </div>
-            <div class="info-row">
-                <div class="info-icon">📐</div>
-                <div class="info-text"><strong>Сила ума и Точность</strong><span>Клик-улучшения. Повышают базовый доход с примера, скидки и шанс х4 крита.</span></div>
-            </div>
-            <div class="info-row">
-                <div class="info-icon">👑</div>
-                <div class="info-text"><strong>Величие Ордена</strong><span>Науки, генерирующие проценты Славы.</span></div>
-            </div>
         </div>
 
         <button class="btn-start-game" onclick="startGame()">⚔️ Вступить в Орден Счета</button>
     </div>
 
-    <!-- Шапка ресурсов -->
     <div class="top-panel-wrapper">
         <div class="game-clock-bar" id="gameClock">⏳ Время Эпохи: 00:00</div>
         <header>
@@ -537,7 +519,6 @@
         </header>
     </div>
 
-    <!-- Игровая зона (Центральная, полностью безопасная область) -->
     <div class="game-space">
         <canvas id="cityCanvas"></canvas>
         <div class="math-box">
@@ -553,7 +534,6 @@
         </div>
     </div>
 
-    <!-- Панель магазина -->
     <div class="control-panel">
         <div class="shop-cat-header">🌾 Производство ресурсов</div>
         <div class="build-grid">
@@ -575,6 +555,12 @@
                 <span class="cost" id="cost-scriptorium">...</span>
                 <span class="count" id="cnt-scriptorium">0</span>
             </button>
+            <button class="btn-build" data-type="alchemical" data-cat="prod" id="btn-alchemical">
+                <span class="name">⚗️ Алхим. Фабрика</span>
+                <span class="effect-desc">Дает: +3 🧱 и +1 📜/с</span>
+                <span class="cost" id="cost-alchemical">...</span>
+                <span class="count" id="cnt-alchemical">0</span>
+            </button>
         </div>
 
         <div class="shop-cat-header upg-header">📐 Сила ума и Точность</div>
@@ -585,17 +571,23 @@
                 <span class="cost" id="cost-book">...</span>
                 <span class="count" id="cnt-book">0</span>
             </button>
-            <button class="btn-build" data-type="compass" data-cat="upgrade" id="btn-compass">
-                <span class="name">📿 Счетные Четки</span>
-                <span class="effect-desc">Крит: Шанс х4 равен +8%</span>
-                <span class="cost" id="cost-compass">...</span>
-                <span class="count" id="cnt-compass">0</span>
-            </button>
             <button class="btn-build" data-type="theorem" data-cat="upgrade" id="btn-theorem">
                 <span class="name">📐 Циркуль Магистра</span>
                 <span class="effect-desc">Скидка: -6% на все цены</span>
                 <span class="cost" id="cost-theorem">...</span>
                 <span class="count" id="cnt-theorem">0</span>
+            </button>
+            <button class="btn-build" data-type="critChance" data-cat="upgrade" id="btn-critChance">
+                <span class="name">🎯 Точность Разума</span>
+                <span class="effect-desc" id="eff-critChance">Шанс крита: +8%</span>
+                <span class="cost" id="cost-critChance">...</span>
+                <span class="count" id="cnt-critChance">0</span>
+            </button>
+            <button class="btn-build" data-type="critMult" data-cat="upgrade" id="btn-critMult">
+                <span class="name">⚡ Заточка Крита</span>
+                <span class="effect-desc">Крит. урон: +1.0х к силе</span>
+                <span class="cost" id="cost-critMult">...</span>
+                <span class="count" id="cnt-critMult">0</span>
             </button>
         </div>
 
@@ -608,10 +600,16 @@
                 <span class="count" id="cnt-geometry">0</span>
             </button>
             <button class="btn-build" data-type="patent" data-cat="glory" id="btn-patent">
-                <span class="name">📜 Королевский Патент</span>
+                <span class="name">📜 Коралевский Патент</span>
                 <span class="effect-desc">Дает: +0.15% 👑 Славы/с</span>
                 <span class="cost" id="cost-patent">...</span>
                 <span class="count" id="cnt-patent">0</span>
+            </button>
+            <button class="btn-build" data-type="astral" data-cat="glory" id="btn-astral">
+                <span class="name">🌌 Астральное Знамение</span>
+                <span class="effect-desc">Дает: +0.6% 👑/с и +3 клик</span>
+                <span class="cost" id="cost-astral">...</span>
+                <span class="count" id="cnt-astral">0</span>
             </button>
 
             <button class="btn-build btn-final" data-type="exam" id="btn-exam">
@@ -621,9 +619,8 @@
         </div>
     </div>
 
-    <!-- Победный Экран -->
     <div class="win-screen" id="winScreen">
-        <h1 style="color:var(--gold); font-size:2.2rem; margin-bottom:15px;">Облик Triumpa!</h1>
+        <h1 style="color:var(--gold); font-size:2.2rem; margin-bottom:15px;">Облик Триумфа!</h1>
         <p id="winDesc" style="padding:0 25px; color:#94a3b8; line-height:1.5;"></p>
         <button style="margin-top:30px; padding:12px 25px; background:var(--gold); border:none; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="location.reload()">Выбрать новую цель</button>
     </div>
@@ -633,7 +630,7 @@
             easy: { name: "📜 ОБЕТ УЧЕНИКА", targetG: 2000, targetS: 0, targetSc: 0, targetGl: 20, desc: "Вы успешно завершили Спринт Ученика! Основы математики заложены идеально." },
             medium: { name: "⚔️ ОБЕТ РЫЦАРЯ СЧЕТА", targetG: 5000, targetS: 0, targetSc: 0, targetGl: 50, desc: "Вы с честью выполнили Обет Рыцаря! Ваша Цитадель процветает." },
             hard: { name: "🏛️ ОБЕТ МАГИСТРА", targetG: 10000, targetS: 0, targetSc: 0, targetGl: 100, desc: "Великолепно! Вы подтвердили звание истинного Магистра Математического Ордена." },
-            expert: { name: "👑 ОБЕТ ХРАНИТЕЛЯ ТАЙН", targetG: 25000, targetS: 0, targetSc: 5000, targetGl: 100, desc: "Поразительно! Все древние Манускрипты разгаданы, тайны вселенной открыты вам." },
+            expert: { name: "👑 ОБЕТ ХРАНИТЕЛЯ ТАЙН", targetG: 25000, targetS: 5000, targetSc: 2000, targetGl: 100, desc: "Поразительно! Все древние Манускрипты разгаданы, тайны вселенной открыты вам." },
             marathon: { name: "🪐 ТРИУМФ АБСОЛЮТНОГО ТИТАНА", targetG: 100000, targetS: 25000, targetSc: 10000, targetGl: 100, desc: "Невероятно! Это был великий Марафон. Вы создали бессмертную Империю Разума!" }
         };
 
@@ -643,17 +640,25 @@
 
         const state = {
             gold: 100, steel: 40, scrolls: 0, glory: 0,
-            clickBase: 12, combo: 0, critChance: 0, discount: 1.0,
+            clickBase: 12, combo: 0, 
+            critChance: 0.05, // Стартовый шанс 5%
+            critMultiplier: 4.0, // Стартовый множитель х4
+            discount: 1.0,
             income: { gold: 0, steel: 0, scrolls: 0, glory: 0 },
             buildings: {
-                abacus: { count: 0, baseG: 0, baseS: 30, baseSc: 0, curG: 0, curS: 30, curSc: 0 },
+                abacus: { count: 0, baseG: 25, baseS: 0, baseSc: 0, curG: 25, curS: 0, curSc: 0 },
                 blueprint: { count: 0, baseG: 40, baseS: 0, baseSc: 0, curG: 40, curS: 0, curSc: 0 },
                 scriptorium: { count: 0, baseG: 60, baseS: 30, baseSc: 0, curG: 60, curS: 30, curSc: 0 },
-                geometry: { count: 0, baseG: 100, baseS: 60, baseSc: 20, curG: 100, curS: 60, curSc: 20 },
-                book: { count: 0, baseG: 80, baseS: 0, baseSc: 10, curG: 80, curS: 0, curSc: 10 },
-                compass: { count: 0, baseG: 120, baseS: 40, baseSc: 0, curG: 120, curS: 40, curSc: 0 },
-                theorem: { count: 0, baseG: 150, baseS: 150, baseSc: 50, curG: 150, curS: 150, curSc: 50 },
-                patent: { count: 0, baseG: 200, baseS: 0, baseSc: 80, curG: 200, curS: 0, curSc: 80 }
+                alchemical: { count: 0, baseG: 150, baseS: 80, baseSc: 10, curG: 150, curS: 80, curSc: 10 }, // Новая фабрика
+                
+                book: { count: 0, baseG: 50, baseS: 10, baseSc: 0, curG: 50, curS: 10, curSc: 0 },
+                theorem: { count: 0, baseG: 120, baseS: 60, baseSc: 15, curG: 120, curS: 60, curSc: 15 },
+                critChance: { count: 0, baseG: 70, baseS: 30, baseSc: 5, curG: 70, curS: 30, curSc: 5 }, // Изменяемый шанс
+                critMult: { count: 0, baseG: 90, baseS: 40, baseSc: 10, curG: 90, curS: 40, curSc: 10 }, // Изменяемый урон
+                
+                geometry: { count: 0, baseG: 100, baseS: 50, baseSc: 20, curG: 100, curS: 50, curSc: 20 },
+                patent: { count: 0, baseG: 200, baseS: 0, baseSc: 40, curG: 200, curS: 0, curSc: 40 },
+                astral: { count: 0, baseG: 400, baseS: 150, baseSc: 80, curG: 400, curS: 150, curSc: 80 } // Новое величие
             }
         };
 
@@ -769,7 +774,7 @@
                 let comboMultiplier = 1 + (state.combo * 0.3);
                 let speedBonusPercent = 1 + (timeRemaining * 0.005); 
                 let isCrit = Math.random() < state.critChance;
-                let reward = Math.floor(state.clickBase * comboMultiplier * speedBonusPercent * (isCrit ? 4 : 1));
+                let reward = Math.floor(state.clickBase * comboMultiplier * speedBonusPercent * (isCrit ? state.critMultiplier : 1));
                 state.gold += reward;
                 
                 const badge = document.getElementById('comboBadge');
@@ -778,7 +783,7 @@
                 if (state.combo >= 5) badge.classList.add('frenzy'); else badge.classList.remove('frenzy');
 
                 if(isCrit) {
-                    spawnRewardText(`⚡ КРИТ! +${reward} 🪙`, clickX, clickY, 'var(--gold)', true);
+                    spawnRewardText(`⚡ КРИТ (${state.critMultiplier.toFixed(1)}x)! +${reward} 🪙`, clickX, clickY, 'var(--gold)', true);
                     buildSparks(35, 'var(--gold)');
                 } else {
                     spawnRewardText(`+${reward} 🪙`, clickX, clickY, '#22d3ee', false); 
@@ -849,6 +854,12 @@
             return `${m}:${s}`;
         }
 
+        // Функция для вычисления динамического следующего шанса крита (Diminishing returns)
+        function getNextCritGain(count) {
+            // Прибавка падает: 8%, 6%, 4.5%, 3.5%, 2.5%...
+            return Math.max(0.01, 0.08 * Math.pow(0.78, count));
+        }
+
         function updateUI() {
             document.getElementById('val-gold').innerText = Math.floor(state.gold);
             document.getElementById('val-steel').innerText = Math.floor(state.steel);
@@ -859,6 +870,10 @@
             document.getElementById('inc-steel').innerText = `+${state.income.steel}/с`;
             document.getElementById('inc-scrolls').innerText = `+${state.income.scrolls}/с`;
             document.getElementById('inc-glory').innerText = `+${state.income.glory.toFixed(2)}%/с`;
+
+            // Обновляем описание динамической прибавки в интерфейсе
+            let nextGain = (getNextCritGain(state.buildings.critChance.count) * 100).toFixed(1);
+            document.getElementById('eff-critChance').innerText = `Текущий: ${(state.critChance*100).toFixed(0)}% (След: +${nextGain}%)`;
 
             for (let key in state.buildings) {
                 let b = state.buildings[key];
@@ -927,20 +942,32 @@
 
                 if(state.gold >= g && state.steel >= s && state.scrolls >= sc) {
                     state.gold -= g; state.steel -= s; state.scrolls -= sc;
-                    b.count++;
-
+                    
+                    // Эффекты от покупки
                     if(type === 'abacus') state.income.gold += 1;
                     if(type === 'blueprint') state.income.steel += 1;
                     if(type === 'scriptorium') state.income.scrolls += 1;
-                    if(type === 'geometry') { state.income.glory += 0.1; state.income.gold += 2; }
+                    if(type === 'alchemical') { state.income.steel += 3; state.income.scrolls += 1; } // Эффект гибрида
+                    
                     if(type === 'book') state.clickBase += 6; 
-                    if(type === 'compass') state.critChance += 0.08; 
                     if(type === 'theorem') state.discount *= 0.94; 
+                    if(type === 'critChance') {
+                        state.critChance += getNextCritGain(b.count);
+                        if(state.critChance > 0.85) state.critChance = 0.85; // Лимит шанса 85%
+                    }
+                    if(type === 'critMult') state.critMultiplier += 1.0;
+                    
+                    if(type === 'geometry') { state.income.glory += 0.1; state.income.gold += 2; }
                     if(type === 'patent') state.income.glory += 0.15;
+                    if(type === 'astral') { state.income.glory += 0.6; state.clickBase += 3; } // Новое величие
 
-                    b.curG = Math.floor(b.baseG * Math.pow(1.16, b.count));
-                    b.curS = Math.floor(b.baseS * Math.pow(1.16, b.count));
-                    b.curSc = Math.floor(b.baseSc * Math.pow(1.16, b.count));
+                    b.count++;
+                    
+                    // Новое усложнение цен (для шанса крита множитель цены выше — 1.35x вместо обычного 1.18x)
+                    let priceMult = (type === 'critChance') ? 1.35 : 1.18;
+                    b.curG = Math.floor(b.baseG * Math.pow(priceMult, b.count));
+                    b.curS = Math.floor(b.baseS * Math.pow(priceMult, b.count));
+                    b.curSc = Math.floor(b.baseSc * Math.pow(priceMult, b.count));
 
                     document.getElementById(`cnt-${type}`).innerText = b.count;
                     updateUI();
