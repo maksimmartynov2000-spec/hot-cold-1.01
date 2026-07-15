@@ -53,7 +53,7 @@
             background: radial-gradient(circle at center, #111324 0%, #030408 100%);
             z-index: 200;
             display: flex; flex-direction: column;
-            justify-content: flex-start; align-items: center;
+            justify-content: center; align-items: center;
             padding: 20px;
             padding-top: calc(20px + env(safe-area-inset-top));
             padding-bottom: calc(20px + env(safe-area-inset-bottom));
@@ -66,47 +66,7 @@
         }
 
         .start-subtitle {
-            color: #94a3b8; font-size: 0.85rem; margin-bottom: 15px; text-align: center;
-        }
-
-        /* Стили для нового генератора настроек */
-        .setup-container {
-            width: 100%; max-width: 450px; background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
-            padding: 14px; margin-bottom: 15px;
-        }
-        .setup-group-title {
-            font-size: 0.85rem; text-transform: uppercase; color: var(--cyan);
-            margin-bottom: 8px; font-weight: bold; letter-spacing: 0.5px;
-        }
-        .setup-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 12px;
-        }
-        .setup-grid.thirds {
-            grid-template-columns: repeat(3, 1fr);
-        }
-        .setup-grid.fifths {
-            grid-template-columns: repeat(5, 1fr);
-        }
-        .btn-select {
-            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px; padding: 10px 6px; color: #cbd5e1; font-size: 0.8rem;
-            cursor: pointer; text-align: center; font-weight: bold; transition: all 0.2s;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-        }
-        .btn-select.active {
-            background: rgba(6, 182, 212, 0.15); border-color: var(--cyan); color: white;
-            box-shadow: 0 0 8px rgba(6, 182, 212, 0.3);
-        }
-        .btn-select.locked {
-            opacity: 0.4; cursor: not-allowed; background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.03);
-        }
-        .btn-select .sub-lock { font-size: 0.65rem; color: #ef4444; font-weight: normal; }
-
-        .btn-next-setup {
-            width: 100%; max-width: 450px; background: linear-gradient(45deg, #0284c7, #06b6d4);
-            border: none; color: white; padding: 14px; font-size: 1.05rem;
-            font-weight: bold; border-radius: 12px; cursor: pointer; text-align: center;
+            color: #94a3b8; font-size: 0.85rem; margin-bottom: 20px; text-align: center;
         }
 
         .mode-list {
@@ -228,6 +188,7 @@
         }
         .btn-answer:active { transform: scale(0.95); background: rgba(6, 182, 212, 0.2); }
 
+        /* Анимации наград укорочены на 20% */
         .floating-reward {
             position: fixed; pointer-events: none; font-weight: 900; font-size: 1.4rem; z-index: 300;
             font-family: 'Impact', 'Arial Black', sans-serif;
@@ -329,55 +290,7 @@
 </head>
 <body>
 
-    <div class="modal-screen" id="setupMathScreen">
-        <h1 class="start-title">📐 Конфигуратор Разума</h1>
-        <p class="start-subtitle">Настройте типы задач для текущей эпохи:</p>
-
-        <div class="setup-container">
-            <div class="setup-group-title">1. Режим генерации / Вид чисел</div>
-            <div class="setup-grid">
-                <button class="btn-select active" id="type-positive" onclick="toggleMathType('positive')">Положительные</button>
-                <button class="btn-select" id="type-negative" onclick="toggleMathType('negative')">Отрицательные</button>
-                <button class="btn-select locked" id="type-fraction">Обыкн. дроби <span class="sub-lock">🔒 в разраб.</span></button>
-                <button class="btn-select locked" id="type-decimal">Десятичные <span class="sub-lock">🔒 в разраб.</span></button>
-            </div>
-            <div class="setup-grid thirds">
-                <button class="btn-select" id="type-challenge" onclick="toggleSpecialMode('challenge')">⚔️ Испытание</button>
-                <button class="btn-select locked" id="type-reduction">Сокращение <span class="sub-lock">🔒 в разраб.</span></button>
-                <button class="btn-select locked" id="type-mixed">Смешанные <span class="sub-lock">🔒 в разраб.</span></button>
-            </div>
-            <div class="setup-grid">
-                <button class="btn-select locked" style="grid-column: span 2;" id="type-percent">📈 Проценты <span class="sub-lock">🔒 в разработке</span></button>
-            </div>
-        </div>
-
-        <div class="setup-container" id="operationsBlock">
-            <div class="setup-group-title">2. Математические операции</div>
-            <div class="setup-grid thirds">
-                <button class="btn-select active" id="op-add" onclick="toggleOp('add')">Сложение (+)</button>
-                <button class="btn-select active" id="op-sub" onclick="toggleOp('sub')">Вычитание (-)</button>
-                <button class="btn-select active" id="op-mul" onclick="toggleOp('mul')">Умножение (×</button>
-            </div>
-            <div class="setup-grid">
-                <button class="btn-select active" style="grid-column: span 2;" id="op-div" onclick="toggleOp('div')">Деление (÷)</button>
-            </div>
-        </div>
-
-        <div class="setup-container">
-            <div class="setup-group-title">3. Уровень сложности</div>
-            <div class="setup-grid fifths">
-                <button class="btn-select" id="diff-1" onclick="setDiff(1)">1</button>
-                <button class="btn-select" id="diff-2" onclick="setDiff(2)">2</button>
-                <button class="btn-select active" id="diff-3" onclick="setDiff(3)">3</button>
-                <button class="btn-select" id="diff-4" onclick="setDiff(4)">4</button>
-                <button class="btn-select" id="diff-5" onclick="setDiff(5)">5</button>
-            </div>
-        </div>
-
-        <button class="btn-next-setup" onclick="confirmSetup()">Далее: Выбрать Обет Цитадели ➡️</button>
-    </div>
-
-    <div class="modal-screen" id="startScreen" style="display: none;">
+    <div class="modal-screen" id="startScreen">
         <h1 class="start-title">🏛️ Орден Света</h1>
         <p class="start-subtitle">Выберите Обет Научной Цели на эту эпоху:</p>
         <div class="mode-list">
@@ -625,14 +538,6 @@
             document.getElementById(`m-desc-${key}`).innerText = `Цель: ${(modes[key].targetG/1000).toFixed(0)}k 🪙, ${modes[key].targetS} 🧱, ${modes[key].targetSc} 📜, ${modes[key].targetGl}% Славы.`;
         }
 
-        // ПЕРЕМЕННЫЕ НАСТРОЙКИ ГЕНЕРАТОРА ПРИМЕРОВ
-        let setupData = {
-            types: { positive: true, negative: false }, 
-            challengeMode: false,
-            operations: ['add', 'sub', 'mul', 'div'],
-            difficulty: 3
-        };
-
         let activeMode = modes.medium;
         let gameActive = false;
         let totalSeconds = 0;
@@ -643,6 +548,7 @@
         let blessArchitectDiscount = 1.0; 
         let speedBonusBaseFactor = 0.5; 
         let comboStepBonus = 0.35;       
+        
         let mentalBreakthroughLevel = 0; 
 
         const state = {
@@ -679,7 +585,6 @@
         };
 
         let correctAnswer = 0;
-        let isNoSolution = false; // Маркер деления на 0
         let timeRemaining = 100; 
         let timerInterval = null;
         const canvas = document.getElementById('cityCanvas');
@@ -689,62 +594,7 @@
         let megaShowActive = false;
         let megaShowTimer = 0;
         let bgFlashState = 0;
-        let isUltimateStorm = false; 
-
-        // ЛОГИКА ИНТЕРФЕЙСА НАСТРОЕК МАТЕМАТИКИ
-        function toggleMathType(type) {
-            setupData.challengeMode = false;
-            document.getElementById('type-challenge').classList.remove('active');
-            
-            if (type === 'positive') {
-                setupData.types.positive = true;
-                setupData.types.negative = false;
-                document.getElementById('type-positive').classList.add('active');
-                document.getElementById('type-negative').classList.remove('active');
-            } else if (type === 'negative') {
-                setupData.types.positive = false;
-                setupData.types.negative = true;
-                document.getElementById('type-positive').classList.remove('active');
-                document.getElementById('type-negative').classList.add('active');
-            }
-        }
-
-        function toggleSpecialMode(mode) {
-            if (mode === 'challenge') {
-                setupData.challengeMode = true;
-                setupData.types.positive = true;
-                setupData.types.negative = true;
-                document.getElementById('type-challenge').classList.add('active');
-                document.getElementById('type-positive').classList.remove('active');
-                document.getElementById('type-negative').classList.remove('active');
-            }
-        }
-
-        function toggleOp(op) {
-            const index = setupData.operations.indexOf(op);
-            if (index > -1) {
-                if (setupData.operations.length > 1) {
-                    setupData.operations.splice(index, 1);
-                    document.getElementById(`op-${op}`).classList.remove('active');
-                }
-            } else {
-                setupData.operations.push(op);
-                document.getElementById(`op-${op}`).classList.add('active');
-            }
-        }
-
-        function setDiff(d) {
-            setupData.difficulty = d;
-            for(let i = 1; i <= 5; i++) {
-                document.getElementById(`diff-${i}`).classList.remove('active');
-            }
-            document.getElementById(`diff-${d}`).classList.add('active');
-        }
-
-        function confirmSetup() {
-            document.getElementById('setupMathScreen').style.display = 'none';
-            document.getElementById('startScreen').style.display = 'flex';
-        }
+        let isUltimateStorm = false; // Триггер супер-эффекта на 1000 побед
 
         function selectMode(mKey) {
             activeMode = modes[mKey];
@@ -774,7 +624,6 @@
         }
         window.addEventListener('resize', resizeCanvas);
 
-        // УМНЫЙ ДВИЖОК ГЕНЕРАЦИИ МАТЕМАТИКИ С УЧЕТОМ НАСТРОЕК
         function generateMath() {
             if(!gameActive) return;
             clearInterval(timerInterval);
@@ -798,256 +647,45 @@
                 }
             }, 100);
 
-            // Определяем текущий вид чисел
-            let currentType = 'positive';
-            if (setupData.challengeMode) {
-                currentType = Math.random() < 0.5 ? 'positive' : 'negative';
-            } else {
-                currentType = setupData.types.positive ? 'positive' : 'negative';
-            }
+            const types = ['+', '-', '*', '/'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            let n1, n2, text;
 
-            // Выбираем операцию из разрешенных пользователем
-            const op = setupData.operations[Math.floor(Math.random() * setupData.operations.length)];
-            const diff = setupData.difficulty;
-
-            let n1 = 0, n2 = 0, text = "";
-            isNoSolution = false;
-
-            if (currentType === 'positive') {
-                // ПОЛОЖИТЕЛЬНЫЕ ЧИСЛА
-                if (op === 'add' || op === 'sub') {
-                    if (diff === 1) {
-                        // 1. Без перехода через десяток (в рамках 10)
-                        if (op === 'add') {
-                            n1 = Math.floor(Math.random() * 10);
-                            n2 = Math.floor(Math.random() * (10 - n1));
-                            correctAnswer = n1 + n2; text = `${n1} + ${n2}`;
-                        } else {
-                            n1 = Math.floor(Math.random() * 11);
-                            n2 = Math.floor(Math.random() * (n1 + 1));
-                            correctAnswer = n1 - n2; text = `${n1} - ${n2}`;
-                        }
-                    } else if (diff === 2) {
-                        // 2. В рамках 20
-                        if (op === 'add') {
-                            n1 = Math.floor(Math.random() * 21);
-                            n2 = Math.floor(Math.random() * (21 - n1));
-                            correctAnswer = n1 + n2; text = `${n1} + ${n2}`;
-                        } else {
-                            n1 = Math.floor(Math.random() * 21);
-                            n2 = Math.floor(Math.random() * (n1 + 1));
-                            correctAnswer = n1 - n2; text = `${n1} - ${n2}`;
-                        }
-                    } else if (diff === 3) {
-                        // 3. Каждое число не больше 30
-                        n1 = Math.floor(Math.random() * 31);
-                        n2 = Math.floor(Math.random() * 31);
-                        if (op === 'add') {
-                            correctAnswer = n1 + n2; text = `${n1} + ${n2}`;
-                        } else {
-                            if (n1 < n2) { let t = n1; n1 = n2; n2 = t; } // Положительный ответ
-                            correctAnswer = n1 - n2; text = `${n1} - ${n2}`;
-                        }
-                    } else if (diff === 4) {
-                        // 4. В рамках 100 (и числа и ответы)
-                        if (op === 'add') {
-                            n1 = Math.floor(Math.random() * 101);
-                            n2 = Math.floor(Math.random() * (101 - n1));
-                            correctAnswer = n1 + n2; text = `${n1} + ${n2}`;
-                        } else {
-                            n1 = Math.floor(Math.random() * 101);
-                            n2 = Math.floor(Math.random() * (n1 + 1));
-                            correctAnswer = n1 - n2; text = `${n1} - ${n2}`;
-                        }
-                    } else if (diff === 5) {
-                        // 5. В рамках 200 (и числа и ответы)
-                        if (op === 'add') {
-                            n1 = Math.floor(Math.random() * 201);
-                            n2 = Math.floor(Math.random() * (201 - n1));
-                            correctAnswer = n1 + n2; text = `${n1} + ${n2}`;
-                        } else {
-                            n1 = Math.floor(Math.random() * 201);
-                            n2 = Math.floor(Math.random() * (n1 + 1));
-                            correctAnswer = n1 - n2; text = `${n1} - ${n2}`;
-                        }
-                    }
-                } else if (op === 'mul' || op === 'div') {
-                    let allowedMultipliers = [0, 1, 2, 5, 10];
-                    if (diff === 2) allowedMultipliers = [0, 1, 2, 3, 4, 5, 10];
-                    if (diff === 3) allowedMultipliers = [0, 1, 2, 3, 4, 5, 6, 9, 10];
-                    
-                    if (diff <= 3) {
-                        n1 = allowedMultipliers[Math.floor(Math.random() * allowedMultipliers.length)];
-                        n2 = Math.floor(Math.random() * 11); // до 10
-                        if (Math.random() < 0.5) { let t = n1; n1 = n2; n2 = t; } // перемешаем
-                        
-                        if (op === 'mul') {
-                            correctAnswer = n1 * n2; text = `${n1} × ${n2}`;
-                        } else {
-                            // Деление аналогичное умножению
-                            // Шанс 10% сгенерировать деление на 0
-                            if (Math.random() < 0.10) {
-                                n1 = Math.floor(Math.random() * 20);
-                                n2 = 0;
-                                isNoSolution = true;
-                                text = `${n1} ÷ ${n2}`;
-                            } else {
-                                n2 = allowedMultipliers[Math.floor(Math.random() * (allowedMultipliers.length - 1)) + 1]; // Исключаем 0 из делителя
-                                let baseFactor = Math.floor(Math.random() * 11);
-                                n1 = n2 * baseFactor;
-                                correctAnswer = baseFactor;
-                                text = `${n1} ÷ ${n2}`;
-                            }
-                        }
-                    } else if (diff === 4) {
-                        // Вся таблица умножения
-                        n1 = Math.floor(Math.random() * 9) + 2; 
-                        n2 = Math.floor(Math.random() * 9) + 2; 
-                        if (op === 'mul') {
-                            correctAnswer = n1 * n2; text = `${n1} × ${n2}`;
-                        } else {
-                            n1 = n1 * n2;
-                            correctAnswer = n2;
-                            text = `${n1} ÷ ${n1 / n2}`;
-                        }
-                    } else if (diff === 5) {
-                        // Умножение двузначного числа на число от 0 до 10
-                        n1 = Math.floor(Math.random() * 90) + 10; // двузначное
-                        n2 = Math.floor(Math.random() * 11); // от 0 до 10
-                        if (Math.random() < 0.5) { let t = n1; n1 = n2; n2 = t; }
-
-                        if (op === 'mul') {
-                            correctAnswer = n1 * n2; text = `${n1} × ${n2}`;
-                        } else {
-                            // Делитель от 1 до 10
-                            n2 = Math.floor(Math.random() * 10) + 1;
-                            let baseFactor = Math.floor(Math.random() * 90) + 10; // Двузначный ответ
-                            n1 = n2 * baseFactor;
-                            correctAnswer = baseFactor;
-                            text = `${n1} ÷ ${n2}`;
-                        }
-                    }
-                }
-            } else {
-                // ОТРИЦАТЕЛЬНЫЕ ЧИСЛА
-                let bound = 10;
-                if (diff === 2) bound = 20;
-                if (diff === 3) bound = 50;
-                if (diff === 4) bound = 100;
-                if (diff === 5) bound = 200;
-
-                if (op === 'add' || op === 'sub') {
-                    // Генерируем числа в заданном диапазоне по модулю
-                    n1 = Math.floor(Math.random() * (bound * 2 + 1)) - bound;
-                    n2 = Math.floor(Math.random() * (bound * 2 + 1)) - bound;
-                    
-                    if (op === 'add') {
-                        correctAnswer = n1 + n2;
-                        let displayN2 = n2 < 0 ? `(${n2})` : `${n2}`;
-                        text = `${n1} + ${displayN2}`;
-                    } else {
-                        correctAnswer = n1 - n2;
-                        let displayN2 = n2 < 0 ? `(${n2})` : `${n2}`;
-                        text = `${n1} - ${displayN2}`;
-                    }
-                } else if (op === 'mul' || op === 'div') {
-                    let allowedFactors = [0, 1, 2, 5, 10];
-                    if (diff === 2) allowedFactors = [0, 1, 2, 3, 4, 5, 9, 10];
-                    if (diff === 3) allowedFactors = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-
-                    if (diff <= 3) {
-                        let f1 = allowedFactors[Math.floor(Math.random() * allowedFactors.length)];
-                        let f2 = Math.floor(Math.random() * 10) + 1; // однозначное без нуля
-                        
-                        // Знак
-                        if (Math.random() < 0.5) f1 = -f1;
-                        if (Math.random() < 0.5 && f1 !== 0) f2 = -f2;
-                        if (Math.random() < 0.5) { let t = f1; f1 = f2; f2 = t; }
-
-                        if (op === 'mul') {
-                            correctAnswer = f1 * f2;
-                            let displayF2 = f2 < 0 ? `(${f2})` : `${f2}`;
-                            text = `${f1} × ${displayF2}`;
-                        } else {
-                            // Деление аналогичное умножению
-                            if (f2 === 0) f2 = 1; // Защита
-                            let displayF2 = f2 < 0 ? `(${f2})` : `${f2}`;
-                            text = `${f1 * f2} ÷ ${displayF2}`;
-                            correctAnswer = f1;
-                        }
-                    } else if (diff === 4) {
-                        // Числа до 20 на однозначные
-                        let f1 = Math.floor(Math.random() * 21); // до 20
-                        let f2 = Math.floor(Math.random() * 9) + 1; // однозначное
-                        if (Math.random() < 0.5) f1 = -f1;
-                        if (Math.random() < 0.5) f2 = -f2;
-                        if (Math.random() < 0.5) { let t = f1; f1 = f2; f2 = t; }
-
-                        if (op === 'mul') {
-                            correctAnswer = f1 * f2;
-                            let displayF2 = f2 < 0 ? `(${f2})` : `${f2}`;
-                            text = `${f1} × ${displayF2}`;
-                        } else {
-                            if (f2 === 0) f2 = 1;
-                            let displayF2 = f2 < 0 ? `(${f2})` : `${f2}`;
-                            text = `${f1 * f2} ÷ ${displayF2}`;
-                            correctAnswer = f1;
-                        }
-                    } else if (diff === 5) {
-                        // Двузначные на однозначные
-                        let f1 = Math.floor(Math.random() * 90) + 10; // двузначные
-                        let f2 = Math.floor(Math.random() * 9) + 1; // однозначные
-                        if (Math.random() < 0.5) f1 = -f1;
-                        if (Math.random() < 0.5) f2 = -f2;
-                        if (Math.random() < 0.5) { let t = f1; f1 = f2; f2 = t; }
-
-                        if (op === 'mul') {
-                            correctAnswer = f1 * f2;
-                            let displayF2 = f2 < 0 ? `(${f2})` : `${f2}`;
-                            text = `${f1} × ${displayF2}`;
-                        } else {
-                            if (f2 === 0) f2 = 1;
-                            let displayF2 = f2 < 0 ? `(${f2})` : `${f2}`;
-                            text = `${f1 * f2} ÷ ${displayF2}`;
-                            correctAnswer = f1;
-                        }
-                    }
-                }
+            if (type === '+') {
+                n1 = Math.floor(Math.random() * 60) + 10; n2 = Math.floor(Math.random() * 60) + 10;
+                correctAnswer = n1 + n2; text = `${n1} + ${n2}`;
+            } else if (type === '-') {
+                n1 = Math.floor(Math.random() * 95) + 10; n2 = Math.floor(Math.random() * n1);
+                correctAnswer = n1 - n2; text = `${n1} - ${n2}`;
+            } else if (type === '*') {
+                n1 = Math.floor(Math.random() * 12) + 2; n2 = Math.floor(Math.random() * 11) + 2;
+                correctAnswer = n1 * n2; text = `${n1} × ${n2}`;
+            } else { 
+                n2 = Math.floor(Math.random() * 10) + 2; correctAnswer = Math.floor(Math.random() * 11) + 2;
+                n1 = n2 * correctAnswer; text = `${n1} ÷ ${n2}`;
             }
 
             document.getElementById('mathQuestion').innerText = text;
 
-            // ГЕНЕРАЦИЯ ОТВЕТОВ В СЕТКУ
-            let arr = [];
+            let arr = [correctAnswer];
+            while(arr.length < 4) {
+                let fake = correctAnswer + (Math.floor(Math.random() * 15) - 7);
+                if(fake !== correctAnswer && fake >= 0 && !arr.includes(fake)) arr.push(fake);
+            }
+            arr.sort(() => Math.random() - 0.5);
+
             const grid = document.getElementById('answersGrid');
             grid.innerHTML = '';
-
-            if (isNoSolution) {
-                arr = ["Нет реш.", "0", "1", "Infinity"];
-                arr.sort(() => Math.random() - 0.5);
-                arr.forEach(ans => {
-                    const b = document.createElement('button');
-                    b.className = 'btn-answer'; b.innerText = ans;
-                    b.onclick = (e) => checkAnswer(ans, e);
-                    grid.appendChild(b);
-                });
-            } else {
-                arr = [correctAnswer];
-                while(arr.length < 4) {
-                    let fake = correctAnswer + (Math.floor(Math.random() * 15) - 7);
-                    if(fake !== correctAnswer && !arr.includes(fake)) arr.push(fake);
-                }
-                arr.sort(() => Math.random() - 0.5);
-                arr.forEach(ans => {
-                    const b = document.createElement('button');
-                    b.className = 'btn-answer'; b.innerText = ans;
-                    b.onclick = (e) => checkAnswer(ans, e);
-                    grid.appendChild(b);
-                });
-            }
+            arr.forEach(ans => {
+                const b = document.createElement('button');
+                b.className = 'btn-answer'; b.innerText = ans;
+                b.onclick = (e) => checkAnswer(ans, e);
+                grid.appendChild(b);
+            });
         }
 
         function triggerAnniversaryEffects(count) {
+            // ВАУ-эффект на 1000 примеров: Длится 30 секунд (30000мс / 100мс = 300 тиков анимации)
             if (count === 1000) {
                 megaShowActive = true;
                 isUltimateStorm = true;
@@ -1062,6 +700,7 @@
                 return;
             }
 
+            // На 100 примерах: Работает в 3 раза дольше (Было 6 секунд -> Стало 18 секунд = 180 тиков)
             if (count % 100 === 0) {
                 megaShowActive = true;
                 isUltimateStorm = false;
@@ -1089,6 +728,7 @@
                 return;
             }
 
+            // Каждые 10 примеров: Подсветка на 5 секунд (50 тиков)
             if (count % 10 === 0) {
                 megaShowActive = true;
                 isUltimateStorm = false;
@@ -1121,11 +761,7 @@
                 clickY = rect.top + rect.height / 2;
             }
 
-            let isCorrect = false;
-            if (isNoSolution && chosen === "Нет реш.") isCorrect = true;
-            if (!isNoSolution && parseInt(chosen) === correctAnswer) isCorrect = true;
-
-            if (isCorrect) {
+            if (chosen === correctAnswer) {
                 correctCount++;
                 document.getElementById('stat-correct').innerText = correctCount;
 
@@ -1235,12 +871,14 @@
                 let mathBox = document.getElementById('mainMathBox');
 
                 if (isUltimateStorm) {
+                    // Космическая переливающаяся иллюминация для 1000 побед
                     let r = Math.floor(Math.sin(bgFlashState) * 127 + 128);
                     let g = Math.floor(Math.sin(bgFlashState + 2) * 127 + 128);
                     let b = Math.floor(Math.cos(bgFlashState) * 127 + 128);
                     mathBox.style.backgroundColor = `rgba(${r}, ${g}, ${b}, 0.35)`;
                     mathBox.style.borderColor = `rgb(${g}, ${b}, ${r})`;
                     
+                    // Увеличено производство искр для масштабности
                     let colors = ['#ff0055', '#00ffcc', '#ffcc00', '#ff00ff', '#00ff00', '#ffffff'];
                     for(let k=0; k<3; k++) {
                         let angle = Math.random() * Math.PI * 2;
@@ -1251,6 +889,7 @@
                         particles.push(new CustomSpark(canvas.width / 2, canvas.height * 0.4, c, vx, vy, Math.random() * 5 + 2, 4.0));
                     }
                 } else {
+                    // Стандартная юбилейная неоновая пульсация
                     let r = Math.floor(Math.sin(bgFlashState) * 30 + 15);
                     let g = Math.floor(Math.sin(bgFlashState + 1) * 20 + 10);
                     let b = Math.floor(Math.cos(bgFlashState) * 40 + 25);
