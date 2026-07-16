@@ -286,11 +286,99 @@
             .build-grid { grid-template-columns: repeat(2, 1fr); gap: 4px; }
             .btn-final { grid-column: span 2; padding: 8px; }
         }
+
+        /* ===== Новый экран настройки генерации примеров ===== */
+        .config-container {
+            width: 100%; max-width: 450px; background: rgba(15, 18, 32, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px;
+            padding: 18px; max-height: 72vh; overflow-y: auto;
+        }
+        .config-section { margin-bottom: 18px; }
+        .config-section:last-child { margin-bottom: 0; }
+        .config-section-title {
+            color: var(--cyan); font-size: 0.85rem; text-transform: uppercase;
+            letter-spacing: 0.5px; margin-bottom: 10px; font-weight: bold;
+            border-bottom: 1px solid rgba(6, 182, 212, 0.2); padding-bottom: 5px;
+        }
+        .type-select-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn-type {
+            background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px; padding: 12px 8px; color: white; text-align: center;
+            font-size: 0.85rem; font-weight: bold; cursor: pointer;
+        }
+        .btn-type.selected {
+            border-color: var(--cyan); background: rgba(6, 182, 212, 0.15);
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.35);
+        }
+        .op-select-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn-op {
+            background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px; padding: 12px 8px; color: white; text-align: center;
+            font-size: 0.85rem; font-weight: bold; cursor: pointer;
+        }
+        .btn-op.selected {
+            border-color: var(--gold); background: rgba(255, 215, 0, 0.12);
+            box-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
+        }
+        .diff-row {
+            background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 10px; padding: 10px; margin-bottom: 8px;
+        }
+        .diff-row:last-child { margin-bottom: 0; }
+        .diff-row-label { font-size: 0.8rem; color: #f1f5f9; font-weight: bold; margin-bottom: 6px; }
+        .diff-stars { display: flex; gap: 6px; }
+        .btn-star {
+            flex: 1; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px; padding: 8px 2px; color: #94a3b8; text-align: center;
+            font-size: 0.95rem; cursor: pointer;
+        }
+        .btn-star.selected { background: rgba(255, 215, 0, 0.18); border-color: var(--gold); color: var(--gold); }
+        .config-hint { font-size: 0.72rem; color: #64748b; margin-top: 4px; }
+        .btn-config-continue {
+            width: 100%; max-width: 450px; background: linear-gradient(45deg, #0284c7, #06b6d4);
+            border: none; color: white; padding: 15px; font-size: 1.05rem;
+            font-weight: bold; border-radius: 12px; margin-top: 15px; cursor: pointer;
+            opacity: 0.4; pointer-events: none; transition: opacity 0.2s ease;
+        }
+        .btn-config-continue.ready { opacity: 1; pointer-events: auto; }
     </style>
 </head>
 <body>
 
-    <div class="modal-screen" id="startScreen">
+    <!-- НОВЫЙ СТАРТОВЫЙ ЭКРАН: настройка генерации примеров -->
+    <div class="modal-screen" id="configScreen">
+        <h1 class="start-title">🔮 Настройка Испытаний</h1>
+        <p class="start-subtitle">Определите, какими примерами Орден будет проверять ваш разум</p>
+        <div class="config-container">
+            <div class="config-section">
+                <div class="config-section-title">1️⃣ Вид чисел</div>
+                <div class="type-select-row" id="typeSelectRow">
+                    <button class="btn-type" data-value="positive">🔵 Положительные числа</button>
+                    <button class="btn-type" data-value="negative">🔴 Отрицательные числа</button>
+                </div>
+            </div>
+
+            <div class="config-section">
+                <div class="config-section-title">2️⃣ Режимы вычислений</div>
+                <div class="op-select-grid" id="opSelectGrid">
+                    <button class="btn-op" data-op="add">➕ Сложение</button>
+                    <button class="btn-op" data-op="sub">➖ Вычитание</button>
+                    <button class="btn-op" data-op="mul">✖️ Умножение</button>
+                    <button class="btn-op" data-op="div">➗ Деление</button>
+                </div>
+                <div class="config-hint">Можно выбрать один или несколько режимов</div>
+            </div>
+
+            <div class="config-section" id="difficultyContainer" style="display:none;">
+                <div class="config-section-title">3️⃣ Сложность по режимам</div>
+                <div id="difficultyList"></div>
+                <div class="config-hint">Для каждого выбранного режима — своя сложность</div>
+            </div>
+        </div>
+        <button class="btn-config-continue" id="btnConfigContinue" onclick="finishConfig()">⚔️ Продолжить к выбору Обета</button>
+    </div>
+
+    <div class="modal-screen" id="startScreen" style="display:none;">
         <h1 class="start-title">🏛️ Орден Света</h1>
         <p class="start-subtitle">Выберите Обет Научной Цели на эту эпоху:</p>
         <div class="mode-list">
@@ -525,6 +613,291 @@
     </div>
 
     <script>
+        // ===================== НАСТРОЙКА ГЕНЕРАЦИИ ПРИМЕРОВ =====================
+        const OP_LABELS = { add: '➕ Сложение', sub: '➖ Вычитание', mul: '✖️ Умножение', div: '➗ Деление' };
+        const OP_ORDER = ['add', 'sub', 'mul', 'div'];
+
+        let exampleConfig = {
+            numberType: null,     // 'positive' | 'negative'
+            operations: {}        // { add: level(1-5), sub: level, ... } — только выбранные режимы
+        };
+
+        document.querySelectorAll('.btn-type').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.btn-type').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                exampleConfig.numberType = btn.getAttribute('data-value');
+                updateConfigValidity();
+            });
+        });
+
+        document.querySelectorAll('.btn-op').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const op = btn.getAttribute('data-op');
+                if (btn.classList.contains('selected')) {
+                    btn.classList.remove('selected');
+                    delete exampleConfig.operations[op];
+                } else {
+                    btn.classList.add('selected');
+                    exampleConfig.operations[op] = null; // сложность ещё не выбрана
+                }
+                renderDifficultyList();
+                updateConfigValidity();
+            });
+        });
+
+        function renderDifficultyList() {
+            const container = document.getElementById('difficultyContainer');
+            const list = document.getElementById('difficultyList');
+            const selectedOps = OP_ORDER.filter(op => op in exampleConfig.operations);
+
+            if (selectedOps.length === 0) {
+                container.style.display = 'none';
+                list.innerHTML = '';
+                return;
+            }
+
+            container.style.display = 'block';
+            list.innerHTML = '';
+
+            selectedOps.forEach(op => {
+                const row = document.createElement('div');
+                row.className = 'diff-row';
+
+                const label = document.createElement('div');
+                label.className = 'diff-row-label';
+                label.innerText = OP_LABELS[op];
+                row.appendChild(label);
+
+                const starsWrap = document.createElement('div');
+                starsWrap.className = 'diff-stars';
+
+                for (let lvl = 1; lvl <= 5; lvl++) {
+                    const starBtn = document.createElement('button');
+                    starBtn.className = 'btn-star';
+                    starBtn.innerText = '⭐'.repeat(lvl);
+                    if (exampleConfig.operations[op] === lvl) starBtn.classList.add('selected');
+                    starBtn.addEventListener('click', () => {
+                        exampleConfig.operations[op] = lvl;
+                        row.querySelectorAll('.btn-star').forEach(s => s.classList.remove('selected'));
+                        starBtn.classList.add('selected');
+                        updateConfigValidity();
+                    });
+                    starsWrap.appendChild(starBtn);
+                }
+
+                row.appendChild(starsWrap);
+                list.appendChild(row);
+            });
+        }
+
+        function updateConfigValidity() {
+            const btn = document.getElementById('btnConfigContinue');
+            const selectedOps = Object.keys(exampleConfig.operations);
+            const allHaveDifficulty = selectedOps.length > 0 && selectedOps.every(op => exampleConfig.operations[op] !== null);
+            const valid = !!exampleConfig.numberType && allHaveDifficulty;
+            if (valid) btn.classList.add('ready'); else btn.classList.remove('ready');
+        }
+
+        function finishConfig() {
+            const selectedOps = Object.keys(exampleConfig.operations);
+            const allHaveDifficulty = selectedOps.length > 0 && selectedOps.every(op => exampleConfig.operations[op] !== null);
+            if (!exampleConfig.numberType || !allHaveDifficulty) return;
+
+            document.getElementById('configScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'flex';
+        }
+
+        // ===================== ГЕНЕРАТОРЫ ПРИМЕРОВ =====================
+        function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+        function randSign() { return Math.random() < 0.5 ? -1 : 1; }
+        function fmt(n) { return n < 0 ? `(${n})` : `${n}`; }
+
+        // --- ПОЛОЖИТЕЛЬНЫЕ ЧИСЛА ---
+        function genAddPositive(level) {
+            let maxOperand, maxResult;
+            switch (level) {
+                case 1: maxOperand = 10; maxResult = 10; break;
+                case 2: maxOperand = 20; maxResult = 20; break;
+                case 3: maxOperand = 30; maxResult = 60; break;
+                case 4: maxOperand = 100; maxResult = 100; break;
+                default: maxOperand = 200; maxResult = 200; break;
+            }
+            let n1, n2, sum, tries = 0;
+            do {
+                n1 = randInt(1, maxOperand);
+                n2 = randInt(1, maxOperand);
+                sum = n1 + n2;
+                tries++;
+            } while (sum > maxResult && tries < 40);
+            if (sum > maxResult) { n2 = Math.max(1, maxResult - n1); sum = n1 + n2; }
+            return { text: `${n1} + ${n2}`, answer: sum };
+        }
+
+        function genSubPositive(level) {
+            let maxOperand;
+            switch (level) {
+                case 1: maxOperand = 10; break;
+                case 2: maxOperand = 20; break;
+                case 3: maxOperand = 30; break;
+                case 4: maxOperand = 100; break;
+                default: maxOperand = 200; break;
+            }
+            const n1 = randInt(2, maxOperand);
+            const n2 = randInt(0, n1);
+            return { text: `${n1} - ${n2}`, answer: n1 - n2 };
+        }
+
+        function genMulPositive(level) {
+            let table;
+            switch (level) {
+                case 1: table = [0, 1, 2, 5, 10]; break;
+                case 2: table = [0, 1, 2, 3, 4, 5, 10]; break;
+                case 3: table = [0, 1, 2, 3, 4, 5, 6, 9, 10]; break;
+                case 4: table = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; break;
+                default: table = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; break;
+            }
+            let a, b;
+            if (level < 5) {
+                a = table[randInt(0, table.length - 1)];
+                b = randInt(0, 10);
+                if (Math.random() < 0.5) { const t = a; a = b; b = t; }
+            } else {
+                a = randInt(10, 99);
+                b = table[randInt(0, table.length - 1)];
+            }
+            return { text: `${a} × ${b}`, answer: a * b };
+        }
+
+        function genDivPositive(level) {
+            let table;
+            switch (level) {
+                case 1: table = [0, 1, 2, 5, 10]; break;
+                case 2: table = [0, 1, 2, 3, 4, 5, 10]; break;
+                case 3: table = [0, 1, 2, 3, 4, 5, 6, 9, 10]; break;
+                case 4: table = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; break;
+                default: table = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; break; // на 0 делить нельзя
+            }
+            const divisor = table[randInt(0, table.length - 1)];
+            if (divisor === 0) {
+                const dividend = randInt(1, level < 4 ? 20 : 100);
+                return { text: `${dividend} ÷ 0`, answer: null, noSolution: true };
+            }
+            const quotient = randInt(0, 10);
+            const dividend = divisor * quotient;
+            return { text: `${dividend} ÷ ${divisor}`, answer: quotient };
+        }
+
+        // --- ОТРИЦАТЕЛЬНЫЕ ЧИСЛА ---
+        function rangeForLevelNeg(level) {
+            switch (level) {
+                case 1: return 10;
+                case 2: return 20;
+                case 3: return 50;
+                case 4: return 100;
+                default: return 200;
+            }
+        }
+
+        function genAddNegative(level) {
+            const range = rangeForLevelNeg(level);
+            let n1, n2, sum, tries = 0;
+            do {
+                n1 = randInt(-range, range);
+                n2 = randInt(-range, range);
+                sum = n1 + n2;
+                tries++;
+            } while ((sum < -range || sum > range) && tries < 40);
+            if (sum < -range || sum > range) { n2 = Math.max(-range, Math.min(range, -n1)); sum = n1 + n2; }
+            return { text: `${fmt(n1)} + ${fmt(n2)}`, answer: sum };
+        }
+
+        function genSubNegative(level) {
+            const range = rangeForLevelNeg(level);
+            let n1, n2, diff, tries = 0;
+            do {
+                n1 = randInt(-range, range);
+                n2 = randInt(-range, range);
+                diff = n1 - n2;
+                tries++;
+            } while ((diff < -range || diff > range) && tries < 40);
+            if (diff < -range || diff > range) { n2 = Math.max(-range, Math.min(range, n1)); diff = n1 - n2; }
+            return { text: `${fmt(n1)} - ${fmt(n2)}`, answer: diff };
+        }
+
+        function genMulNegative(level) {
+            let table, magAMax, magBMax;
+            switch (level) {
+                case 1: table = [0, 1, 2, 5, 10]; magAMax = 10; break;
+                case 2: table = [0, 1, 2, 3, 4, 5, 9, 10]; magAMax = 10; break;
+                case 3: table = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; magAMax = 10; break;
+                case 4: table = null; magAMax = 20; magBMax = 9; break;
+                default: table = null; magAMax = 99; magBMax = 9; break;
+            }
+            let magA, magB;
+            if (level <= 3) {
+                magA = table[randInt(0, table.length - 1)];
+                magB = randInt(0, 10);
+            } else if (level === 4) {
+                magA = randInt(0, 20);
+                magB = randInt(0, 9);
+            } else {
+                magA = randInt(10, 99);
+                magB = randInt(0, 9);
+            }
+            const a = magA === 0 ? 0 : magA * randSign();
+            const b = magB === 0 ? 0 : magB * randSign();
+            return { text: `${fmt(a)} × ${fmt(b)}`, answer: a * b };
+        }
+
+        function genDivNegative(level) {
+            let table, divMax;
+            switch (level) {
+                case 1: table = [0, 1, 2, 5, 10]; break;
+                case 2: table = [0, 1, 2, 3, 4, 5, 9, 10]; break;
+                case 3: table = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; break;
+                case 4: divMax = 9; break;
+                default: divMax = 9; break;
+            }
+            let divisorMag;
+            if (level <= 3) divisorMag = table[randInt(0, table.length - 1)];
+            else divisorMag = randInt(0, divMax);
+
+            if (divisorMag === 0) {
+                const dividendMag = randInt(1, level < 4 ? 20 : 100);
+                const dividend = dividendMag * randSign();
+                return { text: `${fmt(dividend)} ÷ 0`, answer: null, noSolution: true };
+            }
+
+            const divisorSign = randSign();
+            const divisor = divisorMag * divisorSign;
+
+            let quotientMag;
+            if (level <= 3) quotientMag = randInt(0, 10);
+            else if (level === 4) quotientMag = randInt(0, 20);
+            else quotientMag = randInt(0, 99);
+
+            const quotientSign = quotientMag === 0 ? 1 : randSign();
+            const quotient = quotientMag * quotientSign;
+            const dividend = divisor * quotient;
+            return { text: `${fmt(dividend)} ÷ ${fmt(divisor)}`, answer: quotient };
+        }
+
+        function generateProblem(opKey, level, isNegative) {
+            if (!isNegative) {
+                if (opKey === 'add') return genAddPositive(level);
+                if (opKey === 'sub') return genSubPositive(level);
+                if (opKey === 'mul') return genMulPositive(level);
+                return genDivPositive(level);
+            } else {
+                if (opKey === 'add') return genAddNegative(level);
+                if (opKey === 'sub') return genSubNegative(level);
+                if (opKey === 'mul') return genMulNegative(level);
+                return genDivNegative(level);
+            }
+        }
+
+        // ===================== ОСТАЛЬНАЯ ЛОГИКА ИГРЫ (без изменений) =====================
         // Цели увеличены в 20 раз от исходных в кодовой базе
         const modes = {
             easy: { name: "📜 ОБЕТ УЧЕНИКА", targetG: 3600000, targetS: 400, targetSc: 40, targetGl: 30, desc: "Спринт окончен. Основы математики изучены безукоризненно!" },
@@ -647,41 +1020,58 @@
                 }
             }, 100);
 
-            const types = ['+', '-', '*', '/'];
-            const type = types[Math.floor(Math.random() * types.length)];
-            let n1, n2, text;
+            const isNegative = exampleConfig.numberType === 'negative';
+            const opsKeys = Object.keys(exampleConfig.operations);
+            const opKey = opsKeys[Math.floor(Math.random() * opsKeys.length)];
+            const level = exampleConfig.operations[opKey];
 
-            if (type === '+') {
-                n1 = Math.floor(Math.random() * 60) + 10; n2 = Math.floor(Math.random() * 60) + 10;
-                correctAnswer = n1 + n2; text = `${n1} + ${n2}`;
-            } else if (type === '-') {
-                n1 = Math.floor(Math.random() * 95) + 10; n2 = Math.floor(Math.random() * n1);
-                correctAnswer = n1 - n2; text = `${n1} - ${n2}`;
-            } else if (type === '*') {
-                n1 = Math.floor(Math.random() * 12) + 2; n2 = Math.floor(Math.random() * 11) + 2;
-                correctAnswer = n1 * n2; text = `${n1} × ${n2}`;
-            } else { 
-                n2 = Math.floor(Math.random() * 10) + 2; correctAnswer = Math.floor(Math.random() * 11) + 2;
-                n1 = n2 * correctAnswer; text = `${n1} ÷ ${n2}`;
-            }
+            const problem = generateProblem(opKey, level, isNegative);
 
-            document.getElementById('mathQuestion').innerText = text;
-
-            let arr = [correctAnswer];
-            while(arr.length < 4) {
-                let fake = correctAnswer + (Math.floor(Math.random() * 15) - 7);
-                if(fake !== correctAnswer && fake >= 0 && !arr.includes(fake)) arr.push(fake);
-            }
-            arr.sort(() => Math.random() - 0.5);
+            document.getElementById('mathQuestion').innerText = problem.text;
 
             const grid = document.getElementById('answersGrid');
             grid.innerHTML = '';
-            arr.forEach(ans => {
-                const b = document.createElement('button');
-                b.className = 'btn-answer'; b.innerText = ans;
-                b.onclick = (e) => checkAnswer(ans, e);
-                grid.appendChild(b);
-            });
+
+            if (problem.noSolution) {
+                correctAnswer = 'NO_SOLUTION';
+                let opts = ['Нет решения'];
+                let guard = 0;
+                while (opts.length < 4 && guard < 50) {
+                    guard++;
+                    let fake = randInt(-25, 25);
+                    if (!isNegative && fake < 0) continue;
+                    if (!opts.includes(String(fake))) opts.push(String(fake));
+                }
+                opts.sort(() => Math.random() - 0.5);
+                opts.forEach(optText => {
+                    const b = document.createElement('button');
+                    b.className = 'btn-answer';
+                    b.innerText = optText;
+                    b.onclick = (e) => checkAnswer(optText === 'Нет решения' ? 'NO_SOLUTION' : Number(optText), e);
+                    grid.appendChild(b);
+                });
+            } else {
+                correctAnswer = problem.answer;
+                let arr = [correctAnswer];
+                let guard = 0;
+                while (arr.length < 4 && guard < 60) {
+                    guard++;
+                    let delta = randInt(-7, 7);
+                    if (delta === 0) delta = 1;
+                    let fake = correctAnswer + delta;
+                    if (fake === correctAnswer) continue;
+                    if (!isNegative && fake < 0) continue;
+                    if (arr.includes(fake)) continue;
+                    arr.push(fake);
+                }
+                arr.sort(() => Math.random() - 0.5);
+                arr.forEach(ans => {
+                    const b = document.createElement('button');
+                    b.className = 'btn-answer'; b.innerText = ans;
+                    b.onclick = (e) => checkAnswer(ans, e);
+                    grid.appendChild(b);
+                });
+            }
         }
 
         function triggerAnniversaryEffects(count) {
