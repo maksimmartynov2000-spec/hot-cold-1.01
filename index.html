@@ -498,7 +498,7 @@
             </button>
             <button class="btn-build" data-type="alchemical" data-cat="prod" id="btn-alchemical">
                 <span class="name">⚗️ Алхим. Фабрика</span>
-                <span class="effect-desc">+4 🪙 к базовому клику</span>
+                <span class="effect-desc">+3 🪙 к базовому клику</span>
                 <span class="cost" id="cost-alchemical">...</span>
                 <span class="meta-info" id="meta-alchemical">Текущий клик: 12 🪙</span>
                 <span class="count" id="cnt-alchemical">0</span>
@@ -591,7 +591,7 @@
             </button>
             <button class="btn-build" data-type="blessArchitect" data-cat="bless" id="btn-blessArchitect">
                 <span class="name">🧱 Зодчество Магов</span>
-                <span class="effect-desc">Доп. скидка цен: -10%</span>
+                <span class="effect-desc">Доп. скидка цен: -15%</span>
                 <span class="cost" id="cost-blessArchitect">...</span>
                 <span class="count" id="cnt-blessArchitect">0</span>
             </button>
@@ -734,7 +734,7 @@
                 tries++;
             } while (sum > maxResult && tries < 40);
             if (sum > maxResult) { n2 = Math.max(1, maxResult - n1); sum = n1 + n2; }
-            return { text: `${n1} + ${n2}`, answer: sum };
+            return { text: `${n1} + ${n2}`, answer: sum, a: n1, b: n2 };
         }
 
         function genSubPositive(level) {
@@ -748,7 +748,7 @@
             }
             const n1 = randInt(2, maxOperand);
             const n2 = randInt(0, n1);
-            return { text: `${n1} - ${n2}`, answer: n1 - n2 };
+            return { text: `${n1} - ${n2}`, answer: n1 - n2, a: n1, b: n2 };
         }
 
         function genMulPositive(level) {
@@ -769,7 +769,7 @@
                 a = randInt(10, 99);
                 b = table[randInt(0, table.length - 1)];
             }
-            return { text: `${a} × ${b}`, answer: a * b };
+            return { text: `${a} × ${b}`, answer: a * b, a: a, b: b };
         }
 
         function genDivPositive(level) {
@@ -784,11 +784,11 @@
             const divisor = table[randInt(0, table.length - 1)];
             if (divisor === 0) {
                 const dividend = randInt(1, level < 4 ? 20 : 100);
-                return { text: `${dividend} ÷ 0`, answer: null, noSolution: true };
+                return { text: `${dividend} ÷ 0`, answer: null, noSolution: true, a: dividend, b: 0 };
             }
             const quotient = randInt(0, 10);
             const dividend = divisor * quotient;
-            return { text: `${dividend} ÷ ${divisor}`, answer: quotient };
+            return { text: `${dividend} ÷ ${divisor}`, answer: quotient, a: dividend, b: divisor };
         }
 
         // --- ОТРИЦАТЕЛЬНЫЕ ЧИСЛА ---
@@ -812,7 +812,7 @@
                 tries++;
             } while ((sum < -range || sum > range) && tries < 40);
             if (sum < -range || sum > range) { n2 = Math.max(-range, Math.min(range, -n1)); sum = n1 + n2; }
-            return { text: `${fmt(n1)} + ${fmt(n2)}`, answer: sum };
+            return { text: `${fmt(n1)} + ${fmt(n2)}`, answer: sum, a: n1, b: n2 };
         }
 
         function genSubNegative(level) {
@@ -825,7 +825,7 @@
                 tries++;
             } while ((diff < -range || diff > range) && tries < 40);
             if (diff < -range || diff > range) { n2 = Math.max(-range, Math.min(range, n1)); diff = n1 - n2; }
-            return { text: `${fmt(n1)} - ${fmt(n2)}`, answer: diff };
+            return { text: `${fmt(n1)} - ${fmt(n2)}`, answer: diff, a: n1, b: n2 };
         }
 
         function genMulNegative(level) {
@@ -850,7 +850,7 @@
             }
             const a = magA === 0 ? 0 : magA * randSign();
             const b = magB === 0 ? 0 : magB * randSign();
-            return { text: `${fmt(a)} × ${fmt(b)}`, answer: a * b };
+            return { text: `${fmt(a)} × ${fmt(b)}`, answer: a * b, a: a, b: b };
         }
 
         function genDivNegative(level) {
@@ -869,7 +869,7 @@
             if (divisorMag === 0) {
                 const dividendMag = randInt(1, level < 4 ? 20 : 100);
                 const dividend = dividendMag * randSign();
-                return { text: `${fmt(dividend)} ÷ 0`, answer: null, noSolution: true };
+                return { text: `${fmt(dividend)} ÷ 0`, answer: null, noSolution: true, a: dividend, b: 0 };
             }
 
             const divisorSign = randSign();
@@ -883,7 +883,143 @@
             const quotientSign = quotientMag === 0 ? 1 : randSign();
             const quotient = quotientMag * quotientSign;
             const dividend = divisor * quotient;
-            return { text: `${fmt(dividend)} ÷ ${fmt(divisor)}`, answer: quotient };
+            return { text: `${fmt(dividend)} ÷ ${fmt(divisor)}`, answer: quotient, a: dividend, b: divisor };
+        }
+
+        // --- ГЕНЕРАЦИЯ ОТВЛЕКАЮЩИХ ВАРИАНТОВ ОТВЕТА ---
+
+        // Имитация "сложения без переноса через разряд" — частая ошибка новичков.
+        // Работает только для неотрицательных целых чисел.
+        function noCarryAdd(a, b) {
+            if (a < 0 || b < 0) return null;
+            const sa = String(a), sb = String(b);
+            const maxLen = Math.max(sa.length, sb.length);
+            const pa = sa.padStart(maxLen, '0');
+            const pb = sb.padStart(maxLen, '0');
+            let digits = '';
+            for (let i = 0; i < maxLen; i++) {
+                digits += (parseInt(pa[i]) + parseInt(pb[i])) % 10;
+            }
+            const val = parseInt(digits, 10);
+            return Number.isNaN(val) ? null : val;
+        }
+
+        // Добавляет кандидата в массив структурных дистракторов (может совпадать с операндами —
+        // это специально, т.к. "спутал делимое/делитель с ответом" тоже реальная ошибка)
+        function pushStructural(arr, val, correctAnswer, isNegative) {
+            if (val === undefined || val === null || !Number.isFinite(val)) return;
+            val = Math.round(val);
+            if (val === correctAnswer) return;
+            if (!isNegative && val < 0) return;
+            if (arr.includes(val)) return;
+            arr.push(val);
+        }
+
+        function shuffleArray(arr) {
+            const copy = arr.slice();
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        // Строит ровно `count` уникальных отвлекающих вариантов для обычного (не noSolution) примера.
+        // Смешивает 1-2 "похожих на реальную ошибку" варианта со случайными, масштабируемыми по величине ответа.
+        function buildDistractors(opKey, a, b, correctAnswer, isNegative, count) {
+            let structural = [];
+
+            if (opKey === 'add') {
+                pushStructural(structural, noCarryAdd(a, b), correctAnswer, isNegative);
+                pushStructural(structural, a - b, correctAnswer, isNegative);
+            } else if (opKey === 'sub') {
+                pushStructural(structural, b - a, correctAnswer, isNegative);
+                pushStructural(structural, a + b, correctAnswer, isNegative);
+            } else if (opKey === 'mul') {
+                pushStructural(structural, a * (b + 1), correctAnswer, isNegative);
+                pushStructural(structural, a * (b - 1), correctAnswer, isNegative);
+                pushStructural(structural, (a + 1) * b, correctAnswer, isNegative);
+                pushStructural(structural, a + b, correctAnswer, isNegative);
+            } else if (opKey === 'div') {
+                pushStructural(structural, correctAnswer + 1, correctAnswer, isNegative);
+                pushStructural(structural, correctAnswer - 1, correctAnswer, isNegative);
+                // делитель как "ответ" — реалистичная ошибка, только если он сопоставим по величине с частным
+                if (Math.abs(b) <= Math.abs(correctAnswer) * 3 + 10) {
+                    pushStructural(structural, b, correctAnswer, isNegative);
+                }
+            }
+
+            structural = shuffleArray(structural);
+
+            const used = new Set([correctAnswer]);
+            const result = [];
+
+            // берём максимум 2 "структурных", чтобы не все варианты были предсказуемо случайными
+            const structuralTake = Math.min(2, structural.length, count);
+            for (let i = 0; i < structuralTake; i++) {
+                const v = structural[i];
+                if (!used.has(v)) { result.push(v); used.add(v); }
+            }
+
+            // разброс масштабируется под величину ответа (~15%, но не меньше 3)
+            const deltaMax = Math.max(3, Math.round(Math.abs(correctAnswer) * 0.15));
+            let guard = 0;
+            while (result.length < count && guard < 100) {
+                guard++;
+                let delta = randInt(-deltaMax, deltaMax);
+                if (delta === 0) delta = 1;
+                const fake = correctAnswer + delta;
+                if (!isNegative && fake < 0) continue;
+                if (fake === a || fake === b) continue; // случайный не должен случайно совпасть с условием
+                if (used.has(fake)) continue;
+                result.push(fake); used.add(fake);
+            }
+
+            // подстраховка на случай исчерпания попыток (очень маловероятно)
+            let widen = deltaMax;
+            while (result.length < count) {
+                widen++;
+                const fake = correctAnswer + widen * (Math.random() < 0.5 ? -1 : 1);
+                if (!isNegative && fake < 0) continue;
+                if (used.has(fake)) continue;
+                result.push(fake); used.add(fake);
+            }
+
+            return result;
+        }
+
+        // Строит варианты для случая деления на 0: всегда включает "0" и "делимое" (частые заблуждения),
+        // остальное — случайные значения, масштабируемые под величину делимого.
+        function buildNoSolutionOptions(dividend, isNegative) {
+            const used = new Set();
+            const opts = [];
+
+            function tryAdd(v) {
+                if (v === undefined || v === null || !Number.isFinite(v)) return false;
+                v = Math.round(v);
+                if (!isNegative && v < 0) return false;
+                if (used.has(v)) return false;
+                used.add(v);
+                opts.push(v);
+                return true;
+            }
+
+            tryAdd(0); // "на 0 делить = 0" — самое частое заблуждение
+            tryAdd(dividend); // "на 0 делить = само число" — второе по частоте
+
+            const deltaMax = Math.max(5, Math.round(Math.abs(dividend) * 0.3));
+            let guard = 0;
+            while (opts.length < 3 && guard < 60) {
+                guard++;
+                tryAdd(dividend + randInt(-deltaMax, deltaMax));
+            }
+            let widen = deltaMax;
+            while (opts.length < 3) {
+                widen++;
+                tryAdd(dividend + widen * (Math.random() < 0.5 ? -1 : 1));
+            }
+
+            return opts;
         }
 
         function generateProblem(opKey, level, isNegative) {
@@ -977,7 +1113,7 @@
                 abacus: { count: 0, baseG: 2250, baseS: 0, baseSc: 0, curG: 2250, curS: 0, curSc: 0, currency: 'normal' },
                 blueprint: { count: 0, baseG: 4000, baseS: 6, baseSc: 0, curG: 4000, curS: 6, curSc: 0, currency: 'normal' },
                 scriptorium: { count: 0, baseG: 7000, baseS: 18, baseSc: 0, curG: 7000, curS: 18, curSc: 0, currency: 'normal' },
-                alchemical: { count: 0, baseG: 16250, baseS: 48, baseSc: 5, curG: 16250, curS: 48, curSc: 5, currency: 'normal' },
+                alchemical: { count: 0, baseG: 16250, baseS: 34, baseSc: 5, curG: 16250, curS: 34, curSc: 5, currency: 'normal' },
                 
                 book: { count: 0, baseG: 4500, baseS: 18, baseSc: 0, curG: 4500, curS: 18, curSc: 0, currency: 'normal' },
                 theorem: { count: 0, baseG: 12500, baseS: 36, baseSc: 15, curG: 12500, curS: 36, curSc: 15, currency: 'normal' },
@@ -1079,15 +1215,9 @@
 
             if (problem.noSolution) {
                 correctAnswer = 'NO_SOLUTION';
-                let opts = ['Нет решения'];
-                let guard = 0;
-                while (opts.length < 4 && guard < 50) {
-                    guard++;
-                    let fake = randInt(-25, 25);
-                    if (!isNegative && fake < 0) continue;
-                    if (!opts.includes(String(fake))) opts.push(String(fake));
-                }
-                opts.sort(() => Math.random() - 0.5);
+                const fakeNums = buildNoSolutionOptions(problem.a, isNegative);
+                let opts = ['Нет решения', ...fakeNums.map(String)];
+                opts = shuffleArray(opts);
                 opts.forEach(optText => {
                     const b = document.createElement('button');
                     b.className = 'btn-answer';
@@ -1097,19 +1227,8 @@
                 });
             } else {
                 correctAnswer = problem.answer;
-                let arr = [correctAnswer];
-                let guard = 0;
-                while (arr.length < 4 && guard < 60) {
-                    guard++;
-                    let delta = randInt(-7, 7);
-                    if (delta === 0) delta = 1;
-                    let fake = correctAnswer + delta;
-                    if (fake === correctAnswer) continue;
-                    if (!isNegative && fake < 0) continue;
-                    if (arr.includes(fake)) continue;
-                    arr.push(fake);
-                }
-                arr.sort(() => Math.random() - 0.5);
+                const fakeNums = buildDistractors(opKey, problem.a, problem.b, correctAnswer, isNegative, 3);
+                let arr = shuffleArray([correctAnswer, ...fakeNums]);
                 arr.forEach(ans => {
                     const b = document.createElement('button');
                     b.className = 'btn-answer'; b.innerText = ans;
@@ -1129,8 +1248,8 @@
                 }
             }
 
-            // ВАУ-эффект на 1000 примеров: Длится 30 секунд (30000мс / 100мс = 300 тиков анимации)
-            if (count === 1000) {
+            // ВАУ-эффект на КАЖДУЮ тысячу примеров (1000, 2000, 3000...): Длится 30 секунд
+            if (count % 1000 === 0) {
                 megaShowActive = true;
                 isUltimateStorm = true;
                 megaShowTimer = 4500; 
@@ -1140,7 +1259,7 @@
                 mathBox.style.borderColor = 'var(--gold)';
                 mathBox.style.boxShadow = '0 0 50px rgba(255, 215, 0, 0.9)';
 
-                spawnRewardText("🌌 ДОСТИГНУТ АБСОЛЮТНЫЙ РАЗУМ! КВАНТОВЫЙ ВЗРЫВ! 🌌", window.innerWidth/2, window.innerHeight/2 - 50, 'var(--gold)', true);
+                spawnRewardText(`🌌 ${count} РЕШЕНО! АБСОЛЮТНЫЙ РАЗУМ! КВАНТОВЫЙ ВЗРЫВ! 🌌`, window.innerWidth/2, window.innerHeight/2 - 50, 'var(--gold)', true);
                 return;
             }
 
@@ -1399,7 +1518,7 @@
             return `${m}:${s}`;
         }
 
-        function getNextCritChanceGain(count) { return Math.max(0.01, 0.08 * Math.pow(0.75, count)); }
+        function getNextCritChanceGain(currentChance) { return (1 - currentChance) * 0.15; }
         function getNextCritMultGain(count) { return Math.max(0.15, 0.8 * Math.pow(0.75, count)); }
 
         function updateUI() {
@@ -1414,8 +1533,8 @@
             document.getElementById('inc-scrolls').innerText = `+${(state.income.scrolls * globalProductionBonus * manifestoProductionMultiplier).toFixed(2)}/с`;
             document.getElementById('inc-glory').innerText = `+${displayedGloryRate.toFixed(5)}%/с`;
 
-            let nextChance = (getNextCritChanceGain(state.buildings.critChance.count) * 100).toFixed(1);
-            document.getElementById('eff-critChance').innerText = `Шанс: ${(state.critChance*100).toFixed(0)}% (+${nextChance}%)`;
+            let nextChance = (getNextCritChanceGain(state.critChance) * 100).toFixed(2);
+            document.getElementById('eff-critChance').innerText = `Шанс: ${(state.critChance*100).toFixed(2)}% (+${nextChance}%)`;
 
             let nextMult = getNextCritMultGain(state.buildings.critMult.count).toFixed(2);
             document.getElementById('eff-critMult').innerText = `Крит: ${state.critMultiplier.toFixed(1)}х (+${nextMult}х)`;
@@ -1561,12 +1680,11 @@
                         if(type === 'abacus') { abacusGoldDiscount *= 0.90; state.income.gold += 3; }
                         if(type === 'blueprint') state.income.steel += 1; 
                         if(type === 'scriptorium') state.income.scrolls += 0.5;
-                        if(type === 'alchemical') { state.clickBase += 4; } 
+                        if(type === 'alchemical') { state.clickBase += 3; } 
                         
-                        if(type === 'theorem') state.discount *= 0.94; 
+                        if(type === 'theorem') state.discount *= 0.93; 
                         if(type === 'critChance') {
-                            state.critChance += getNextCritChanceGain(b.count);
-                            if(state.critChance > 0.85) state.critChance = 0.85; 
+                            state.critChance += getNextCritChanceGain(state.critChance);
                         }
                         if(type === 'critMult') state.critMultiplier += getNextCritMultGain(b.count);
 
@@ -1622,7 +1740,7 @@
                             spawnRewardText(`🦅 Архивариус усилен! Больше прощений за сотню`, window.innerWidth/2, window.innerHeight/2, '#38bdf8', true);
                         }
                         if (type === 'blessArchitect') {
-                            blessArchitectDiscount *= 0.90;
+                            blessArchitectDiscount *= 0.85;
                             spawnRewardText(`🧱 Стоимость построек упала на 10%!`, window.innerWidth/2, window.innerHeight/2, '#10b981', false);
                         }
                         if (type === 'blessInspiration') {
