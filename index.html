@@ -110,6 +110,29 @@
             font-weight: bold; border-radius: 12px; margin-top: 15px; cursor: pointer;
         }
 
+        .btn-profile-link {
+            width: 100%; max-width: 420px; background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; padding: 12px;
+            font-size: 0.9rem; font-weight: bold; border-radius: 12px; margin-top: 14px; cursor: pointer;
+        }
+        .m-status { font-size: 0.75rem; font-weight: normal; }
+        .profile-obet-row {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; font-size: 0.85rem;
+        }
+        .profile-obet-row .po-name { font-weight: bold; color: #f1f5f9; }
+        .profile-obet-row .po-detail { color: #94a3b8; font-size: 0.78rem; text-align: right; }
+        .profile-stat-row {
+            display: flex; justify-content: space-between; font-size: 0.85rem;
+            padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .btn-reset-profile {
+            width: 100%; max-width: 450px; background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.35); color: #f87171; padding: 12px;
+            font-size: 0.85rem; font-weight: bold; border-radius: 12px; margin-top: 10px; cursor: pointer;
+        }
+
         .top-panel-wrapper {
             flex-shrink: 0; background: var(--panel-bg);
             border-bottom: 2px solid rgba(255, 215, 0, 0.15); z-index: 10;
@@ -384,26 +407,37 @@
         <p class="start-subtitle">Выберите Обет Научной Цели на эту эпоху:</p>
         <div class="mode-list">
             <button class="btn-mode m-1" onclick="selectMode('easy')">
-                <span class="m-title">📜 Ученик</span>
+                <span class="m-title">📜 Ученик <span class="m-status" id="status-easy"></span></span>
                 <span class="m-desc" id="m-desc-easy">...</span>
             </button>
             <button class="btn-mode m-2" onclick="selectMode('medium')">
-                <span class="m-title">⚔️ Рыцарь Счета</span>
+                <span class="m-title">⚔️ Рыцарь Счета <span class="m-status" id="status-medium"></span></span>
                 <span class="m-desc" id="m-desc-medium">...</span>
             </button>
             <button class="btn-mode m-3" onclick="selectMode('hard')">
-                <span class="m-title">🏛️ Магистр Цитадели</span>
+                <span class="m-title">🏛️ Магистр Цитадели <span class="m-status" id="status-hard"></span></span>
                 <span class="m-desc" id="m-desc-hard">...</span>
             </button>
             <button class="btn-mode m-4" onclick="selectMode('expert')">
-                <span class="m-title">👑 Хранитель Тайн</span>
+                <span class="m-title">👑 Хранитель Тайн <span class="m-status" id="status-expert"></span></span>
                 <span class="m-desc" id="m-desc-expert">...</span>
             </button>
             <button class="btn-mode m-5" onclick="selectMode('marathon')">
-                <span class="m-title">🪐 Абсолютный Титан</span>
+                <span class="m-title">🪐 Абсолютный Титан <span class="m-status" id="status-marathon"></span></span>
                 <span class="m-desc" id="m-desc-marathon">...</span>
             </button>
         </div>
+        <button class="btn-profile-link" onclick="openProfileScreen()">👤 Профиль и рекорды</button>
+    </div>
+
+    <div class="modal-screen" id="profileScreen" style="display:none;">
+        <h1 class="start-title" style="color: var(--cyan);">👤 Профиль Ордена</h1>
+        <p class="start-subtitle">Ваш прогресс сохраняется в этом браузере</p>
+        <div class="info-container" id="profileStatsBox">
+            <!-- заполняется через JS -->
+        </div>
+        <button class="btn-start-game" onclick="closeProfileScreen()">⬅️ Назад к выбору Обета</button>
+        <button class="btn-reset-profile" onclick="resetProfile()">🗑️ Сбросить весь прогресс</button>
     </div>
 
     <div class="modal-screen" id="briefingScreen" style="display: none;">
@@ -1050,7 +1084,124 @@
             document.getElementById(`m-desc-${key}`).innerText = `Цель: ${(modes[key].targetG/1000).toFixed(0)}k 🪙, ${modes[key].targetGl}% Славы. Время: ${modes[key].estTime}`;
         }
 
+        // ===================== ЛОКАЛЬНЫЙ ПРОФИЛЬ (localStorage) =====================
+        const PROFILE_KEY = 'orderOfLight_profile_v1';
+
+        function defaultProfile() {
+            const obets = {};
+            for (let key in modes) {
+                obets[key] = { completed: false, bestTimeSeconds: null, attempts: 0 };
+            }
+            return {
+                totalCorrect: 0,
+                totalWrong: 0,
+                totalGamesStarted: 0,
+                bestComboEver: 0,
+                obets: obets,
+                modeStats: {} // ключ вида "pos_add_2" -> кол-во верно решённых примеров этой конфигурации
+            };
+        }
+
+        function loadProfile() {
+            try {
+                const raw = localStorage.getItem(PROFILE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    // на случай если появятся новые обеты — дозаполняем недостающие поля
+                    const fresh = defaultProfile();
+                    for (let key in fresh.obets) {
+                        if (!parsed.obets || !parsed.obets[key]) {
+                            parsed.obets = parsed.obets || {};
+                            parsed.obets[key] = fresh.obets[key];
+                        }
+                    }
+                    if (!parsed.modeStats) parsed.modeStats = {};
+                    return Object.assign(fresh, parsed);
+                }
+            } catch (e) { /* localStorage недоступен (приватный режим и т.п.) — просто не сохраняем */ }
+            return defaultProfile();
+        }
+
+        function saveProfile() {
+            try {
+                localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+            } catch (e) { /* не критично — просто прогресс не сохранится */ }
+        }
+
+        function resetProfile() {
+            if (!confirm('Точно сбросить весь сохранённый прогресс? Это необратимо.')) return;
+            profile = defaultProfile();
+            saveProfile();
+            renderModeStatusBadges();
+            renderProfileScreen();
+        }
+
+        let profile = loadProfile();
+        let currentProblemMeta = null; // { isNegative, opKey, level } — заполняется в generateMath()
+
+        function renderModeStatusBadges() {
+            for (let key in modes) {
+                const el = document.getElementById(`status-${key}`);
+                if (!el) continue;
+                const rec = profile.obets[key];
+                if (rec && rec.completed) {
+                    el.innerText = rec.bestTimeSeconds != null ? `✅ ${formatTime(rec.bestTimeSeconds)}` : '✅';
+                    el.style.color = '#10b981';
+                } else {
+                    el.innerText = '';
+                }
+            }
+        }
+
+        function openProfileScreen() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('profileScreen').style.display = 'flex';
+            renderProfileScreen();
+        }
+
+        function closeProfileScreen() {
+            document.getElementById('profileScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'flex';
+        }
+
+        function renderProfileScreen() {
+            const box = document.getElementById('profileStatsBox');
+            let html = '';
+
+            html += `<div class="info-section-title">📊 Общая статистика</div>`;
+            html += `<div class="profile-stat-row"><span>Игр начато</span><span>${profile.totalGamesStarted}</span></div>`;
+            html += `<div class="profile-stat-row"><span>Верных ответов всего</span><span>${profile.totalCorrect.toLocaleString()}</span></div>`;
+            html += `<div class="profile-stat-row"><span>Ошибок всего</span><span>${profile.totalWrong.toLocaleString()}</span></div>`;
+            html += `<div class="profile-stat-row"><span>Лучшая серия</span><span>🔥 x${profile.bestComboEver}</span></div>`;
+
+            html += `<div class="info-section-title">🏆 Обеты</div>`;
+            for (let key in modes) {
+                const rec = profile.obets[key];
+                const status = rec.completed ? `✅ Пройден за ${formatTime(rec.bestTimeSeconds)}` : (rec.attempts > 0 ? `⏳ Попыток: ${rec.attempts}` : '— не начат');
+                html += `<div class="profile-obet-row"><span class="po-name">${modes[key].name}</span><span class="po-detail">${status}</span></div>`;
+            }
+
+            html += `<div class="info-section-title">📈 Практика по режимам</div>`;
+            const statEntries = Object.entries(profile.modeStats).sort((a, b) => b[1] - a[1]);
+            if (statEntries.length === 0) {
+                html += `<div class="profile-stat-row"><span style="color:#64748b;">Пока нет данных — сыграйте хотя бы один раунд</span></div>`;
+            } else {
+                statEntries.forEach(([key, count]) => {
+                    const parts = key.split('_'); // ["pos"|"neg", opKey, level]
+                    const numLabel = parts[0] === 'neg' ? '🔴 Отрицательные' : '🔵 Положительные';
+                    const opLabel = OP_LABELS[parts[1]] || parts[1];
+                    const stars = '⭐'.repeat(parseInt(parts[2], 10) || 1);
+                    html += `<div class="profile-obet-row"><span class="po-name">${numLabel} — ${opLabel} ${stars}</span><span class="po-detail">${count.toLocaleString()} решено</span></div>`;
+                });
+            }
+
+            box.innerHTML = html;
+        }
+
+        renderModeStatusBadges();
+
         let activeMode = modes.medium;
+        let activeModeKey = 'medium';
         let gameActive = false;
         let totalSeconds = 0;
         let correctCount = 0;
@@ -1148,6 +1299,7 @@
 
         function selectMode(mKey) {
             activeMode = modes[mKey];
+            activeModeKey = mKey;
             document.getElementById('startScreen').style.display = 'none';
             document.getElementById('briefingScreen').style.display = 'flex';
             
@@ -1158,6 +1310,10 @@
             if(activeMode.targetSc > 0) reqText += `${activeMode.targetSc.toLocaleString()} 📜 `;
             if(activeMode.targetGl > 0) reqText += `${activeMode.targetGl}% 👑`;
             document.getElementById('finalCost').innerText = reqText;
+
+            profile.totalGamesStarted++;
+            profile.obets[mKey].attempts++;
+            saveProfile();
         }
 
         function startGame() {
@@ -1205,6 +1361,8 @@
             const opsKeys = Object.keys(exampleConfig.operations);
             const opKey = opsKeys[Math.floor(Math.random() * opsKeys.length)];
             const level = exampleConfig.operations[opKey];
+
+            currentProblemMeta = { isNegative, opKey, level };
 
             const problem = generateProblem(opKey, level, isNegative);
 
@@ -1327,8 +1485,15 @@
             if (chosen === correctAnswer) {
                 correctCount++;
                 document.getElementById('stat-correct').innerText = correctCount;
+                profile.totalCorrect++;
+
+                if (currentProblemMeta) {
+                    const modeKey = `${currentProblemMeta.isNegative ? 'neg' : 'pos'}_${currentProblemMeta.opKey}_${currentProblemMeta.level}`;
+                    profile.modeStats[modeKey] = (profile.modeStats[modeKey] || 0) + 1;
+                }
 
                 state.combo++;
+                if (state.combo > profile.bestComboEver) profile.bestComboEver = state.combo;
                 let comboMultiplier = 1 + (state.combo * comboStepBonus);
                 let speedBonusPercent = 1 + (timeRemaining * 0.01 * speedBonusBaseFactor); 
                 let isCrit = Math.random() < state.critChance;
@@ -1368,6 +1533,7 @@
             } else {
                 wrongCount++;
                 document.getElementById('stat-wrong').innerText = wrongCount;
+                profile.totalWrong++;
 
                 let forgiven = false;
                 if (errorForgivenessTokens > 0) {
@@ -1625,6 +1791,7 @@
         }
 
         let lastGloryForRate = 0;
+        window.addEventListener('beforeunload', () => { saveProfile(); });
         let displayedGloryRate = 0;
 
         setInterval(() => {
@@ -1642,6 +1809,8 @@
             displayedGloryRate = Math.max(0, state.glory - lastGloryForRate);
             lastGloryForRate = state.glory;
 
+            if (totalSeconds % 5 === 0) saveProfile();
+
             updateUI();
         }, 1000);
 
@@ -1658,6 +1827,13 @@
                         gameActive = false;
                         document.getElementById('winDesc').innerText = `${activeMode.desc}\n\n⏱️ Время прохождения: ${formatTime(totalSeconds)}\n📊 Решено верно: ${correctCount} | Ошибок: ${wrongCount}`;
                         document.getElementById('winScreen').classList.add('active');
+
+                        const rec = profile.obets[activeModeKey];
+                        rec.completed = true;
+                        if (rec.bestTimeSeconds === null || totalSeconds < rec.bestTimeSeconds) {
+                            rec.bestTimeSeconds = totalSeconds;
+                        }
+                        saveProfile();
                     }
                     return;
                 }
