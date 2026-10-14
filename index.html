@@ -1,813 +1,647 @@
 <!DOCTYPE html>
-<html lang="ru" class="h-full">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Крестики-Нолики 6х6 • Без прокрутки</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            display: ['Orbitron', 'sans-serif'],
-          },
-          colors: {
-            darkBg: '#090d16',
-            cardBg: '#111827',
-            neonX: '#00f2fe',
-            neonO: '#ff5e62',
-          }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Хогвартс Коро: Магическая Экономика</title>
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --text-color: #e0e0e0;
+            --gold: #d4af37;
+            --red: #8b0000;
+            --blue-card: #4a90e2;
+            --green-card: #2ecc71;
+            --red-card: #e74c3c;
+            --purple-card: #9b59b6;
         }
-      }
-    }
-  </script>
 
-  <style>
-    /* Strict viewport height fit without scroll */
-    html, body {
-      height: 100%;
-      height: 100dvh;
-      width: 100vw;
-      overflow: hidden;
-      margin: 0;
-      padding: 0;
-      background-color: #090d16;
-      color: #f3f4f6;
-      font-family: 'Inter', sans-serif;
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: manipulation;
-    }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-    /* Safe Area Padding for iOS Devices */
-    .safe-container {
-      height: 100%;
-      height: 100dvh;
-      padding-top: max(0.5rem, env(safe-area-inset-top));
-      padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
-      padding-left: max(0.5rem, env(safe-area-inset-left));
-      padding-right: max(0.5rem, env(safe-area-inset-right));
-    }
+        h1 { color: var(--gold); text-shadow: 2px 2px 4px #000; margin-bottom: 5px; text-align: center;}
+        p.subtitle { margin-top: 0; color: #aaa; margin-bottom: 20px; text-align: center;}
 
-    /* Dynamic responsive board size */
-    .game-board-wrapper {
-      width: min(86vw, 44vh);
-      height: min(86vw, 44vh);
-    }
+        .game-container {
+            display: flex;
+            width: 100%;
+            max-width: 1400px;
+            gap: 20px;
+        }
 
-    @media (orientation: landscape) {
-      .game-board-wrapper {
-        width: min(52vw, 55vh);
-        height: min(52vw, 55vh);
-      }
-    }
+        .player-panel, .market-panel {
+            background: #2a2a40;
+            border: 2px solid var(--gold);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
 
-    /* Glow Effects */
-    .glow-x {
-      color: #00f2fe;
-      text-shadow: 0 0 8px rgba(0, 242, 254, 0.7), 0 0 16px rgba(0, 242, 254, 0.4);
-    }
-    .glow-o {
-      color: #ff5e62;
-      text-shadow: 0 0 8px rgba(255, 94, 98, 0.7), 0 0 16px rgba(255, 94, 98, 0.4);
-    }
+        .player-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
 
-    /* Glassmorphism */
-    .glass-panel {
-      background: rgba(17, 24, 39, 0.75);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
+        .market-panel {
+            flex: 2;
+        }
 
-    /* Cell Buttons */
-    .cell-btn {
-      transition: all 0.15s ease;
-      background: rgba(17, 24, 39, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      font-size: clamp(14px, 4vw, 24px);
-    }
-    .cell-btn:active:not(:disabled) {
-      transform: scale(0.93);
-      background: rgba(0, 242, 254, 0.15);
-    }
+        h2 { margin-top: 0; color: var(--gold); border-bottom: 1px solid var(--gold); padding-bottom: 5px; }
 
-    /* Triplet Highlight Borders */
-    .triplet-x-1 { border: 2px solid #00f2fe !important; box-shadow: inset 0 0 8px rgba(0,242,254,0.4); }
-    .triplet-x-2 { border: 2px solid #a855f7 !important; box-shadow: inset 0 0 8px rgba(168,85,247,0.4); }
-    .triplet-x-3 { border: 2px solid #3b82f6 !important; box-shadow: inset 0 0 8px rgba(59,130,246,0.4); }
+        .stats {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
 
-    .triplet-o-1 { border: 2px solid #ff5e62 !important; box-shadow: inset 0 0 8px rgba(255,94,98,0.4); }
-    .triplet-o-2 { border: 2px solid #f59e0b !important; box-shadow: inset 0 0 8px rgba(245,158,11,0.4); }
-    .triplet-o-3 { border: 2px solid #ec4899 !important; box-shadow: inset 0 0 8px rgba(236,72,153,0.4); }
+        .coins { font-weight: bold; color: var(--gold); }
 
-    .line-5-win {
-      animation: winPulse 0.8s infinite alternate;
-      border: 2px solid #eab308 !important;
-    }
-    @keyframes winPulse {
-      0% { box-shadow: 0 0 8px #eab308; background: rgba(234, 179, 8, 0.25); }
-      100% { box-shadow: 0 0 20px #facc15; background: rgba(250, 204, 21, 0.5); }
-    }
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
 
-    .pop-in {
-      animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    }
-    @keyframes popIn {
-      0% { transform: scale(0); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
+        .card {
+            background: #eee;
+            color: #111;
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 0.85em;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 120px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        }
 
-    /* Active turn indicator */
-    .active-x { border-color: rgba(0, 242, 254, 0.8) !important; box-shadow: 0 0 12px rgba(0, 242, 254, 0.25); }
-    .active-o { border-color: rgba(255, 94, 98, 0.8) !important; box-shadow: 0 0 12px rgba(255, 94, 98, 0.25); }
+        .card:hover { transform: scale(1.05); }
+        
+        .card.disabled { opacity: 0.5; cursor: not-allowed; }
+        .card.disabled:hover { transform: none; }
 
-    #confettiCanvas {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 100;
-    }
-  </style>
+        .card.blue { border-top: 5px solid var(--blue-card); }
+        .card.green { border-top: 5px solid var(--green-card); }
+        .card.red { border-top: 5px solid var(--red-card); }
+        .card.purple { border-top: 5px solid var(--purple-card); }
+        .card.landmark { border-top: 5px solid var(--gold); background: #fff8e7; }
+        .card.landmark.built { background: var(--gold); color: #000; }
+
+        .card-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 5px;}
+        .card-cost { background: var(--gold); color: #000; padding: 2px 5px; border-radius: 3px; font-size: 0.9em;}
+        .card-triggers { background: #333; color: #fff; padding: 2px 5px; border-radius: 3px; }
+        .card-count { position: absolute; bottom: -10px; right: -10px; background: #e74c3c; color: white; width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid #fff; z-index: 10;}
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+            background: #2a2a40;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #444;
+        }
+
+        .dice-area {
+            font-size: 3em;
+            margin: 10px 0;
+            display: flex;
+            gap: 15px;
+        }
+
+        .die { background: white; color: black; width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; border-radius: 10px; box-shadow: inset 0 0 10px rgba(0,0,0,0.2); }
+
+        button {
+            background: var(--red);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.1em;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin: 5px;
+        }
+
+        button:hover:not(:disabled) { background: #a00000; }
+        button:disabled { background: #555; cursor: not-allowed; }
+
+        #log {
+            width: 100%;
+            height: 150px;
+            overflow-y: auto;
+            background: #111;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-family: monospace;
+            border: 1px solid #333;
+        }
+
+        .log-entry { margin: 3px 0; border-bottom: 1px dashed #333; padding-bottom: 2px; }
+        .log-entry.turn { color: var(--gold); font-weight: bold; margin-top: 10px; }
+        .log-entry.income { color: var(--green-card); }
+        .log-entry.loss { color: var(--red-card); }
+
+        @media(max-width: 900px) {
+            .game-container { flex-direction: column; }
+        }
+    </style>
 </head>
 <body>
 
-  <canvas id="confettiCanvas"></canvas>
+    <h1>Хогвартс Коро</h1>
+    <p class="subtitle">Мачи Коро: Издание Волшебного Мира (с правилом рынка из "Гавани")</p>
 
-  <div class="safe-container flex flex-col justify-between items-center max-w-lg mx-auto w-full gap-1.5 sm:gap-2">
-
-    <!-- Compact Header -->
-    <header class="w-full glass-panel rounded-xl py-1.5 px-3 flex justify-between items-center shrink-0">
-      <div class="flex items-center gap-2">
-        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center font-display font-black text-xs text-white shadow">
-          6x6
+    <div class="controls">
+        <div id="turn-indicator" style="font-size: 1.2em; color: var(--gold); margin-bottom: 10px;">Ход: Игрок (Ожидание броска)</div>
+        <div class="dice-area" id="dice-container">
+            <div class="die" id="die1">?</div>
+            <div class="die" id="die2" style="display: none;">?</div>
         </div>
-        <h1 class="font-display font-bold text-xs sm:text-sm tracking-wide text-white leading-none">
-          КРЕСТИКИ-НОЛИКИ
-        </h1>
-      </div>
-
-      <div class="flex items-center gap-1.5">
-        <button id="soundBtn" onclick="toggleSound()" class="w-7 h-7 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 flex items-center justify-center border border-gray-700/50 text-xs">
-          <i id="soundIcon" class="fa-solid fa-volume-high"></i>
-        </button>
-        <button onclick="openModal('rulesModal')" class="px-2.5 h-7 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 text-[11px] font-semibold flex items-center gap-1">
-          <i class="fa-solid fa-circle-info"></i> Rules
-        </button>
-      </div>
-    </header>
-
-    <!-- Compact Game Settings Mode Selector -->
-    <div class="w-full glass-panel rounded-xl p-1 flex justify-between items-center text-[11px] shrink-0 gap-1">
-      <div class="flex bg-gray-900/90 p-0.5 rounded-lg border border-gray-800 flex-1">
-        <button id="modePvp" onclick="setMode('pvp')" class="flex-1 py-1 rounded-md font-semibold transition text-white bg-indigo-600 shadow">
-          <i class="fa-solid fa-users text-[10px] mr-1"></i> 2 Игрока
-        </button>
-        <button id="modeAi" onclick="setMode('ai')" class="flex-1 py-1 rounded-md font-semibold transition text-gray-400">
-          <i class="fa-solid fa-robot text-[10px] mr-1"></i> ИИ
-        </button>
-      </div>
-
-      <div id="aiDiffGroup" class="hidden flex items-center bg-gray-900/90 p-0.5 rounded-lg border border-gray-800 gap-0.5">
-        <button id="diffEasy" onclick="setDifficulty('easy')" class="px-1.5 py-1 rounded text-gray-400 font-semibold text-[10px]">Легк</button>
-        <button id="diffMedium" onclick="setDifficulty('medium')" class="px-1.5 py-1 rounded text-white bg-amber-600 font-semibold text-[10px]">Ср</button>
-        <button id="diffHard" onclick="setDifficulty('hard')" class="px-1.5 py-1 rounded text-gray-400 font-semibold text-[10px]">Сложн</button>
-      </div>
+        <div>
+            <button id="btn-roll-1" onclick="rollDice(1)">Бросить 1 кубик</button>
+            <button id="btn-roll-2" onclick="rollDice(2)" style="display:none;">Бросить 2 кубика</button>
+            <button id="btn-end-turn" onclick="endTurn()" style="display:none; background: var(--green-card);">Завершить ход</button>
+        </div>
     </div>
 
-    <!-- Players & Triplets Score Board -->
-    <div class="w-full grid grid-cols-2 gap-2 shrink-0">
-      <!-- Player X -->
-      <div id="cardX" class="glass-panel p-2 rounded-xl border border-cyan-500/30 active-x transition-all">
-        <div class="flex justify-between items-center mb-1">
-          <div class="flex items-center gap-1.5">
-            <span class="w-5 h-5 rounded bg-cyan-500/20 text-cyan-400 font-black text-xs flex items-center justify-center border border-cyan-500/40">X</span>
-            <span id="nameX" class="font-bold text-[11px] text-white">Игрок 1</span>
-          </div>
-          <span id="badgeX" class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300">ХОД</span>
+    <div class="game-container">
+        <!-- Player 1 -->
+        <div class="player-panel" id="player-panel">
+            <h2>Вы <span class="stats"><span class="coins" id="p1-coins">3 Галеона</span></span></h2>
+            <div class="cards-grid" id="p1-landmarks"></div>
+            <h3>Ваши предприятия:</h3>
+            <div class="cards-grid" id="p1-cards"></div>
         </div>
-        <div class="flex justify-between items-center text-[10px] text-gray-300 font-semibold">
-          <span>Тройки:</span>
-          <span id="tripletsXText" class="text-cyan-400 font-display">0 / 3</span>
-        </div>
-        <div class="w-full h-1.5 bg-gray-900 rounded-full overflow-hidden mt-1 p-0.5 border border-gray-800">
-          <div id="barX" class="h-full bg-cyan-400 rounded-full transition-all duration-300" style="width: 0%"></div>
-        </div>
-      </div>
 
-      <!-- Player O -->
-      <div id="cardO" class="glass-panel p-2 rounded-xl border border-red-500/20 transition-all">
-        <div class="flex justify-between items-center mb-1">
-          <div class="flex items-center gap-1.5">
-            <span class="w-5 h-5 rounded bg-red-500/20 text-red-400 font-black text-xs flex items-center justify-center border border-red-500/40">O</span>
-            <span id="nameO" class="font-bold text-[11px] text-white">Игрок 2</span>
-          </div>
-          <span id="badgeO" class="hidden text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-500/20 text-red-300">ХОД</span>
+        <!-- Market -->
+        <div class="market-panel">
+            <h2>Косой Переулок (Рынок)</h2>
+            <div class="cards-grid" id="market-cards"></div>
         </div>
-        <div class="flex justify-between items-center text-[10px] text-gray-300 font-semibold">
-          <span>Тройки:</span>
-          <span id="tripletsOText" class="text-red-400 font-display">0 / 3</span>
+
+        <!-- AI Player -->
+        <div class="player-panel" id="ai-panel">
+            <h2>Малфой (ИИ) <span class="stats"><span class="coins" id="p2-coins">3 Галеона</span></span></h2>
+            <div class="cards-grid" id="p2-landmarks"></div>
+            <h3>Предприятия ИИ:</h3>
+            <div class="cards-grid" id="p2-cards"></div>
         </div>
-        <div class="w-full h-1.5 bg-gray-900 rounded-full overflow-hidden mt-1 p-0.5 border border-gray-800">
-          <div id="barO" class="h-full bg-red-400 rounded-full transition-all duration-300" style="width: 0%"></div>
-        </div>
-      </div>
     </div>
 
-    <!-- Status Banner -->
-    <div id="statusBanner" class="w-full py-1 px-2 glass-panel rounded-lg text-center text-[11px] font-semibold text-gray-300 shrink-0 border-gray-800 flex items-center justify-center gap-1.5">
-      <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
-      <span id="statusText">Ход X. Соберите 3 тройки или 5-в-ряд!</span>
-    </div>
+    <div id="log"></div>
 
-    <!-- Centered Dynamic 6x6 Board -->
-    <div class="flex-1 min-h-0 flex items-center justify-center w-full">
-      <div class="game-board-wrapper glass-panel p-1.5 rounded-2xl border border-gray-800 shadow-xl">
-        <div id="boardGrid" class="grid grid-cols-6 grid-rows-6 gap-1 w-full h-full">
-          <!-- 36 cells generated via JS -->
-        </div>
-      </div>
-    </div>
+<script>
+    // --- Data ---
+    const cardDatabase = [
+        // Blue (Anyone's turn)
+        { id: 'c1', name: 'Теплица с мандрагорами', type: 'blue', cost: 1, triggers: [1], effectDesc: '1 Галеон из банка', icon: '🌱' },
+        { id: 'c2', name: 'Заповедник гиппогрифов', type: 'blue', cost: 1, triggers: [2], effectDesc: '1 Галеон из банка', icon: '🦅' },
+        { id: 'c3', name: 'Заросли цапучей ивы', type: 'blue', cost: 3, triggers: [4], effectDesc: '3 Галеона из банка', icon: '🌳' }, // Flower Orchard
+        { id: 'c4', name: 'Лодка на Черном озере', type: 'blue', cost: 2, triggers: [8], effectDesc: '3 Галеона из банка', icon: '⛵' }, // Mackerel Boat
+        { id: 'c5', name: 'Шахта гоблинов', type: 'blue', cost: 6, triggers: [9], effectDesc: '5 Галеонов из банка', icon: '⛏️' }, // Mine
+        { id: 'c6', name: 'Тыквенная грядка', type: 'blue', cost: 3, triggers: [10], effectDesc: '3 Галеона из банка', icon: '🎃' }, // Apple Orchard
+        
+        // Green (Your turn)
+        { id: 'c7', name: 'Сладкое королевство', type: 'green', cost: 1, triggers: [2, 3], effectDesc: '1 Галеон из банка', icon: '🍬' }, // Bakery
+        { id: 'c8', name: 'Лавка Олливандера', type: 'green', cost: 2, triggers: [4], effectDesc: '3 Галеона из банка', icon: '🪄' }, // Convenience Store
+        { id: 'c9', name: 'Зельеварня', type: 'green', cost: 5, triggers: [7], effectDesc: '3 Галеона за каждое Существо (🦅)', icon: '⚗️', comboIcon: '🦅' }, // Cheese Factory
+        { id: 'c10', name: 'Фабрика метел', type: 'green', cost: 3, triggers: [8], effectDesc: '3 Галеона за каждые Артефакты (🪄/⛏️)', icon: '🧹', comboIcon: '🪄' }, // Furniture
+        { id: 'c11', name: 'Рынок ингредиентов', type: 'green', cost: 2, triggers: [11, 12], effectDesc: '2 Галеона за каждое Растение (🌱/🌳/🎃)', icon: '📜', comboIcon: '🌱' }, // Fruit Market
 
-    <!-- Bottom Action Controls -->
-    <div class="w-full flex gap-2 shrink-0 pt-0.5">
-      <button id="undoBtn" onclick="undoMove()" class="flex-1 py-2 rounded-xl bg-gray-800/90 hover:bg-gray-700 text-gray-300 border border-gray-700/60 font-semibold text-xs transition flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-40">
-        <i class="fa-solid fa-rotate-left text-[11px]"></i> Отмена
-      </button>
-      <button onclick="resetGame()" class="flex-1 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-bold text-xs transition shadow-md flex items-center justify-center gap-1.5 active:scale-95">
-        <i class="fa-solid fa-arrows-rotate text-[11px]"></i> Новая игра
-      </button>
-    </div>
+        // Red (Take from roller)
+        { id: 'c12', name: 'Кафе мадам Паддифут', type: 'red', cost: 2, triggers: [3], effectDesc: 'Забирает 1 Галеон у бросившего', icon: '☕' }, // Cafe
+        { id: 'c13', name: 'Паб "Три метлы"', type: 'red', cost: 1, triggers: [7], effectDesc: 'Забирает 1 Галеон у бросившего', icon: '🍺' }, // Pizza
+        { id: 'c14', name: 'Дырявый котел', type: 'red', cost: 3, triggers: [9, 10], effectDesc: 'Забирает 2 Галеона у бросившего', icon: '🍲' }, // Family Restaurant
 
-  </div>
+        // Purple (Your turn, special)
+        { id: 'c15', name: 'Стадион для квиддича', type: 'purple', cost: 6, triggers: [6], effectDesc: 'Забирает по 2 Галеона у всех', icon: '🏟️' }, // Stadium
+        { id: 'c16', name: 'Ежедневный пророк', type: 'purple', cost: 7, triggers: [6], effectDesc: 'Забирает 5 Галеонов у одного (ИИ)', icon: '📰' }, // TV Station
+        { id: 'c17', name: 'Налог Министерства', type: 'purple', cost: 4, triggers: [8, 9], effectDesc: 'Забирает половину у богачей (>=10)', icon: '⚖️' } // Tax Office
+    ];
 
-  <!-- Rules Modal -->
-  <div id="rulesModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3">
-    <div class="glass-panel max-w-sm w-full rounded-2xl border border-gray-700 p-4 max-h-[85vh] overflow-y-auto text-gray-200">
-      <div class="flex justify-between items-center pb-2 border-b border-gray-800">
-        <h3 class="font-display font-bold text-sm text-white flex items-center gap-1.5">
-          <i class="fa-solid fa-book-open text-cyan-400"></i> Правила игры
-        </h3>
-        <button onclick="closeModal('rulesModal')" class="text-gray-400 p-1">
-          <i class="fa-solid fa-xmark text-base"></i>
-        </button>
-      </div>
+    const landmarksData = [
+        { id: 'l1', name: 'Порт Хогвартса', cost: 2, effectDesc: 'Если бросок >= 10, можно +2 (Автоматически)', key: 'port' },
+        { id: 'l2', name: 'Вокзал Кингс-Кросс', cost: 4, effectDesc: 'Позволяет бросать 2 кубика', key: 'station' },
+        { id: 'l3', name: 'Косой Переулок', cost: 10, effectDesc: 'Кафе и Пабы (☕/🍺/🍲) приносят +1 монету', key: 'mall' },
+        { id: 'l4', name: 'Замок Хогвартс', cost: 16, effectDesc: 'Если выпал дубль — дополнительный ход', key: 'park' },
+        { id: 'l5', name: 'Отдел Тайн', cost: 22, effectDesc: 'Можно перебросить кубики 1 раз (Автоматически при < 6)', key: 'tower' },
+        { id: 'l6', name: 'Аэропорт магов', cost: 30, effectDesc: 'Если ничего не купили в свой ход — +10 Галеонов', key: 'airport' }
+    ];
 
-      <div class="space-y-2.5 mt-3 text-[11px] leading-relaxed">
-        <div class="bg-gray-900/80 p-2.5 rounded-xl border border-gray-800">
-          <h4 class="font-bold text-cyan-400 mb-0.5 flex items-center gap-1 text-xs">
-            <i class="fa-solid fa-trophy text-[10px]"></i> Условия победы
-          </h4>
-          <ul class="list-disc pl-3.5 space-y-0.5">
-            <li>Собрать <b>3 независимые тройки</b> (3 в ряд по любой линии).</li>
-            <li>ИЛИ сразу собрать <b>1 линию из 5 клеток подряд</b>.</li>
-          </ul>
-        </div>
+    // --- State ---
+    let players = [
+        { name: 'Вы', coins: 3, cards: {}, landmarks: {}, isAI: false },
+        { name: 'Малфой (ИИ)', coins: 3, cards: {}, landmarks: {}, isAI: true }
+    ];
+    let deck = [];
+    let market = {};
+    let activePlayer = 0;
+    let turnPhase = 'roll'; // roll -> buy
+    let currentRoll = 0;
+    let doubleRolled = false;
+    let extraTurn = false;
 
-        <div class="bg-gray-900/80 p-2.5 rounded-xl border border-gray-800">
-          <h4 class="font-bold text-amber-400 mb-0.5 flex items-center gap-1 text-xs">
-            <i class="fa-solid fa-shield-halved text-[10px]"></i> Правило троек
-          </h4>
-          <p>
-            Каждая клетка может входить <b>строго в 1 засчитанную тройку</b>. Клетки после засчета тройки нельзя использовать для создания второй тройки.
-          </p>
-        </div>
-
-        <div class="bg-gray-900/80 p-2.5 rounded-xl border border-gray-800">
-          <h4 class="font-bold text-red-400 mb-0.5 flex items-center gap-1 text-xs">
-            <i class="fa-solid fa-bolt text-[10px]"></i> Супер-линия из 5
-          </h4>
-          <p>
-            Любые ваши клетки (даже ранее использованные в тройках) <b>свободно засчитываются</b> для победной линии из 5 символов подряд!
-          </p>
-        </div>
-      </div>
-
-      <div class="mt-4 text-center">
-        <button onclick="closeModal('rulesModal')" class="w-full py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs">
-          Понятно
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Victory Modal -->
-  <div id="victoryModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-    <div class="glass-panel max-w-xs w-full rounded-2xl border border-gray-700 p-5 text-center shadow-2xl">
-      <div id="vicIconBg" class="w-12 h-12 rounded-xl mx-auto flex items-center justify-center text-2xl mb-2 bg-cyan-500 text-white shadow-lg">
-        <i class="fa-solid fa-trophy"></i>
-      </div>
-
-      <h2 id="vicTitle" class="font-display font-black text-xl text-white mb-0.5">ПОБЕДА!</h2>
-      <p id="vicSubtitle" class="text-[11px] text-gray-300 mb-3">Игрок X победил!</p>
-
-      <div class="bg-gray-900/80 p-2.5 rounded-xl border border-gray-800 mb-4 text-[11px] text-gray-400 space-y-1">
-        <div class="flex justify-between">
-          <span>Режим:</span>
-          <span id="vicModeText" class="text-gray-200 font-semibold">2 Игрока</span>
-        </div>
-        <div class="flex justify-between">
-          <span>Сделано ходов:</span>
-          <span id="vicMovesText" class="text-gray-200 font-semibold">0</span>
-        </div>
-        <div class="flex justify-between">
-          <span>Счёт троек (X/O):</span>
-          <span id="vicScoreText" class="text-gray-200 font-semibold">0 / 0</span>
-        </div>
-      </div>
-
-      <button onclick="closeModal('victoryModal'); resetGame();" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold text-xs shadow-lg">
-        Играть снова
-      </button>
-    </div>
-  </div>
-
-  <script>
-    /* GAME LOGIC ENGINE */
-    const TOTAL_CELLS = 36;
-    let board = Array(TOTAL_CELLS).fill(null);
-    let currentPlayer = 'X';
-    let gameMode = 'pvp';
-    let aiDifficulty = 'medium';
-    let gameOver = false;
-    let soundEnabled = true;
-    let moveHistory = [];
-
-    let playerX = { triplets: [], usedCells: new Set() };
-    let playerO = { triplets: [], usedCells: new Set() };
-
-    const ALL_TRIPLETS = [];
-    const ALL_FIVE_LINES = [];
-
-    // Precalculate line combinations
-    (function generateCombinations() {
-      // Horizontal
-      for (let r = 0; r < 6; r++) {
-        for (let c = 0; c <= 3; c++) ALL_TRIPLETS.push([r*6+c, r*6+c+1, r*6+c+2]);
-        for (let c = 0; c <= 1; c++) ALL_FIVE_LINES.push([r*6+c, r*6+c+1, r*6+c+2, r*6+c+3, r*6+c+4]);
-      }
-      // Vertical
-      for (let c = 0; c < 6; c++) {
-        for (let r = 0; r <= 3; r++) ALL_TRIPLETS.push([r*6+c, (r+1)*6+c, (r+2)*6+c]);
-        for (let r = 0; r <= 1; r++) ALL_FIVE_LINES.push([r*6+c, (r+1)*6+c, (r+2)*6+c, (r+3)*6+c, (r+4)*6+c]);
-      }
-      // Main Diagonals (\)
-      for (let r = 0; r <= 3; r++) {
-        for (let c = 0; c <= 3; c++) ALL_TRIPLETS.push([r*6+c, (r+1)*6+c+1, (r+2)*6+c+2]);
-      }
-      for (let r = 0; r <= 1; r++) {
-        for (let c = 0; c <= 1; c++) ALL_FIVE_LINES.push([r*6+c, (r+1)*6+c+1, (r+2)*6+c+2, (r+3)*6+c+3, (r+4)*6+c+4]);
-      }
-      // Anti Diagonals (/)
-      for (let r = 0; r <= 3; r++) {
-        for (let c = 2; c < 6; c++) ALL_TRIPLETS.push([r*6+c, (r+1)*6+c-1, (r+2)*6+c-2]);
-      }
-      for (let r = 0; r <= 1; r++) {
-        for (let c = 4; c < 6; c++) ALL_FIVE_LINES.push([r*6+c, (r+1)*6+c-1, (r+2)*6+c-2, (r+3)*6+c-3, (r+4)*6+c-4]);
-      }
-    })();
-
-    /* Web Audio Sound Synthesizer */
-    let audioCtx = null;
-    function initAudio() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    function playSound(type) {
-      if (!soundEnabled) return;
-      initAudio();
-      if (!audioCtx) return;
-
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      const now = audioCtx.currentTime;
-
-      if (type === 'moveX') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(587, now);
-        osc.frequency.exponentialRampToValueAtTime(880, now + 0.07);
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.07);
-        osc.start(now); osc.stop(now + 0.07);
-      } else if (type === 'moveO') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(329, now);
-        osc.frequency.exponentialRampToValueAtTime(220, now + 0.08);
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
-        osc.start(now); osc.stop(now + 0.08);
-      } else if (type === 'triplet') {
-        [523, 659, 783].forEach((f, i) => {
-          const o = audioCtx.createOscillator();
-          const g = audioCtx.createGain();
-          o.connect(g); g.connect(audioCtx.destination);
-          o.frequency.setValueAtTime(f, now + i * 0.05);
-          g.gain.setValueAtTime(0.15, now + i * 0.05);
-          g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.05 + 0.12);
-          o.start(now + i * 0.05); o.stop(now + i * 0.05 + 0.12);
+    // --- Initialization ---
+    function initGame() {
+        // Init player starting cards
+        players.forEach(p => {
+            p.cards['c1'] = 1; // 1 Wheat
+            p.cards['c7'] = 1; // 1 Bakery
+            landmarksData.forEach(l => p.landmarks[l.key] = false);
         });
-      } else if (type === 'win') {
-        [523, 659, 783, 1046].forEach((f, i) => {
-          const o = audioCtx.createOscillator();
-          const g = audioCtx.createGain();
-          o.connect(g); g.connect(audioCtx.destination);
-          o.frequency.setValueAtTime(f, now + i * 0.07);
-          g.gain.setValueAtTime(0.2, now + i * 0.07);
-          g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.07 + 0.25);
-          o.start(now + i * 0.07); o.stop(now + i * 0.07 + 0.25);
+
+        // Build Deck (6 of each except Purple which has 4)
+        cardDatabase.forEach(c => {
+            let count = c.type === 'purple' ? 4 : 6;
+            for(let i=0; i<count; i++) deck.push(c.id);
         });
-      }
+        shuffle(deck);
+        replenishMarket();
+        updateUI();
+        log('Игра началась! Вы ходите первым.');
     }
 
-    function toggleSound() {
-      soundEnabled = !soundEnabled;
-      document.getElementById('soundIcon').className = soundEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark text-red-400';
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
     }
 
-    /* Board UI Initialization */
-    function initUI() {
-      const grid = document.getElementById('boardGrid');
-      grid.innerHTML = '';
-      for (let i = 0; i < TOTAL_CELLS; i++) {
-        const btn = document.createElement('button');
-        btn.className = 'cell-btn rounded-lg flex items-center justify-center font-display font-black relative';
-        btn.onclick = () => handleCellClick(i);
-        grid.appendChild(btn);
-      }
+    // "Harbor" expansion rule: Market must have 10 unique establishments
+    function replenishMarket() {
+        while(Object.keys(market).length < 10 && deck.length > 0) {
+            let cardId = deck.pop();
+            market[cardId] = (market[cardId] || 0) + 1;
+        }
     }
 
-    function render() {
-      const cells = document.querySelectorAll('.cell-btn');
-      cells.forEach((cell, idx) => {
-        const val = board[idx];
-        cell.className = 'cell-btn rounded-lg flex items-center justify-center font-display font-black relative';
-        cell.disabled = gameOver || val !== null || (gameMode === 'ai' && currentPlayer === 'O');
+    // --- Core Logic ---
+    function rollDice(num) {
+        if (turnPhase !== 'roll') return;
+        
+        let d1 = Math.floor(Math.random() * 6) + 1;
+        let d2 = num === 2 ? Math.floor(Math.random() * 6) + 1 : 0;
+        currentRoll = d1 + d2;
+        doubleRolled = (num === 2 && d1 === d2);
+        
+        document.getElementById('die1').innerText = d1;
+        document.getElementById('die2').innerText = d2 > 0 ? d2 : '';
+        document.getElementById('die2').style.display = d2 > 0 ? 'flex' : 'none';
 
-        if (val === 'X') {
-          cell.innerHTML = `<span class="glow-x pop-in"><i class="fa-solid fa-xmark"></i></span>`;
-        } else if (val === 'O') {
-          cell.innerHTML = `<span class="glow-o pop-in"><i class="fa-solid fa-o"></i></span>`;
-        } else {
-          cell.innerHTML = '';
+        log(`<span class="turn">${players[activePlayer].name} бросает кубики: ${d1}${d2 ? ' + '+d2 : ''} = ${currentRoll}</span>`);
+
+        let p = players[activePlayer];
+
+        // Landmark: Tower (Reroll)
+        if (p.landmarks.tower && currentRoll <= 5 && !p.isAI) {
+            // Simplified automatic reroll for basic implementation
+            log(`<i>Отдел Тайн перебрасывает плохой результат...</i>`);
+            d1 = Math.floor(Math.random() * 6) + 1;
+            d2 = num === 2 ? Math.floor(Math.random() * 6) + 1 : 0;
+            currentRoll = d1 + d2;
+            doubleRolled = (num === 2 && d1 === d2);
+            document.getElementById('die1').innerText = d1;
+            document.getElementById('die2').innerText = d2 > 0 ? d2 : '';
+            log(`Новый результат: ${currentRoll}`);
         }
 
-        // Apply Triplet highlights
-        playerX.triplets.forEach((t, i) => { if (t.includes(idx)) cell.classList.add(`triplet-x-${Math.min(i+1, 3)}`); });
-        playerO.triplets.forEach((t, i) => { if (t.includes(idx)) cell.classList.add(`triplet-o-${Math.min(i+1, 3)}`); });
-      });
-
-      // Update Turn cards
-      const cardX = document.getElementById('cardX');
-      const cardO = document.getElementById('cardO');
-      const badgeX = document.getElementById('badgeX');
-      const badgeO = document.getElementById('badgeO');
-
-      if (!gameOver) {
-        if (currentPlayer === 'X') {
-          cardX.classList.add('active-x'); cardO.classList.remove('active-o');
-          badgeX.classList.remove('hidden'); badgeO.classList.add('hidden');
-        } else {
-          cardO.classList.add('active-o'); cardX.classList.remove('active-x');
-          badgeO.classList.remove('hidden'); badgeX.classList.add('hidden');
+        // Landmark: Port
+        if (p.landmarks.port && currentRoll >= 10) {
+            currentRoll += 2;
+            log(`<i>Порт Хогвартса увеличивает результат до ${currentRoll}</i>`);
         }
-      } else {
-        cardX.classList.remove('active-x'); cardO.classList.remove('active-o');
-        badgeX.classList.add('hidden'); badgeO.classList.add('hidden');
-      }
 
-      document.getElementById('tripletsXText').innerText = `${playerX.triplets.length} / 3`;
-      document.getElementById('tripletsOText').innerText = `${playerO.triplets.length} / 3`;
-      document.getElementById('barX').style.width = `${Math.min(100, (playerX.triplets.length / 3) * 100)}%`;
-      document.getElementById('barO').style.width = `${Math.min(100, (playerO.triplets.length / 3) * 100)}%`;
+        processIncome(currentRoll);
 
-      document.getElementById('undoBtn').disabled = moveHistory.length === 0 || gameOver;
-    }
+        turnPhase = 'buy';
+        updateUI();
 
-    function handleCellClick(index) {
-      if (gameOver || board[index] !== null) return;
-      if (gameMode === 'ai' && currentPlayer === 'O') return;
-      makeMove(index);
-    }
-
-    function makeMove(index) {
-      saveHistory();
-      board[index] = currentPlayer;
-      playSound(currentPlayer === 'X' ? 'moveX' : 'moveO');
-
-      const turnPlayer = currentPlayer === 'X' ? playerX : playerO;
-      const prevTripletsCount = turnPlayer.triplets.length;
-
-      checkAndScoreTriplets(currentPlayer);
-      const win5 = check5InARow(currentPlayer);
-
-      render();
-
-      if (win5) {
-        highlightWinLine(win5);
-        handleWin(currentPlayer, '5-в-ряд');
-        return;
-      }
-
-      if (turnPlayer.triplets.length > prevTripletsCount) {
-        playSound('triplet');
-      }
-
-      if (turnPlayer.triplets.length >= 3) {
-        handleWin(currentPlayer, '3 тройки');
-        return;
-      }
-
-      if (!board.includes(null)) {
-        handleBoardFull();
-        return;
-      }
-
-      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-      updateStatus();
-      render();
-
-      if (gameMode === 'ai' && currentPlayer === 'O' && !gameOver) {
-        setTimeout(makeAiMove, 300);
-      }
-    }
-
-    function checkAndScoreTriplets(p) {
-      const pData = p === 'X' ? playerX : playerO;
-      for (let t of ALL_TRIPLETS) {
-        const [a, b, c] = t;
-        if (board[a] === p && board[b] === p && board[c] === p) {
-          if (!pData.usedCells.has(a) && !pData.usedCells.has(b) && !pData.usedCells.has(c)) {
-            pData.triplets.push(t);
-            pData.usedCells.add(a); pData.usedCells.add(b); pData.usedCells.add(c);
-          }
+        if (players[activePlayer].isAI) {
+            setTimeout(aiBuyPhase, 1500);
         }
-      }
     }
 
-    function check5InARow(p) {
-      for (let l of ALL_FIVE_LINES) {
-        if (l.every(i => board[i] === p)) return l;
-      }
-      return null;
-    }
+    function processIncome(roll) {
+        let pActive = players[activePlayer];
+        let pOther = players[(activePlayer + 1) % 2];
 
-    function highlightWinLine(line) {
-      const cells = document.querySelectorAll('.cell-btn');
-      line.forEach(i => cells[i].classList.add('line-5-win'));
-    }
-
-    function updateStatus() {
-      const txt = document.getElementById('statusText');
-      if (gameMode === 'ai' && currentPlayer === 'O') {
-        txt.innerText = 'ИИ размышляет...';
-      } else {
-        const name = currentPlayer === 'X' ? 'X' : (gameMode === 'ai' ? 'ИИ (O)' : 'O');
-        txt.innerText = `Ход ${name}. Свободная клетка.`;
-      }
-    }
-
-    function handleWin(winner, reason) {
-      gameOver = true;
-      playSound('win');
-      triggerConfetti();
-
-      const name = winner === 'X' ? (gameMode === 'ai' ? 'Вы (X)' : 'Игрок 1 (X)') : (gameMode === 'ai' ? 'ИИ (O)' : 'Игрок 2 (O)');
-      document.getElementById('vicTitle').innerText = `ПОБЕДА ${winner}!`;
-      document.getElementById('vicSubtitle').innerText = `${name} одержал победу (${reason})!`;
-
-      document.getElementById('vicModeText').innerText = gameMode === 'pvp' ? '2 Игрока' : `Против ИИ (${getDiffLabel()})`;
-      document.getElementById('vicMovesText').innerText = board.filter(c => c !== null).length;
-      document.getElementById('vicScoreText').innerText = `${playerX.triplets.length} / ${playerO.triplets.length}`;
-
-      document.getElementById('statusText').innerText = `Победитель: ${name}`;
-
-      setTimeout(() => openModal('victoryModal'), 400);
-    }
-
-    function handleBoardFull() {
-      gameOver = true;
-      if (playerX.triplets.length > playerO.triplets.length) handleWin('X', 'Больше троек');
-      else if (playerO.triplets.length > playerX.triplets.length) handleWin('O', 'Больше троек');
-      else {
-        document.getElementById('vicTitle').innerText = 'НИЧЬЯ!';
-        document.getElementById('vicSubtitle').innerText = 'Поле заполнено. Равное число троек!';
-        document.getElementById('vicModeText').innerText = gameMode === 'pvp' ? '2 Игрока' : `ИИ (${getDiffLabel()})`;
-        document.getElementById('vicMovesText').innerText = 36;
-        document.getElementById('vicScoreText').innerText = `${playerX.triplets.length} / ${playerO.triplets.length}`;
-        openModal('victoryModal');
-      }
-    }
-
-    function saveHistory() {
-      moveHistory.push({
-        board: [...board],
-        currentPlayer: currentPlayer,
-        playerX: { triplets: JSON.parse(JSON.stringify(playerX.triplets)), usedCells: new Set(playerX.usedCells) },
-        playerO: { triplets: JSON.parse(JSON.stringify(playerO.triplets)), usedCells: new Set(playerO.usedCells) }
-      });
-    }
-
-    function undoMove() {
-      if (moveHistory.length === 0 || gameOver) return;
-      let steps = (gameMode === 'ai' && moveHistory.length >= 2) ? 2 : 1;
-      let lastState = null;
-      while (steps > 0 && moveHistory.length > 0) {
-        lastState = moveHistory.pop();
-        steps--;
-      }
-      if (lastState) {
-        board = [...lastState.board];
-        currentPlayer = lastState.currentPlayer;
-        playerX = { triplets: lastState.playerX.triplets, usedCells: new Set(lastState.playerX.usedCells) };
-        playerO = { triplets: lastState.playerO.triplets, usedCells: new Set(lastState.playerO.usedCells) };
-        gameOver = false;
-        updateStatus();
-        render();
-      }
-    }
-
-    function resetGame() {
-      board = Array(TOTAL_CELLS).fill(null);
-      currentPlayer = 'X';
-      gameOver = false;
-      moveHistory = [];
-      playerX = { triplets: [], usedCells: new Set() };
-      playerO = { triplets: [], usedCells: new Set() };
-      updateStatus();
-      render();
-    }
-
-    /* AI Logic */
-    function makeAiMove() {
-      if (gameOver) return;
-      const avail = [];
-      for (let i = 0; i < TOTAL_CELLS; i++) if (board[i] === null) avail.push(i);
-      if (avail.length === 0) return;
-
-      let move = null;
-      if (aiDifficulty === 'easy') {
-        move = Math.random() > 0.3 ? avail[Math.floor(Math.random()*avail.length)] : getBestMove(avail);
-      } else if (aiDifficulty === 'medium') {
-        move = getImmediateWinOrBlock('O') || getImmediateWinOrBlock('X') || getBestMove(avail);
-      } else {
-        move = getImmediateWinOrBlock('O') || getImmediateWinOrBlock('X') || getHardMove(avail);
-      }
-
-      if (move !== null && move !== undefined) makeMove(move);
-    }
-
-    function getImmediateWinOrBlock(p) {
-      for (let i = 0; i < TOTAL_CELLS; i++) {
-        if (board[i] === null) {
-          board[i] = p;
-          if (check5InARow(p)) { board[i] = null; return i; }
-          
-          const pData = p === 'X' ? playerX : playerO;
-          let added = 0;
-          for (let t of ALL_TRIPLETS) {
-            const [a, b, c] = t;
-            if (board[a] === p && board[b] === p && board[c] === p) {
-              if (!pData.usedCells.has(a) && !pData.usedCells.has(b) && !pData.usedCells.has(c)) added++;
+        // 1. RED (Counter-clockwise, so Other Player gets from Active)
+        let redOwed = 0;
+        Object.keys(pOther.cards).forEach(cid => {
+            let c = cardDatabase.find(x => x.id === cid);
+            if (c.type === 'red' && c.triggers.includes(roll)) {
+                let amount = (c.id === 'c14' ? 2 : 1);
+                if (pOther.landmarks.mall) amount += 1; // Landmark: Mall buff
+                redOwed += amount * pOther.cards[cid];
             }
-          }
-          board[i] = null;
-          if (pData.triplets.length + added >= 3) return i;
-        }
-      }
-      return null;
-    }
-
-    function getBestMove(avail) {
-      let bestS = -Infinity, bestM = avail[0];
-      for (let m of avail) {
-        let s = scoreMove(m, 'O');
-        if (s > bestS) { bestS = s; bestM = m; }
-      }
-      return bestM;
-    }
-
-    function getHardMove(avail) {
-      let bestS = -Infinity, bestMoves = [];
-      for (let m of avail) {
-        let s = scoreMove(m, 'O') * 1.2 + scoreMove(m, 'X') * 0.9;
-        if (s > bestS) { bestS = s; bestMoves = [m]; }
-        else if (s === bestS) bestMoves.push(m);
-      }
-      return bestMoves[Math.floor(Math.random() * bestMoves.length)];
-    }
-
-    function scoreMove(idx, p) {
-      let s = 0;
-      const r = Math.floor(idx / 6), c = idx % 6;
-      if ((r === 2 || r === 3) && (c === 2 || c === 3)) s += 25;
-
-      board[idx] = p;
-      for (let t of ALL_TRIPLETS) {
-        if (t.includes(idx)) {
-          const [a,b,c] = t;
-          const count = (board[a]===p)+ (board[b]===p)+ (board[c]===p);
-          if (count === 3) s += 200;
-          else if (count === 2) s += 30;
-        }
-      }
-      for (let l of ALL_FIVE_LINES) {
-        if (l.includes(idx)) {
-          const count = l.filter(i => board[i] === p).length;
-          if (!l.some(i => board[i] !== null && board[i] !== p)) {
-            if (count === 5) s += 800;
-            else if (count === 4) s += 250;
-          }
-        }
-      }
-      board[idx] = null;
-      return s;
-    }
-
-    /* Controls & Modals */
-    function setMode(m) {
-      gameMode = m;
-      document.getElementById('modePvp').className = m === 'pvp' ? 'flex-1 py-1 rounded-md font-semibold transition text-white bg-indigo-600 shadow' : 'flex-1 py-1 rounded-md font-semibold transition text-gray-400';
-      document.getElementById('modeAi').className = m === 'ai' ? 'flex-1 py-1 rounded-md font-semibold transition text-white bg-indigo-600 shadow' : 'flex-1 py-1 rounded-md font-semibold transition text-gray-400';
-
-      const aiGrp = document.getElementById('aiDiffGroup');
-      if (m === 'ai') {
-        aiGrp.classList.remove('hidden');
-        document.getElementById('nameO').innerText = `ИИ (${getDiffLabel()})`;
-      } else {
-        aiGrp.classList.add('hidden');
-        document.getElementById('nameO').innerText = 'Игрок 2';
-      }
-      resetGame();
-    }
-
-    function setDifficulty(d) {
-      aiDifficulty = d;
-      ['Easy', 'Medium', 'Hard'].forEach(x => {
-        const btn = document.getElementById(`diff${x}`);
-        btn.className = x.toLowerCase() === d ? 'px-1.5 py-1 rounded text-white bg-amber-600 font-semibold text-[10px]' : 'px-1.5 py-1 rounded text-gray-400 font-semibold text-[10px]';
-      });
-      if (gameMode === 'ai') document.getElementById('nameO').innerText = `ИИ (${getDiffLabel()})`;
-      resetGame();
-    }
-
-    function getDiffLabel() {
-      return aiDifficulty === 'easy' ? 'Легк' : (aiDifficulty === 'medium' ? 'Ср' : 'Сложн');
-    }
-
-    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-
-    /* Confetti Particle Animation */
-    function triggerConfetti() {
-      const canvas = document.getElementById('confettiCanvas');
-      const ctx = canvas.getContext('2d');
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-
-      const particles = [];
-      const colors = ['#00f2fe', '#4f46e5', '#ff5e62', '#f59e0b', '#10b981'];
-
-      for (let i = 0; i < 70; i++) {
-        particles.push({
-          x: canvas.width / 2, y: canvas.height / 2,
-          vx: (Math.random() - 0.5) * 12, vy: (Math.random() - 0.7) * 12,
-          size: Math.random() * 6 + 3,
-          color: colors[Math.floor(Math.random() * colors.length)],
-          opacity: 1
         });
-      }
+        if (redOwed > 0) {
+            let actualPay = Math.min(redOwed, pActive.coins);
+            pActive.coins -= actualPay;
+            pOther.coins += actualPay;
+            log(`<span class="loss">${pActive.name} платит ${actualPay} ☕ ${pOther.name}</span>`);
+        }
 
-      function renderFrame() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        let active = 0;
-        particles.forEach(p => {
-          if (p.opacity > 0) {
-            active++;
-            p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.opacity -= 0.015;
-            ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0, p.opacity);
-            ctx.fillRect(p.x, p.y, p.size, p.size);
-          }
+        // 2. BLUE (Everyone gets from bank simultaneously)
+        players.forEach(p => {
+            let blueGain = 0;
+            Object.keys(p.cards).forEach(cid => {
+                let c = cardDatabase.find(x => x.id === cid);
+                if (c.type === 'blue' && c.triggers.includes(roll)) {
+                    let base = (c.id === 'c5' ? 5 : (c.id === 'c3' || c.id === 'c4' || c.id === 'c6' ? 3 : 1));
+                    blueGain += base * p.cards[cid];
+                }
+            });
+            if (blueGain > 0) {
+                p.coins += blueGain;
+                log(`<span class="income">${p.name} получает ${blueGain} из банка (Синие карты)</span>`);
+            }
         });
-        if (active > 0) requestAnimationFrame(renderFrame);
-      }
-      renderFrame();
+
+        // 3. GREEN (Active player only)
+        let greenGain = 0;
+        Object.keys(pActive.cards).forEach(cid => {
+            let c = cardDatabase.find(x => x.id === cid);
+            if (c.type === 'green' && c.triggers.includes(roll)) {
+                let base = 0;
+                if (cid === 'c7') base = 1 + (pActive.landmarks.mall ? 1 : 0); // Bakery
+                else if (cid === 'c8') base = 3; // Store
+                else if (cid === 'c9') { // Potion (Cow combo)
+                    let cows = pActive.cards['c2'] || 0;
+                    base = 3 * cows;
+                } else if (cid === 'c10') { // Broom (Gear combo)
+                    let gears = (pActive.cards['c5'] || 0) + (pActive.cards['c8'] || 0);
+                    base = 3 * gears;
+                } else if (cid === 'c11') { // Market (Wheat combo)
+                    let wheat = (pActive.cards['c1'] || 0) + (pActive.cards['c3'] || 0) + (pActive.cards['c6'] || 0);
+                    base = 2 * wheat;
+                }
+                greenGain += base * pActive.cards[cid];
+            }
+        });
+        if (greenGain > 0) {
+            pActive.coins += greenGain;
+            log(`<span class="income">${pActive.name} получает ${greenGain} из банка (Зеленые карты)</span>`);
+        }
+
+        // 4. PURPLE (Active player only)
+        Object.keys(pActive.cards).forEach(cid => {
+            let c = cardDatabase.find(x => x.id === cid);
+            if (c.type === 'purple' && c.triggers.includes(roll)) {
+                if (cid === 'c15') { // Stadium
+                    let amount = Math.min(2, pOther.coins);
+                    pOther.coins -= amount;
+                    pActive.coins += amount;
+                    log(`<span class="income">Квиддич! ${pActive.name} забирает ${amount} у ${pOther.name}</span>`);
+                } else if (cid === 'c16') { // TV
+                    let amount = Math.min(5, pOther.coins);
+                    pOther.coins -= amount;
+                    pActive.coins += amount;
+                    log(`<span class="income">Пророк! ${pActive.name} забирает ${amount} у ${pOther.name}</span>`);
+                } else if (cid === 'c17') { // Tax
+                    if (pOther.coins >= 10) {
+                        let amount = Math.floor(pOther.coins / 2);
+                        pOther.coins -= amount;
+                        pActive.coins += amount;
+                        log(`<span class="income">Налог! ${pActive.name} забирает ${amount} у ${pOther.name}</span>`);
+                    }
+                }
+            }
+        });
     }
 
-    window.onload = () => {
-      initUI();
-      resetGame();
-    };
-  </script>
+    // --- Market Action ---
+    function buyCard(id) {
+        if (turnPhase !== 'buy' || players[activePlayer].isAI) return;
+        let p = players[activePlayer];
+        let c = cardDatabase.find(x => x.id === id);
+        
+        if (p.coins >= c.cost && market[id] > 0) {
+            if (c.type === 'purple' && p.cards[id]) {
+                log('У вас уже есть эта фиолетовая карта!');
+                return;
+            }
+            p.coins -= c.cost;
+            market[id]--;
+            if (market[id] === 0) delete market[id];
+            p.cards[id] = (p.cards[id] || 0) + 1;
+            log(`${p.name} покупает ${c.name}`);
+            
+            replenishMarket();
+            finalizeTurn(true);
+        }
+    }
+
+    function buyLandmark(key) {
+        if (turnPhase !== 'buy' || players[activePlayer].isAI) return;
+        let p = players[activePlayer];
+        let l = landmarksData.find(x => x.key === key);
+        
+        if (p.coins >= l.cost && !p.landmarks[key]) {
+            p.coins -= l.cost;
+            p.landmarks[key] = true;
+            log(`<b>${p.name} построил достопримечательность: ${l.name}!</b>`);
+            checkWin(p);
+            if(turnPhase !== 'end') finalizeTurn(true);
+        }
+    }
+
+    function endTurn() {
+        if (turnPhase !== 'buy') return;
+        let p = players[activePlayer];
+        // Airport landmark effect
+        if (p.landmarks.airport) {
+            p.coins += 10;
+            log(`<span class="income">${p.name} получает 10 Галеонов от Аэропорта (ничего не купил)</span>`);
+        }
+        finalizeTurn(false);
+    }
+
+    function finalizeTurn(bought) {
+        let p = players[activePlayer];
+        
+        if (p.landmarks.park && doubleRolled) {
+            log(`<b>Замок Хогвартс дарует ${p.name} дополнительный ход за дубль!</b>`);
+            turnPhase = 'roll';
+            updateUI();
+            if(p.isAI) setTimeout(aiTurn, 1000);
+            return;
+        }
+
+        activePlayer = (activePlayer + 1) % 2;
+        turnPhase = 'roll';
+        updateUI();
+
+        if (players[activePlayer].isAI) {
+            setTimeout(aiTurn, 1000);
+        }
+    }
+
+    // --- AI Logic ---
+    function aiTurn() {
+        let p = players[activePlayer];
+        let numDice = p.landmarks.station ? (Math.random() > 0.5 ? 2 : 1) : 1;
+        rollDice(numDice);
+    }
+
+    function aiBuyPhase() {
+        if (turnPhase === 'end') return;
+        let p = players[activePlayer];
+        let bought = false;
+
+        // 1. Try to buy landmark
+        for (let l of landmarksData) {
+            if (!p.landmarks[l.key] && p.coins >= l.cost) {
+                p.coins -= l.cost;
+                p.landmarks[l.key] = true;
+                log(`<b>${p.name} построил ${l.name}!</b>`);
+                bought = true;
+                checkWin(p);
+                break;
+            }
+        }
+
+        // 2. Buy random affordable card from market
+        if (!bought && turnPhase !== 'end') {
+            let affordable = Object.keys(market).filter(id => {
+                let c = cardDatabase.find(x => x.id === id);
+                if (c.type === 'purple' && p.cards[id]) return false;
+                return c.cost <= p.coins;
+            });
+
+            if (affordable.length > 0) {
+                // Pick random
+                let pick = affordable[Math.floor(Math.random() * affordable.length)];
+                let c = cardDatabase.find(x => x.id === pick);
+                p.coins -= c.cost;
+                market[pick]--;
+                if (market[pick] === 0) delete market[pick];
+                p.cards[pick] = (p.cards[pick] || 0) + 1;
+                log(`${p.name} покупает ${c.name}`);
+                replenishMarket();
+                bought = true;
+            }
+        }
+
+        if (!bought && p.landmarks.airport && turnPhase !== 'end') {
+             p.coins += 10;
+             log(`<span class="income">${p.name} получает 10 Галеонов от Аэропорта (ничего не купил)</span>`);
+        }
+
+        if (turnPhase !== 'end') finalizeTurn(bought);
+    }
+
+    function checkWin(p) {
+        let built = Object.values(p.landmarks).filter(x => x).length;
+        if (built === landmarksData.length) {
+            log(`<h2>🎉 ${p.name} побеждает, отстроив весь магический мир! 🎉</h2>`);
+            turnPhase = 'end';
+            updateUI();
+        }
+    }
+
+    // --- Rendering ---
+    function updateUI() {
+        let pActive = players[activePlayer];
+        document.getElementById('turn-indicator').innerText = turnPhase === 'end' ? 'Игра окончена' : `Ход: ${pActive.name} (${turnPhase === 'roll' ? 'Бросок' : 'Покупка'})`;
+
+        // Buttons
+        document.getElementById('btn-roll-1').style.display = (turnPhase === 'roll' && !pActive.isAI) ? 'inline-block' : 'none';
+        document.getElementById('btn-roll-2').style.display = (turnPhase === 'roll' && !pActive.isAI && pActive.landmarks.station) ? 'inline-block' : 'none';
+        document.getElementById('btn-end-turn').style.display = (turnPhase === 'buy' && !pActive.isAI) ? 'inline-block' : 'none';
+
+        // Render Player Panels
+        renderPlayer(0, 'p1');
+        renderPlayer(1, 'p2');
+
+        // Render Market
+        let mHTML = '';
+        Object.keys(market).forEach(id => {
+            let c = cardDatabase.find(x => x.id === id);
+            let canBuy = (turnPhase === 'buy' && !players[0].isAI && players[0].coins >= c.cost && activePlayer === 0);
+            if (c.type === 'purple' && players[0].cards[id]) canBuy = false;
+
+            mHTML += `
+                <div class="card ${c.type} ${canBuy ? '' : 'disabled'}" onclick="buyCard('${id}')">
+                    <div class="card-header">
+                        <span class="card-triggers">[${c.triggers.join(',')}]</span>
+                        <span class="card-cost">${c.cost} 💰</span>
+                    </div>
+                    <div style="font-weight:bold; margin-top:5px; text-align:center;">${c.icon} ${c.name}</div>
+                    <div style="font-size:0.8em; margin-top:10px; color:#555;">${c.effectDesc}</div>
+                    <div class="card-count">${market[id]}</div>
+                </div>
+            `;
+        });
+        document.getElementById('market-cards').innerHTML = mHTML;
+    }
+
+    function renderPlayer(index, prefix) {
+        let p = players[index];
+        document.getElementById(`${prefix}-coins`).innerText = `${p.coins} Галеонов`;
+        
+        // Render Cards
+        let cHTML = '';
+        Object.keys(p.cards).forEach(id => {
+            let c = cardDatabase.find(x => x.id === id);
+            cHTML += `
+                <div class="card ${c.type}" style="cursor:default">
+                    <div class="card-header">
+                        <span class="card-triggers">[${c.triggers.join(',')}]</span>
+                    </div>
+                    <div style="font-weight:bold; margin-top:5px; text-align:center;">${c.icon} ${c.name}</div>
+                    <div class="card-count" style="background:#2c3e50;">${p.cards[id]}</div>
+                </div>
+            `;
+        });
+        document.getElementById(`${prefix}-cards`).innerHTML = cHTML;
+
+        // Render Landmarks
+        let lHTML = '';
+        landmarksData.forEach(l => {
+            let built = p.landmarks[l.key];
+            let canBuy = (!built && turnPhase === 'buy' && activePlayer === index && !p.isAI && p.coins >= l.cost);
+            
+            lHTML += `
+                <div class="card landmark ${built ? 'built' : ''} ${(!built && !canBuy) ? 'disabled' : ''}" 
+                     ${canBuy ? `onclick="buyLandmark('${l.key}')"` : ''} style="min-height: 80px;">
+                    <div class="card-header">
+                        <span>${l.name}</span>
+                        <span class="card-cost">${l.cost} 💰</span>
+                    </div>
+                    <div style="font-size:0.8em; margin-top:5px;">${l.effectDesc}</div>
+                </div>
+            `;
+        });
+        document.getElementById(`${prefix}-landmarks`).innerHTML = lHTML;
+    }
+
+    function log(msg) {
+        let l = document.getElementById('log');
+        l.innerHTML += `<div class="log-entry">${msg}</div>`;
+        l.scrollTop = l.scrollHeight;
+    }
+
+    // Start
+    initGame();
+</script>
 </body>
 </html>
