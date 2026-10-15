@@ -5,642 +5,732 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Хогвартс Коро: Магическая Экономика</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:wght@400;600;700&display=swap');
+        
         :root {
-            --bg-color: #1a1a2e;
-            --text-color: #e0e0e0;
+            --bg-color: #0f111a;
+            --panel-bg: rgba(20, 24, 36, 0.9);
+            --text-main: #e0e6ed;
             --gold: #d4af37;
-            --red: #8b0000;
-            --blue-card: #4a90e2;
-            --green-card: #2ecc71;
-            --red-card: #e74c3c;
-            --purple-card: #9b59b6;
+            --gold-glow: rgba(212, 175, 55, 0.4);
+            --blue-card: #2980b9;
+            --green-card: #27ae60;
+            --red-card: #c0392b;
+            --purple-card: #8e44ad;
+            --border-radius: 12px;
         }
 
+        * { box-sizing: border-box; }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            font-family: 'Cormorant Garamond', serif;
+            background: #0f111a url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 31.5V29h-2v2.5L25.5 24 28 26.5V29h2v-2.5L32.5 24 30 21.5z' fill='%23d4af37' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
+            color: var(--text-main);
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        h1 { color: var(--gold); text-shadow: 2px 2px 4px #000; margin-bottom: 5px; text-align: center;}
-        p.subtitle { margin-top: 0; color: #aaa; margin-bottom: 20px; text-align: center;}
-
-        .game-container {
+        header {
+            width: 100%;
+            background: linear-gradient(to bottom, rgba(15,17,26,1), rgba(15,17,26,0.8));
+            padding: 15px 20px;
             display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--gold);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+
+        .header-title { text-align: left; }
+        h1 { font-family: 'Cinzel', serif; color: var(--gold); margin: 0; font-size: 1.8rem; text-shadow: 0 0 10px var(--gold-glow); }
+        .subtitle { font-family: 'Cinzel', serif; color: #8892b0; font-size: 0.9rem; letter-spacing: 1px; }
+
+        .nav-buttons { display: flex; gap: 15px; }
+
+        button {
+            background: linear-gradient(135deg, #3a2e24, #1a1510);
+            color: var(--gold);
+            border: 1px solid var(--gold);
+            padding: 10px 20px;
+            font-size: 1.1rem;
+            font-family: 'Cinzel', serif;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            font-weight: bold;
+        }
+        button:hover:not(:disabled) { background: linear-gradient(135deg, #4a3b2e, #2a221a); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(212,175,55,0.3); }
+        button:disabled { background: #222; color: #555; border-color: #444; cursor: not-allowed; transform: none; box-shadow: none; }
+        button.action-btn { background: linear-gradient(135deg, #c0392b, #8e44ad); color: white; border-color: #fff; }
+        button.action-btn:hover:not(:disabled) { background: linear-gradient(135deg, #e74c3c, #9b59b6); }
+        button.end-btn { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; border-color: #fff; }
+
+        .container {
             width: 100%;
             max-width: 1400px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
             gap: 20px;
         }
 
-        .player-panel, .market-panel {
-            background: #2a2a40;
-            border: 2px solid var(--gold);
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        /* Views */
+        #game-view { display: flex; flex-direction: column; gap: 20px; }
+        #catalog-view { display: none; background: var(--panel-bg); border-radius: var(--border-radius); padding: 30px; border: 1px solid var(--gold); }
+
+        .game-layout { display: flex; gap: 20px; width: 100%; align-items: flex-start;}
+        @media(max-width: 1000px) { .game-layout { flex-direction: column; } }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+        .player-panel { flex: 1; }
+        .market-panel { flex: 2; border: 1px solid rgba(136, 146, 176, 0.4); }
+
+        h2, h3 { font-family: 'Cinzel', serif; margin-top: 0; color: var(--gold); border-bottom: 1px solid rgba(212, 175, 55, 0.3); padding-bottom: 10px; }
+        
+        .stats { float: right; font-size: 1.4rem; background: rgba(0,0,0,0.5); padding: 2px 10px; border-radius: 8px; border: 1px solid var(--gold); }
+        .coins { font-weight: bold; color: #ffd700; text-shadow: 0 0 5px rgba(255, 215, 0, 0.5); }
+
+        /* Controls */
+        .controls {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--panel-bg); padding: 20px 30px; border-radius: var(--border-radius);
+            border: 1px solid var(--gold); box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            margin-bottom: 10px; flex-wrap: wrap; gap: 20px;
+        }
+        
+        .turn-info { flex: 1; }
+        #turn-indicator { font-size: 1.6rem; font-family: 'Cinzel', serif; color: var(--gold); font-weight: bold; }
+        #phase-indicator { font-size: 1.1rem; color: #aaa; font-style: italic; }
+
+        .dice-area { display: flex; gap: 15px; align-items: center; justify-content: center; flex: 1; }
+        .die { 
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2); color: #1a1a2e; 
+            width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; 
+            border-radius: 12px; box-shadow: inset 0 0 10px rgba(0,0,0,0.2), 0 5px 15px rgba(0,0,0,0.5); 
+            font-size: 2.5rem; font-weight: bold; font-family: sans-serif;
         }
 
-        .player-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
+        .btn-group { display: flex; gap: 10px; flex: 1; justify-content: flex-end; flex-wrap: wrap; }
 
-        .market-panel {
-            flex: 2;
-        }
-
-        h2 { margin-top: 0; color: var(--gold); border-bottom: 1px solid var(--gold); padding-bottom: 5px; }
-
-        .stats {
-            font-size: 1.2em;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .coins { font-weight: bold; color: var(--gold); }
-
+        /* Cards Grid */
         .cards-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 10px;
+            gap: 12px;
             margin-bottom: 20px;
         }
 
+        /* Premium Cards */
         .card {
-            background: #eee;
-            color: #111;
-            border-radius: 6px;
-            padding: 10px;
-            font-size: 0.85em;
+            background-color: #1e1a18;
+            background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2.5L22.5 11 25 13.5V16h20v2H25v2.5L22.5 23 20 20.5zM11 22.5L13.5 25 11 27.5 8.5 25 11 22.5zM29 22.5L31.5 25 29 27.5 26.5 25 29 22.5zM11 8.5L13.5 11 11 13.5 8.5 11 11 8.5zM29 8.5L31.5 11 29 13.5 26.5 11 29 8.5z' fill='%23d4af37' fill-opacity='0.15' fill-rule='evenodd'/%3E%3C/svg%3E");
+            color: #f4ebd8;
+            border-radius: 8px;
+            padding: 8px;
             position: relative;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.2s;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            min-height: 120px;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            justify-content: flex-start;
+            min-height: 170px;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.6);
+            border: 2px solid #3a2e24;
+            outline: 1px solid var(--gold);
+            outline-offset: -4px;
         }
 
-        .card:hover { transform: scale(1.05); }
+        .card:hover { transform: translateY(-5px); box-shadow: inset 0 0 30px rgba(0,0,0,0.9), 0 8px 16px rgba(0,0,0,0.8); outline-color: #ffdf00; z-index: 10; }
+        .card.disabled { filter: grayscale(60%) brightness(0.6); cursor: not-allowed; pointer-events: none; }
+        .card.disabled:hover { transform: none; box-shadow: inset 0 0 30px rgba(0,0,0,0.8); outline-color: var(--gold); z-index: 1;}
+
+        .type-ribbon {
+            position: absolute; top: 0; left: 0; width: 100%; height: 35px; border-radius: 6px 6px 0 0; opacity: 0.8; z-index: 1;
+            mask-image: linear-gradient(to bottom, black 20%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 20%, transparent 100%);
+        }
+        .card.blue .type-ribbon { background: linear-gradient(180deg, var(--blue-card), transparent); }
+        .card.green .type-ribbon { background: linear-gradient(180deg, var(--green-card), transparent); }
+        .card.red .type-ribbon { background: linear-gradient(180deg, var(--red-card), transparent); }
+        .card.purple .type-ribbon { background: linear-gradient(180deg, var(--purple-card), transparent); }
         
-        .card.disabled { opacity: 0.5; cursor: not-allowed; }
-        .card.disabled:hover { transform: none; }
+        .card.landmark { outline: 2px solid #555; background-color: #111; }
+        .card.landmark.built { outline: 2px solid var(--gold); background-color: #2a2210; box-shadow: inset 0 0 30px #000, 0 0 15px var(--gold-glow); pointer-events: none; }
 
-        .card.blue { border-top: 5px solid var(--blue-card); }
-        .card.green { border-top: 5px solid var(--green-card); }
-        .card.red { border-top: 5px solid var(--red-card); }
-        .card.purple { border-top: 5px solid var(--purple-card); }
-        .card.landmark { border-top: 5px solid var(--gold); background: #fff8e7; }
-        .card.landmark.built { background: var(--gold); color: #000; }
-
-        .card-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 5px;}
-        .card-cost { background: var(--gold); color: #000; padding: 2px 5px; border-radius: 3px; font-size: 0.9em;}
-        .card-triggers { background: #333; color: #fff; padding: 2px 5px; border-radius: 3px; }
-        .card-count { position: absolute; bottom: -10px; right: -10px; background: #e74c3c; color: white; width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid #fff; z-index: 10;}
-
-        .controls {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 20px 0;
-            background: #2a2a40;
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid #444;
+        .card-header { display: flex; justify-content: space-between; align-items: center; z-index: 2; margin-bottom: 2px; }
+        .card-triggers { background: #111; color: var(--gold); padding: 2px 5px; border-radius: 4px; font-family: 'Cinzel', serif; font-size: 1rem; border: 1px solid var(--gold); font-weight: bold; }
+        .card-cost { background: linear-gradient(135deg, #d4af37, #aa8222); color: #000; padding: 2px 6px; border-radius: 4px; font-size: 0.9rem; font-weight: bold; border: 1px solid #ffe680; }
+        
+        .card-title { font-weight: bold; text-align: center; font-size: 1rem; line-height: 1.1; color: var(--gold); font-family: 'Cinzel', serif; z-index: 2; margin: 4px 0; text-shadow: 2px 2px 4px #000;}
+        
+        .art-frame {
+            background: radial-gradient(circle, rgba(74, 59, 44, 0.9), rgba(26, 21, 16, 1));
+            border: 2px solid rgba(212, 175, 55, 0.6);
+            border-radius: 4px;
+            margin: 2px 10px;
+            padding: 5px 0;
+            text-align: center;
+            font-size: 2rem;
+            box-shadow: inset 0 0 10px #000;
+            z-index: 2;
         }
 
-        .dice-area {
-            font-size: 3em;
-            margin: 10px 0;
-            display: flex;
-            gap: 15px;
+        .card-desc { font-size: 0.8rem; color: #b8ac97; line-height: 1.1; text-align: center; margin-top: 5px; z-index: 2; font-style: italic; }
+        .card-tag { position: absolute; bottom: 5px; left: 5px; font-size: 0.7rem; background: #222; padding: 1px 4px; border-radius: 3px; border: 1px solid #444; color: #888; z-index: 2; }
+        
+        .card-count { 
+            position: absolute; bottom: -8px; right: -8px; background: radial-gradient(circle, #c0392b, #7a150a); 
+            color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; border: 2px solid var(--gold); z-index: 10; box-shadow: 0 4px 8px rgba(0,0,0,0.6); 
+            font-family: 'Cinzel', serif; font-size: 1.1rem; 
         }
 
-        .die { background: white; color: black; width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; border-radius: 10px; box-shadow: inset 0 0 10px rgba(0,0,0,0.2); }
-
-        button {
-            background: var(--red);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 1.1em;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s;
-            margin: 5px;
+        /* Log */
+        #log-container {
+            width: 100%; background: var(--panel-bg); border-radius: var(--border-radius); border: 1px solid var(--gold); padding: 15px; margin-top: 10px;
         }
-
-        button:hover:not(:disabled) { background: #a00000; }
-        button:disabled { background: #555; cursor: not-allowed; }
-
         #log {
-            width: 100%;
-            height: 150px;
-            overflow-y: auto;
-            background: #111;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 20px;
-            font-family: monospace;
-            border: 1px solid #333;
+            width: 100%; height: 180px; overflow-y: auto; background: rgba(0, 0, 0, 0.8); padding: 10px; border-radius: 6px; font-family: 'Courier New', monospace; border: 1px inset #333; color: #ddd;
         }
+        .log-entry { margin: 3px 0; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 3px; font-size: 0.95rem; }
+        .log-entry.turn { color: var(--gold); font-weight: bold; margin-top: 10px; border-bottom: 1px solid var(--gold); font-size: 1.05rem; }
+        .log-entry.income { color: #2ecc71; }
+        .log-entry.loss { color: #e74c3c; }
+        .log-entry.error { color: #ff0000; font-weight: bold; background: rgba(255,0,0,0.2); padding: 5px; }
 
-        .log-entry { margin: 3px 0; border-bottom: 1px dashed #333; padding-bottom: 2px; }
-        .log-entry.turn { color: var(--gold); font-weight: bold; margin-top: 10px; }
-        .log-entry.income { color: var(--green-card); }
-        .log-entry.loss { color: var(--red-card); }
+        /* Catalog specific */
+        .catalog-section { margin-bottom: 30px; }
+        .catalog-section h3 { border-bottom: 2px solid; padding-bottom: 5px; }
+        .color-blue h3 { border-color: var(--blue-card); color: #5dade2;}
+        .color-green h3 { border-color: var(--green-card); color: #58d68d;}
+        .color-red h3 { border-color: var(--red-card); color: #ec7063;}
+        .color-purple h3 { border-color: var(--purple-card); color: #af7ac5;}
+        .color-landmark h3 { border-color: var(--gold); color: var(--gold);}
 
-        @media(max-width: 900px) {
-            .game-container { flex-direction: column; }
-        }
     </style>
 </head>
 <body>
 
-    <h1>Хогвартс Коро</h1>
-    <p class="subtitle">Мачи Коро: Издание Волшебного Мира (с правилом рынка из "Гавани")</p>
-
-    <div class="controls">
-        <div id="turn-indicator" style="font-size: 1.2em; color: var(--gold); margin-bottom: 10px;">Ход: Игрок (Ожидание броска)</div>
-        <div class="dice-area" id="dice-container">
-            <div class="die" id="die1">?</div>
-            <div class="die" id="die2" style="display: none;">?</div>
+    <header>
+        <div class="header-title">
+            <h1>Хогвартс Коро</h1>
+            <div class="subtitle">Магическая Экономика</div>
         </div>
-        <div>
-            <button id="btn-roll-1" onclick="rollDice(1)">Бросить 1 кубик</button>
-            <button id="btn-roll-2" onclick="rollDice(2)" style="display:none;">Бросить 2 кубика</button>
-            <button id="btn-end-turn" onclick="endTurn()" style="display:none; background: var(--green-card);">Завершить ход</button>
+        <div class="nav-buttons">
+            <button id="btn-nav-game" onclick="switchView('game')" disabled>Игровая доска</button>
+            <button id="btn-nav-catalog" onclick="switchView('catalog')">📖 Справочник карт</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Game View -->
+        <div id="game-view">
+            
+            <div class="controls">
+                <div class="turn-info">
+                    <div id="turn-indicator">Ход: Загрузка...</div>
+                    <div id="phase-indicator">Подготовка игры</div>
+                </div>
+                <div class="dice-area" id="dice-container">
+                    <div class="die" id="die1">-</div>
+                    <div class="die" id="die2" style="display: none;">-</div>
+                </div>
+                <div class="btn-group">
+                    <button id="btn-roll-1" class="action-btn" onclick="executeAction('roll', 1)">Бросить 1 кубик</button>
+                    <button id="btn-roll-2" class="action-btn" onclick="executeAction('roll', 2)" style="display:none;">Бросить 2 кубика</button>
+                    <button id="btn-end-turn" class="end-btn" onclick="executeAction('end')" style="display:none;">Завершить ход</button>
+                </div>
+            </div>
+
+            <div class="game-layout">
+                <!-- P1 -->
+                <div class="panel player-panel" id="player-panel">
+                    <h2>Вы <span class="stats"><span class="coins" id="p1-coins">0 💰</span></span></h2>
+                    <div class="cards-grid" id="p1-landmarks"></div>
+                    <h3 style="font-size: 1.1rem; margin-top: 15px;">Ваши предприятия</h3>
+                    <div class="cards-grid" id="p1-cards"></div>
+                </div>
+
+                <!-- Market -->
+                <div class="panel market-panel">
+                    <h2>Косой Переулок (Рынок)</h2>
+                    <div class="cards-grid" id="market-cards"></div>
+                </div>
+
+                <!-- P2 (AI) -->
+                <div class="panel player-panel" id="ai-panel">
+                    <h2>Малфой (ИИ) <span class="stats"><span class="coins" id="p2-coins">0 💰</span></span></h2>
+                    <div class="cards-grid" id="p2-landmarks"></div>
+                    <h3 style="font-size: 1.1rem; margin-top: 15px;">Предприятия Малфоя</h3>
+                    <div class="cards-grid" id="p2-cards"></div>
+                </div>
+            </div>
+
+            <div id="log-container">
+                <h3 style="margin: 0 0 10px 0; font-size: 1.1rem;">История событий</h3>
+                <div id="log"></div>
+            </div>
+        </div>
+
+        <!-- Catalog View -->
+        <div id="catalog-view">
+            <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 10px;">Справочник Всех Карт</h2>
+            <p style="text-align: center; color: #aaa; margin-bottom: 30px;">Полный список предприятий и достопримечательностей Магического Мира</p>
+            <div id="catalog-content"></div>
         </div>
     </div>
-
-    <div class="game-container">
-        <!-- Player 1 -->
-        <div class="player-panel" id="player-panel">
-            <h2>Вы <span class="stats"><span class="coins" id="p1-coins">3 Галеона</span></span></h2>
-            <div class="cards-grid" id="p1-landmarks"></div>
-            <h3>Ваши предприятия:</h3>
-            <div class="cards-grid" id="p1-cards"></div>
-        </div>
-
-        <!-- Market -->
-        <div class="market-panel">
-            <h2>Косой Переулок (Рынок)</h2>
-            <div class="cards-grid" id="market-cards"></div>
-        </div>
-
-        <!-- AI Player -->
-        <div class="player-panel" id="ai-panel">
-            <h2>Малфой (ИИ) <span class="stats"><span class="coins" id="p2-coins">3 Галеона</span></span></h2>
-            <div class="cards-grid" id="p2-landmarks"></div>
-            <h3>Предприятия ИИ:</h3>
-            <div class="cards-grid" id="p2-cards"></div>
-        </div>
-    </div>
-
-    <div id="log"></div>
 
 <script>
-    // --- Data ---
-    const cardDatabase = [
-        // Blue (Anyone's turn)
-        { id: 'c1', name: 'Теплица с мандрагорами', type: 'blue', cost: 1, triggers: [1], effectDesc: '1 Галеон из банка', icon: '🌱' },
-        { id: 'c2', name: 'Заповедник гиппогрифов', type: 'blue', cost: 1, triggers: [2], effectDesc: '1 Галеон из банка', icon: '🦅' },
-        { id: 'c3', name: 'Заросли цапучей ивы', type: 'blue', cost: 3, triggers: [4], effectDesc: '3 Галеона из банка', icon: '🌳' }, // Flower Orchard
-        { id: 'c4', name: 'Лодка на Черном озере', type: 'blue', cost: 2, triggers: [8], effectDesc: '3 Галеона из банка', icon: '⛵' }, // Mackerel Boat
-        { id: 'c5', name: 'Шахта гоблинов', type: 'blue', cost: 6, triggers: [9], effectDesc: '5 Галеонов из банка', icon: '⛏️' }, // Mine
-        { id: 'c6', name: 'Тыквенная грядка', type: 'blue', cost: 3, triggers: [10], effectDesc: '3 Галеона из банка', icon: '🎃' }, // Apple Orchard
+    // --- DATABASE ---
+    const DB = [
+        { id:'c1', name:'Теплица', type:'blue', tag:'plant', cost:1, tr:[1], val:1, icon:'🌱', desc:'1 💰 из банка' },
+        { id:'c2', name:'Гиппогрифы', type:'blue', tag:'creature', cost:1, tr:[2], val:1, icon:'🦅', desc:'1 💰 из банка' },
+        { id:'c3', name:'Запретный лес', type:'blue', tag:'gear', cost:3, tr:[5], val:1, icon:'🌲', desc:'1 💰 из банка' },
+        { id:'c4', name:'Цапучая ива', type:'blue', tag:'plant', cost:3, tr:[4], val:3, icon:'🌳', desc:'3 💰 из банка' },
+        { id:'c5', name:'Лодка на озере', type:'blue', tag:'boat', cost:2, tr:[8], val:3, icon:'⛵', desc:'3 💰 из банка' },
+        { id:'c6', name:'Шахта Гринготтс', type:'blue', tag:'gear', cost:6, tr:[9], val:5, icon:'⛏️', desc:'5 💰 из банка' },
+        { id:'c7', name:'Тыквен. грядка', type:'blue', tag:'plant', cost:3, tr:[10], val:3, icon:'🎃', desc:'3 💰 из банка' },
+        { id:'c8', name:'Корабль', type:'blue', tag:'boat', cost:5, tr:[12,13,14], val:0, icon:'🛳️', desc:'Доход равен сумме броска' },
         
-        // Green (Your turn)
-        { id: 'c7', name: 'Сладкое королевство', type: 'green', cost: 1, triggers: [2, 3], effectDesc: '1 Галеон из банка', icon: '🍬' }, // Bakery
-        { id: 'c8', name: 'Лавка Олливандера', type: 'green', cost: 2, triggers: [4], effectDesc: '3 Галеона из банка', icon: '🪄' }, // Convenience Store
-        { id: 'c9', name: 'Зельеварня', type: 'green', cost: 5, triggers: [7], effectDesc: '3 Галеона за каждое Существо (🦅)', icon: '⚗️', comboIcon: '🦅' }, // Cheese Factory
-        { id: 'c10', name: 'Фабрика метел', type: 'green', cost: 3, triggers: [8], effectDesc: '3 Галеона за каждые Артефакты (🪄/⛏️)', icon: '🧹', comboIcon: '🪄' }, // Furniture
-        { id: 'c11', name: 'Рынок ингредиентов', type: 'green', cost: 2, triggers: [11, 12], effectDesc: '2 Галеона за каждое Растение (🌱/🌳/🎃)', icon: '📜', comboIcon: '🌱' }, // Fruit Market
+        { id:'c9', name:'Сладкое корол.', type:'green', tag:'shop', cost:1, tr:[2,3], val:1, icon:'🍬', desc:'1 💰 из банка' },
+        { id:'c10', name:'Олливандер', type:'green', tag:'shop', cost:2, tr:[4], val:3, icon:'🪄', desc:'3 💰 из банка' },
+        { id:'c11', name:'Зельеварня', type:'green', tag:'factory', cost:5, tr:[7], val:3, combo:'creature', icon:'⚗️', desc:'3 💰 за каждое Существо (🦅)' },
+        { id:'c12', name:'Фабр. метел', type:'green', tag:'factory', cost:3, tr:[8], val:3, combo:'gear', icon:'🧹', desc:'3 💰 за каждый Ресурс (🌲/⛏️)' },
+        { id:'c13', name:'Рынок ингр.', type:'green', tag:'factory', cost:2, tr:[11,12], val:2, combo:'plant', icon:'📜', desc:'2 💰 за каждое Растение (🌱/🌳/🎃)' },
+        
+        { id:'c14', name:'Кафе Паддифут', type:'red', tag:'cafe', cost:2, tr:[3], val:1, icon:'☕', desc:'Забирает 1 💰 у бросившего' },
+        { id:'c15', name:'Три метлы', type:'red', tag:'cafe', cost:1, tr:[7], val:1, icon:'🍺', desc:'Забирает 1 💰 у бросившего' },
+        { id:'c16', name:'Кабанья голова', type:'red', tag:'cafe', cost:1, tr:[8], val:1, icon:'🐗', desc:'Забирает 1 💰 у бросившего' },
+        { id:'c17', name:'Дырявый котел', type:'red', tag:'cafe', cost:3, tr:[9,10], val:2, icon:'🍲', desc:'Забирает 2 💰 у бросившего' },
 
-        // Red (Take from roller)
-        { id: 'c12', name: 'Кафе мадам Паддифут', type: 'red', cost: 2, triggers: [3], effectDesc: 'Забирает 1 Галеон у бросившего', icon: '☕' }, // Cafe
-        { id: 'c13', name: 'Паб "Три метлы"', type: 'red', cost: 1, triggers: [7], effectDesc: 'Забирает 1 Галеон у бросившего', icon: '🍺' }, // Pizza
-        { id: 'c14', name: 'Дырявый котел', type: 'red', cost: 3, triggers: [9, 10], effectDesc: 'Забирает 2 Галеона у бросившего', icon: '🍲' }, // Family Restaurant
-
-        // Purple (Your turn, special)
-        { id: 'c15', name: 'Стадион для квиддича', type: 'purple', cost: 6, triggers: [6], effectDesc: 'Забирает по 2 Галеона у всех', icon: '🏟️' }, // Stadium
-        { id: 'c16', name: 'Ежедневный пророк', type: 'purple', cost: 7, triggers: [6], effectDesc: 'Забирает 5 Галеонов у одного (ИИ)', icon: '📰' }, // TV Station
-        { id: 'c17', name: 'Налог Министерства', type: 'purple', cost: 4, triggers: [8, 9], effectDesc: 'Забирает половину у богачей (>=10)', icon: '⚖️' } // Tax Office
+        { id:'c18', name:'Стадион', type:'purple', tag:'special', cost:6, tr:[6], val:0, icon:'🏟️', desc:'Забирает по 2 💰 у всех' },
+        { id:'c19', name:'Пророк', type:'purple', tag:'special', cost:7, tr:[6], val:0, icon:'📰', desc:'Забирает 5 💰 у одного' },
+        { id:'c20', name:'Налог Мин-ва', type:'purple', tag:'special', cost:4, tr:[8,9], val:0, icon:'⚖️', desc:'Забирает половину 💰 у богачей' }
     ];
 
-    const landmarksData = [
-        { id: 'l1', name: 'Порт Хогвартса', cost: 2, effectDesc: 'Если бросок >= 10, можно +2 (Автоматически)', key: 'port' },
-        { id: 'l2', name: 'Вокзал Кингс-Кросс', cost: 4, effectDesc: 'Позволяет бросать 2 кубика', key: 'station' },
-        { id: 'l3', name: 'Косой Переулок', cost: 10, effectDesc: 'Кафе и Пабы (☕/🍺/🍲) приносят +1 монету', key: 'mall' },
-        { id: 'l4', name: 'Замок Хогвартс', cost: 16, effectDesc: 'Если выпал дубль — дополнительный ход', key: 'park' },
-        { id: 'l5', name: 'Отдел Тайн', cost: 22, effectDesc: 'Можно перебросить кубики 1 раз (Автоматически при < 6)', key: 'tower' },
-        { id: 'l6', name: 'Аэропорт магов', cost: 30, effectDesc: 'Если ничего не купили в свой ход — +10 Галеонов', key: 'airport' }
+    const LandmarksDB = [
+        { id: 'l1', key: 'port', name: 'Порт', cost: 2, desc: 'Бросок >= 10 дает +2 (Автоматически)' },
+        { id: 'l2', key: 'station', name: 'Вокзал Кингс-Кросс', cost: 4, desc: 'Позволяет бросать 2 кубика' },
+        { id: 'l3', key: 'mall', name: 'Косой Переулок', cost: 10, desc: 'Магазины и Кафе (🍬/☕) дают +1 💰' },
+        { id: 'l4', key: 'park', name: 'Замок Хогвартс', cost: 16, desc: 'Дубль при 2 кубиках дает доп. ход' },
+        { id: 'l5', key: 'tower', name: 'Отдел Тайн', cost: 22, desc: 'Переброс если результат < 6 (Авто)' },
+        { id: 'l6', key: 'airport', name: 'Аэропорт магов', cost: 30, desc: 'Если ничего не купили: +10 💰' }
     ];
 
-    // --- State ---
-    let players = [
-        { name: 'Вы', coins: 3, cards: {}, landmarks: {}, isAI: false },
-        { name: 'Малфой (ИИ)', coins: 3, cards: {}, landmarks: {}, isAI: true }
-    ];
-    let deck = [];
-    let market = {};
-    let activePlayer = 0;
-    let turnPhase = 'roll'; // roll -> buy
-    let currentRoll = 0;
-    let doubleRolled = false;
-    let extraTurn = false;
+    let state = {
+        players: [
+            { name: 'Вы', isAI: false, coins: 3, cards: { 'c1': 1, 'c9': 1 }, landmarks: {} },
+            { name: 'Малфой', isAI: true, coins: 3, cards: { 'c1': 1, 'c9': 1 }, landmarks: {} }
+        ],
+        activePlayer: 0,
+        phase: 'roll',
+        market: {},
+        deck: [],
+        lastRoll: 0,
+        isDouble: false
+    };
 
-    // --- Initialization ---
-    function initGame() {
-        // Init player starting cards
-        players.forEach(p => {
-            p.cards['c1'] = 1; // 1 Wheat
-            p.cards['c7'] = 1; // 1 Bakery
-            landmarksData.forEach(l => p.landmarks[l.key] = false);
-        });
-
-        // Build Deck (6 of each except Purple which has 4)
-        cardDatabase.forEach(c => {
-            let count = c.type === 'purple' ? 4 : 6;
-            for(let i=0; i<count; i++) deck.push(c.id);
-        });
-        shuffle(deck);
-        replenishMarket();
-        updateUI();
-        log('Игра началась! Вы ходите первым.');
+    function logMsg(msg, type='') {
+        try {
+            const l = document.getElementById('log');
+            if (l) {
+                l.innerHTML += `<div class="log-entry ${type}">${msg}</div>`;
+                l.scrollTop = l.scrollHeight;
+            }
+        } catch (e) { console.error("Log err", e); }
     }
 
-    function shuffle(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-    }
-
-    // "Harbor" expansion rule: Market must have 10 unique establishments
     function replenishMarket() {
-        while(Object.keys(market).length < 10 && deck.length > 0) {
-            let cardId = deck.pop();
-            market[cardId] = (market[cardId] || 0) + 1;
+        while(Object.keys(state.market).length < 10 && state.deck.length > 0) {
+            let cid = state.deck.pop();
+            state.market[cid] = (state.market[cid] || 0) + 1;
         }
     }
 
-    // --- Core Logic ---
-    function rollDice(num) {
-        if (turnPhase !== 'roll') return;
-        
+    function executeAction(action, param) {
+        try {
+            if (state.phase === 'end' || state.players[state.activePlayer].isAI) return;
+            
+            if (action === 'roll' && state.phase === 'roll') {
+                performRoll(param);
+            } else if (action === 'buy' && state.phase === 'buy') {
+                buyCard(param);
+            } else if (action === 'buy_l' && state.phase === 'buy') {
+                buyLandmark(param);
+            } else if (action === 'end' && state.phase === 'buy') {
+                endTurn();
+            }
+        } catch (e) {
+            logMsg(`Ошибка: ${e.message}`, 'error');
+        }
+    }
+
+    function performRoll(numDice) {
+        let p = state.players[state.activePlayer];
         let d1 = Math.floor(Math.random() * 6) + 1;
-        let d2 = num === 2 ? Math.floor(Math.random() * 6) + 1 : 0;
-        currentRoll = d1 + d2;
-        doubleRolled = (num === 2 && d1 === d2);
+        let d2 = numDice === 2 ? Math.floor(Math.random() * 6) + 1 : 0;
+        let total = d1 + d2;
+        state.isDouble = (numDice === 2 && d1 === d2);
         
         document.getElementById('die1').innerText = d1;
-        document.getElementById('die2').innerText = d2 > 0 ? d2 : '';
-        document.getElementById('die2').style.display = d2 > 0 ? 'flex' : 'none';
+        if(d2 > 0) {
+            document.getElementById('die2').innerText = d2;
+            document.getElementById('die2').style.display = 'flex';
+        } else {
+            document.getElementById('die2').style.display = 'none';
+        }
 
-        log(`<span class="turn">${players[activePlayer].name} бросает кубики: ${d1}${d2 ? ' + '+d2 : ''} = ${currentRoll}</span>`);
+        logMsg(`${p.name} бросает: ${d1}${d2 ? ' + '+d2 : ''} = ${total}`, 'turn');
 
-        let p = players[activePlayer];
-
-        // Landmark: Tower (Reroll)
-        if (p.landmarks.tower && currentRoll <= 5 && !p.isAI) {
-            // Simplified automatic reroll for basic implementation
-            log(`<i>Отдел Тайн перебрасывает плохой результат...</i>`);
+        if (p.landmarks.tower && total <= 5 && !p.isAI) {
+            logMsg(`<i>Отдел Тайн: автоматический переброс плохих кубиков...</i>`);
             d1 = Math.floor(Math.random() * 6) + 1;
-            d2 = num === 2 ? Math.floor(Math.random() * 6) + 1 : 0;
-            currentRoll = d1 + d2;
-            doubleRolled = (num === 2 && d1 === d2);
+            d2 = numDice === 2 ? Math.floor(Math.random() * 6) + 1 : 0;
+            total = d1 + d2;
+            state.isDouble = (numDice === 2 && d1 === d2);
             document.getElementById('die1').innerText = d1;
-            document.getElementById('die2').innerText = d2 > 0 ? d2 : '';
-            log(`Новый результат: ${currentRoll}`);
+            if(d2 > 0) document.getElementById('die2').innerText = d2;
+            logMsg(`Новый результат: ${total}`);
         }
 
-        // Landmark: Port
-        if (p.landmarks.port && currentRoll >= 10) {
-            currentRoll += 2;
-            log(`<i>Порт Хогвартса увеличивает результат до ${currentRoll}</i>`);
+        if (p.landmarks.port && total >= 10) {
+            total += 2;
+            logMsg(`<i>Порт Хогвартса прибавляет +2. Итого: ${total}</i>`);
         }
 
-        processIncome(currentRoll);
-
-        turnPhase = 'buy';
+        state.lastRoll = total;
+        resolveIncome(total);
+        
+        state.phase = 'buy';
         updateUI();
 
-        if (players[activePlayer].isAI) {
+        if (state.players[state.activePlayer].isAI) {
             setTimeout(aiBuyPhase, 1500);
         }
     }
 
-    function processIncome(roll) {
-        let pActive = players[activePlayer];
-        let pOther = players[(activePlayer + 1) % 2];
+    function resolveIncome(roll) {
+        let pAct = state.players[state.activePlayer];
+        let pOth = state.players[(state.activePlayer + 1) % 2];
 
-        // 1. RED (Counter-clockwise, so Other Player gets from Active)
+        // 1. RED
         let redOwed = 0;
-        Object.keys(pOther.cards).forEach(cid => {
-            let c = cardDatabase.find(x => x.id === cid);
-            if (c.type === 'red' && c.triggers.includes(roll)) {
-                let amount = (c.id === 'c14' ? 2 : 1);
-                if (pOther.landmarks.mall) amount += 1; // Landmark: Mall buff
-                redOwed += amount * pOther.cards[cid];
+        Object.keys(pOth.cards).forEach(cid => {
+            let c = DB.find(x => x.id === cid);
+            if (c.type === 'red' && c.tr.includes(roll)) {
+                let amount = c.val + (pOth.landmarks.mall ? 1 : 0);
+                redOwed += amount * pOth.cards[cid];
             }
         });
         if (redOwed > 0) {
-            let actualPay = Math.min(redOwed, pActive.coins);
-            pActive.coins -= actualPay;
-            pOther.coins += actualPay;
-            log(`<span class="loss">${pActive.name} платит ${actualPay} ☕ ${pOther.name}</span>`);
+            let paid = Math.min(redOwed, pAct.coins);
+            pAct.coins -= paid; pOth.coins += paid;
+            logMsg(`${pAct.name} платит ${paid} 💰 ${pOth.name} (Кафе/Пабы)`, 'loss');
         }
 
-        // 2. BLUE (Everyone gets from bank simultaneously)
-        players.forEach(p => {
+        // 2. BLUE
+        state.players.forEach(p => {
             let blueGain = 0;
             Object.keys(p.cards).forEach(cid => {
-                let c = cardDatabase.find(x => x.id === cid);
-                if (c.type === 'blue' && c.triggers.includes(roll)) {
-                    let base = (c.id === 'c5' ? 5 : (c.id === 'c3' || c.id === 'c4' || c.id === 'c6' ? 3 : 1));
-                    blueGain += base * p.cards[cid];
+                let c = DB.find(x => x.id === cid);
+                if (c.type === 'blue' && c.tr.includes(roll)) {
+                    let amount = c.id === 'c8' ? roll : c.val;
+                    blueGain += amount * p.cards[cid];
                 }
             });
             if (blueGain > 0) {
                 p.coins += blueGain;
-                log(`<span class="income">${p.name} получает ${blueGain} из банка (Синие карты)</span>`);
+                logMsg(`${p.name} получает ${blueGain} 💰 (Синие карты)`, 'income');
             }
         });
 
-        // 3. GREEN (Active player only)
+        // 3. GREEN
         let greenGain = 0;
-        Object.keys(pActive.cards).forEach(cid => {
-            let c = cardDatabase.find(x => x.id === cid);
-            if (c.type === 'green' && c.triggers.includes(roll)) {
-                let base = 0;
-                if (cid === 'c7') base = 1 + (pActive.landmarks.mall ? 1 : 0); // Bakery
-                else if (cid === 'c8') base = 3; // Store
-                else if (cid === 'c9') { // Potion (Cow combo)
-                    let cows = pActive.cards['c2'] || 0;
-                    base = 3 * cows;
-                } else if (cid === 'c10') { // Broom (Gear combo)
-                    let gears = (pActive.cards['c5'] || 0) + (pActive.cards['c8'] || 0);
-                    base = 3 * gears;
-                } else if (cid === 'c11') { // Market (Wheat combo)
-                    let wheat = (pActive.cards['c1'] || 0) + (pActive.cards['c3'] || 0) + (pActive.cards['c6'] || 0);
-                    base = 2 * wheat;
+        Object.keys(pAct.cards).forEach(cid => {
+            let c = DB.find(x => x.id === cid);
+            if (c.type === 'green' && c.tr.includes(roll)) {
+                let amount = c.val;
+                if (c.tag === 'shop' && pAct.landmarks.mall) amount += 1;
+                
+                if (c.combo) {
+                    let count = 0;
+                    Object.keys(pAct.cards).forEach(checkId => {
+                        let checkC = DB.find(x => x.id === checkId);
+                        if (checkC.tag === c.combo) count += pAct.cards[checkId];
+                    });
+                    amount = amount * count;
                 }
-                greenGain += base * pActive.cards[cid];
+                greenGain += amount * pAct.cards[cid];
             }
         });
         if (greenGain > 0) {
-            pActive.coins += greenGain;
-            log(`<span class="income">${pActive.name} получает ${greenGain} из банка (Зеленые карты)</span>`);
+            pAct.coins += greenGain;
+            logMsg(`${pAct.name} получает ${greenGain} 💰 (Зеленые карты)`, 'income');
         }
 
-        // 4. PURPLE (Active player only)
-        Object.keys(pActive.cards).forEach(cid => {
-            let c = cardDatabase.find(x => x.id === cid);
-            if (c.type === 'purple' && c.triggers.includes(roll)) {
-                if (cid === 'c15') { // Stadium
-                    let amount = Math.min(2, pOther.coins);
-                    pOther.coins -= amount;
-                    pActive.coins += amount;
-                    log(`<span class="income">Квиддич! ${pActive.name} забирает ${amount} у ${pOther.name}</span>`);
-                } else if (cid === 'c16') { // TV
-                    let amount = Math.min(5, pOther.coins);
-                    pOther.coins -= amount;
-                    pActive.coins += amount;
-                    log(`<span class="income">Пророк! ${pActive.name} забирает ${amount} у ${pOther.name}</span>`);
-                } else if (cid === 'c17') { // Tax
-                    if (pOther.coins >= 10) {
-                        let amount = Math.floor(pOther.coins / 2);
-                        pOther.coins -= amount;
-                        pActive.coins += amount;
-                        log(`<span class="income">Налог! ${pActive.name} забирает ${amount} у ${pOther.name}</span>`);
+        // 4. PURPLE
+        Object.keys(pAct.cards).forEach(cid => {
+            let c = DB.find(x => x.id === cid);
+            if (c.type === 'purple' && c.tr.includes(roll)) {
+                if (cid === 'c18') {
+                    let steal = Math.min(2, pOth.coins);
+                    pOth.coins -= steal; pAct.coins += steal;
+                    logMsg(`Квиддич! ${pAct.name} забирает ${steal} 💰`, 'income');
+                } else if (cid === 'c19') {
+                    let steal = Math.min(5, pOth.coins);
+                    pOth.coins -= steal; pAct.coins += steal;
+                    logMsg(`Пророк! ${pAct.name} забирает ${steal} 💰`, 'income');
+                } else if (cid === 'c20') {
+                    if (pOth.coins >= 10) {
+                        let steal = Math.floor(pOth.coins / 2);
+                        pOth.coins -= steal; pAct.coins += steal;
+                        logMsg(`Налог! ${pAct.name} конфискует ${steal} 💰`, 'income');
                     }
                 }
             }
         });
     }
 
-    // --- Market Action ---
     function buyCard(id) {
-        if (turnPhase !== 'buy' || players[activePlayer].isAI) return;
-        let p = players[activePlayer];
-        let c = cardDatabase.find(x => x.id === id);
-        
-        if (p.coins >= c.cost && market[id] > 0) {
-            if (c.type === 'purple' && p.cards[id]) {
-                log('У вас уже есть эта фиолетовая карта!');
-                return;
-            }
+        let p = state.players[state.activePlayer];
+        let c = DB.find(x => x.id === id);
+        if (p.coins >= c.cost && state.market[id] > 0) {
+            if (c.type === 'purple' && p.cards[id]) { logMsg('Фиолетовая карта уже есть!', 'error'); return; }
+            
             p.coins -= c.cost;
-            market[id]--;
-            if (market[id] === 0) delete market[id];
+            state.market[id]--;
+            if (state.market[id] === 0) delete state.market[id];
+            
             p.cards[id] = (p.cards[id] || 0) + 1;
-            log(`${p.name} покупает ${c.name}`);
+            logMsg(`<b>${p.name} покупает ${c.name}</b>`);
             
             replenishMarket();
-            finalizeTurn(true);
+            concludeTurn();
         }
     }
 
     function buyLandmark(key) {
-        if (turnPhase !== 'buy' || players[activePlayer].isAI) return;
-        let p = players[activePlayer];
-        let l = landmarksData.find(x => x.key === key);
-        
+        let p = state.players[state.activePlayer];
+        let l = LandmarksDB.find(x => x.key === key);
         if (p.coins >= l.cost && !p.landmarks[key]) {
             p.coins -= l.cost;
             p.landmarks[key] = true;
-            log(`<b>${p.name} построил достопримечательность: ${l.name}!</b>`);
-            checkWin(p);
-            if(turnPhase !== 'end') finalizeTurn(true);
+            logMsg(`<b style="color:var(--gold); font-size:1.1em;">${p.name} построил: ${l.name}!</b>`);
+            
+            if (Object.values(p.landmarks).filter(x=>x).length === LandmarksDB.length) {
+                logMsg(`<h2>🎉 ${p.name.toUpperCase()} ПОБЕЖДАЕТ! 🎉</h2>`);
+                state.phase = 'end';
+                updateUI();
+                return;
+            }
+            concludeTurn();
         }
     }
 
     function endTurn() {
-        if (turnPhase !== 'buy') return;
-        let p = players[activePlayer];
-        // Airport landmark effect
+        let p = state.players[state.activePlayer];
         if (p.landmarks.airport) {
             p.coins += 10;
-            log(`<span class="income">${p.name} получает 10 Галеонов от Аэропорта (ничего не купил)</span>`);
+            logMsg(`${p.name} получает +10 💰 от Аэропорта (ничего не куплено)`, 'income');
         }
-        finalizeTurn(false);
+        concludeTurn();
     }
 
-    function finalizeTurn(bought) {
-        let p = players[activePlayer];
-        
-        if (p.landmarks.park && doubleRolled) {
-            log(`<b>Замок Хогвартс дарует ${p.name} дополнительный ход за дубль!</b>`);
-            turnPhase = 'roll';
+    function concludeTurn() {
+        let p = state.players[state.activePlayer];
+        if (p.landmarks.park && state.isDouble) {
+            logMsg(`<b>Замок Хогвартс дарует доп. ход за дубль!</b>`, 'turn');
+            state.phase = 'roll';
             updateUI();
-            if(p.isAI) setTimeout(aiTurn, 1000);
+            if (p.isAI) setTimeout(aiTurn, 1500);
             return;
         }
 
-        activePlayer = (activePlayer + 1) % 2;
-        turnPhase = 'roll';
+        state.activePlayer = (state.activePlayer + 1) % 2;
+        state.phase = 'roll';
         updateUI();
 
-        if (players[activePlayer].isAI) {
-            setTimeout(aiTurn, 1000);
+        if (state.players[state.activePlayer].isAI) {
+            setTimeout(aiTurn, 1500);
         }
     }
 
-    // --- AI Logic ---
     function aiTurn() {
-        let p = players[activePlayer];
-        let numDice = p.landmarks.station ? (Math.random() > 0.5 ? 2 : 1) : 1;
-        rollDice(numDice);
+        if(state.phase !== 'roll') return;
+        let p = state.players[1];
+        let dice = p.landmarks.station ? (Math.random() > 0.4 ? 2 : 1) : 1;
+        performRoll(dice);
     }
 
     function aiBuyPhase() {
-        if (turnPhase === 'end') return;
-        let p = players[activePlayer];
+        if (state.phase !== 'buy') return;
+        let p = state.players[1];
         let bought = false;
 
-        // 1. Try to buy landmark
-        for (let l of landmarksData) {
+        for (let l of LandmarksDB) {
             if (!p.landmarks[l.key] && p.coins >= l.cost) {
-                p.coins -= l.cost;
-                p.landmarks[l.key] = true;
-                log(`<b>${p.name} построил ${l.name}!</b>`);
-                bought = true;
-                checkWin(p);
-                break;
+                buyLandmark(l.key);
+                return;
             }
         }
 
-        // 2. Buy random affordable card from market
-        if (!bought && turnPhase !== 'end') {
-            let affordable = Object.keys(market).filter(id => {
-                let c = cardDatabase.find(x => x.id === id);
-                if (c.type === 'purple' && p.cards[id]) return false;
-                return c.cost <= p.coins;
+        let affordable = Object.keys(state.market).filter(id => {
+            let c = DB.find(x => x.id === id);
+            if (c.type === 'purple' && p.cards[id]) return false;
+            return c.cost <= p.coins;
+        });
+
+        if (affordable.length > 0) {
+            affordable.sort((a,b) => DB.find(x=>x.id===b).cost - DB.find(x=>x.id===a).cost);
+            let pick = affordable[0];
+            if(Math.random() > 0.3) pick = affordable[Math.floor(Math.random() * affordable.length)];
+            
+            buyCard(pick);
+            return;
+        }
+
+        endTurn();
+    }
+
+    function renderCard(c, count=0, interactive=false, onClickStr='') {
+        let classes = `card ${c.type} ${!interactive ? 'disabled' : ''}`;
+        return `
+            <div class="${classes}" ${interactive ? `onclick="${onClickStr}"` : ''}>
+                <div class="type-ribbon"></div>
+                <div class="card-header">
+                    <span class="card-triggers">[${c.tr.join(',')}]</span>
+                    <span class="card-cost">${c.cost} 💰</span>
+                </div>
+                <div class="card-title">${c.name}</div>
+                <div class="art-frame">${c.icon}</div>
+                <div class="card-desc">${c.desc}</div>
+                <div class="card-tag">${c.tag}</div>
+                ${count > 0 ? `<div class="card-count">${count}</div>` : ''}
+            </div>
+        `;
+    }
+
+    function renderLandmark(l, built, interactive, onClickStr='') {
+        let classes = `card landmark ${built ? 'built' : ''} ${(!built && !interactive) ? 'disabled' : ''}`;
+        return `
+            <div class="${classes}" ${interactive ? `onclick="${onClickStr}"` : ''}>
+                <div class="card-header">
+                    <span style="font-weight:bold; color:var(--gold);">${l.name}</span>
+                    <span class="card-cost">${l.cost} 💰</span>
+                </div>
+                <div class="card-desc" style="margin-top:15px; font-size:0.9rem;">${l.desc}</div>
+            </div>
+        `;
+    }
+
+    function updateUI() {
+        try {
+            let pAct = state.players[state.activePlayer];
+            
+            document.getElementById('turn-indicator').innerText = state.phase === 'end' ? 'Игра окончена' : `Ход: ${pAct.name}`;
+            document.getElementById('phase-indicator').innerText = state.phase === 'roll' ? 'Бросок кубиков' : state.phase === 'buy' ? 'Фаза покупки' : '';
+
+            let isHuman = !pAct.isAI;
+            document.getElementById('btn-roll-1').style.display = (state.phase === 'roll' && isHuman) ? 'inline-block' : 'none';
+            document.getElementById('btn-roll-2').style.display = (state.phase === 'roll' && isHuman && pAct.landmarks.station) ? 'inline-block' : 'none';
+            document.getElementById('btn-end-turn').style.display = (state.phase === 'buy' && isHuman) ? 'inline-block' : 'none';
+
+            [0, 1].forEach(idx => {
+                let p = state.players[idx];
+                let prefix = idx === 0 ? 'p1' : 'p2';
+                
+                document.getElementById(`${prefix}-coins`).innerText = `${p.coins} 💰`;
+                
+                let lHTML = LandmarksDB.map(l => {
+                    let built = p.landmarks[l.key];
+                    let canBuy = (!built && state.phase === 'buy' && state.activePlayer === idx && isHuman && p.coins >= l.cost);
+                    return renderLandmark(l, built, canBuy, `executeAction('buy_l', '${l.key}')`);
+                }).join('');
+                document.getElementById(`${prefix}-landmarks`).innerHTML = lHTML;
+
+                let cHTML = Object.keys(p.cards).map(id => {
+                    return renderCard(DB.find(x=>x.id===id), p.cards[id], false);
+                }).join('');
+                document.getElementById(`${prefix}-cards`).innerHTML = cHTML;
             });
 
-            if (affordable.length > 0) {
-                // Pick random
-                let pick = affordable[Math.floor(Math.random() * affordable.length)];
-                let c = cardDatabase.find(x => x.id === pick);
-                p.coins -= c.cost;
-                market[pick]--;
-                if (market[pick] === 0) delete market[pick];
-                p.cards[pick] = (p.cards[pick] || 0) + 1;
-                log(`${p.name} покупает ${c.name}`);
-                replenishMarket();
-                bought = true;
-            }
+            let mHTML = Object.keys(state.market).map(id => {
+                let c = DB.find(x=>x.id===id);
+                let p = state.players[0];
+                let canBuy = (state.phase === 'buy' && state.activePlayer === 0 && p.coins >= c.cost && !(c.type==='purple' && p.cards[id]));
+                return renderCard(c, state.market[id], canBuy, `executeAction('buy', '${id}')`);
+            }).join('');
+            document.getElementById('market-cards').innerHTML = mHTML;
+        } catch (e) {
+            logMsg(`Ошибка рендера: ${e.message}`, 'error');
         }
-
-        if (!bought && p.landmarks.airport && turnPhase !== 'end') {
-             p.coins += 10;
-             log(`<span class="income">${p.name} получает 10 Галеонов от Аэропорта (ничего не купил)</span>`);
-        }
-
-        if (turnPhase !== 'end') finalizeTurn(bought);
     }
 
-    function checkWin(p) {
-        let built = Object.values(p.landmarks).filter(x => x).length;
-        if (built === landmarksData.length) {
-            log(`<h2>🎉 ${p.name} побеждает, отстроив весь магический мир! 🎉</h2>`);
-            turnPhase = 'end';
+    function switchView(view) {
+        document.getElementById('game-view').style.display = view === 'game' ? 'flex' : 'none';
+        document.getElementById('catalog-view').style.display = view === 'catalog' ? 'block' : 'none';
+        document.getElementById('btn-nav-game').disabled = view === 'game';
+        document.getElementById('btn-nav-catalog').disabled = view === 'catalog';
+    }
+
+    function buildCatalog() {
+        let content = '';
+        let types = [
+            { id: 'blue', name: 'Синие карты (Доход в любой ход)' },
+            { id: 'green', name: 'Зеленые карты (Доход в свой ход)' },
+            { id: 'red', name: 'Красные карты (Штраф соперникам)' },
+            { id: 'purple', name: 'Фиолетовые карты (Особые здания)' }
+        ];
+
+        types.forEach(t => {
+            let cards = DB.filter(c => c.type === t.id).sort((a,b) => a.tr[0] - b.tr[0]);
+            content += `<div class="catalog-section color-${t.id}"><h3>${t.name}</h3><div class="cards-grid">`;
+            cards.forEach(c => { content += renderCard(c, 0, true); }); 
+            content += `</div></div>`;
+        });
+
+        content += `<div class="catalog-section color-landmark"><h3>Достопримечательности (Для победы нужно построить все)</h3><div class="cards-grid">`;
+        LandmarksDB.forEach(l => { content += renderLandmark(l, false, true); });
+        content += `</div></div>`;
+
+        document.getElementById('catalog-content').innerHTML = content;
+    }
+
+    function initGame() {
+        try {
+            LandmarksDB.forEach(l => {
+                state.players[0].landmarks[l.key] = false;
+                state.players[1].landmarks[l.key] = false;
+            });
+            DB.forEach(c => {
+                let copies = c.type === 'purple' ? 4 : 6;
+                for(let i=0; i<copies; i++) state.deck.push(c.id);
+            });
+            state.deck.sort(() => Math.random() - 0.5);
+            replenishMarket();
+            buildCatalog();
             updateUI();
+            logMsg('Игра началась! Бросайте кубик.', 'turn');
+        } catch (e) {
+            logMsg(`Ошибка инициализации: ${e.message}`, 'error');
         }
     }
 
-    // --- Rendering ---
-    function updateUI() {
-        let pActive = players[activePlayer];
-        document.getElementById('turn-indicator').innerText = turnPhase === 'end' ? 'Игра окончена' : `Ход: ${pActive.name} (${turnPhase === 'roll' ? 'Бросок' : 'Покупка'})`;
-
-        // Buttons
-        document.getElementById('btn-roll-1').style.display = (turnPhase === 'roll' && !pActive.isAI) ? 'inline-block' : 'none';
-        document.getElementById('btn-roll-2').style.display = (turnPhase === 'roll' && !pActive.isAI && pActive.landmarks.station) ? 'inline-block' : 'none';
-        document.getElementById('btn-end-turn').style.display = (turnPhase === 'buy' && !pActive.isAI) ? 'inline-block' : 'none';
-
-        // Render Player Panels
-        renderPlayer(0, 'p1');
-        renderPlayer(1, 'p2');
-
-        // Render Market
-        let mHTML = '';
-        Object.keys(market).forEach(id => {
-            let c = cardDatabase.find(x => x.id === id);
-            let canBuy = (turnPhase === 'buy' && !players[0].isAI && players[0].coins >= c.cost && activePlayer === 0);
-            if (c.type === 'purple' && players[0].cards[id]) canBuy = false;
-
-            mHTML += `
-                <div class="card ${c.type} ${canBuy ? '' : 'disabled'}" onclick="buyCard('${id}')">
-                    <div class="card-header">
-                        <span class="card-triggers">[${c.triggers.join(',')}]</span>
-                        <span class="card-cost">${c.cost} 💰</span>
-                    </div>
-                    <div style="font-weight:bold; margin-top:5px; text-align:center;">${c.icon} ${c.name}</div>
-                    <div style="font-size:0.8em; margin-top:10px; color:#555;">${c.effectDesc}</div>
-                    <div class="card-count">${market[id]}</div>
-                </div>
-            `;
-        });
-        document.getElementById('market-cards').innerHTML = mHTML;
-    }
-
-    function renderPlayer(index, prefix) {
-        let p = players[index];
-        document.getElementById(`${prefix}-coins`).innerText = `${p.coins} Галеонов`;
-        
-        // Render Cards
-        let cHTML = '';
-        Object.keys(p.cards).forEach(id => {
-            let c = cardDatabase.find(x => x.id === id);
-            cHTML += `
-                <div class="card ${c.type}" style="cursor:default">
-                    <div class="card-header">
-                        <span class="card-triggers">[${c.triggers.join(',')}]</span>
-                    </div>
-                    <div style="font-weight:bold; margin-top:5px; text-align:center;">${c.icon} ${c.name}</div>
-                    <div class="card-count" style="background:#2c3e50;">${p.cards[id]}</div>
-                </div>
-            `;
-        });
-        document.getElementById(`${prefix}-cards`).innerHTML = cHTML;
-
-        // Render Landmarks
-        let lHTML = '';
-        landmarksData.forEach(l => {
-            let built = p.landmarks[l.key];
-            let canBuy = (!built && turnPhase === 'buy' && activePlayer === index && !p.isAI && p.coins >= l.cost);
-            
-            lHTML += `
-                <div class="card landmark ${built ? 'built' : ''} ${(!built && !canBuy) ? 'disabled' : ''}" 
-                     ${canBuy ? `onclick="buyLandmark('${l.key}')"` : ''} style="min-height: 80px;">
-                    <div class="card-header">
-                        <span>${l.name}</span>
-                        <span class="card-cost">${l.cost} 💰</span>
-                    </div>
-                    <div style="font-size:0.8em; margin-top:5px;">${l.effectDesc}</div>
-                </div>
-            `;
-        });
-        document.getElementById(`${prefix}-landmarks`).innerHTML = lHTML;
-    }
-
-    function log(msg) {
-        let l = document.getElementById('log');
-        l.innerHTML += `<div class="log-entry">${msg}</div>`;
-        l.scrollTop = l.scrollHeight;
-    }
-
-    // Start
+    // Direct initialization instead of window.onload
     initGame();
 </script>
 </body>
