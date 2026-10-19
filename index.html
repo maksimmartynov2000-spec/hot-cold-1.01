@@ -10,51 +10,72 @@
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #0f172a; /* Темно-синий фон */
+            background-color: #0f172a;
             font-family: 'Inter', sans-serif;
             color: #ffffff;
-            touch-action: none; /* Запрет стандартных свайпов браузера */
+            touch-action: none;
         }
         
-        #canvas-container {
+        #canvas-container, #css2d-container {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100vw;
             height: 100vh;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
         }
 
-        #css2d-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none; /* Пропускает клики к 3D объектам */
-            z-index: 2;
-        }
+        #canvas-container { z-index: 1; }
+        #css2d-container { z-index: 2; pointer-events: none; }
 
-        /* Стиль для букв вершин */
+        /* Стиль для базовых букв вершин */
         .vertex-label {
             font-family: 'Georgia', serif;
             font-style: italic;
             font-size: 16px;
             font-weight: bold;
             color: #000;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             padding: 2px 8px;
             border-radius: 6px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             pointer-events: none;
-            margin-top: -15px; /* Сдвиг, чтобы не перекрывать саму точку */
+            margin-top: -15px;
             border: 1px solid #cbd5e1;
         }
 
-        /* Кастомизация ползунков */
+        /* Стиль для пользовательских точек (отличается цветом) */
+        .user-vertex-label {
+            font-family: 'Georgia', serif;
+            font-style: italic;
+            font-size: 16px;
+            font-weight: bold;
+            color: #b91c1c; /* Красный оттенок для отличия */
+            background: rgba(254, 226, 226, 0.95); /* Светло-розовый */
+            padding: 2px 8px;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            pointer-events: none;
+            margin-top: -15px;
+            border: 1px solid #f87171;
+        }
+
+        /* Стиль для плашек с измерениями (расстояние и угол) */
+        .measurement-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            background: rgba(79, 70, 229, 0.9); /* Индиго */
+            padding: 3px 8px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            pointer-events: none;
+            border: 1px solid #818cf8;
+            z-index: 10;
+        }
+
         input[type=range] { accent-color: #3b82f6; }
         
-        /* Анимация шторки */
         #panel-settings {
             transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
         }
@@ -72,22 +93,18 @@
 </head>
 <body>
 
-    <!-- Канвасы -->
     <div id="canvas-container"></div>
     <div id="css2d-container"></div>
 
-    <!-- UI Панель (Улучшенная выдвижная шторка для мобильных) -->
-    <div id="ui-panel" class="absolute bottom-0 left-0 w-full md:top-4 md:left-4 md:bottom-auto md:w-[360px] bg-slate-900/95 backdrop-blur-xl border-t md:border border-slate-700 rounded-t-3xl md:rounded-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] md:shadow-2xl z-10 flex flex-col">
+    <!-- UI Панель -->
+    <div id="ui-panel" class="absolute bottom-0 left-0 w-full md:top-4 md:left-4 md:bottom-auto md:w-[380px] bg-slate-900/95 backdrop-blur-xl border-t md:border border-slate-700 rounded-t-3xl md:rounded-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] md:shadow-2xl z-10 flex flex-col">
         
-        <!-- Ручка-drag (только мобильные) -->
         <div id="drag-handle" class="w-full flex justify-center pt-3 pb-1 cursor-pointer md:hidden">
             <div class="w-12 h-1.5 bg-slate-600 rounded-full"></div>
         </div>
 
-        <!-- Заголовок панели -->
         <div id="panel-header" class="px-5 pb-3 md:pt-5 md:pb-4 flex justify-between items-center cursor-pointer md:cursor-default select-none">
             <h1 class="text-lg md:text-xl font-bold text-blue-400">Стереометрия 3D</h1>
-            <!-- Кнопка разворачивания (только мобильные) -->
             <button id="toggle-btn" class="md:hidden flex items-center justify-center w-8 h-8 bg-slate-800 rounded-full border border-slate-600 text-slate-300">
                 <svg id="toggle-icon" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -95,34 +112,40 @@
             </button>
         </div>
 
-        <!-- Инструменты (Всегда видны!) -->
+        <!-- Инструменты 2 ряда по 3 кнопки -->
         <div class="px-4 pb-3 border-b border-slate-700/50 md:border-none">
-            <div class="flex gap-2 justify-between">
-                <button id="btn-view" class="tool-btn flex-1 flex flex-col items-center justify-center p-2 rounded-xl bg-blue-600 text-white border-2 border-blue-400 shadow-lg shadow-blue-900/50 transition-all" data-mode="view">
-                    <span class="text-xl mb-1">🔄</span>
-                    <span class="text-[10px] md:text-xs font-bold uppercase">Вращение</span>
+            <div class="grid grid-cols-3 gap-2">
+                <button class="tool-btn flex flex-col items-center justify-center p-2 rounded-xl bg-blue-600 text-white border-2 border-blue-400 shadow-lg shadow-blue-900/50 transition-all" data-mode="view">
+                    <span class="text-lg mb-1">🔄</span>
+                    <span class="text-[10px] md:text-[11px] font-bold uppercase">Камера</span>
                 </button>
-                <button id="btn-point" class="tool-btn flex-1 flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800 text-slate-300 border-2 border-transparent transition-all" data-mode="point">
-                    <span class="text-xl mb-1">📍</span>
-                    <span class="text-[10px] md:text-xs font-bold uppercase">Точка</span>
+                <button class="tool-btn flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800 text-slate-300 border-2 border-transparent transition-all" data-mode="point">
+                    <span class="text-lg mb-1">📍</span>
+                    <span class="text-[10px] md:text-[11px] font-bold uppercase">Точка</span>
                 </button>
-                <button id="btn-segment" class="tool-btn flex-1 flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800 text-slate-300 border-2 border-transparent transition-all" data-mode="segment">
-                    <span class="text-xl mb-1">📏</span>
-                    <span class="text-[10px] md:text-xs font-bold uppercase">Отрезок</span>
+                <button class="tool-btn flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800 text-slate-300 border-2 border-transparent transition-all" data-mode="segment">
+                    <span class="text-lg mb-1">➖</span>
+                    <span class="text-[10px] md:text-[11px] font-bold uppercase">Отрезок</span>
                 </button>
-                <button id="btn-plane" class="tool-btn flex-1 flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800 text-slate-300 border-2 border-transparent transition-all" data-mode="plane">
-                    <span class="text-xl mb-1">📐</span>
-                    <span class="text-[10px] md:text-xs font-bold uppercase">Плоскость</span>
+                <button class="tool-btn flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800 text-slate-300 border-2 border-transparent transition-all" data-mode="plane">
+                    <span class="text-lg mb-1">🟦</span>
+                    <span class="text-[10px] md:text-[11px] font-bold uppercase">Плоскость</span>
+                </button>
+                <button class="tool-btn flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800 text-slate-300 border-2 border-transparent transition-all" data-mode="distance">
+                    <span class="text-lg mb-1">📏</span>
+                    <span class="text-[10px] md:text-[11px] font-bold uppercase">Длина</span>
+                </button>
+                <button class="tool-btn flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800 text-slate-300 border-2 border-transparent transition-all" data-mode="angle">
+                    <span class="text-lg mb-1">📐</span>
+                    <span class="text-[10px] md:text-[11px] font-bold uppercase">Угол</span>
                 </button>
             </div>
-            <p id="tool-hint" class="text-[11px] md:text-xs text-slate-400 mt-2 text-center h-4">Свайпайте 3D-фон для вращения камеры.</p>
+            <p id="tool-hint" class="text-[11px] md:text-xs text-amber-300 mt-3 text-center h-4 font-medium">Свайпайте 3D-фон для вращения камеры.</p>
         </div>
 
-        <!-- Сворачиваемая часть с настройками -->
+        <!-- Настройки (сворачиваемые) -->
         <div id="panel-settings" class="overflow-y-auto max-h-0 opacity-0 md:max-h-[500px] md:opacity-100">
             <div class="px-4 pb-5 pt-2 flex flex-col gap-4">
-                
-                <!-- Выбор фигуры -->
                 <div class="flex flex-col gap-1.5">
                     <label class="text-xs md:text-sm font-semibold text-slate-300">Тип фигуры:</label>
                     <select id="shape-type" class="bg-slate-800 border border-slate-600 rounded-lg p-2 text-sm text-white outline-none focus:border-blue-500 w-full transition-colors">
@@ -132,7 +155,6 @@
                     </select>
                 </div>
 
-                <!-- Ползунки параметров -->
                 <div class="flex flex-col gap-3 bg-slate-800/50 p-3.5 rounded-xl border border-slate-700/50">
                     <div class="flex flex-col gap-1">
                         <label class="text-xs md:text-sm flex justify-between">
@@ -141,7 +163,6 @@
                         </label>
                         <input type="range" id="param-radius" min="1" max="10" step="0.5" value="3" class="w-full">
                     </div>
-                    
                     <div class="flex flex-col gap-1" id="height-container">
                         <label class="text-xs md:text-sm flex justify-between">
                             <span class="text-slate-300">Высота</span>
@@ -149,7 +170,6 @@
                         </label>
                         <input type="range" id="param-height" min="1" max="15" step="0.5" value="5" class="w-full">
                     </div>
-
                     <div class="flex flex-col gap-1" id="segments-container">
                         <label class="text-xs md:text-sm flex justify-between">
                             <span class="text-slate-300">Углов в основании</span>
@@ -159,11 +179,9 @@
                     </div>
                 </div>
 
-                <!-- Очистка -->
                 <button id="btn-clear" class="w-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg p-2.5 text-sm font-medium transition-colors">
                     🗑 Очистить построения
                 </button>
-
             </div>
         </div>
     </div>
@@ -174,14 +192,13 @@
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-        // --- ЛОГИКА UI ПАНЕЛИ (Сворачивание/Разворачивание) ---
+        // --- UI Шторка ---
         const panelSettings = document.getElementById('panel-settings');
         const toggleIcon = document.getElementById('toggle-icon');
-        let isPanelExpanded = window.innerWidth >= 768; // Развернута на ПК, свернута на телефонах
+        let isPanelExpanded = window.innerWidth >= 768;
 
         function updatePanelState() {
             if (window.innerWidth >= 768) {
-                // На ПК всегда открыта
                 panelSettings.style.maxHeight = '1000px';
                 panelSettings.style.opacity = '1';
                 return;
@@ -198,26 +215,21 @@
         }
         
         function togglePanel() {
-            if (window.innerWidth >= 768) return; // Не работает на ПК
+            if (window.innerWidth >= 768) return;
             isPanelExpanded = !isPanelExpanded;
             updatePanelState();
         }
 
         document.getElementById('panel-header').addEventListener('click', togglePanel);
         document.getElementById('drag-handle').addEventListener('click', togglePanel);
-        
-        // Корректировка при повороте экрана
         window.addEventListener('resize', () => {
-            if (window.innerWidth >= 768) isPanelExpanded = true;
-            else isPanelExpanded = false;
+            isPanelExpanded = window.innerWidth >= 768;
             updatePanelState();
         });
-        
-        // Устанавливаем начальное состояние
         updatePanelState();
 
 
-        // --- ЛОГИКА THREE.JS И СТЕРЕОМЕТРИИ ---
+        // --- Логика THREE.JS ---
         let scene, camera, renderer, labelRenderer, controls;
         let mainMesh, edgesMesh; 
         
@@ -232,15 +244,18 @@
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         
-        const pointMaterialDefault = new THREE.MeshBasicMaterial({ color: 0xef4444 }); // Красный
-        const pointMaterialSelected = new THREE.MeshBasicMaterial({ color: 0xfacc15 }); // Желтый
+        const pointMaterialDefault = new THREE.MeshBasicMaterial({ color: 0xef4444 }); 
+        const pointMaterialSelected = new THREE.MeshBasicMaterial({ color: 0xfacc15 }); 
+
+        // Буквы для новых точек пользователя
+        const userPointLetters = ['M', 'N', 'K', 'L', 'P', 'Q', 'R', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+        let userPointIndex = 0;
 
         init();
         animate();
 
         function init() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color('#0f172a');
             
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
             camera.position.set(12, 12, 18);
@@ -259,9 +274,6 @@
             const dirLight1 = new THREE.DirectionalLight(0xffffff, 1);
             dirLight1.position.set(10, 20, 10);
             scene.add(dirLight1);
-            const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
-            dirLight2.position.set(-10, -10, -10);
-            scene.add(dirLight2);
 
             controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
@@ -276,7 +288,6 @@
 
             window.addEventListener('resize', onWindowResize);
             
-            // Защита от ложных срабатываний клика при свайпе/вращении
             const canvasContainer = document.getElementById('canvas-container');
             let isDragging = false;
             let pointerDownPos = { x: 0, y: 0 };
@@ -291,6 +302,16 @@
             canvasContainer.addEventListener('pointerup', (e) => {
                 if (!isDragging) handleInteractionClick(e);
             });
+        }
+
+        // --- Решение БАГА: Полное уничтожение HTML элементов из памяти ---
+        function clearGroupWithLabels(group) {
+            group.traverse((object) => {
+                if (object.isCSS2DObject && object.element && object.element.parentNode) {
+                    object.element.parentNode.removeChild(object.element);
+                }
+            });
+            group.clear();
         }
 
         function setupToolsUI() {
@@ -325,9 +346,11 @@
             const hint = document.getElementById('tool-hint');
             const hints = {
                 'view': 'Свайпайте 3D-фон для вращения камеры.',
-                'point': 'Кликните на грань фигуры, чтобы поставить точку.',
-                'segment': 'Выберите 2 точки (вершины или ваши), чтобы провести прямую.',
-                'plane': 'Выберите 3 точки, чтобы построить плоскость.'
+                'point': 'Кликните на грань, чтобы поставить и назвать точку.',
+                'segment': 'Выберите 2 точки, чтобы провести отрезок.',
+                'plane': 'Выберите 3 точки, чтобы построить плоскость.',
+                'distance': 'Выберите 2 точки, чтобы измерить расстояние (см).',
+                'angle': 'Выберите 3 точки (2-я будет вершиной угла).'
             };
 
             tools.forEach(btn => {
@@ -343,12 +366,6 @@
                     
                     currentMode = target.getAttribute('data-mode');
                     hint.innerText = hints[currentMode];
-                    
-                    // Если шторка открыта при выборе инструмента на мобильном, слегка сворачиваем её для удобства черчения
-                    if (window.innerWidth < 768 && currentMode !== 'view' && isPanelExpanded) {
-                        togglePanel();
-                    }
-                    
                     resetSelection();
                 });
             });
@@ -358,8 +375,10 @@
 
         function buildShape() {
             shapeGroup.clear();
-            verticesGroup.clear();
-            interactablePoints = [];
+            // Тщательно очищаем старые вершины и их HTML-буквы
+            clearGroupWithLabels(verticesGroup);
+            
+            interactablePoints = interactablePoints.filter(p => p.userData.type === 'user_point'); // Сохраняем кастомные точки, очищаем стандартные
 
             const type = document.getElementById('shape-type').value;
             const radius = parseFloat(document.getElementById('param-radius').value);
@@ -379,7 +398,6 @@
 
             geometry.computeBoundingBox();
 
-            // Стеклянный материал
             const material = new THREE.MeshPhysicalMaterial({
                 color: 0x3b82f6, metalness: 0.1, roughness: 0.1,
                 transmission: 0.8, thickness: 0.5, transparent: true, opacity: 1, side: THREE.DoubleSide
@@ -388,10 +406,8 @@
             mainMesh = new THREE.Mesh(geometry, material);
             shapeGroup.add(mainMesh);
 
-            // Белые ребра
-            const edges = new THREE.EdgesGeometry(geometry);
             const edgesMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
-            edgesMesh = new THREE.LineSegments(edges, edgesMat);
+            edgesMesh = new THREE.LineSegments(new THREE.EdgesGeometry(geometry), edgesMat);
             shapeGroup.add(edgesMesh);
 
             extractAndLabelVertices(geometry, type, height, radius);
@@ -437,23 +453,27 @@
                 pointDefs.push({ vec: new THREE.Vector3(0, 0, 0), label: 'O' });
             }
 
-            pointDefs.forEach(def => createVertexPoint(def.vec, def.label));
+            pointDefs.forEach(def => {
+                const ptMesh = createPointMesh(def.vec, def.label, 'vertex', 'vertex-label');
+                verticesGroup.add(ptMesh);
+                interactablePoints.push(ptMesh);
+            });
         }
 
-        function createVertexPoint(positionVector, labelText) {
+        function createPointMesh(positionVector, labelText, typeStr, cssClass) {
             const ptGeom = new THREE.SphereGeometry(0.18, 16, 16);
             const ptMesh = new THREE.Mesh(ptGeom, pointMaterialDefault);
             ptMesh.position.copy(positionVector);
-            ptMesh.userData = { type: 'vertex', id: Math.random() };
-            verticesGroup.add(ptMesh);
-            interactablePoints.push(ptMesh);
+            ptMesh.userData = { type: typeStr, id: Math.random() };
 
             const div = document.createElement('div');
-            div.className = 'vertex-label';
+            div.className = cssClass;
             div.textContent = labelText;
             const label = new CSS2DObject(div);
             label.position.set(0, 0, 0);
             ptMesh.add(label);
+
+            return ptMesh;
         }
 
         function handleInteractionClick(event) {
@@ -465,7 +485,7 @@
             if (currentMode === 'point') {
                 const intersects = raycaster.intersectObject(mainMesh);
                 if (intersects.length > 0) placeUserPoint(intersects[0].point);
-            } else if (currentMode === 'segment' || currentMode === 'plane') {
+            } else {
                 const closestPointMesh = getClosestPointToRay(raycaster);
                 if (closestPointMesh) togglePointSelection(closestPointMesh);
             }
@@ -473,7 +493,7 @@
 
         function getClosestPointToRay(raycaster) {
             let closest = null;
-            let minDist = 0.6; // Увеличенный радиус для мобильных
+            let minDist = 0.6; 
             interactablePoints.forEach(ptMesh => {
                 const dist = raycaster.ray.distanceToPoint(ptMesh.position);
                 if (dist < minDist) { minDist = dist; closest = ptMesh; }
@@ -482,10 +502,11 @@
         }
 
         function placeUserPoint(position) {
-            const ptGeom = new THREE.SphereGeometry(0.15, 16, 16);
-            const ptMesh = new THREE.Mesh(ptGeom, pointMaterialDefault);
-            ptMesh.position.copy(position);
-            ptMesh.userData = { type: 'user_point', id: Math.random() };
+            // Назначаем автоматическую букву
+            const letter = userPointLetters[userPointIndex % userPointLetters.length];
+            userPointIndex++;
+
+            const ptMesh = createPointMesh(position, letter, 'user_point', 'user-vertex-label');
             userGroup.add(ptMesh);
             interactablePoints.push(ptMesh);
         }
@@ -498,11 +519,18 @@
             } else {
                 mesh.material = pointMaterialSelected;
                 selectedPoints.push(mesh);
+                
                 if (currentMode === 'segment' && selectedPoints.length === 2) {
                     drawSegment(selectedPoints[0], selectedPoints[1]);
                     resetSelection();
                 } else if (currentMode === 'plane' && selectedPoints.length === 3) {
                     drawPlane(selectedPoints[0], selectedPoints[1], selectedPoints[2]);
+                    resetSelection();
+                } else if (currentMode === 'distance' && selectedPoints.length === 2) {
+                    drawDistance(selectedPoints[0], selectedPoints[1]);
+                    resetSelection();
+                } else if (currentMode === 'angle' && selectedPoints.length === 3) {
+                    drawAngle(selectedPoints[0], selectedPoints[1], selectedPoints[2]);
                     resetSelection();
                 }
             }
@@ -543,9 +571,68 @@
             userGroup.add(edgesMesh);
         }
 
+        function drawDistance(p1, p2) {
+            const dist = p1.position.distanceTo(p2.position).toFixed(1);
+            
+            const geometry = new THREE.BufferGeometry().setFromPoints([p1.position, p2.position]);
+            const material = new THREE.LineDashedMaterial({ color: 0x38bdf8, linewidth: 2, dashSize: 0.4, gapSize: 0.2, depthTest: false, transparent: true });
+            const line = new THREE.Line(geometry, material);
+            line.computeLineDistances(); 
+            line.renderOrder = 999;
+            userGroup.add(line);
+
+            const midPoint = new THREE.Vector3().addVectors(p1.position, p2.position).multiplyScalar(0.5);
+            
+            const div = document.createElement('div');
+            div.className = 'measurement-label';
+            div.textContent = `${dist} см`;
+            const label = new CSS2DObject(div);
+            
+            const dummy = new THREE.Object3D();
+            dummy.position.copy(midPoint);
+            dummy.add(label);
+            userGroup.add(dummy);
+        }
+
+        function drawAngle(p1, p2, p3) {
+            // p2 - это вершина угла
+            const v1 = new THREE.Vector3().subVectors(p1.position, p2.position).normalize();
+            const v2 = new THREE.Vector3().subVectors(p3.position, p2.position).normalize();
+            
+            const angleRad = v1.angleTo(v2);
+            const angleDeg = THREE.MathUtils.radToDeg(angleRad).toFixed(1);
+
+            const geom1 = new THREE.BufferGeometry().setFromPoints([p1.position, p2.position]);
+            const geom2 = new THREE.BufferGeometry().setFromPoints([p2.position, p3.position]);
+            const mat = new THREE.LineBasicMaterial({ color: 0xa855f7, linewidth: 2, depthTest: false, transparent: true }); // Пурпурный
+            const line1 = new THREE.Line(geom1, mat);
+            const line2 = new THREE.Line(geom2, mat);
+            line1.renderOrder = 999; line2.renderOrder = 999;
+            
+            userGroup.add(line1); 
+            userGroup.add(line2);
+
+            // Позиция текста (чуть смещена от вершины по биссектрисе)
+            const bisector = new THREE.Vector3().addVectors(v1, v2).normalize().multiplyScalar(0.7);
+            const labelPos = new THREE.Vector3().copy(p2.position).add(bisector);
+            
+            const div = document.createElement('div');
+            div.className = 'measurement-label';
+            div.textContent = `${angleDeg}°`;
+            div.style.background = 'rgba(168, 85, 247, 0.9)'; // Пурпурный фон для угла
+            div.style.borderColor = '#d8b4fe';
+            const label = new CSS2DObject(div);
+            
+            const dummy = new THREE.Object3D();
+            dummy.position.copy(labelPos);
+            dummy.add(label);
+            userGroup.add(dummy);
+        }
+
         function clearUserDrawings() {
+            clearGroupWithLabels(userGroup);
             interactablePoints = interactablePoints.filter(mesh => mesh.userData.type !== 'user_point');
-            userGroup.clear();
+            userPointIndex = 0; // Сбрасываем алфавит для новых точек
             resetSelection();
         }
 
