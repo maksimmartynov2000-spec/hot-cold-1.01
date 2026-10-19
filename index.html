@@ -3,735 +3,632 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Хогвартс Коро: Магическая Экономика</title>
+    <title>3D Моделирование по Стереометрии</title>
+    <!-- Подключаем Tailwind CSS для быстрого и красивого UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:wght@400;600;700&display=swap');
-        
-        :root {
-            --bg-color: #0f111a;
-            --panel-bg: rgba(20, 24, 36, 0.9);
-            --text-main: #e0e6ed;
-            --gold: #d4af37;
-            --gold-glow: rgba(212, 175, 55, 0.4);
-            --blue-card: #2980b9;
-            --green-card: #27ae60;
-            --red-card: #c0392b;
-            --purple-card: #8e44ad;
-            --border-radius: 12px;
-        }
-
-        * { box-sizing: border-box; }
-
         body {
-            font-family: 'Cormorant Garamond', serif;
-            background: #0f111a url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 31.5V29h-2v2.5L25.5 24 28 26.5V29h2v-2.5L32.5 24 30 21.5z' fill='%23d4af37' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
-            color: var(--text-main);
             margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            overflow: hidden;
+            background-color: #1a1a1a;
+            font-family: 'Inter', sans-serif;
+            color: #ffffff;
         }
-
-        header {
-            width: 100%;
-            background: linear-gradient(to bottom, rgba(15,17,26,1), rgba(15,17,26,0.8));
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid var(--gold);
-            position: sticky;
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
             top: 0;
-            z-index: 100;
-            backdrop-filter: blur(5px);
+            left: 0;
+            z-index: 1;
         }
-
-        .header-title { text-align: left; }
-        h1 { font-family: 'Cinzel', serif; color: var(--gold); margin: 0; font-size: 1.8rem; text-shadow: 0 0 10px var(--gold-glow); }
-        .subtitle { font-family: 'Cinzel', serif; color: #8892b0; font-size: 0.9rem; letter-spacing: 1px; }
-
-        .nav-buttons { display: flex; gap: 15px; }
-
-        button {
-            background: linear-gradient(135deg, #3a2e24, #1a1510);
-            color: var(--gold);
-            border: 1px solid var(--gold);
-            padding: 10px 20px;
-            font-size: 1.1rem;
-            font-family: 'Cinzel', serif;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            font-weight: bold;
-        }
-        button:hover:not(:disabled) { background: linear-gradient(135deg, #4a3b2e, #2a221a); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(212,175,55,0.3); }
-        button:disabled { background: #222; color: #555; border-color: #444; cursor: not-allowed; transform: none; box-shadow: none; }
-        button.action-btn { background: linear-gradient(135deg, #c0392b, #8e44ad); color: white; border-color: #fff; }
-        button.action-btn:hover:not(:disabled) { background: linear-gradient(135deg, #e74c3c, #9b59b6); }
-        button.end-btn { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; border-color: #fff; }
-
-        .container {
+        #css2d-container {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 1400px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        /* Views */
-        #game-view { display: flex; flex-direction: column; gap: 20px; }
-        #catalog-view { display: none; background: var(--panel-bg); border-radius: var(--border-radius); padding: 30px; border: 1px solid var(--gold); }
-
-        .game-layout { display: flex; gap: 20px; width: 100%; align-items: flex-start;}
-        @media(max-width: 1000px) { .game-layout { flex-direction: column; } }
-
-        .panel {
-            background: var(--panel-bg);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            border-radius: var(--border-radius);
-            padding: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-        }
-        .player-panel { flex: 1; }
-        .market-panel { flex: 2; border: 1px solid rgba(136, 146, 176, 0.4); }
-
-        h2, h3 { font-family: 'Cinzel', serif; margin-top: 0; color: var(--gold); border-bottom: 1px solid rgba(212, 175, 55, 0.3); padding-bottom: 10px; }
-        
-        .stats { float: right; font-size: 1.4rem; background: rgba(0,0,0,0.5); padding: 2px 10px; border-radius: 8px; border: 1px solid var(--gold); }
-        .coins { font-weight: bold; color: #ffd700; text-shadow: 0 0 5px rgba(255, 215, 0, 0.5); }
-
-        /* Controls */
-        .controls {
-            display: flex; justify-content: space-between; align-items: center;
-            background: var(--panel-bg); padding: 20px 30px; border-radius: var(--border-radius);
-            border: 1px solid var(--gold); box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            margin-bottom: 10px; flex-wrap: wrap; gap: 20px;
-        }
-        
-        .turn-info { flex: 1; }
-        #turn-indicator { font-size: 1.6rem; font-family: 'Cinzel', serif; color: var(--gold); font-weight: bold; }
-        #phase-indicator { font-size: 1.1rem; color: #aaa; font-style: italic; }
-
-        .dice-area { display: flex; gap: 15px; align-items: center; justify-content: center; flex: 1; }
-        .die { 
-            background: linear-gradient(135deg, #f5f7fa, #c3cfe2); color: #1a1a2e; 
-            width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; 
-            border-radius: 12px; box-shadow: inset 0 0 10px rgba(0,0,0,0.2), 0 5px 15px rgba(0,0,0,0.5); 
-            font-size: 2.5rem; font-weight: bold; font-family: sans-serif;
-        }
-
-        .btn-group { display: flex; gap: 10px; flex: 1; justify-content: flex-end; flex-wrap: wrap; }
-
-        /* Cards Grid */
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        /* Premium Cards */
-        .card {
-            background-color: #1e1a18;
-            background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2.5L22.5 11 25 13.5V16h20v2H25v2.5L22.5 23 20 20.5zM11 22.5L13.5 25 11 27.5 8.5 25 11 22.5zM29 22.5L31.5 25 29 27.5 26.5 25 29 22.5zM11 8.5L13.5 11 11 13.5 8.5 11 11 8.5zM29 8.5L31.5 11 29 13.5 26.5 11 29 8.5z' fill='%23d4af37' fill-opacity='0.15' fill-rule='evenodd'/%3E%3C/svg%3E");
-            color: #f4ebd8;
-            border-radius: 8px;
-            padding: 8px;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            min-height: 170px;
-            box-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.6);
-            border: 2px solid #3a2e24;
-            outline: 1px solid var(--gold);
-            outline-offset: -4px;
-        }
-
-        .card:hover { transform: translateY(-5px); box-shadow: inset 0 0 30px rgba(0,0,0,0.9), 0 8px 16px rgba(0,0,0,0.8); outline-color: #ffdf00; z-index: 10; }
-        .card.disabled { filter: grayscale(60%) brightness(0.6); cursor: not-allowed; pointer-events: none; }
-        .card.disabled:hover { transform: none; box-shadow: inset 0 0 30px rgba(0,0,0,0.8); outline-color: var(--gold); z-index: 1;}
-
-        .type-ribbon {
-            position: absolute; top: 0; left: 0; width: 100%; height: 35px; border-radius: 6px 6px 0 0; opacity: 0.8; z-index: 1;
-            mask-image: linear-gradient(to bottom, black 20%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to bottom, black 20%, transparent 100%);
-        }
-        .card.blue .type-ribbon { background: linear-gradient(180deg, var(--blue-card), transparent); }
-        .card.green .type-ribbon { background: linear-gradient(180deg, var(--green-card), transparent); }
-        .card.red .type-ribbon { background: linear-gradient(180deg, var(--red-card), transparent); }
-        .card.purple .type-ribbon { background: linear-gradient(180deg, var(--purple-card), transparent); }
-        
-        .card.landmark { outline: 2px solid #555; background-color: #111; }
-        .card.landmark.built { outline: 2px solid var(--gold); background-color: #2a2210; box-shadow: inset 0 0 30px #000, 0 0 15px var(--gold-glow); pointer-events: none; }
-
-        .card-header { display: flex; justify-content: space-between; align-items: center; z-index: 2; margin-bottom: 2px; }
-        .card-triggers { background: #111; color: var(--gold); padding: 2px 5px; border-radius: 4px; font-family: 'Cinzel', serif; font-size: 1rem; border: 1px solid var(--gold); font-weight: bold; }
-        .card-cost { background: linear-gradient(135deg, #d4af37, #aa8222); color: #000; padding: 2px 6px; border-radius: 4px; font-size: 0.9rem; font-weight: bold; border: 1px solid #ffe680; }
-        
-        .card-title { font-weight: bold; text-align: center; font-size: 1rem; line-height: 1.1; color: var(--gold); font-family: 'Cinzel', serif; z-index: 2; margin: 4px 0; text-shadow: 2px 2px 4px #000;}
-        
-        .art-frame {
-            background: radial-gradient(circle, rgba(74, 59, 44, 0.9), rgba(26, 21, 16, 1));
-            border: 2px solid rgba(212, 175, 55, 0.6);
-            border-radius: 4px;
-            margin: 2px 10px;
-            padding: 5px 0;
-            text-align: center;
-            font-size: 2rem;
-            box-shadow: inset 0 0 10px #000;
+            height: 100%;
+            pointer-events: none; /* Важно: пропускает клики сквозь метки к 3D объектам */
             z-index: 2;
         }
-
-        .card-desc { font-size: 0.8rem; color: #b8ac97; line-height: 1.1; text-align: center; margin-top: 5px; z-index: 2; font-style: italic; }
-        .card-tag { position: absolute; bottom: 5px; left: 5px; font-size: 0.7rem; background: #222; padding: 1px 4px; border-radius: 3px; border: 1px solid #444; color: #888; z-index: 2; }
+        /* Стиль для букв вершин */
+        .vertex-label {
+            font-family: 'Georgia', serif;
+            font-style: italic;
+            font-size: 16px;
+            font-weight: bold;
+            color: #111;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 2px 6px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            pointer-events: none;
+            margin-top: -15px; /* Сдвиг, чтобы не перекрывать саму точку */
+        }
+        /* Боковая панель UI */
+        #ui-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 320px;
+            max-height: calc(100vh - 20px);
+            z-index: 10;
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(10px);
+            overflow-y: auto;
+        }
         
-        .card-count { 
-            position: absolute; bottom: -8px; right: -8px; background: radial-gradient(circle, #c0392b, #7a150a); 
-            color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-            font-weight: bold; border: 2px solid var(--gold); z-index: 10; box-shadow: 0 4px 8px rgba(0,0,0,0.6); 
-            font-family: 'Cinzel', serif; font-size: 1.1rem; 
-        }
+        /* Стилизация скроллбара */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
 
-        /* Log */
-        #log-container {
-            width: 100%; background: var(--panel-bg); border-radius: var(--border-radius); border: 1px solid var(--gold); padding: 15px; margin-top: 10px;
+        input[type=range] {
+            accent-color: #3b82f6;
         }
-        #log {
-            width: 100%; height: 180px; overflow-y: auto; background: rgba(0, 0, 0, 0.8); padding: 10px; border-radius: 6px; font-family: 'Courier New', monospace; border: 1px inset #333; color: #ddd;
-        }
-        .log-entry { margin: 3px 0; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 3px; font-size: 0.95rem; }
-        .log-entry.turn { color: var(--gold); font-weight: bold; margin-top: 10px; border-bottom: 1px solid var(--gold); font-size: 1.05rem; }
-        .log-entry.income { color: #2ecc71; }
-        .log-entry.loss { color: #e74c3c; }
-        .log-entry.error { color: #ff0000; font-weight: bold; background: rgba(255,0,0,0.2); padding: 5px; }
-
-        /* Catalog specific */
-        .catalog-section { margin-bottom: 30px; }
-        .catalog-section h3 { border-bottom: 2px solid; padding-bottom: 5px; }
-        .color-blue h3 { border-color: var(--blue-card); color: #5dade2;}
-        .color-green h3 { border-color: var(--green-card); color: #58d68d;}
-        .color-red h3 { border-color: var(--red-card); color: #ec7063;}
-        .color-purple h3 { border-color: var(--purple-card); color: #af7ac5;}
-        .color-landmark h3 { border-color: var(--gold); color: var(--gold);}
-
     </style>
+    
+    <!-- Настройка Import Map для загрузки Three.js -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
 </head>
 <body>
 
-    <header>
-        <div class="header-title">
-            <h1>Хогвартс Коро</h1>
-            <div class="subtitle">Магическая Экономика</div>
-        </div>
-        <div class="nav-buttons">
-            <button id="btn-nav-game" onclick="switchView('game')" disabled>Игровая доска</button>
-            <button id="btn-nav-catalog" onclick="switchView('catalog')">📖 Справочник карт</button>
-        </div>
-    </header>
+    <!-- Контейнеры для Three.js -->
+    <div id="canvas-container"></div>
+    <div id="css2d-container"></div>
 
-    <div class="container">
-        <!-- Game View -->
-        <div id="game-view">
+    <!-- UI Панель -->
+    <div id="ui-panel" class="rounded-xl shadow-2xl p-5 border border-gray-700 flex flex-col gap-4">
+        <h1 class="text-xl font-bold text-blue-400 mb-2">Стереометрия 3D</h1>
+        
+        <!-- Выбор фигуры -->
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-semibold text-gray-300">Тип фигуры:</label>
+            <select id="shape-type" class="bg-gray-800 border border-gray-600 rounded p-2 text-white outline-none focus:border-blue-500">
+                <option value="prism">Призма</option>
+                <option value="pyramid">Пирамида</option>
+                <option value="sphere">Сфера</option>
+            </select>
+        </div>
+
+        <!-- Настройки (Слайдеры) -->
+        <div class="flex flex-col gap-3 bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
+            <div class="flex flex-col gap-1">
+                <label class="text-sm flex justify-between">
+                    <span>Радиус (Основание)</span>
+                    <span id="radius-val" class="text-blue-400">3</span>
+                </label>
+                <input type="range" id="param-radius" min="1" max="10" step="0.5" value="3">
+            </div>
             
-            <div class="controls">
-                <div class="turn-info">
-                    <div id="turn-indicator">Ход: Загрузка...</div>
-                    <div id="phase-indicator">Подготовка игры</div>
-                </div>
-                <div class="dice-area" id="dice-container">
-                    <div class="die" id="die1">-</div>
-                    <div class="die" id="die2" style="display: none;">-</div>
-                </div>
-                <div class="btn-group">
-                    <button id="btn-roll-1" class="action-btn" onclick="executeAction('roll', 1)">Бросить 1 кубик</button>
-                    <button id="btn-roll-2" class="action-btn" onclick="executeAction('roll', 2)" style="display:none;">Бросить 2 кубика</button>
-                    <button id="btn-end-turn" class="end-btn" onclick="executeAction('end')" style="display:none;">Завершить ход</button>
-                </div>
+            <div class="flex flex-col gap-1" id="height-container">
+                <label class="text-sm flex justify-between">
+                    <span>Высота</span>
+                    <span id="height-val" class="text-blue-400">5</span>
+                </label>
+                <input type="range" id="param-height" min="1" max="15" step="0.5" value="5">
             </div>
 
-            <div class="game-layout">
-                <!-- P1 -->
-                <div class="panel player-panel" id="player-panel">
-                    <h2>Вы <span class="stats"><span class="coins" id="p1-coins">0 💰</span></span></h2>
-                    <div class="cards-grid" id="p1-landmarks"></div>
-                    <h3 style="font-size: 1.1rem; margin-top: 15px;">Ваши предприятия</h3>
-                    <div class="cards-grid" id="p1-cards"></div>
-                </div>
-
-                <!-- Market -->
-                <div class="panel market-panel">
-                    <h2>Косой Переулок (Рынок)</h2>
-                    <div class="cards-grid" id="market-cards"></div>
-                </div>
-
-                <!-- P2 (AI) -->
-                <div class="panel player-panel" id="ai-panel">
-                    <h2>Малфой (ИИ) <span class="stats"><span class="coins" id="p2-coins">0 💰</span></span></h2>
-                    <div class="cards-grid" id="p2-landmarks"></div>
-                    <h3 style="font-size: 1.1rem; margin-top: 15px;">Предприятия Малфоя</h3>
-                    <div class="cards-grid" id="p2-cards"></div>
-                </div>
-            </div>
-
-            <div id="log-container">
-                <h3 style="margin: 0 0 10px 0; font-size: 1.1rem;">История событий</h3>
-                <div id="log"></div>
+            <div class="flex flex-col gap-1" id="segments-container">
+                <label class="text-sm flex justify-between">
+                    <span>Углов в основании</span>
+                    <span id="segments-val" class="text-blue-400">4</span>
+                </label>
+                <input type="range" id="param-segments" min="3" max="12" step="1" value="4">
             </div>
         </div>
 
-        <!-- Catalog View -->
-        <div id="catalog-view">
-            <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 10px;">Справочник Всех Карт</h2>
-            <p style="text-align: center; color: #aaa; margin-bottom: 30px;">Полный список предприятий и достопримечательностей Магического Мира</p>
-            <div id="catalog-content"></div>
+        <!-- Инструменты -->
+        <div class="flex flex-col gap-2 mt-2">
+            <label class="text-sm font-semibold text-gray-300">Инструменты:</label>
+            <div class="grid grid-cols-2 gap-2">
+                <button id="btn-view" class="tool-btn bg-blue-600 hover:bg-blue-500 text-white rounded p-2 text-sm font-medium transition-colors" data-mode="view">
+                    🔄 Вращение
+                </button>
+                <button id="btn-point" class="tool-btn bg-gray-700 hover:bg-gray-600 text-white rounded p-2 text-sm font-medium transition-colors border border-transparent" data-mode="point">
+                    📍 Точка
+                </button>
+                <button id="btn-segment" class="tool-btn bg-gray-700 hover:bg-gray-600 text-white rounded p-2 text-sm font-medium transition-colors border border-transparent" data-mode="segment">
+                    📏 Отрезок
+                </button>
+                <button id="btn-plane" class="tool-btn bg-gray-700 hover:bg-gray-600 text-white rounded p-2 text-sm font-medium transition-colors border border-transparent" data-mode="plane">
+                    📐 Плоскость
+                </button>
+            </div>
+            <p id="tool-hint" class="text-xs text-gray-400 mt-1 h-8">Используйте мышь для вращения камеры.</p>
         </div>
+
+        <button id="btn-clear" class="mt-2 w-full bg-red-600/80 hover:bg-red-500 text-white rounded p-2 text-sm font-medium transition-colors">
+            🗑 Очистить построения
+        </button>
     </div>
 
-<script>
-    // --- DATABASE ---
-    const DB = [
-        { id:'c1', name:'Теплица', type:'blue', tag:'plant', cost:1, tr:[1], val:1, icon:'🌱', desc:'1 💰 из банка' },
-        { id:'c2', name:'Гиппогрифы', type:'blue', tag:'creature', cost:1, tr:[2], val:1, icon:'🦅', desc:'1 💰 из банка' },
-        { id:'c3', name:'Запретный лес', type:'blue', tag:'gear', cost:3, tr:[5], val:1, icon:'🌲', desc:'1 💰 из банка' },
-        { id:'c4', name:'Цапучая ива', type:'blue', tag:'plant', cost:3, tr:[4], val:3, icon:'🌳', desc:'3 💰 из банка' },
-        { id:'c5', name:'Лодка на озере', type:'blue', tag:'boat', cost:2, tr:[8], val:3, icon:'⛵', desc:'3 💰 из банка' },
-        { id:'c6', name:'Шахта Гринготтс', type:'blue', tag:'gear', cost:6, tr:[9], val:5, icon:'⛏️', desc:'5 💰 из банка' },
-        { id:'c7', name:'Тыквен. грядка', type:'blue', tag:'plant', cost:3, tr:[10], val:3, icon:'🎃', desc:'3 💰 из банка' },
-        { id:'c8', name:'Корабль', type:'blue', tag:'boat', cost:5, tr:[12,13,14], val:0, icon:'🛳️', desc:'Доход равен сумме броска' },
+    <!-- Основной скрипт Three.js -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+        // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
+        let scene, camera, renderer, labelRenderer, controls;
+        let mainMesh, edgesMesh; // Основная фигура
         
-        { id:'c9', name:'Сладкое корол.', type:'green', tag:'shop', cost:1, tr:[2,3], val:1, icon:'🍬', desc:'1 💰 из банка' },
-        { id:'c10', name:'Олливандер', type:'green', tag:'shop', cost:2, tr:[4], val:3, icon:'🪄', desc:'3 💰 из банка' },
-        { id:'c11', name:'Зельеварня', type:'green', tag:'factory', cost:5, tr:[7], val:3, combo:'creature', icon:'⚗️', desc:'3 💰 за каждое Существо (🦅)' },
-        { id:'c12', name:'Фабр. метел', type:'green', tag:'factory', cost:3, tr:[8], val:3, combo:'gear', icon:'🧹', desc:'3 💰 за каждый Ресурс (🌲/⛏️)' },
-        { id:'c13', name:'Рынок ингр.', type:'green', tag:'factory', cost:2, tr:[11,12], val:2, combo:'plant', icon:'📜', desc:'2 💰 за каждое Растение (🌱/🌳/🎃)' },
+        let shapeGroup = new THREE.Group(); // Группа фигуры
+        let userGroup = new THREE.Group(); // Группа построений (линии, точки, плоскости)
+        let verticesGroup = new THREE.Group(); // Группа вершин (для кликов)
+
+        // Массивы для логики
+        let interactablePoints = []; // Все точки (вершины + пользовательские)
+        let selectedPoints = []; // Точки, выбранные для текущего инструмента
         
-        { id:'c14', name:'Кафе Паддифут', type:'red', tag:'cafe', cost:2, tr:[3], val:1, icon:'☕', desc:'Забирает 1 💰 у бросившего' },
-        { id:'c15', name:'Три метлы', type:'red', tag:'cafe', cost:1, tr:[7], val:1, icon:'🍺', desc:'Забирает 1 💰 у бросившего' },
-        { id:'c16', name:'Кабанья голова', type:'red', tag:'cafe', cost:1, tr:[8], val:1, icon:'🐗', desc:'Забирает 1 💰 у бросившего' },
-        { id:'c17', name:'Дырявый котел', type:'red', tag:'cafe', cost:3, tr:[9,10], val:2, icon:'🍲', desc:'Забирает 2 💰 у бросившего' },
+        let currentMode = 'view'; // view, point, segment, plane
+        
+        // Raycaster для интерактива
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        
+        // Материалы для точек
+        const pointMaterialDefault = new THREE.MeshBasicMaterial({ color: 0xef4444 }); // Красный
+        const pointMaterialSelected = new THREE.MeshBasicMaterial({ color: 0xeab308 }); // Желтый (выделение)
 
-        { id:'c18', name:'Стадион', type:'purple', tag:'special', cost:6, tr:[6], val:0, icon:'🏟️', desc:'Забирает по 2 💰 у всех' },
-        { id:'c19', name:'Пророк', type:'purple', tag:'special', cost:7, tr:[6], val:0, icon:'📰', desc:'Забирает 5 💰 у одного' },
-        { id:'c20', name:'Налог Мин-ва', type:'purple', tag:'special', cost:4, tr:[8,9], val:0, icon:'⚖️', desc:'Забирает половину 💰 у богачей' }
-    ];
+        init();
+        animate();
 
-    const LandmarksDB = [
-        { id: 'l1', key: 'port', name: 'Порт', cost: 2, desc: 'Бросок >= 10 дает +2 (Автоматически)' },
-        { id: 'l2', key: 'station', name: 'Вокзал Кингс-Кросс', cost: 4, desc: 'Позволяет бросать 2 кубика' },
-        { id: 'l3', key: 'mall', name: 'Косой Переулок', cost: 10, desc: 'Магазины и Кафе (🍬/☕) дают +1 💰' },
-        { id: 'l4', key: 'park', name: 'Замок Хогвартс', cost: 16, desc: 'Дубль при 2 кубиках дает доп. ход' },
-        { id: 'l5', key: 'tower', name: 'Отдел Тайн', cost: 22, desc: 'Переброс если результат < 6 (Авто)' },
-        { id: 'l6', key: 'airport', name: 'Аэропорт магов', cost: 30, desc: 'Если ничего не купили: +10 💰' }
-    ];
-
-    let state = {
-        players: [
-            { name: 'Вы', isAI: false, coins: 3, cards: { 'c1': 1, 'c9': 1 }, landmarks: {} },
-            { name: 'Малфой', isAI: true, coins: 3, cards: { 'c1': 1, 'c9': 1 }, landmarks: {} }
-        ],
-        activePlayer: 0,
-        phase: 'roll',
-        market: {},
-        deck: [],
-        lastRoll: 0,
-        isDouble: false
-    };
-
-    function logMsg(msg, type='') {
-        try {
-            const l = document.getElementById('log');
-            if (l) {
-                l.innerHTML += `<div class="log-entry ${type}">${msg}</div>`;
-                l.scrollTop = l.scrollHeight;
-            }
-        } catch (e) { console.error("Log err", e); }
-    }
-
-    function replenishMarket() {
-        while(Object.keys(state.market).length < 10 && state.deck.length > 0) {
-            let cid = state.deck.pop();
-            state.market[cid] = (state.market[cid] || 0) + 1;
-        }
-    }
-
-    function executeAction(action, param) {
-        try {
-            if (state.phase === 'end' || state.players[state.activePlayer].isAI) return;
+        function init() {
+            // 1. Сцена и камера
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a1a);
             
-            if (action === 'roll' && state.phase === 'roll') {
-                performRoll(param);
-            } else if (action === 'buy' && state.phase === 'buy') {
-                buyCard(param);
-            } else if (action === 'buy_l' && state.phase === 'buy') {
-                buyLandmark(param);
-            } else if (action === 'end' && state.phase === 'buy') {
-                endTurn();
-            }
-        } catch (e) {
-            logMsg(`Ошибка: ${e.message}`, 'error');
-        }
-    }
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(10, 10, 15);
 
-    function performRoll(numDice) {
-        let p = state.players[state.activePlayer];
-        let d1 = Math.floor(Math.random() * 6) + 1;
-        let d2 = numDice === 2 ? Math.floor(Math.random() * 6) + 1 : 0;
-        let total = d1 + d2;
-        state.isDouble = (numDice === 2 && d1 === d2);
-        
-        document.getElementById('die1').innerText = d1;
-        if(d2 > 0) {
-            document.getElementById('die2').innerText = d2;
-            document.getElementById('die2').style.display = 'flex';
-        } else {
-            document.getElementById('die2').style.display = 'none';
-        }
+            // 2. Рендерер WebGL
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        logMsg(`${p.name} бросает: ${d1}${d2 ? ' + '+d2 : ''} = ${total}`, 'turn');
+            // 3. Рендерер CSS2D (Для HTML ярлыков букв)
+            labelRenderer = new CSS2DRenderer();
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('css2d-container').appendChild(labelRenderer.domElement);
 
-        if (p.landmarks.tower && total <= 5 && !p.isAI) {
-            logMsg(`<i>Отдел Тайн: автоматический переброс плохих кубиков...</i>`);
-            d1 = Math.floor(Math.random() * 6) + 1;
-            d2 = numDice === 2 ? Math.floor(Math.random() * 6) + 1 : 0;
-            total = d1 + d2;
-            state.isDouble = (numDice === 2 && d1 === d2);
-            document.getElementById('die1').innerText = d1;
-            if(d2 > 0) document.getElementById('die2').innerText = d2;
-            logMsg(`Новый результат: ${total}`);
-        }
+            // 4. Освещение
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 20, 10);
+            scene.add(directionalLight);
 
-        if (p.landmarks.port && total >= 10) {
-            total += 2;
-            logMsg(`<i>Порт Хогвартса прибавляет +2. Итого: ${total}</i>`);
-        }
+            // 5. Управление (OrbitControls)
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
 
-        state.lastRoll = total;
-        resolveIncome(total);
-        
-        state.phase = 'buy';
-        updateUI();
+            // Добавляем группы на сцену
+            scene.add(shapeGroup);
+            scene.add(verticesGroup);
+            scene.add(userGroup);
 
-        if (state.players[state.activePlayer].isAI) {
-            setTimeout(aiBuyPhase, 1500);
-        }
-    }
+            // Инициализация первой фигуры
+            buildShape();
 
-    function resolveIncome(roll) {
-        let pAct = state.players[state.activePlayer];
-        let pOth = state.players[(state.activePlayer + 1) % 2];
+            // 6. Обработчики событий
+            window.addEventListener('resize', onWindowResize);
+            
+            // Обработчик кликов (pointer events для мобилок и мыши)
+            const canvasContainer = document.getElementById('canvas-container');
+            let isDragging = false;
+            let pointerDownPos = { x: 0, y: 0 };
 
-        // 1. RED
-        let redOwed = 0;
-        Object.keys(pOth.cards).forEach(cid => {
-            let c = DB.find(x => x.id === cid);
-            if (c.type === 'red' && c.tr.includes(roll)) {
-                let amount = c.val + (pOth.landmarks.mall ? 1 : 0);
-                redOwed += amount * pOth.cards[cid];
-            }
-        });
-        if (redOwed > 0) {
-            let paid = Math.min(redOwed, pAct.coins);
-            pAct.coins -= paid; pOth.coins += paid;
-            logMsg(`${pAct.name} платит ${paid} 💰 ${pOth.name} (Кафе/Пабы)`, 'loss');
-        }
-
-        // 2. BLUE
-        state.players.forEach(p => {
-            let blueGain = 0;
-            Object.keys(p.cards).forEach(cid => {
-                let c = DB.find(x => x.id === cid);
-                if (c.type === 'blue' && c.tr.includes(roll)) {
-                    let amount = c.id === 'c8' ? roll : c.val;
-                    blueGain += amount * p.cards[cid];
+            canvasContainer.addEventListener('pointerdown', (e) => {
+                pointerDownPos = { x: e.clientX, y: e.clientY };
+                isDragging = false;
+            });
+            canvasContainer.addEventListener('pointermove', (e) => {
+                // Если мышь сдвинулась более чем на 3 пикселя - это свайп/drag
+                if (Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y) > 3) {
+                    isDragging = true;
                 }
             });
-            if (blueGain > 0) {
-                p.coins += blueGain;
-                logMsg(`${p.name} получает ${blueGain} 💰 (Синие карты)`, 'income');
-            }
-        });
+            canvasContainer.addEventListener('pointerup', (e) => {
+                if (!isDragging) {
+                    handleInteractionClick(e);
+                }
+            });
 
-        // 3. GREEN
-        let greenGain = 0;
-        Object.keys(pAct.cards).forEach(cid => {
-            let c = DB.find(x => x.id === cid);
-            if (c.type === 'green' && c.tr.includes(roll)) {
-                let amount = c.val;
-                if (c.tag === 'shop' && pAct.landmarks.mall) amount += 1;
+            setupUI();
+        }
+
+        function setupUI() {
+            // Слайдеры и селекты
+            const shapeSelect = document.getElementById('shape-type');
+            const paramRadius = document.getElementById('param-radius');
+            const paramHeight = document.getElementById('param-height');
+            const paramSegments = document.getElementById('param-segments');
+            
+            const updateShape = () => {
+                // Обновляем тексты
+                document.getElementById('radius-val').innerText = paramRadius.value;
+                document.getElementById('height-val').innerText = paramHeight.value;
+                document.getElementById('segments-val').innerText = paramSegments.value;
                 
-                if (c.combo) {
-                    let count = 0;
-                    Object.keys(pAct.cards).forEach(checkId => {
-                        let checkC = DB.find(x => x.id === checkId);
-                        if (checkC.tag === c.combo) count += pAct.cards[checkId];
+                // Прячем/показываем настройки в зависимости от фигуры
+                if (shapeSelect.value === 'sphere') {
+                    document.getElementById('height-container').style.display = 'none';
+                    document.getElementById('segments-container').style.display = 'none';
+                } else {
+                    document.getElementById('height-container').style.display = 'flex';
+                    document.getElementById('segments-container').style.display = 'flex';
+                }
+                
+                buildShape();
+                clearUserDrawings(); // Очищаем построения при изменении геометрии
+            };
+
+            shapeSelect.addEventListener('change', updateShape);
+            paramRadius.addEventListener('input', updateShape);
+            paramHeight.addEventListener('input', updateShape);
+            paramSegments.addEventListener('input', updateShape);
+
+            // Кнопки инструментов
+            const tools = document.querySelectorAll('.tool-btn');
+            const hint = document.getElementById('tool-hint');
+            
+            const hints = {
+                'view': 'Используйте мышь для вращения камеры.',
+                'point': 'Кликните на грань или ребро фигуры, чтобы поставить точку.',
+                'segment': 'Выберите две точки, чтобы провести отрезок.',
+                'plane': 'Выберите три точки, чтобы построить плоскость сечения.'
+            };
+
+            tools.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Сбрасываем стили кнопок
+                    tools.forEach(t => {
+                        t.classList.remove('bg-blue-600', 'border-blue-400');
+                        t.classList.add('bg-gray-700', 'border-transparent');
                     });
-                    amount = amount * count;
-                }
-                greenGain += amount * pAct.cards[cid];
+                    
+                    // Активная кнопка
+                    const target = e.currentTarget;
+                    target.classList.remove('bg-gray-700', 'border-transparent');
+                    target.classList.add('bg-blue-600', 'border-blue-400');
+                    
+                    currentMode = target.getAttribute('data-mode');
+                    hint.innerText = hints[currentMode];
+                    
+                    // Сбрасываем выбор точек
+                    resetSelection();
+                    
+                    // Отключаем вращение, если мы строим (по желанию, но лучше оставить для удобства)
+                    // controls.enabled = (currentMode === 'view'); 
+                });
+            });
+
+            // Кнопка очистки
+            document.getElementById('btn-clear').addEventListener('click', clearUserDrawings);
+            
+            // Инициализация UI
+            updateShape();
+        }
+
+        // --- ЛОГИКА ФОРМИРОВАНИЯ ФИГУР И ВЕРШИН ---
+
+        function buildShape() {
+            // Очистка старой фигуры и меток
+            shapeGroup.clear();
+            verticesGroup.clear();
+            interactablePoints = [];
+
+            const type = document.getElementById('shape-type').value;
+            const radius = parseFloat(document.getElementById('param-radius').value);
+            const height = parseFloat(document.getElementById('param-height').value);
+            const segments = parseInt(document.getElementById('param-segments').value);
+
+            let geometry;
+
+            if (type === 'prism') {
+                geometry = new THREE.CylinderGeometry(radius, radius, height, segments, 1);
+                // Поворот, чтобы красиво смотрелось для квадратов/треугольников
+                if (segments % 2 === 0) geometry.rotateY(Math.PI / segments); 
+            } else if (type === 'pyramid') {
+                // Пирамида — это конус
+                geometry = new THREE.ConeGeometry(radius, height, segments, 1);
+                if (segments % 2 === 0) geometry.rotateY(Math.PI / segments);
+            } else if (type === 'sphere') {
+                geometry = new THREE.SphereGeometry(radius, 32, 16);
             }
-        });
-        if (greenGain > 0) {
-            pAct.coins += greenGain;
-            logMsg(`${pAct.name} получает ${greenGain} 💰 (Зеленые карты)`, 'income');
+
+            // Центрируем геометрию (чтобы Y = 0 было центром)
+            geometry.computeBoundingBox();
+
+            // Материал - полупрозрачный пластик/стекло для стереометрии
+            const material = new THREE.MeshPhysicalMaterial({
+                color: 0xe0e7ff, // Светло-голубой
+                metalness: 0.1,
+                roughness: 0.2,
+                transmission: 0.8, // Эффект стекла
+                thickness: 0.5,
+                transparent: true,
+                opacity: 0.9,
+                side: THREE.DoubleSide
+            });
+
+            mainMesh = new THREE.Mesh(geometry, material);
+            shapeGroup.add(mainMesh);
+
+            // Добавляем четкие ребра (черные линии)
+            const edges = new THREE.EdgesGeometry(geometry);
+            const edgesMat = new THREE.LineBasicMaterial({ color: 0x111827, linewidth: 2 });
+            edgesMesh = new THREE.LineSegments(edges, edgesMat);
+            shapeGroup.add(edgesMesh);
+
+            // Обработка вершин и расстановка букв
+            extractAndLabelVertices(geometry, type, height);
         }
 
-        // 4. PURPLE
-        Object.keys(pAct.cards).forEach(cid => {
-            let c = DB.find(x => x.id === cid);
-            if (c.type === 'purple' && c.tr.includes(roll)) {
-                if (cid === 'c18') {
-                    let steal = Math.min(2, pOth.coins);
-                    pOth.coins -= steal; pAct.coins += steal;
-                    logMsg(`Квиддич! ${pAct.name} забирает ${steal} 💰`, 'income');
-                } else if (cid === 'c19') {
-                    let steal = Math.min(5, pOth.coins);
-                    pOth.coins -= steal; pAct.coins += steal;
-                    logMsg(`Пророк! ${pAct.name} забирает ${steal} 💰`, 'income');
-                } else if (cid === 'c20') {
-                    if (pOth.coins >= 10) {
-                        let steal = Math.floor(pOth.coins / 2);
-                        pOth.coins -= steal; pAct.coins += steal;
-                        logMsg(`Налог! ${pAct.name} конфискует ${steal} 💰`, 'income');
-                    }
-                }
-            }
-        });
-    }
+        function extractAndLabelVertices(geometry, type, height) {
+            // Получаем позиции всех точек (среди них много дубликатов)
+            const position = geometry.attributes.position;
+            const uniquePoints = [];
+            const map = new Map();
 
-    function buyCard(id) {
-        let p = state.players[state.activePlayer];
-        let c = DB.find(x => x.id === id);
-        if (p.coins >= c.cost && state.market[id] > 0) {
-            if (c.type === 'purple' && p.cards[id]) { logMsg('Фиолетовая карта уже есть!', 'error'); return; }
-            
-            p.coins -= c.cost;
-            state.market[id]--;
-            if (state.market[id] === 0) delete state.market[id];
-            
-            p.cards[id] = (p.cards[id] || 0) + 1;
-            logMsg(`<b>${p.name} покупает ${c.name}</b>`);
-            
-            replenishMarket();
-            concludeTurn();
-        }
-    }
-
-    function buyLandmark(key) {
-        let p = state.players[state.activePlayer];
-        let l = LandmarksDB.find(x => x.key === key);
-        if (p.coins >= l.cost && !p.landmarks[key]) {
-            p.coins -= l.cost;
-            p.landmarks[key] = true;
-            logMsg(`<b style="color:var(--gold); font-size:1.1em;">${p.name} построил: ${l.name}!</b>`);
-            
-            if (Object.values(p.landmarks).filter(x=>x).length === LandmarksDB.length) {
-                logMsg(`<h2>🎉 ${p.name.toUpperCase()} ПОБЕЖДАЕТ! 🎉</h2>`);
-                state.phase = 'end';
-                updateUI();
-                return;
-            }
-            concludeTurn();
-        }
-    }
-
-    function endTurn() {
-        let p = state.players[state.activePlayer];
-        if (p.landmarks.airport) {
-            p.coins += 10;
-            logMsg(`${p.name} получает +10 💰 от Аэропорта (ничего не куплено)`, 'income');
-        }
-        concludeTurn();
-    }
-
-    function concludeTurn() {
-        let p = state.players[state.activePlayer];
-        if (p.landmarks.park && state.isDouble) {
-            logMsg(`<b>Замок Хогвартс дарует доп. ход за дубль!</b>`, 'turn');
-            state.phase = 'roll';
-            updateUI();
-            if (p.isAI) setTimeout(aiTurn, 1500);
-            return;
-        }
-
-        state.activePlayer = (state.activePlayer + 1) % 2;
-        state.phase = 'roll';
-        updateUI();
-
-        if (state.players[state.activePlayer].isAI) {
-            setTimeout(aiTurn, 1500);
-        }
-    }
-
-    function aiTurn() {
-        if(state.phase !== 'roll') return;
-        let p = state.players[1];
-        let dice = p.landmarks.station ? (Math.random() > 0.4 ? 2 : 1) : 1;
-        performRoll(dice);
-    }
-
-    function aiBuyPhase() {
-        if (state.phase !== 'buy') return;
-        let p = state.players[1];
-        let bought = false;
-
-        for (let l of LandmarksDB) {
-            if (!p.landmarks[l.key] && p.coins >= l.cost) {
-                buyLandmark(l.key);
-                return;
-            }
-        }
-
-        let affordable = Object.keys(state.market).filter(id => {
-            let c = DB.find(x => x.id === id);
-            if (c.type === 'purple' && p.cards[id]) return false;
-            return c.cost <= p.coins;
-        });
-
-        if (affordable.length > 0) {
-            affordable.sort((a,b) => DB.find(x=>x.id===b).cost - DB.find(x=>x.id===a).cost);
-            let pick = affordable[0];
-            if(Math.random() > 0.3) pick = affordable[Math.floor(Math.random() * affordable.length)];
-            
-            buyCard(pick);
-            return;
-        }
-
-        endTurn();
-    }
-
-    function renderCard(c, count=0, interactive=false, onClickStr='') {
-        let classes = `card ${c.type} ${!interactive ? 'disabled' : ''}`;
-        return `
-            <div class="${classes}" ${interactive ? `onclick="${onClickStr}"` : ''}>
-                <div class="type-ribbon"></div>
-                <div class="card-header">
-                    <span class="card-triggers">[${c.tr.join(',')}]</span>
-                    <span class="card-cost">${c.cost} 💰</span>
-                </div>
-                <div class="card-title">${c.name}</div>
-                <div class="art-frame">${c.icon}</div>
-                <div class="card-desc">${c.desc}</div>
-                <div class="card-tag">${c.tag}</div>
-                ${count > 0 ? `<div class="card-count">${count}</div>` : ''}
-            </div>
-        `;
-    }
-
-    function renderLandmark(l, built, interactive, onClickStr='') {
-        let classes = `card landmark ${built ? 'built' : ''} ${(!built && !interactive) ? 'disabled' : ''}`;
-        return `
-            <div class="${classes}" ${interactive ? `onclick="${onClickStr}"` : ''}>
-                <div class="card-header">
-                    <span style="font-weight:bold; color:var(--gold);">${l.name}</span>
-                    <span class="card-cost">${l.cost} 💰</span>
-                </div>
-                <div class="card-desc" style="margin-top:15px; font-size:0.9rem;">${l.desc}</div>
-            </div>
-        `;
-    }
-
-    function updateUI() {
-        try {
-            let pAct = state.players[state.activePlayer];
-            
-            document.getElementById('turn-indicator').innerText = state.phase === 'end' ? 'Игра окончена' : `Ход: ${pAct.name}`;
-            document.getElementById('phase-indicator').innerText = state.phase === 'roll' ? 'Бросок кубиков' : state.phase === 'buy' ? 'Фаза покупки' : '';
-
-            let isHuman = !pAct.isAI;
-            document.getElementById('btn-roll-1').style.display = (state.phase === 'roll' && isHuman) ? 'inline-block' : 'none';
-            document.getElementById('btn-roll-2').style.display = (state.phase === 'roll' && isHuman && pAct.landmarks.station) ? 'inline-block' : 'none';
-            document.getElementById('btn-end-turn').style.display = (state.phase === 'buy' && isHuman) ? 'inline-block' : 'none';
-
-            [0, 1].forEach(idx => {
-                let p = state.players[idx];
-                let prefix = idx === 0 ? 'p1' : 'p2';
+            for (let i = 0; i < position.count; i++) {
+                let x = position.getX(i);
+                let y = position.getY(i);
+                let z = position.getZ(i);
                 
-                document.getElementById(`${prefix}-coins`).innerText = `${p.coins} 💰`;
+                // Округляем для удаления мелких погрешностей
+                let key = `${x.toFixed(3)}_${y.toFixed(3)}_${z.toFixed(3)}`;
                 
-                let lHTML = LandmarksDB.map(l => {
-                    let built = p.landmarks[l.key];
-                    let canBuy = (!built && state.phase === 'buy' && state.activePlayer === idx && isHuman && p.coins >= l.cost);
-                    return renderLandmark(l, built, canBuy, `executeAction('buy_l', '${l.key}')`);
-                }).join('');
-                document.getElementById(`${prefix}-landmarks`).innerHTML = lHTML;
+                if (!map.has(key)) {
+                    const vec = new THREE.Vector3(x, y, z);
+                    map.set(key, vec);
+                    uniquePoints.push(vec);
+                }
+            }
 
-                let cHTML = Object.keys(p.cards).map(id => {
-                    return renderCard(DB.find(x=>x.id===id), p.cards[id], false);
-                }).join('');
-                document.getElementById(`${prefix}-cards`).innerHTML = cHTML;
+            // Функция для сортировки точек основания/крыши по кругу (угол atan2)
+            const sortByAngle = (pts) => {
+                return pts.sort((a, b) => Math.atan2(a.z, a.x) - Math.atan2(b.z, b.x));
+            };
+
+            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            let pointDefinitions = [];
+
+            if (type === 'pyramid') {
+                const maxY = Math.max(...uniquePoints.map(v => v.y));
+                // Вершина пирамиды
+                const top = uniquePoints.find(v => Math.abs(v.y - maxY) < 0.01);
+                pointDefinitions.push({ vec: top, label: 'S' });
+
+                // Основание
+                let basePoints = uniquePoints.filter(v => Math.abs(v.y - maxY) > 0.01);
+                basePoints = sortByAngle(basePoints);
+                
+                basePoints.forEach((pt, i) => {
+                    pointDefinitions.push({ vec: pt, label: alphabet[i % 26] });
+                });
+
+            } else if (type === 'prism') {
+                const minY = Math.min(...uniquePoints.map(v => v.y));
+                const maxY = Math.max(...uniquePoints.map(v => v.y));
+
+                let bottomPoints = uniquePoints.filter(v => Math.abs(v.y - minY) < 0.01);
+                let topPoints = uniquePoints.filter(v => Math.abs(v.y - maxY) < 0.01);
+                
+                bottomPoints = sortByAngle(bottomPoints);
+                topPoints = sortByAngle(topPoints);
+
+                bottomPoints.forEach((pt, i) => {
+                    const letter = alphabet[i % 26];
+                    pointDefinitions.push({ vec: pt, label: letter });
+                });
+
+                topPoints.forEach((pt, i) => {
+                    const letter = alphabet[i % 26];
+                    pointDefinitions.push({ vec: pt, label: letter + '1' }); // A1, B1...
+                });
+
+            } else if (type === 'sphere') {
+                // Для сферы просто пометим центр, северный и южный полюс
+                pointDefinitions.push({ vec: new THREE.Vector3(0, height/2 || radius, 0), label: 'N' });
+                pointDefinitions.push({ vec: new THREE.Vector3(0, -(height/2 || radius), 0), label: 'S' });
+                pointDefinitions.push({ vec: new THREE.Vector3(0, 0, 0), label: 'O' });
+            }
+
+            // Создаем визуальные узлы-вершины
+            pointDefinitions.forEach(def => {
+                createVertexPoint(def.vec, def.label);
             });
-
-            let mHTML = Object.keys(state.market).map(id => {
-                let c = DB.find(x=>x.id===id);
-                let p = state.players[0];
-                let canBuy = (state.phase === 'buy' && state.activePlayer === 0 && p.coins >= c.cost && !(c.type==='purple' && p.cards[id]));
-                return renderCard(c, state.market[id], canBuy, `executeAction('buy', '${id}')`);
-            }).join('');
-            document.getElementById('market-cards').innerHTML = mHTML;
-        } catch (e) {
-            logMsg(`Ошибка рендера: ${e.message}`, 'error');
         }
-    }
 
-    function switchView(view) {
-        document.getElementById('game-view').style.display = view === 'game' ? 'flex' : 'none';
-        document.getElementById('catalog-view').style.display = view === 'catalog' ? 'block' : 'none';
-        document.getElementById('btn-nav-game').disabled = view === 'game';
-        document.getElementById('btn-nav-catalog').disabled = view === 'catalog';
-    }
+        // Создает интерактивную точку (сферой) и HTML-метку
+        function createVertexPoint(positionVector, labelText) {
+            // Геометрия невидимая или очень маленькая (чтобы было за что цепляться лучу)
+            const ptGeom = new THREE.SphereGeometry(0.15, 8, 8);
+            const ptMesh = new THREE.Mesh(ptGeom, pointMaterialDefault);
+            ptMesh.position.copy(positionVector);
+            
+            // Сохраняем логический тип
+            ptMesh.userData = { type: 'vertex', id: Math.random() };
+            
+            verticesGroup.add(ptMesh);
+            interactablePoints.push(ptMesh);
 
-    function buildCatalog() {
-        let content = '';
-        let types = [
-            { id: 'blue', name: 'Синие карты (Доход в любой ход)' },
-            { id: 'green', name: 'Зеленые карты (Доход в свой ход)' },
-            { id: 'red', name: 'Красные карты (Штраф соперникам)' },
-            { id: 'purple', name: 'Фиолетовые карты (Особые здания)' }
-        ];
-
-        types.forEach(t => {
-            let cards = DB.filter(c => c.type === t.id).sort((a,b) => a.tr[0] - b.tr[0]);
-            content += `<div class="catalog-section color-${t.id}"><h3>${t.name}</h3><div class="cards-grid">`;
-            cards.forEach(c => { content += renderCard(c, 0, true); }); 
-            content += `</div></div>`;
-        });
-
-        content += `<div class="catalog-section color-landmark"><h3>Достопримечательности (Для победы нужно построить все)</h3><div class="cards-grid">`;
-        LandmarksDB.forEach(l => { content += renderLandmark(l, false, true); });
-        content += `</div></div>`;
-
-        document.getElementById('catalog-content').innerHTML = content;
-    }
-
-    function initGame() {
-        try {
-            LandmarksDB.forEach(l => {
-                state.players[0].landmarks[l.key] = false;
-                state.players[1].landmarks[l.key] = false;
-            });
-            DB.forEach(c => {
-                let copies = c.type === 'purple' ? 4 : 6;
-                for(let i=0; i<copies; i++) state.deck.push(c.id);
-            });
-            state.deck.sort(() => Math.random() - 0.5);
-            replenishMarket();
-            buildCatalog();
-            updateUI();
-            logMsg('Игра началась! Бросайте кубик.', 'turn');
-        } catch (e) {
-            logMsg(`Ошибка инициализации: ${e.message}`, 'error');
+            // Создаем HTML Метку
+            const div = document.createElement('div');
+            div.className = 'vertex-label';
+            div.textContent = labelText;
+            
+            const label = new CSS2DObject(div);
+            label.position.set(0, 0, 0); // Позиция относительно ptMesh
+            ptMesh.add(label);
         }
-    }
 
-    // Direct initialization instead of window.onload
-    initGame();
-</script>
+        // --- ЛОГИКА ИНТЕРАКТИВА (РИСОВАНИЕ) ---
+
+        function handleInteractionClick(event) {
+            if (currentMode === 'view') return;
+
+            // Вычисляем координаты мыши от -1 до +1
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+
+            if (currentMode === 'point') {
+                // Ставим точку на поверхности фигуры
+                const intersects = raycaster.intersectObject(mainMesh);
+                if (intersects.length > 0) {
+                    placeUserPoint(intersects[0].point);
+                }
+            } else if (currentMode === 'segment' || currentMode === 'plane') {
+                // Выделяем существующие точки (наши или вершины)
+                // Вместо точного raycast mesh (точки мелкие), используем расстояние от луча!
+                const closestPointMesh = getClosestPointToRay(raycaster);
+                
+                if (closestPointMesh) {
+                    togglePointSelection(closestPointMesh);
+                }
+            }
+        }
+
+        // Находит ближайшую точку к лучу, чтобы не целиться точно в пиксель
+        function getClosestPointToRay(raycaster) {
+            let closest = null;
+            let minDist = 0.5; // Радиус захвата (чем больше, тем легче кликать)
+            
+            interactablePoints.forEach(ptMesh => {
+                // Кратчайшее расстояние от точки до луча
+                const dist = raycaster.ray.distanceToPoint(ptMesh.position);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closest = ptMesh;
+                }
+            });
+            
+            return closest;
+        }
+
+        function placeUserPoint(position) {
+            const ptGeom = new THREE.SphereGeometry(0.12, 16, 16);
+            const ptMesh = new THREE.Mesh(ptGeom, new THREE.MeshBasicMaterial({ color: 0xef4444 })); // Красный
+            ptMesh.position.copy(position);
+            ptMesh.userData = { type: 'user_point', id: Math.random() };
+            
+            userGroup.add(ptMesh);
+            interactablePoints.push(ptMesh);
+        }
+
+        function togglePointSelection(mesh) {
+            const index = selectedPoints.findIndex(p => p.userData.id === mesh.userData.id);
+            
+            if (index > -1) {
+                // Снимаем выделение
+                mesh.material = pointMaterialDefault;
+                selectedPoints.splice(index, 1);
+            } else {
+                // Добавляем выделение
+                mesh.material = pointMaterialSelected;
+                selectedPoints.push(mesh);
+                
+                // Проверяем, достаточно ли точек для инструмента
+                if (currentMode === 'segment' && selectedPoints.length === 2) {
+                    drawSegment(selectedPoints[0], selectedPoints[1]);
+                    resetSelection();
+                } else if (currentMode === 'plane' && selectedPoints.length === 3) {
+                    drawPlane(selectedPoints[0], selectedPoints[1], selectedPoints[2]);
+                    resetSelection();
+                }
+            }
+        }
+
+        function resetSelection() {
+            selectedPoints.forEach(mesh => {
+                mesh.material = pointMaterialDefault; // Возвращаем красный цвет
+            });
+            selectedPoints = [];
+        }
+
+        function drawSegment(p1, p2) {
+            const points = [p1.position, p2.position];
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            
+            // Толстая синяя линия (в WebGL 1 linewidth игнорируется, но зададим для порядка)
+            const material = new THREE.LineBasicMaterial({ 
+                color: 0xef4444, 
+                linewidth: 3,
+                depthTest: false // чтобы было видно сквозь фигуру
+            }); 
+            
+            const line = new THREE.Line(geometry, material);
+            userGroup.add(line);
+        }
+
+        function drawPlane(p1, p2, p3) {
+            // Создаем треугольник
+            const geometry = new THREE.BufferGeometry();
+            
+            // Вершины
+            const vertices = new Float32Array([
+                p1.position.x, p1.position.y, p1.position.z,
+                p2.position.x, p2.position.y, p2.position.z,
+                p3.position.x, p3.position.y, p3.position.z
+            ]);
+            geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            geometry.computeVertexNormals();
+
+            // Плоскость сечения (полупрозрачная, зелено-желтая)
+            const material = new THREE.MeshBasicMaterial({ 
+                color: 0x10b981, 
+                side: THREE.DoubleSide, 
+                transparent: true, 
+                opacity: 0.5,
+                depthTest: false
+            });
+            const plane = new THREE.Mesh(geometry, material);
+            
+            // Добавим контур треугольника
+            const edges = new THREE.EdgesGeometry(geometry);
+            const edgesMat = new THREE.LineBasicMaterial({ color: 0x059669, linewidth: 2, depthTest: false });
+            const edgesMesh = new THREE.LineSegments(edges, edgesMat);
+
+            userGroup.add(plane);
+            userGroup.add(edgesMesh);
+        }
+
+        function clearUserDrawings() {
+            // Очищаем массив user точек из массива интерактивных
+            interactablePoints = interactablePoints.filter(mesh => mesh.userData.type !== 'user_point');
+            
+            // Очищаем группу
+            userGroup.clear();
+            resetSelection();
+        }
+
+        // --- БАЗОВЫЕ ФУНКЦИИ ---
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); // Требуется для damping
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+        }
+    </script>
 </body>
 </html>
