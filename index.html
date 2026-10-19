@@ -2,18 +2,20 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>3D Моделирование по Стереометрии</title>
-    <!-- Подключаем Tailwind CSS для быстрого и красивого UI -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #1a1a1a;
+            background-color: #0f172a; /* Темно-синий фон */
             font-family: 'Inter', sans-serif;
             color: #ffffff;
+            touch-action: none; /* Запрет стандартных свайпов браузера */
         }
+        
         #canvas-container {
             width: 100vw;
             height: 100vh;
@@ -22,53 +24,44 @@
             left: 0;
             z-index: 1;
         }
+
         #css2d-container {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none; /* Важно: пропускает клики сквозь метки к 3D объектам */
+            pointer-events: none; /* Важно: пропускает клики к 3D объектам */
             z-index: 2;
         }
+
         /* Стиль для букв вершин */
         .vertex-label {
             font-family: 'Georgia', serif;
             font-style: italic;
             font-size: 16px;
             font-weight: bold;
-            color: #111;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 2px 6px;
-            border-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            color: #000;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2px 8px;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             pointer-events: none;
             margin-top: -15px; /* Сдвиг, чтобы не перекрывать саму точку */
+            border: 1px solid #cbd5e1;
         }
-        /* Боковая панель UI */
-        #ui-panel {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            width: 320px;
-            max-height: calc(100vh - 20px);
-            z-index: 10;
-            background: rgba(30, 41, 59, 0.85);
-            backdrop-filter: blur(10px);
-            overflow-y: auto;
-        }
-        
-        /* Стилизация скроллбара */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
 
+        /* Кастомизация скроллбара в панели */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        
         input[type=range] {
             accent-color: #3b82f6;
         }
     </style>
     
-    <!-- Настройка Import Map для загрузки Three.js -->
+    <!-- Import Map для Three.js -->
     <script type="importmap">
         {
             "imports": {
@@ -80,18 +73,23 @@
 </head>
 <body>
 
-    <!-- Контейнеры для Three.js -->
+    <!-- Канвасы -->
     <div id="canvas-container"></div>
     <div id="css2d-container"></div>
 
-    <!-- UI Панель -->
-    <div id="ui-panel" class="rounded-xl shadow-2xl p-5 border border-gray-700 flex flex-col gap-4">
-        <h1 class="text-xl font-bold text-blue-400 mb-2">Стереометрия 3D</h1>
+    <!-- UI Панель (Адаптивная: внизу на мобилках, слева-сверху на ПК) -->
+    <div id="ui-panel" class="absolute bottom-0 left-0 w-full max-h-[45vh] md:top-4 md:left-4 md:bottom-auto md:w-[340px] md:max-h-[calc(100vh-2rem)] overflow-y-auto bg-slate-900/90 backdrop-blur-xl border-t md:border border-slate-700 rounded-t-3xl md:rounded-2xl p-5 shadow-2xl z-10 flex flex-col gap-4">
+        
+        <div class="flex justify-between items-center md:block">
+            <h1 class="text-xl font-bold text-blue-400">Стереометрия 3D</h1>
+            <!-- Декоративная полоска для свайпа на мобилках -->
+            <div class="w-12 h-1 bg-slate-600 rounded-full md:hidden"></div>
+        </div>
         
         <!-- Выбор фигуры -->
-        <div class="flex flex-col gap-1">
-            <label class="text-sm font-semibold text-gray-300">Тип фигуры:</label>
-            <select id="shape-type" class="bg-gray-800 border border-gray-600 rounded p-2 text-white outline-none focus:border-blue-500">
+        <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-semibold text-slate-300">Тип фигуры:</label>
+            <select id="shape-type" class="bg-slate-800 border border-slate-600 rounded-lg p-2 text-white outline-none focus:border-blue-500 w-full transition-colors">
                 <option value="prism">Призма</option>
                 <option value="pyramid">Пирамида</option>
                 <option value="sphere">Сфера</option>
@@ -99,53 +97,53 @@
         </div>
 
         <!-- Настройки (Слайдеры) -->
-        <div class="flex flex-col gap-3 bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
+        <div class="flex flex-col gap-3 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
             <div class="flex flex-col gap-1">
                 <label class="text-sm flex justify-between">
-                    <span>Радиус (Основание)</span>
-                    <span id="radius-val" class="text-blue-400">3</span>
+                    <span class="text-slate-300">Радиус основания</span>
+                    <span id="radius-val" class="text-blue-400 font-mono">3</span>
                 </label>
-                <input type="range" id="param-radius" min="1" max="10" step="0.5" value="3">
+                <input type="range" id="param-radius" min="1" max="10" step="0.5" value="3" class="w-full">
             </div>
             
             <div class="flex flex-col gap-1" id="height-container">
                 <label class="text-sm flex justify-between">
-                    <span>Высота</span>
-                    <span id="height-val" class="text-blue-400">5</span>
+                    <span class="text-slate-300">Высота</span>
+                    <span id="height-val" class="text-blue-400 font-mono">5</span>
                 </label>
-                <input type="range" id="param-height" min="1" max="15" step="0.5" value="5">
+                <input type="range" id="param-height" min="1" max="15" step="0.5" value="5" class="w-full">
             </div>
 
             <div class="flex flex-col gap-1" id="segments-container">
                 <label class="text-sm flex justify-between">
-                    <span>Углов в основании</span>
-                    <span id="segments-val" class="text-blue-400">4</span>
+                    <span class="text-slate-300">Углов в основании</span>
+                    <span id="segments-val" class="text-blue-400 font-mono">4</span>
                 </label>
-                <input type="range" id="param-segments" min="3" max="12" step="1" value="4">
+                <input type="range" id="param-segments" min="3" max="12" step="1" value="4" class="w-full">
             </div>
         </div>
 
         <!-- Инструменты -->
-        <div class="flex flex-col gap-2 mt-2">
-            <label class="text-sm font-semibold text-gray-300">Инструменты:</label>
+        <div class="flex flex-col gap-2 mt-1">
+            <label class="text-sm font-semibold text-slate-300">Инструменты:</label>
             <div class="grid grid-cols-2 gap-2">
-                <button id="btn-view" class="tool-btn bg-blue-600 hover:bg-blue-500 text-white rounded p-2 text-sm font-medium transition-colors" data-mode="view">
+                <button id="btn-view" class="tool-btn bg-blue-600 hover:bg-blue-500 text-white rounded-lg p-2.5 text-sm font-medium transition-all border-2 border-blue-400 shadow-lg shadow-blue-900/50" data-mode="view">
                     🔄 Вращение
                 </button>
-                <button id="btn-point" class="tool-btn bg-gray-700 hover:bg-gray-600 text-white rounded p-2 text-sm font-medium transition-colors border border-transparent" data-mode="point">
+                <button id="btn-point" class="tool-btn bg-slate-700 hover:bg-slate-600 text-white rounded-lg p-2.5 text-sm font-medium transition-all border-2 border-transparent" data-mode="point">
                     📍 Точка
                 </button>
-                <button id="btn-segment" class="tool-btn bg-gray-700 hover:bg-gray-600 text-white rounded p-2 text-sm font-medium transition-colors border border-transparent" data-mode="segment">
+                <button id="btn-segment" class="tool-btn bg-slate-700 hover:bg-slate-600 text-white rounded-lg p-2.5 text-sm font-medium transition-all border-2 border-transparent" data-mode="segment">
                     📏 Отрезок
                 </button>
-                <button id="btn-plane" class="tool-btn bg-gray-700 hover:bg-gray-600 text-white rounded p-2 text-sm font-medium transition-colors border border-transparent" data-mode="plane">
+                <button id="btn-plane" class="tool-btn bg-slate-700 hover:bg-slate-600 text-white rounded-lg p-2.5 text-sm font-medium transition-all border-2 border-transparent" data-mode="plane">
                     📐 Плоскость
                 </button>
             </div>
-            <p id="tool-hint" class="text-xs text-gray-400 mt-1 h-8">Используйте мышь для вращения камеры.</p>
+            <p id="tool-hint" class="text-xs text-slate-400 mt-1 h-6">Свайпайте 3D-фон для вращения камеры.</p>
         </div>
 
-        <button id="btn-clear" class="mt-2 w-full bg-red-600/80 hover:bg-red-500 text-white rounded p-2 text-sm font-medium transition-colors">
+        <button id="btn-clear" class="mt-1 w-full bg-red-500/20 hover:bg-red-500/40 border border-red-500/50 text-red-300 rounded-lg p-3 text-sm font-medium transition-colors mb-4 md:mb-0">
             🗑 Очистить построения
         </button>
     </div>
@@ -156,74 +154,71 @@
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-        // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
         let scene, camera, renderer, labelRenderer, controls;
-        let mainMesh, edgesMesh; // Основная фигура
+        let mainMesh, edgesMesh; 
         
-        let shapeGroup = new THREE.Group(); // Группа фигуры
-        let userGroup = new THREE.Group(); // Группа построений (линии, точки, плоскости)
-        let verticesGroup = new THREE.Group(); // Группа вершин (для кликов)
+        let shapeGroup = new THREE.Group(); 
+        let userGroup = new THREE.Group(); 
+        let verticesGroup = new THREE.Group(); 
 
-        // Массивы для логики
-        let interactablePoints = []; // Все точки (вершины + пользовательские)
-        let selectedPoints = []; // Точки, выбранные для текущего инструмента
+        let interactablePoints = []; 
+        let selectedPoints = []; 
+        let currentMode = 'view'; 
         
-        let currentMode = 'view'; // view, point, segment, plane
-        
-        // Raycaster для интерактива
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         
-        // Материалы для точек
         const pointMaterialDefault = new THREE.MeshBasicMaterial({ color: 0xef4444 }); // Красный
-        const pointMaterialSelected = new THREE.MeshBasicMaterial({ color: 0xeab308 }); // Желтый (выделение)
+        const pointMaterialSelected = new THREE.MeshBasicMaterial({ color: 0xfacc15 }); // Желтый
 
         init();
         animate();
 
         function init() {
-            // 1. Сцена и камера
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x1a1a1a);
+            scene.background = new THREE.Color('#0f172a'); // Slate-900
             
+            // Камера
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-            camera.position.set(10, 10, 15);
+            camera.position.set(12, 12, 18);
 
-            // 2. Рендерер WebGL
-            renderer = new THREE.WebGLRenderer({ antialias: true });
+            // WebGL Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            // 3. Рендерер CSS2D (Для HTML ярлыков букв)
+            // CSS2D Renderer (Ярлыки)
             labelRenderer = new CSS2DRenderer();
             labelRenderer.setSize(window.innerWidth, window.innerHeight);
             document.getElementById('css2d-container').appendChild(labelRenderer.domElement);
 
-            // 4. Освещение
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            // Освещение (Яркое)
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
             scene.add(ambientLight);
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight.position.set(10, 20, 10);
-            scene.add(directionalLight);
+            
+            const dirLight1 = new THREE.DirectionalLight(0xffffff, 1);
+            dirLight1.position.set(10, 20, 10);
+            scene.add(dirLight1);
+            
+            const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
+            dirLight2.position.set(-10, -10, -10);
+            scene.add(dirLight2);
 
-            // 5. Управление (OrbitControls)
+            // Управление
             controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
 
-            // Добавляем группы на сцену
             scene.add(shapeGroup);
             scene.add(verticesGroup);
             scene.add(userGroup);
 
-            // Инициализация первой фигуры
             buildShape();
 
-            // 6. Обработчики событий
             window.addEventListener('resize', onWindowResize);
             
-            // Обработчик кликов (pointer events для мобилок и мыши)
+            // Обработка кликов с защитой от ложных срабатываний при свайпе
             const canvasContainer = document.getElementById('canvas-container');
             let isDragging = false;
             let pointerDownPos = { x: 0, y: 0 };
@@ -232,12 +227,13 @@
                 pointerDownPos = { x: e.clientX, y: e.clientY };
                 isDragging = false;
             });
+            
             canvasContainer.addEventListener('pointermove', (e) => {
-                // Если мышь сдвинулась более чем на 3 пикселя - это свайп/drag
-                if (Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y) > 3) {
+                if (Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y) > 4) {
                     isDragging = true;
                 }
             });
+            
             canvasContainer.addEventListener('pointerup', (e) => {
                 if (!isDragging) {
                     handleInteractionClick(e);
@@ -248,19 +244,16 @@
         }
 
         function setupUI() {
-            // Слайдеры и селекты
             const shapeSelect = document.getElementById('shape-type');
             const paramRadius = document.getElementById('param-radius');
             const paramHeight = document.getElementById('param-height');
             const paramSegments = document.getElementById('param-segments');
             
             const updateShape = () => {
-                // Обновляем тексты
                 document.getElementById('radius-val').innerText = paramRadius.value;
                 document.getElementById('height-val').innerText = paramHeight.value;
                 document.getElementById('segments-val').innerText = paramSegments.value;
                 
-                // Прячем/показываем настройки в зависимости от фигуры
                 if (shapeSelect.value === 'sphere') {
                     document.getElementById('height-container').style.display = 'none';
                     document.getElementById('segments-container').style.display = 'none';
@@ -270,7 +263,7 @@
                 }
                 
                 buildShape();
-                clearUserDrawings(); // Очищаем построения при изменении геометрии
+                clearUserDrawings();
             };
 
             shapeSelect.addEventListener('change', updateShape);
@@ -278,52 +271,41 @@
             paramHeight.addEventListener('input', updateShape);
             paramSegments.addEventListener('input', updateShape);
 
-            // Кнопки инструментов
             const tools = document.querySelectorAll('.tool-btn');
             const hint = document.getElementById('tool-hint');
             
             const hints = {
-                'view': 'Используйте мышь для вращения камеры.',
+                'view': 'Свайпайте 3D-фон для вращения камеры.',
                 'point': 'Кликните на грань или ребро фигуры, чтобы поставить точку.',
-                'segment': 'Выберите две точки, чтобы провести отрезок.',
-                'plane': 'Выберите три точки, чтобы построить плоскость сечения.'
+                'segment': 'Выберите 2 точки (вершины или поставленные), чтобы провести прямую.',
+                'plane': 'Выберите 3 точки, чтобы построить плоскость сечения.'
             };
 
             tools.forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    // Сбрасываем стили кнопок
+                    // Сброс стилей
                     tools.forEach(t => {
-                        t.classList.remove('bg-blue-600', 'border-blue-400');
-                        t.classList.add('bg-gray-700', 'border-transparent');
+                        t.classList.remove('bg-blue-600', 'border-blue-400', 'shadow-lg', 'shadow-blue-900/50');
+                        t.classList.add('bg-slate-700', 'border-transparent');
                     });
                     
-                    // Активная кнопка
+                    // Активация
                     const target = e.currentTarget;
-                    target.classList.remove('bg-gray-700', 'border-transparent');
-                    target.classList.add('bg-blue-600', 'border-blue-400');
+                    target.classList.remove('bg-slate-700', 'border-transparent');
+                    target.classList.add('bg-blue-600', 'border-blue-400', 'shadow-lg', 'shadow-blue-900/50');
                     
                     currentMode = target.getAttribute('data-mode');
                     hint.innerText = hints[currentMode];
                     
-                    // Сбрасываем выбор точек
                     resetSelection();
-                    
-                    // Отключаем вращение, если мы строим (по желанию, но лучше оставить для удобства)
-                    // controls.enabled = (currentMode === 'view'); 
                 });
             });
 
-            // Кнопка очистки
             document.getElementById('btn-clear').addEventListener('click', clearUserDrawings);
-            
-            // Инициализация UI
             updateShape();
         }
 
-        // --- ЛОГИКА ФОРМИРОВАНИЯ ФИГУР И ВЕРШИН ---
-
         function buildShape() {
-            // Очистка старой фигуры и меток
             shapeGroup.clear();
             verticesGroup.clear();
             interactablePoints = [];
@@ -337,58 +319,52 @@
 
             if (type === 'prism') {
                 geometry = new THREE.CylinderGeometry(radius, radius, height, segments, 1);
-                // Поворот, чтобы красиво смотрелось для квадратов/треугольников
                 if (segments % 2 === 0) geometry.rotateY(Math.PI / segments); 
             } else if (type === 'pyramid') {
-                // Пирамида — это конус
                 geometry = new THREE.ConeGeometry(radius, height, segments, 1);
                 if (segments % 2 === 0) geometry.rotateY(Math.PI / segments);
             } else if (type === 'sphere') {
                 geometry = new THREE.SphereGeometry(radius, 32, 16);
             }
 
-            // Центрируем геометрию (чтобы Y = 0 было центром)
             geometry.computeBoundingBox();
 
-            // Материал - полупрозрачный пластик/стекло для стереометрии
+            // Материал "Стекло" - прозрачный синеватый
             const material = new THREE.MeshPhysicalMaterial({
-                color: 0xe0e7ff, // Светло-голубой
+                color: 0x3b82f6, // Синий
                 metalness: 0.1,
-                roughness: 0.2,
+                roughness: 0.1,
                 transmission: 0.8, // Эффект стекла
                 thickness: 0.5,
                 transparent: true,
-                opacity: 0.9,
+                opacity: 1,
                 side: THREE.DoubleSide
             });
 
             mainMesh = new THREE.Mesh(geometry, material);
             shapeGroup.add(mainMesh);
 
-            // Добавляем четкие ребра (черные линии)
+            // Четкие БЕЛЫЕ ребра для контраста на темном фоне
             const edges = new THREE.EdgesGeometry(geometry);
-            const edgesMat = new THREE.LineBasicMaterial({ color: 0x111827, linewidth: 2 });
+            const edgesMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
             edgesMesh = new THREE.LineSegments(edges, edgesMat);
             shapeGroup.add(edgesMesh);
 
-            // Обработка вершин и расстановка букв
-            extractAndLabelVertices(geometry, type, height);
+            extractAndLabelVertices(geometry, type, height, radius);
         }
 
-        function extractAndLabelVertices(geometry, type, height) {
-            // Получаем позиции всех точек (среди них много дубликатов)
+        function extractAndLabelVertices(geometry, type, height, radius) {
             const position = geometry.attributes.position;
             const uniquePoints = [];
             const map = new Map();
 
+            // Извлечение уникальных вершин (Округление до 3 знаков предотвращает дубли)
             for (let i = 0; i < position.count; i++) {
                 let x = position.getX(i);
                 let y = position.getY(i);
                 let z = position.getZ(i);
                 
-                // Округляем для удаления мелких погрешностей
                 let key = `${x.toFixed(3)}_${y.toFixed(3)}_${z.toFixed(3)}`;
-                
                 if (!map.has(key)) {
                     const vec = new THREE.Vector3(x, y, z);
                     map.set(key, vec);
@@ -396,7 +372,7 @@
                 }
             }
 
-            // Функция для сортировки точек основания/крыши по кругу (угол atan2)
+            // Сортировка по кругу (atan2)
             const sortByAngle = (pts) => {
                 return pts.sort((a, b) => Math.atan2(a.z, a.x) - Math.atan2(b.z, b.x));
             };
@@ -406,11 +382,9 @@
 
             if (type === 'pyramid') {
                 const maxY = Math.max(...uniquePoints.map(v => v.y));
-                // Вершина пирамиды
                 const top = uniquePoints.find(v => Math.abs(v.y - maxY) < 0.01);
                 pointDefinitions.push({ vec: top, label: 'S' });
 
-                // Основание
                 let basePoints = uniquePoints.filter(v => Math.abs(v.y - maxY) > 0.01);
                 basePoints = sortByAngle(basePoints);
                 
@@ -429,99 +403,86 @@
                 topPoints = sortByAngle(topPoints);
 
                 bottomPoints.forEach((pt, i) => {
-                    const letter = alphabet[i % 26];
-                    pointDefinitions.push({ vec: pt, label: letter });
+                    pointDefinitions.push({ vec: pt, label: alphabet[i % 26] });
                 });
 
                 topPoints.forEach((pt, i) => {
-                    const letter = alphabet[i % 26];
-                    pointDefinitions.push({ vec: pt, label: letter + '1' }); // A1, B1...
+                    pointDefinitions.push({ vec: pt, label: alphabet[i % 26] + '1' });
                 });
 
             } else if (type === 'sphere') {
-                // Для сферы просто пометим центр, северный и южный полюс
-                pointDefinitions.push({ vec: new THREE.Vector3(0, height/2 || radius, 0), label: 'N' });
-                pointDefinitions.push({ vec: new THREE.Vector3(0, -(height/2 || radius), 0), label: 'S' });
+                pointDefinitions.push({ vec: new THREE.Vector3(0, radius, 0), label: 'N' });
+                pointDefinitions.push({ vec: new THREE.Vector3(0, -radius, 0), label: 'S' });
                 pointDefinitions.push({ vec: new THREE.Vector3(0, 0, 0), label: 'O' });
             }
 
-            // Создаем визуальные узлы-вершины
             pointDefinitions.forEach(def => {
                 createVertexPoint(def.vec, def.label);
             });
         }
 
-        // Создает интерактивную точку (сферой) и HTML-метку
         function createVertexPoint(positionVector, labelText) {
-            // Геометрия невидимая или очень маленькая (чтобы было за что цепляться лучу)
-            const ptGeom = new THREE.SphereGeometry(0.15, 8, 8);
+            // Точка, за которую цепляется Raycaster
+            const ptGeom = new THREE.SphereGeometry(0.18, 16, 16);
             const ptMesh = new THREE.Mesh(ptGeom, pointMaterialDefault);
             ptMesh.position.copy(positionVector);
-            
-            // Сохраняем логический тип
             ptMesh.userData = { type: 'vertex', id: Math.random() };
             
             verticesGroup.add(ptMesh);
             interactablePoints.push(ptMesh);
 
-            // Создаем HTML Метку
+            // CSS Ярлык
             const div = document.createElement('div');
             div.className = 'vertex-label';
             div.textContent = labelText;
             
             const label = new CSS2DObject(div);
-            label.position.set(0, 0, 0); // Позиция относительно ptMesh
+            label.position.set(0, 0, 0);
             ptMesh.add(label);
         }
 
-        // --- ЛОГИКА ИНТЕРАКТИВА (РИСОВАНИЕ) ---
+        // --- ВЗАИМОДЕЙСТВИЕ И РИСОВАНИЕ ---
 
         function handleInteractionClick(event) {
             if (currentMode === 'view') return;
 
-            // Вычисляем координаты мыши от -1 до +1
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
             raycaster.setFromCamera(mouse, camera);
 
             if (currentMode === 'point') {
-                // Ставим точку на поверхности фигуры
+                // Ставим точку на поверхности
                 const intersects = raycaster.intersectObject(mainMesh);
                 if (intersects.length > 0) {
                     placeUserPoint(intersects[0].point);
                 }
             } else if (currentMode === 'segment' || currentMode === 'plane') {
-                // Выделяем существующие точки (наши или вершины)
-                // Вместо точного raycast mesh (точки мелкие), используем расстояние от луча!
+                // Выделяем существующие точки (Snapping к ближайшей)
                 const closestPointMesh = getClosestPointToRay(raycaster);
-                
                 if (closestPointMesh) {
                     togglePointSelection(closestPointMesh);
                 }
             }
         }
 
-        // Находит ближайшую точку к лучу, чтобы не целиться точно в пиксель
         function getClosestPointToRay(raycaster) {
             let closest = null;
-            let minDist = 0.5; // Радиус захвата (чем больше, тем легче кликать)
+            let minDist = 0.6; // Радиус захвата (чем больше, тем легче попасть пальцем)
             
             interactablePoints.forEach(ptMesh => {
-                // Кратчайшее расстояние от точки до луча
                 const dist = raycaster.ray.distanceToPoint(ptMesh.position);
                 if (dist < minDist) {
                     minDist = dist;
                     closest = ptMesh;
                 }
             });
-            
             return closest;
         }
 
         function placeUserPoint(position) {
-            const ptGeom = new THREE.SphereGeometry(0.12, 16, 16);
-            const ptMesh = new THREE.Mesh(ptGeom, new THREE.MeshBasicMaterial({ color: 0xef4444 })); // Красный
+            const ptGeom = new THREE.SphereGeometry(0.15, 16, 16);
+            const ptMesh = new THREE.Mesh(ptGeom, pointMaterialDefault);
             ptMesh.position.copy(position);
             ptMesh.userData = { type: 'user_point', id: Math.random() };
             
@@ -533,15 +494,12 @@
             const index = selectedPoints.findIndex(p => p.userData.id === mesh.userData.id);
             
             if (index > -1) {
-                // Снимаем выделение
                 mesh.material = pointMaterialDefault;
                 selectedPoints.splice(index, 1);
             } else {
-                // Добавляем выделение
                 mesh.material = pointMaterialSelected;
                 selectedPoints.push(mesh);
                 
-                // Проверяем, достаточно ли точек для инструмента
                 if (currentMode === 'segment' && selectedPoints.length === 2) {
                     drawSegment(selectedPoints[0], selectedPoints[1]);
                     resetSelection();
@@ -554,7 +512,7 @@
 
         function resetSelection() {
             selectedPoints.forEach(mesh => {
-                mesh.material = pointMaterialDefault; // Возвращаем красный цвет
+                mesh.material = pointMaterialDefault;
             });
             selectedPoints = [];
         }
@@ -563,22 +521,22 @@
             const points = [p1.position, p2.position];
             const geometry = new THREE.BufferGeometry().setFromPoints(points);
             
-            // Толстая синяя линия (в WebGL 1 linewidth игнорируется, но зададим для порядка)
+            // depthTest: false позволяет видеть линию сквозь фигуру
             const material = new THREE.LineBasicMaterial({ 
                 color: 0xef4444, 
-                linewidth: 3,
-                depthTest: false // чтобы было видно сквозь фигуру
+                linewidth: 2,
+                depthTest: false,
+                transparent: true
             }); 
             
             const line = new THREE.Line(geometry, material);
+            // Чтобы линия всегда рендерилась поверх
+            line.renderOrder = 999;
             userGroup.add(line);
         }
 
         function drawPlane(p1, p2, p3) {
-            // Создаем треугольник
             const geometry = new THREE.BufferGeometry();
-            
-            // Вершины
             const vertices = new Float32Array([
                 p1.position.x, p1.position.y, p1.position.z,
                 p2.position.x, p2.position.y, p2.position.z,
@@ -587,35 +545,33 @@
             geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
             geometry.computeVertexNormals();
 
-            // Плоскость сечения (полупрозрачная, зелено-желтая)
+            // Полупрозрачная плоскость сечения
             const material = new THREE.MeshBasicMaterial({ 
-                color: 0x10b981, 
+                color: 0x10b981, // Изумрудный
                 side: THREE.DoubleSide, 
                 transparent: true, 
-                opacity: 0.5,
+                opacity: 0.6,
                 depthTest: false
             });
             const plane = new THREE.Mesh(geometry, material);
+            plane.renderOrder = 998;
             
-            // Добавим контур треугольника
+            // Границы плоскости
             const edges = new THREE.EdgesGeometry(geometry);
             const edgesMat = new THREE.LineBasicMaterial({ color: 0x059669, linewidth: 2, depthTest: false });
             const edgesMesh = new THREE.LineSegments(edges, edgesMat);
+            edgesMesh.renderOrder = 999;
 
             userGroup.add(plane);
             userGroup.add(edgesMesh);
         }
 
         function clearUserDrawings() {
-            // Очищаем массив user точек из массива интерактивных
             interactablePoints = interactablePoints.filter(mesh => mesh.userData.type !== 'user_point');
-            
-            // Очищаем группу
             userGroup.clear();
             resetSelection();
         }
 
-        // --- БАЗОВЫЕ ФУНКЦИИ ---
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
@@ -625,7 +581,7 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            controls.update(); // Требуется для damping
+            controls.update();
             renderer.render(scene, camera);
             labelRenderer.render(scene, camera);
         }
