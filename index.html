@@ -1,654 +1,920 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D Моделирование по Стереометрии</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: #0f172a;
-            font-family: 'Inter', sans-serif;
-            color: #ffffff;
-            touch-action: none;
-        }
-        
-        #canvas-container, #css2d-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-        }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Морской бой</title>
+<meta name="theme-color" content="#0b1e33">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="data:image/png;base64,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">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Морской бой">
+<style>
+:root{
+  --bg:#0b1e33; --bg2:#10294a; --card:#13304f; --line:#24507d;
+  --text:#e8f1fb; --muted:#9db4cc; --accent:#3ea6ff; --accent2:#1f7fd6;
+  --water:#1a4670; --water2:#1d4f7d; --ship:#c9d6e3; --hit:#ff5a4f; --sunk:#8e2620;
+  --miss:#9fc3e6; --ok:#3ccf7a; --warn:#ffb648;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
+body{min-height:100vh;padding-bottom:env(safe-area-inset-bottom)}
+button,input{font:inherit}
+[hidden]{display:none!important}
 
-        #canvas-container { z-index: 1; }
-        #css2d-container { z-index: 2; pointer-events: none; }
+.top{display:flex;justify-content:space-between;align-items:center;
+  padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:var(--bg2);border-bottom:1px solid var(--line)}
+.brand{font-weight:700;font-size:18px}
+.top-right{display:flex;gap:10px;align-items:center}
+.icon-btn{background:none;border:0;font-size:22px;color:var(--text);cursor:pointer;padding:4px}
+.pill{font-size:12px;padding:3px 9px;border-radius:99px;background:#334}
+.pill.on{background:rgba(60,207,122,.18);color:var(--ok)}
+.pill.wait{background:rgba(255,182,72,.18);color:var(--warn)}
+.pill.off{background:rgba(255,90,79,.18);color:var(--hit)}
 
-        /* Стиль для базовых букв вершин */
-        .vertex-label {
-            font-family: 'Georgia', serif;
-            font-style: italic;
-            font-size: 16px;
-            font-weight: bold;
-            color: #000;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 2px 8px;
-            border-radius: 6px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            pointer-events: none;
-            margin-top: -15px;
-            border: 1px solid #cbd5e1;
-        }
+main{max-width:980px;margin:0 auto;padding:16px}
+.screen{display:flex;flex-direction:column;gap:14px;align-items:center}
+.card{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:20px;display:flex;flex-direction:column;gap:12px}
+.center{align-items:center;text-align:center}
+.lbl{font-size:14px;color:var(--muted)}
+input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:18px}
+input:focus{outline:2px solid var(--accent);border-color:transparent}
+.code-input{text-transform:uppercase;letter-spacing:.3em;text-align:center;font-size:24px;font-weight:700}
+.sep{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px}
+.sep::before,.sep::after{content:"";flex:1;height:1px;background:var(--line)}
 
-        /* Стиль для пользовательских точек (отличается цветом) */
-        .user-vertex-label {
-            font-family: 'Georgia', serif;
-            font-style: italic;
-            font-size: 16px;
-            font-weight: bold;
-            color: #b91c1c; /* Красный оттенок для отличия */
-            background: rgba(254, 226, 226, 0.95); /* Светло-розовый */
-            padding: 2px 8px;
-            border-radius: 6px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            pointer-events: none;
-            margin-top: -15px;
-            border: 1px solid #f87171;
-        }
+.btn{border:1px solid var(--line);background:var(--bg2);color:var(--text);padding:10px 16px;border-radius:10px;cursor:pointer;font-size:16px}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent2);border-color:var(--accent2);font-weight:600}
+.btn.big{padding:14px 18px;font-size:18px;width:100%;max-width:420px}
+.btn.ghost{background:none;border-color:transparent;color:var(--muted)}
+.btn:disabled{opacity:.45;cursor:default;transform:none}
+.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.col{display:flex;flex-direction:column;gap:8px;width:100%}
+.muted{color:var(--muted)} .small{font-size:13px}
+.hint{color:var(--muted);font-size:14px;max-width:420px;text-align:center;margin:0}
+.rules{max-width:420px;width:100%;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.rules summary{cursor:pointer;font-weight:600}
+.rules ul{padding-left:18px;margin:8px 0 0;color:var(--muted);font-size:15px}
+.big-code{font-size:46px;font-weight:800;letter-spacing:.18em;padding:6px 0 6px .18em;color:var(--accent)}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--muted);border-top-color:transparent;border-radius:50%;
+  animation:spin 1s linear infinite;vertical-align:-2px;margin-right:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-        /* Стиль для плашек с измерениями (расстояние и угол) */
-        .measurement-label {
-            font-family: 'Inter', sans-serif;
-            font-size: 13px;
-            font-weight: 600;
-            color: white;
-            background: rgba(79, 70, 229, 0.9); /* Индиго */
-            padding: 3px 8px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-            pointer-events: none;
-            border: 1px solid #818cf8;
-            z-index: 10;
-        }
+.bar{width:100%;max-width:440px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
 
-        input[type=range] { accent-color: #3b82f6; }
-        
-        #panel-settings {
-            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
-        }
-    </style>
-    
-    <!-- Import Map для Three.js -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
+/* ---- доски ---- */
+.board{--size:min(calc(100vw - 32px), 440px);width:var(--size);display:grid;
+  grid-template-columns:repeat(11,1fr);gap:2px;user-select:none;touch-action:manipulation}
+.small-board{--size:min(calc(100vw - 32px), 300px)}
+.board .h{display:flex;align-items:center;justify-content:center;font-size:calc(var(--size)/28);color:var(--muted);aspect-ratio:1}
+.cell{aspect-ratio:1;background:var(--water);border-radius:3px;position:relative;display:flex;align-items:center;justify-content:center;
+  font-size:calc(var(--size)/16);line-height:1;font-weight:700}
+.cell.ship{background:var(--ship)}
+.cell.prev-ok{background:rgba(62,166,255,.6)}
+.cell.prev-bad{background:rgba(255,90,79,.55)}
+.cell.miss::after{content:"";width:22%;height:22%;border-radius:50%;background:var(--miss)}
+.cell.auto::after{content:"";width:16%;height:16%;border-radius:50%;background:var(--miss);opacity:.45}
+.cell.hit{background:var(--hit)}
+.cell.hit::after{content:"✕";color:#fff}
+.cell.sunk{background:var(--sunk)}
+.cell.sunk::after{content:"✕";color:#ffb3ad}
+.cell.ship.hit{background:var(--hit)}
+.cell.ship.sunk{background:var(--sunk)}
+.cell.reveal{box-shadow:inset 0 0 0 2px var(--warn)}
+.cell.pending{animation:pulse .6s ease-in-out infinite alternate}
+.cell.last{outline:2px solid #fff;outline-offset:-2px}
+@keyframes pulse{from{background:var(--water)}to{background:var(--accent)}}
+.cell.shake{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+.enemy-wrap.active .cell.open{cursor:crosshair}
+.enemy-wrap.active .board{outline:2px solid var(--ok);outline-offset:4px;border-radius:4px}
+
+.tray{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:440px}
+.tray-item{display:flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg2);cursor:pointer;color:var(--text)}
+.tray-item.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.tray-item.done{opacity:.35}
+.tray-ship{display:flex;gap:2px}
+.tray-ship i{width:14px;height:14px;background:var(--ship);border-radius:2px;display:block}
+.tray-item b{font-size:14px}
+
+.turn{width:100%;max-width:440px;text-align:center;padding:10px;border-radius:12px;font-weight:700;font-size:18px;background:var(--card);border:1px solid var(--line)}
+.turn.mine{background:rgba(60,207,122,.15);border-color:var(--ok);color:var(--ok)}
+.boards{display:flex;flex-direction:column;gap:18px;align-items:center}
+.board-wrap{display:flex;flex-direction:column;gap:6px;align-items:center}
+.board-title{font-size:14px;color:var(--muted)}
+.fleet{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:440px}
+.fleet .tray-ship i{width:10px;height:10px}
+.fleet .dead i{background:var(--sunk)}
+.fleet .dead{opacity:.6}
+@media (min-width:820px){
+  .boards{flex-direction:row;align-items:flex-start;gap:28px}
+  .small-board{--size:360px}
+}
+
+.modal{position:fixed;inset:0;background:rgba(3,10,20,.7);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
+.modal-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;width:100%;max-width:360px;text-align:center}
+.modal-title{font-size:28px;font-weight:800;margin-bottom:4px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#000c;color:#fff;
+  padding:10px 16px;border-radius:10px;z-index:20;max-width:90vw;text-align:center}
+</style>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
+<header class="top">
+  <div class="brand">⚓ Морской бой</div>
+  <div class="top-right">
+    <span id="netStatus" class="pill off" hidden>не в сети</span>
+    <button id="muteBtn" class="icon-btn" aria-label="Звук">🔊</button>
+  </div>
+</header>
 
-    <div id="canvas-container"></div>
-    <div id="css2d-container"></div>
-
-    <!-- UI Панель -->
-    <div id="ui-panel" class="absolute bottom-0 left-0 w-full md:top-4 md:left-4 md:bottom-auto md:w-[380px] bg-slate-900/95 backdrop-blur-xl border-t md:border border-slate-700 rounded-t-3xl md:rounded-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] md:shadow-2xl z-10 flex flex-col">
-        
-        <div id="drag-handle" class="w-full flex justify-center pt-3 pb-1 cursor-pointer md:hidden">
-            <div class="w-12 h-1.5 bg-slate-600 rounded-full"></div>
-        </div>
-
-        <div id="panel-header" class="px-5 pb-3 md:pt-5 md:pb-4 flex justify-between items-center cursor-pointer md:cursor-default select-none">
-            <h1 class="text-lg md:text-xl font-bold text-blue-400">Стереометрия 3D</h1>
-            <button id="toggle-btn" class="md:hidden flex items-center justify-center w-8 h-8 bg-slate-800 rounded-full border border-slate-600 text-slate-300">
-                <svg id="toggle-icon" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-            </button>
-        </div>
-
-        <!-- Инструменты 2 ряда по 3 кнопки -->
-        <div class="px-4 pb-3 border-b border-slate-700/50 md:border-none">
-            <div class="grid grid-cols-3 gap-2">
-                <button class="tool-btn flex flex-col items-center justify-center p-2 rounded-xl bg-blue-600 text-white border-2 border-blue-400 shadow-lg shadow-blue-900/50 transition-all" data-mode="view">
-                    <span class="text-lg mb-1">🔄</span>
-                    <span class="text-[10px] md:text-[11px] font-bold uppercase">Камера</span>
-                </button>
-                <button class="tool-btn flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800 text-slate-300 border-2 border-transparent transition-all" data-mode="point">
-                    <span class="text-lg mb-1">📍</span>
-                    <span class="text-[10px] md:text-[11px] font-bold uppercase">Точка</span>
-                </button>
-                <button class="tool-btn flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800 text-slate-300 border-2 border-transparent transition-all" data-mode="segment">
-                    <span class="text-lg mb-1">➖</span>
-                    <span class="text-[10px] md:text-[11px] font-bold uppercase">Отрезок</span>
-                </button>
-                <button class="tool-btn flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800 text-slate-300 border-2 border-transparent transition-all" data-mode="plane">
-                    <span class="text-lg mb-1">🟦</span>
-                    <span class="text-[10px] md:text-[11px] font-bold uppercase">Плоскость</span>
-                </button>
-                <button class="tool-btn flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800 text-slate-300 border-2 border-transparent transition-all" data-mode="distance">
-                    <span class="text-lg mb-1">📏</span>
-                    <span class="text-[10px] md:text-[11px] font-bold uppercase">Длина</span>
-                </button>
-                <button class="tool-btn flex flex-col items-center justify-center p-2 rounded-xl bg-slate-800 text-slate-300 border-2 border-transparent transition-all" data-mode="angle">
-                    <span class="text-lg mb-1">📐</span>
-                    <span class="text-[10px] md:text-[11px] font-bold uppercase">Угол</span>
-                </button>
-            </div>
-            <p id="tool-hint" class="text-[11px] md:text-xs text-amber-300 mt-3 text-center h-4 font-medium">Свайпайте 3D-фон для вращения камеры.</p>
-        </div>
-
-        <!-- Настройки (сворачиваемые) -->
-        <div id="panel-settings" class="overflow-y-auto max-h-0 opacity-0 md:max-h-[500px] md:opacity-100">
-            <div class="px-4 pb-5 pt-2 flex flex-col gap-4">
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-xs md:text-sm font-semibold text-slate-300">Тип фигуры:</label>
-                    <select id="shape-type" class="bg-slate-800 border border-slate-600 rounded-lg p-2 text-sm text-white outline-none focus:border-blue-500 w-full transition-colors">
-                        <option value="prism">Призма</option>
-                        <option value="pyramid">Пирамида</option>
-                        <option value="sphere">Сфера</option>
-                    </select>
-                </div>
-
-                <div class="flex flex-col gap-3 bg-slate-800/50 p-3.5 rounded-xl border border-slate-700/50">
-                    <div class="flex flex-col gap-1">
-                        <label class="text-xs md:text-sm flex justify-between">
-                            <span class="text-slate-300">Радиус основания</span>
-                            <span id="radius-val" class="text-blue-400 font-mono">3</span>
-                        </label>
-                        <input type="range" id="param-radius" min="1" max="10" step="0.5" value="3" class="w-full">
-                    </div>
-                    <div class="flex flex-col gap-1" id="height-container">
-                        <label class="text-xs md:text-sm flex justify-between">
-                            <span class="text-slate-300">Высота</span>
-                            <span id="height-val" class="text-blue-400 font-mono">5</span>
-                        </label>
-                        <input type="range" id="param-height" min="1" max="15" step="0.5" value="5" class="w-full">
-                    </div>
-                    <div class="flex flex-col gap-1" id="segments-container">
-                        <label class="text-xs md:text-sm flex justify-between">
-                            <span class="text-slate-300">Углов в основании</span>
-                            <span id="segments-val" class="text-blue-400 font-mono">4</span>
-                        </label>
-                        <input type="range" id="param-segments" min="3" max="12" step="1" value="4" class="w-full">
-                    </div>
-                </div>
-
-                <button id="btn-clear" class="w-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg p-2.5 text-sm font-medium transition-colors">
-                    🗑 Очистить построения
-                </button>
-            </div>
-        </div>
+<main>
+  <!-- МЕНЮ -->
+  <section id="scr-menu" class="screen">
+    <div class="card">
+      <label class="lbl" for="nameInput">Ваше имя</label>
+      <input id="nameInput" maxlength="16" placeholder="Игрок" autocomplete="off">
+      <button id="hostBtn" class="btn primary big">Создать игру</button>
+      <div class="sep"><span>или</span></div>
+      <label class="lbl" for="codeInput">Код игры от соперника</label>
+      <input id="codeInput" class="code-input" maxlength="5" placeholder="XXXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <button id="joinBtn" class="btn big">Присоединиться</button>
     </div>
+    <details class="rules">
+      <summary>Правила</summary>
+      <ul>
+        <li>Поле 10×10. Флот: 1 четырёхпалубный, 2 трёхпалубных, 3 двухпалубных, 4 однопалубных.</li>
+        <li>Корабли — прямые линии; не касаются друг друга ни сторонами, ни углами.</li>
+        <li>Попали — стреляете ещё раз. Промах — ход переходит сопернику.</li>
+        <li>Клетки вокруг потопленного корабля и по диагонали от попадания отмечаются автоматически: там кораблей быть не может.</li>
+        <li>Побеждает тот, кто первым потопит весь флот соперника.</li>
+      </ul>
+    </details>
+    <p class="hint">Чтобы поставить как приложение: в браузере «Поделиться» → «На экран Домой» (iPhone) или меню ⋮ → «Установить приложение» (Android).</p>
+  </section>
 
-    <!-- Основной скрипт -->
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+  <!-- ОЖИДАНИЕ (хост) -->
+  <section id="scr-host" class="screen" hidden>
+    <div class="card center">
+      <p class="muted">Код игры — продиктуйте или отправьте сопернику</p>
+      <div id="hostCode" class="big-code">·····</div>
+      <div class="row">
+        <button id="shareBtn" class="btn primary">Отправить ссылку</button>
+        <button id="copyBtn" class="btn">Копировать код</button>
+      </div>
+      <p id="hostWait" class="muted"><span class="spinner"></span> Подключаемся к серверу…</p>
+      <button class="btn ghost leaveBtn">Отмена</button>
+    </div>
+  </section>
 
-        // --- UI Шторка ---
-        const panelSettings = document.getElementById('panel-settings');
-        const toggleIcon = document.getElementById('toggle-icon');
-        let isPanelExpanded = window.innerWidth >= 768;
+  <!-- ПОДКЛЮЧЕНИЕ (гость) -->
+  <section id="scr-join" class="screen" hidden>
+    <div class="card center">
+      <p><span class="spinner"></span> Подключаемся к игре <b id="joinCode"></b>…</p>
+      <button class="btn ghost leaveBtn">Отмена</button>
+    </div>
+  </section>
 
-        function updatePanelState() {
-            if (window.innerWidth >= 768) {
-                panelSettings.style.maxHeight = '1000px';
-                panelSettings.style.opacity = '1';
-                return;
-            }
-            if (isPanelExpanded) {
-                panelSettings.style.maxHeight = panelSettings.scrollHeight + 'px';
-                panelSettings.style.opacity = '1';
-                toggleIcon.style.transform = 'rotate(180deg)';
-            } else {
-                panelSettings.style.maxHeight = '0px';
-                panelSettings.style.opacity = '0';
-                toggleIcon.style.transform = 'rotate(0deg)';
-            }
-        }
-        
-        function togglePanel() {
-            if (window.innerWidth >= 768) return;
-            isPanelExpanded = !isPanelExpanded;
-            updatePanelState();
-        }
+  <!-- РАССТАНОВКА -->
+  <section id="scr-place" class="screen" hidden>
+    <div class="bar">
+      <div>Расстановка · против <b class="peerName">Соперник</b></div>
+      <div id="peerPlaceStatus" class="muted small">соперник расставляет…</div>
+    </div>
+    <div id="placeBoard" class="board"></div>
+    <div id="tray" class="tray"></div>
+    <div class="row">
+      <button id="rotateBtn" class="btn">↔ Горизонтально</button>
+      <button id="randomBtn" class="btn">🎲 Случайно</button>
+      <button id="clearBtn" class="btn">Очистить</button>
+    </div>
+    <p class="hint small">Выберите корабль, нажмите на клетку — он встанет от неё вправо/вниз. Нажмите на поставленный корабль, чтобы убрать его.</p>
+    <button id="readyBtn" class="btn primary big" disabled>Готов</button>
+    <button class="btn ghost leaveBtn">Выйти</button>
+  </section>
 
-        document.getElementById('panel-header').addEventListener('click', togglePanel);
-        document.getElementById('drag-handle').addEventListener('click', togglePanel);
-        window.addEventListener('resize', () => {
-            isPanelExpanded = window.innerWidth >= 768;
-            updatePanelState();
-        });
-        updatePanelState();
+  <!-- БОЙ -->
+  <section id="scr-battle" class="screen" hidden>
+    <div id="turnBanner" class="turn">…</div>
+    <div class="boards">
+      <div class="board-wrap enemy-wrap">
+        <div class="board-title">Поле соперника · <b class="peerName">Соперник</b></div>
+        <div id="enemyBoard" class="board"></div>
+        <div id="enemyFleet" class="fleet"></div>
+      </div>
+      <div class="board-wrap my-wrap">
+        <div class="board-title">Ваше поле</div>
+        <div id="myBoard" class="board small-board"></div>
+        <div id="myFleet" class="fleet"></div>
+      </div>
+    </div>
+    <button class="btn ghost leaveBtn">Выйти из игры</button>
+  </section>
+</main>
 
+<!-- МОДАЛКА -->
+<div id="modal" class="modal" hidden>
+  <div class="modal-card">
+    <div id="modalTitle" class="modal-title"></div>
+    <p id="modalText" class="muted"></p>
+    <div id="modalBtns" class="col"></div>
+  </div>
+</div>
+<div id="toast" class="toast" hidden></div>
 
-        // --- Логика THREE.JS ---
-        let scene, camera, renderer, labelRenderer, controls;
-        let mainMesh, edgesMesh; 
-        
-        let shapeGroup = new THREE.Group(); 
-        let userGroup = new THREE.Group(); 
-        let verticesGroup = new THREE.Group(); 
+<script>
+'use strict';
+/* ===== Морской бой: 2 игрока по сети (PeerJS / WebRTC) ===== */
 
-        let interactablePoints = []; 
-        let selectedPoints = []; 
-        let currentMode = 'view'; 
-        
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        
-        const pointMaterialDefault = new THREE.MeshBasicMaterial({ color: 0xef4444 }); 
-        const pointMaterialSelected = new THREE.MeshBasicMaterial({ color: 0xfacc15 }); 
+const N = 10;
+const FLEET = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
+const COLS = 'АБВГДЕЖЗИК';
+const PREFIX = 'mx-seabattle-v1-';
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const LOCAL = new URLSearchParams(location.search).has('local'); // тест в двух вкладках без сети
 
-        // Буквы для новых точек пользователя
-        const userPointLetters = ['M', 'N', 'K', 'L', 'P', 'Q', 'R', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-        let userPointIndex = 0;
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const rand = n => Math.floor(Math.random() * n);
+const randStr = (n, chars = 'abcdefghijklmnopqrstuvwxyz0123456789') => Array.from({ length: n }, () => chars[rand(chars.length)]).join('');
+const grid = v => Array.from({ length: N }, () => Array(N).fill(v));
+const inB = (r, c) => r >= 0 && r < N && c >= 0 && c < N;
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch { } }
+};
 
-        init();
-        animate();
+/* ---------- Состояние ---------- */
+const S = {
+  role: null,          // 'host' | 'guest'
+  code: null,
+  name: '', peerName: 'Соперник',
+  screen: 'menu',
+  phase: 'none',       // 'place' | 'battle' | 'over'
+  gameNo: 0,
+  my: null,            // {grid, ships, shots}
+  enemy: null,         // grid: 0 ?, 1 промах, 2 попал, 3 потоплен, 4 авто-пусто, 5 показан в конце
+  enemySunk: [],
+  myReady: false, peerReady: false,
+  myTurn: false, pending: null, last: null, myLast: null,
+  myRematch: false, peerRematch: false, lastWinner: null,
+  sel: 4, orient: 'h', hover: null,
+  everConnected: false,
+};
 
-        function init() {
-            scene = new THREE.Scene();
-            
-            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-            camera.position.set(12, 12, 18);
+function emptyMy() { return { grid: grid(-1), ships: [], shots: grid(0) }; }
 
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            document.getElementById('canvas-container').appendChild(renderer.domElement);
+/* ---------- Логика поля ---------- */
+function shipCells(r, c, size, o) {
+  const cells = [];
+  for (let i = 0; i < size; i++) cells.push(o === 'h' ? [r, c + i] : [r + i, c]);
+  return cells;
+}
+function canPlace(g, cells) {
+  for (const [r, c] of cells) {
+    if (!inB(r, c)) return false;
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      const rr = r + dr, cc = c + dc;
+      if (inB(rr, cc) && g[rr][cc] !== -1) return false;
+    }
+  }
+  return true;
+}
+function addShip(my, cells) {
+  const idx = my.ships.length;
+  my.ships.push({ size: cells.length, cells, hits: 0 });
+  for (const [r, c] of cells) my.grid[r][c] = idx;
+}
+function rebuildGrid(my) {
+  my.grid = grid(-1);
+  my.ships.forEach((s, i) => s.cells.forEach(([r, c]) => my.grid[r][c] = i));
+}
+function remainingSizes(my) {
+  const left = [...FLEET];
+  for (const s of my.ships) left.splice(left.indexOf(s.size), 1);
+  return left;
+}
+function randomFleet() {
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const my = emptyMy(); let ok = true;
+    for (const size of FLEET) {
+      let placed = false;
+      for (let t = 0; t < 300 && !placed; t++) {
+        const o = rand(2) ? 'h' : 'v';
+        const cells = shipCells(rand(N), rand(N), size, o);
+        if (canPlace(my.grid, cells)) { addShip(my, cells); placed = true; }
+      }
+      if (!placed) { ok = false; break; }
+    }
+    if (ok) return my;
+  }
+  return emptyMy();
+}
+function neighbors8(r, c) {
+  const out = [];
+  for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++)
+    if ((dr || dc) && inB(r + dr, c + dc)) out.push([r + dr, c + dc]);
+  return out;
+}
 
-            labelRenderer = new CSS2DRenderer();
-            labelRenderer.setSize(window.innerWidth, window.innerHeight);
-            document.getElementById('css2d-container').appendChild(labelRenderer.domElement);
+/* ---------- Звук и вибрация ---------- */
+const Snd = {
+  ctx: null, on: store.get('sb-sound', '1') === '1',
+  init() {
+    if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch { } }
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  },
+  tone(f1, f2, dur, type = 'sine', vol = .25, delay = 0) {
+    if (!this.on || !this.ctx) return;
+    const t = this.ctx.currentTime + delay, o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(f1, t); o.frequency.exponentialRampToValueAtTime(Math.max(f2, 1), t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+    o.connect(g).connect(this.ctx.destination); o.start(t); o.stop(t + dur + .05);
+  },
+  noise(dur, freq, vol = .4, delay = 0) {
+    if (!this.on || !this.ctx) return;
+    const ctx = this.ctx, t = ctx.currentTime + delay;
+    const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = buf; f.type = 'lowpass'; f.frequency.setValueAtTime(freq, t); f.frequency.exponentialRampToValueAtTime(100, t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+    src.connect(f).connect(g).connect(ctx.destination); src.start(t);
+  },
+  miss() { this.noise(.35, 1800, .25); this.tone(500, 200, .2, 'sine', .08); },
+  hit() { this.noise(.4, 2500, .5); this.tone(160, 40, .35, 'square', .15); vib(60); },
+  sunk() { this.noise(.9, 3000, .6); this.tone(120, 30, .8, 'sawtooth', .18); this.noise(.6, 900, .4, .25); vib([100, 50, 180]); },
+  myTurn() { this.tone(880, 1320, .12, 'sine', .12); },
+  win() { [523, 659, 784, 1047].forEach((f, i) => this.tone(f, f, .22, 'triangle', .2, i * .14)); vib([80, 60, 80, 60, 200]); },
+  lose() { [392, 330, 262, 196].forEach((f, i) => this.tone(f, f * .97, .3, 'triangle', .18, i * .2)); vib(400); },
+  bad() { this.tone(200, 150, .12, 'square', .08); vib(30); },
+};
+function vib(p) { try { if (Snd.on && navigator.vibrate) navigator.vibrate(p); } catch { } }
 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-            scene.add(ambientLight);
-            const dirLight1 = new THREE.DirectionalLight(0xffffff, 1);
-            dirLight1.position.set(10, 20, 10);
-            scene.add(dirLight1);
+/* ---------- Сеть ---------- */
+const Net = {
+  peer: null, conn: null, outbox: [], token: randStr(12), guestToken: null, retryTimer: null,
 
-            controls = new OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
+  send(m) {
+    if (this.conn && this.conn.open) { try { this.conn.send(m); return; } catch { } }
+    this.outbox.push(m);
+  },
+  flush() { const q = this.outbox; this.outbox = []; q.forEach(m => this.send(m)); },
 
-            scene.add(shapeGroup);
-            scene.add(verticesGroup);
-            scene.add(userGroup);
+  host() {
+    S.role = 'host'; S.code = genCode();
+    $('#hostCode').textContent = S.code;
+    $('#hostWait').innerHTML = '<span class="spinner"></span> Подключаемся к серверу…';
+    show('host');
+    if (LOCAL) return Local.host(S.code);
+    if (!window.Peer) return fail('Не загрузилась сетевая библиотека. Проверьте интернет и обновите страницу.');
+    const peer = this.peer = new Peer(PREFIX + S.code, { debug: 1 });
+    peer.on('open', () => { $('#hostWait').innerHTML = '<span class="spinner"></span> Ждём соперника…'; setNet('wait'); });
+    peer.on('connection', c => {
+      const tok = c.metadata && c.metadata.token;
+      if (this.guestToken && tok !== this.guestToken) {
+        c.on('open', () => { c.send({ t: 'busy' }); setTimeout(() => c.close(), 400); });
+        return;
+      }
+      this.guestToken = tok;
+      this.attach(c);
+    });
+    peer.on('disconnected', () => { if (!peer.destroyed) setTimeout(() => { try { peer.reconnect(); } catch { } }, 1500); });
+    peer.on('error', e => {
+      if (e.type === 'unavailable-id' && !S.everConnected) { peer.destroy(); this.host(); }
+      else if (['network', 'server-error', 'socket-error', 'socket-closed'].includes(e.type)) setNet('off');
+      else if (!S.everConnected) fail('Ошибка сети: ' + e.type);
+    });
+  },
 
-            buildShape();
-            setupToolsUI();
+  join(code) {
+    S.role = 'guest'; S.code = code;
+    $('#joinCode').textContent = code;
+    show('join');
+    if (LOCAL) return Local.join(code);
+    if (!window.Peer) return fail('Не загрузилась сетевая библиотека. Проверьте интернет и обновите страницу.');
+    const peer = this.peer = new Peer({ debug: 1 });
+    peer.on('open', () => this.connectToHost());
+    peer.on('disconnected', () => { if (!peer.destroyed) setTimeout(() => { try { peer.reconnect(); } catch { } }, 1500); });
+    peer.on('error', e => {
+      if (e.type === 'peer-unavailable') {
+        if (!S.everConnected) fail('Игра с кодом ' + code + ' не найдена. Проверьте код — или соперник ещё не создал игру.');
+        else this.scheduleRetry();
+      } else if (['network', 'server-error', 'socket-error', 'socket-closed'].includes(e.type)) { setNet('off'); if (S.everConnected) this.scheduleRetry(); }
+      else if (!S.everConnected) fail('Ошибка сети: ' + e.type);
+    });
+  },
 
-            window.addEventListener('resize', onWindowResize);
-            
-            const canvasContainer = document.getElementById('canvas-container');
-            let isDragging = false;
-            let pointerDownPos = { x: 0, y: 0 };
+  connectToHost() {
+    if (!this.peer || this.peer.destroyed) return;
+    if (this.peer.disconnected) { try { this.peer.reconnect(); } catch { } return this.scheduleRetry(); }
+    const c = this.peer.connect(PREFIX + S.code, { reliable: true, metadata: { token: this.token } });
+    this.attach(c);
+  },
+  scheduleRetry() {
+    if (S.role !== 'guest' || this.retryTimer || (this.conn && this.conn.open)) return;
+    this.retryTimer = setTimeout(() => { this.retryTimer = null; if (!(this.conn && this.conn.open)) { this.connectToHost(); this.scheduleRetry(); } }, 3000);
+  },
 
-            canvasContainer.addEventListener('pointerdown', (e) => {
-                pointerDownPos = { x: e.clientX, y: e.clientY };
-                isDragging = false;
-            });
-            canvasContainer.addEventListener('pointermove', (e) => {
-                if (Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y) > 4) isDragging = true;
-            });
-            canvasContainer.addEventListener('pointerup', (e) => {
-                if (!isDragging) handleInteractionClick(e);
-            });
-        }
+  attach(c) {
+    c.on('open', () => {
+      if (this.conn && this.conn !== c) { try { this.conn.close(); } catch { } }
+      this.conn = c;
+      clearTimeout(this.retryTimer); this.retryTimer = null;
+      setNet('on');
+      onConnected();
+      this.flush();
+    });
+    c.on('data', m => { try { handle(m); } catch (e) { console.error(e); } });
+    c.on('close', () => { if (this.conn === c) { this.conn = null; onDisconnected(); } });
+    c.on('error', () => { if (this.conn === c) { this.conn = null; onDisconnected(); } });
+  },
 
-        // --- Решение БАГА: Полное уничтожение HTML элементов из памяти ---
-        function clearGroupWithLabels(group) {
-            group.traverse((object) => {
-                if (object.isCSS2DObject && object.element && object.element.parentNode) {
-                    object.element.parentNode.removeChild(object.element);
-                }
-            });
-            group.clear();
-        }
+  destroy() {
+    clearTimeout(this.retryTimer); this.retryTimer = null;
+    try { this.conn && this.conn.close(); } catch { }
+    try { this.peer && this.peer.destroy(); } catch { }
+    try { Local.close(); } catch { }
+    this.conn = null; this.peer = null; this.outbox = []; this.guestToken = null;
+  }
+};
 
-        function setupToolsUI() {
-            const shapeSelect = document.getElementById('shape-type');
-            const paramRadius = document.getElementById('param-radius');
-            const paramHeight = document.getElementById('param-height');
-            const paramSegments = document.getElementById('param-segments');
-            
-            const updateShape = () => {
-                document.getElementById('radius-val').innerText = paramRadius.value;
-                document.getElementById('height-val').innerText = paramHeight.value;
-                document.getElementById('segments-val').innerText = paramSegments.value;
-                
-                if (shapeSelect.value === 'sphere') {
-                    document.getElementById('height-container').style.display = 'none';
-                    document.getElementById('segments-container').style.display = 'none';
-                } else {
-                    document.getElementById('height-container').style.display = 'flex';
-                    document.getElementById('segments-container').style.display = 'flex';
-                }
-                
-                buildShape();
-                clearUserDrawings();
-            };
+/* Локальный транспорт для теста в двух вкладках одного браузера (?local) */
+const Local = {
+  bc: null,
+  mkConn(bc, me) {
+    const h = {};
+    const conn = {
+      open: false,
+      on(ev, f) { h[ev] = f; },
+      send(m) { bc.postMessage({ from: me, m }); },
+      close() { conn.open = false; },
+      _fire(ev, x) { h[ev] && h[ev](x); }
+    };
+    return conn;
+  },
+  host(code) {
+    const bc = this.bc = new BroadcastChannel('sb-' + code);
+    const conn = this.mkConn(bc, 'host');
+    setTimeout(() => { $('#hostWait').innerHTML = '<span class="spinner"></span> Ждём соперника… (локальный режим)'; }, 100);
+    bc.onmessage = e => {
+      const d = e.data; if (d.from === 'host') return;
+      if (d.hello) { bc.postMessage({ from: 'host', helloAck: true }); if (!conn.open) { conn.open = true; Net.attach(conn); conn._fire('open'); } return; }
+      if (d.m) conn._fire('data', d.m);
+    };
+  },
+  join(code) {
+    const bc = this.bc = new BroadcastChannel('sb-' + code);
+    const conn = this.mkConn(bc, 'guest');
+    bc.onmessage = e => {
+      const d = e.data; if (d.from === 'guest') return;
+      if (d.helloAck) { if (!conn.open) { conn.open = true; Net.attach(conn); conn._fire('open'); } return; }
+      if (d.m) conn._fire('data', d.m);
+    };
+    bc.postMessage({ from: 'guest', hello: true });
+  },
+  close() { this.bc && this.bc.close(); this.bc = null; }
+};
 
-            shapeSelect.addEventListener('change', updateShape);
-            paramRadius.addEventListener('input', updateShape);
-            paramHeight.addEventListener('input', updateShape);
-            paramSegments.addEventListener('input', updateShape);
+function genCode() { return randStr(5, CODE_CHARS); }
 
-            const tools = document.querySelectorAll('.tool-btn');
-            const hint = document.getElementById('tool-hint');
-            const hints = {
-                'view': 'Свайпайте 3D-фон для вращения камеры.',
-                'point': 'Кликните на грань, чтобы поставить и назвать точку.',
-                'segment': 'Выберите 2 точки, чтобы провести отрезок.',
-                'plane': 'Выберите 3 точки, чтобы построить плоскость.',
-                'distance': 'Выберите 2 точки, чтобы измерить расстояние (см).',
-                'angle': 'Выберите 3 точки (2-я будет вершиной угла).'
-            };
+function onConnected() {
+  Net.send({ t: 'hello', name: S.name });
+  if (!S.everConnected) {
+    S.everConnected = true;
+    S.gameNo = 0; S.lastWinner = null;
+    newGame();
+    keepAwake();
+    return;
+  }
+  hideModalIf('net');
+  toast('Связь восстановлена');
+  // повтор незавершённого выстрела и синхронизация флагов
+  if (S.pending) Net.send({ t: 'shot', r: S.pending.r, c: S.pending.c, g: S.gameNo });
+  Net.send({ t: 'sync', g: S.gameNo, phase: S.phase, ready: S.myReady, rematch: S.myRematch });
+}
+function onDisconnected() {
+  if (!S.everConnected) return;
+  setNet('off');
+  toast('Связь потеряна — переподключаемся…');
+  Net.scheduleRetry();
+}
 
-            tools.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    tools.forEach(t => {
-                        t.classList.remove('bg-blue-600', 'text-white', 'border-blue-400', 'shadow-lg', 'shadow-blue-900/50');
-                        t.classList.add('bg-slate-800', 'text-slate-300', 'border-transparent');
-                    });
-                    
-                    const target = e.currentTarget;
-                    target.classList.remove('bg-slate-800', 'text-slate-300', 'border-transparent');
-                    target.classList.add('bg-blue-600', 'text-white', 'border-blue-400', 'shadow-lg', 'shadow-blue-900/50');
-                    
-                    currentMode = target.getAttribute('data-mode');
-                    hint.innerText = hints[currentMode];
-                    resetSelection();
-                });
-            });
+/* ---------- Протокол ---------- */
+function handle(m) {
+  switch (m.t) {
+    case 'hello':
+      S.peerName = (m.name || 'Соперник').slice(0, 16);
+      $$('.peerName').forEach(e => e.textContent = S.peerName);
+      break;
+    case 'busy':
+      fail('В этой игре уже двое игроков.');
+      break;
+    case 'bye':
+      S.everConnected = false;
+      Net.destroy(); setNet(null);
+      modal('Соперник вышел', 'Игра завершена.', [['В меню', () => toMenu(), 'primary']]);
+      break;
+    case 'ready':
+      if (m.g === S.gameNo) { S.peerReady = true; maybeStart(); renderPlace(); }
+      break;
+    case 'sync':
+      if (m.g !== S.gameNo) break;
+      if (m.ready && !S.peerReady) { S.peerReady = true; maybeStart(); renderPlace(); }
+      if (m.rematch && !S.peerRematch) { S.peerRematch = true; maybeRematch(); }
+      if (S.role === 'host' && S.phase === 'battle' && m.phase === 'place')
+        Net.send({ t: 'start', g: S.gameNo, first: S.myTurn ? 'host' : 'guest' });
+      break;
+    case 'start':
+      if (m.g === S.gameNo && S.phase === 'place') beginBattle(m.first === S.role);
+      break;
+    case 'shot':
+      if (m.g === S.gameNo) onShot(m.r, m.c);
+      break;
+    case 'result':
+      if (m.g === S.gameNo) onResult(m);
+      break;
+    case 'reveal':
+      if (m.g === S.gameNo && S.enemy) {
+        for (const [r, c] of m.cells) if (S.enemy[r][c] === 0 || S.enemy[r][c] === 4) S.enemy[r][c] = 5;
+        renderBattle();
+      }
+      break;
+    case 'rematch':
+      if (m.g === S.gameNo) { S.peerRematch = true; maybeRematch(); }
+      break;
+  }
+}
 
-            document.getElementById('btn-clear').addEventListener('click', clearUserDrawings);
-        }
+function newGame() {
+  S.gameNo++;
+  S.phase = 'place';
+  S.my = emptyMy(); S.enemy = grid(0); S.enemySunk = [];
+  S.myReady = S.peerReady = false; S.myTurn = false; S.pending = null; S.last = S.myLast = null;
+  S.myRematch = S.peerRematch = false;
+  S.sel = 4; S.orient = 'h'; S.hover = null;
+  hideModal();
+  show('place');
+  renderPlace();
+}
 
-        function buildShape() {
-            shapeGroup.clear();
-            // Тщательно очищаем старые вершины и их HTML-буквы
-            clearGroupWithLabels(verticesGroup);
-            
-            interactablePoints = interactablePoints.filter(p => p.userData.type === 'user_point'); // Сохраняем кастомные точки, очищаем стандартные
+function setReady() {
+  if (remainingSizes(S.my).length) return;
+  Snd.init();
+  S.myReady = true;
+  Net.send({ t: 'ready', g: S.gameNo });
+  maybeStart();
+  renderPlace();
+}
+function maybeStart() {
+  if (S.role !== 'host' || S.phase !== 'place' || !S.myReady || !S.peerReady) return;
+  let first;
+  if (S.lastWinner) first = S.lastWinner === 'host' ? 'guest' : 'host'; // проигравший ходит первым
+  else first = rand(2) ? 'host' : 'guest';
+  Net.send({ t: 'start', g: S.gameNo, first });
+  beginBattle(first === 'host');
+}
+function beginBattle(myFirst) {
+  S.phase = 'battle';
+  S.myTurn = myFirst;
+  show('battle');
+  renderBattle();
+  if (myFirst) Snd.myTurn();
+}
 
-            const type = document.getElementById('shape-type').value;
-            const radius = parseFloat(document.getElementById('param-radius').value);
-            const height = parseFloat(document.getElementById('param-height').value);
-            const segments = parseInt(document.getElementById('param-segments').value);
+function fire(r, c) {
+  if (S.phase !== 'battle' || !S.myTurn || S.pending || S.enemy[r][c] !== 0) return;
+  Snd.init();
+  S.pending = { r, c };
+  Net.send({ t: 'shot', r, c, g: S.gameNo });
+  renderBattle();
+}
 
-            let geometry;
-            if (type === 'prism') {
-                geometry = new THREE.CylinderGeometry(radius, radius, height, segments, 1);
-                if (segments % 2 === 0) geometry.rotateY(Math.PI / segments); 
-            } else if (type === 'pyramid') {
-                geometry = new THREE.ConeGeometry(radius, height, segments, 1);
-                if (segments % 2 === 0) geometry.rotateY(Math.PI / segments);
-            } else if (type === 'sphere') {
-                geometry = new THREE.SphereGeometry(radius, 32, 16);
-            }
+function onShot(r, c) {
+  if (S.phase !== 'battle' && S.phase !== 'over') return;
+  const my = S.my, idx = my.grid[r][c], fresh = my.shots[r][c] === 0;
+  if (fresh) {
+    my.shots[r][c] = idx < 0 ? 1 : 2;
+    if (idx >= 0) my.ships[idx].hits++;
+  }
+  let res = 'miss', cells = null, size = 0;
+  if (idx >= 0) {
+    const s = my.ships[idx];
+    res = s.hits >= s.size ? 'sunk' : 'hit';
+    if (res === 'sunk') { cells = s.cells; size = s.size; }
+  }
+  const over = my.ships.every(s => s.hits >= s.size);
+  Net.send({ t: 'result', g: S.gameNo, r, c, res, cells, size, over });
+  if (!fresh) return;
+  S.myLast = [r, c];
+  if (res === 'sunk') {
+    for (const [sr, sc] of cells) for (const [nr, nc] of neighbors8(sr, sc)) if (my.shots[nr][nc] === 0 && my.grid[nr][nc] < 0) my.shots[nr][nc] = 3;
+  }
+  if (res === 'miss') { S.myTurn = true; Snd.miss(); setTimeout(() => Snd.myTurn(), 350); }
+  else if (res === 'hit') Snd.hit(); else Snd.sunk();
+  if (over) endGame(false);
+  renderBattle();
+}
 
-            geometry.computeBoundingBox();
+function onResult(m) {
+  if (!S.pending || S.pending.r !== m.r || S.pending.c !== m.c) return; // дубликат
+  S.pending = null;
+  const E = S.enemy, { r, c } = m;
+  S.last = [r, c];
+  if (m.res === 'miss') {
+    E[r][c] = 1; S.myTurn = false; Snd.miss();
+  } else if (m.res === 'hit') {
+    E[r][c] = 2; Snd.hit();
+    for (const [dr, dc] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) if (inB(r + dr, c + dc) && E[r + dr][c + dc] === 0) E[r + dr][c + dc] = 4;
+  } else {
+    for (const [sr, sc] of m.cells) E[sr][sc] = 3;
+    for (const [sr, sc] of m.cells) for (const [nr, nc] of neighbors8(sr, sc)) if (E[nr][nc] === 0) E[nr][nc] = 4;
+    S.enemySunk.push(m.size); Snd.sunk();
+  }
+  if (m.over) endGame(true);
+  renderBattle();
+}
 
-            const material = new THREE.MeshPhysicalMaterial({
-                color: 0x3b82f6, metalness: 0.1, roughness: 0.1,
-                transmission: 0.8, thickness: 0.5, transparent: true, opacity: 1, side: THREE.DoubleSide
-            });
+function endGame(won) {
+  S.phase = 'over';
+  S.myTurn = false;
+  S.lastWinner = won ? S.role : (S.role === 'host' ? 'guest' : 'host');
+  if (won) {
+    const cells = S.my.ships.flatMap(s => s.cells);
+    Net.send({ t: 'reveal', g: S.gameNo, cells });
+  }
+  setTimeout(() => { won ? Snd.win() : Snd.lose(); }, 500);
+  setTimeout(showOverModal, 900);
+}
+function showOverModal() {
+  if (S.phase !== 'over') return;
+  const won = S.lastWinner === S.role;
+  const txt = S.myRematch ? 'Ждём ответа соперника…' : S.peerRematch ? S.peerName + ' предлагает реванш!' : '';
+  modal(won ? '🏆 Победа!' : 'Поражение', txt, [
+    [S.myRematch ? 'Реванш предложен ✓' : 'Реванш', () => { if (!S.myRematch) askRematch(); }, 'primary', S.myRematch],
+    ['Посмотреть поля', () => hideModal(), ''],
+    ['Выйти в меню', () => leave(), 'ghost'],
+  ]);
+}
+function askRematch() {
+  S.myRematch = true;
+  Net.send({ t: 'rematch', g: S.gameNo });
+  maybeRematch();
+  if (S.phase === 'over') showOverModal();
+}
+function maybeRematch() {
+  if (S.phase !== 'over') return;
+  if (S.myRematch && S.peerRematch) newGame();
+  else if (!$('#modal').hidden) showOverModal();
+  else renderBattle();
+}
 
-            mainMesh = new THREE.Mesh(geometry, material);
-            shapeGroup.add(mainMesh);
+/* ---------- Отрисовка ---------- */
+function show(name) {
+  S.screen = name;
+  $$('.screen').forEach(s => s.hidden = s.id !== 'scr-' + name);
+  window.scrollTo(0, 0);
+}
+function setNet(st) {
+  const el = $('#netStatus');
+  if (!st) { el.hidden = true; return; }
+  el.hidden = false;
+  el.className = 'pill ' + st;
+  el.textContent = st === 'on' ? 'на связи' : st === 'wait' ? 'ожидание' : 'нет связи';
+}
+function boardHTML(cls) {
+  let h = '<div class="h"></div>';
+  for (let c = 0; c < N; c++) h += `<div class="h">${COLS[c]}</div>`;
+  for (let r = 0; r < N; r++) {
+    h += `<div class="h">${r + 1}</div>`;
+    for (let c = 0; c < N; c++) h += `<div class="cell ${cls(r, c)}" data-r="${r}" data-c="${c}"></div>`;
+  }
+  return h;
+}
 
-            const edgesMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
-            edgesMesh = new THREE.LineSegments(new THREE.EdgesGeometry(geometry), edgesMat);
-            shapeGroup.add(edgesMesh);
+function placementCells(r, c) {
+  const cells = shipCells(r, c, S.sel, S.orient);
+  // если не влезает — сдвигаем внутрь поля
+  const shift = Math.max(0, (S.orient === 'h' ? c : r) + S.sel - N);
+  return cells.map(([a, b]) => S.orient === 'h' ? [a, b - shift] : [a - shift, b]);
+}
 
-            extractAndLabelVertices(geometry, type, height, radius);
-        }
+function renderPlace() {
+  if (S.screen !== 'place') return;
+  const my = S.my, left = remainingSizes(my);
+  if (!left.includes(S.sel) && left.length) S.sel = Math.max(...left);
+  let prev = null, prevOk = false;
+  if (S.hover && left.length && !S.myReady && my.grid[S.hover[0]][S.hover[1]] < 0) {
+    prev = placementCells(...S.hover);
+    prevOk = canPlace(my.grid, prev);
+  }
+  const pset = new Set((prev || []).map(([r, c]) => r * N + c));
+  $('#placeBoard').innerHTML = boardHTML((r, c) => {
+    if (my.grid[r][c] >= 0) return 'ship';
+    if (pset.has(r * N + c)) return prevOk ? 'prev-ok' : 'prev-bad';
+    return '';
+  });
+  // лоток
+  let t = '';
+  for (const size of [4, 3, 2, 1]) {
+    const cnt = left.filter(s => s === size).length;
+    t += `<button class="tray-item ${cnt ? '' : 'done'} ${S.sel === size && cnt ? 'sel' : ''}" data-size="${size}" ${S.myReady ? 'disabled' : ''}>
+      <span class="tray-ship">${'<i></i>'.repeat(size)}</span><b>×${cnt}</b></button>`;
+  }
+  $('#tray').innerHTML = t;
+  $('#rotateBtn').textContent = S.orient === 'h' ? '↔ Горизонтально' : '↕ Вертикально';
+  ['#rotateBtn', '#randomBtn', '#clearBtn'].forEach(s => $(s).disabled = S.myReady);
+  const rb = $('#readyBtn');
+  rb.disabled = S.myReady || left.length > 0;
+  rb.textContent = S.myReady ? (S.peerReady ? 'Начинаем…' : 'Ждём соперника…') : left.length ? `Осталось кораблей: ${left.length}` : 'Готов';
+  $('#peerPlaceStatus').textContent = S.peerReady ? 'соперник готов ✓' : 'соперник расставляет…';
+}
 
-        function extractAndLabelVertices(geometry, type, height, radius) {
-            const position = geometry.attributes.position;
-            const uniquePoints = [];
-            const map = new Map();
+function fleetHTML(sunkSizes) {
+  const sunk = [...sunkSizes];
+  return FLEET.map(size => {
+    const i = sunk.indexOf(size), dead = i >= 0;
+    if (dead) sunk.splice(i, 1);
+    return `<span class="tray-ship ${dead ? 'dead' : ''}">${'<i></i>'.repeat(size)}</span>`;
+  }).join('');
+}
 
-            for (let i = 0; i < position.count; i++) {
-                let x = position.getX(i);
-                let y = position.getY(i);
-                let z = position.getZ(i);
-                let key = `${x.toFixed(3)}_${y.toFixed(3)}_${z.toFixed(3)}`;
-                if (!map.has(key)) {
-                    const vec = new THREE.Vector3(x, y, z);
-                    map.set(key, vec);
-                    uniquePoints.push(vec);
-                }
-            }
+function renderBattle() {
+  if (S.screen !== 'battle') return;
+  const E = S.enemy, my = S.my;
+  const canShoot = S.phase === 'battle' && S.myTurn && !S.pending;
+  $('.enemy-wrap').classList.toggle('active', canShoot);
+  const isLast = (p, r, c) => p && p[0] === r && p[1] === c ? ' last' : '';
+  $('#enemyBoard').innerHTML = boardHTML((r, c) => {
+    const v = E[r][c];
+    let k = ['open', 'miss', 'hit', 'sunk', 'auto', 'ship reveal'][v];
+    if (S.pending && S.pending.r === r && S.pending.c === c) k = 'pending';
+    return k + isLast(S.last, r, c);
+  });
+  $('#myBoard').innerHTML = boardHTML((r, c) => {
+    const idx = my.grid[r][c], sh = my.shots[r][c];
+    let k = idx >= 0 ? 'ship' : '';
+    if (idx >= 0 && sh === 2) k += my.ships[idx].hits >= my.ships[idx].size ? ' sunk' : ' hit';
+    if (sh === 1) k += ' miss';
+    if (sh === 3) k += ' auto';
+    return k + isLast(S.myLast, r, c);
+  });
+  $('#enemyFleet').innerHTML = fleetHTML(S.enemySunk);
+  $('#myFleet').innerHTML = fleetHTML(my.ships.filter(s => s.hits >= s.size).map(s => s.size));
+  const tb = $('#turnBanner');
+  if (S.phase === 'over') {
+    const won = S.lastWinner === S.role;
+    tb.className = 'turn' + (won ? ' mine' : '');
+    tb.innerHTML = (won ? '🏆 Победа!' : 'Поражение') + ' <button class="btn" id="reopenModal" style="margin-left:8px;padding:4px 10px">Реванш…</button>';
+    $('#reopenModal').onclick = showOverModal;
+  } else {
+    tb.className = 'turn' + (S.myTurn ? ' mine' : '');
+    tb.textContent = S.myTurn ? (S.pending ? 'Выстрел…' : 'Ваш ход — стреляйте') : `Ходит ${S.peerName}…`;
+  }
+}
 
-            const sortByAngle = (pts) => pts.sort((a, b) => Math.atan2(a.z, a.x) - Math.atan2(b.z, b.x));
-            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            let pointDefs = [];
+/* ---------- UI: модалка, тосты ---------- */
+let modalTag = null;
+function modal(title, text, btns, tag = null) {
+  modalTag = tag;
+  $('#modalTitle').textContent = title;
+  $('#modalText').textContent = text || '';
+  $('#modalText').hidden = !text;
+  const box = $('#modalBtns'); box.innerHTML = '';
+  for (const [label, fn, cls, disabled] of btns) {
+    const b = document.createElement('button');
+    b.className = 'btn big ' + (cls || ''); b.textContent = label; b.disabled = !!disabled;
+    b.onclick = fn; box.appendChild(b);
+  }
+  $('#modal').hidden = false;
+}
+function hideModal() { $('#modal').hidden = true; modalTag = null; }
+function hideModalIf(tag) { if (modalTag === tag) hideModal(); }
+let toastT;
+function toast(msg, ms = 2500) {
+  const t = $('#toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, ms);
+}
+function fail(msg) {
+  Net.destroy(); setNet(null);
+  modal('Не получилось', msg, [['В меню', () => toMenu(), 'primary']]);
+}
+function toMenu() {
+  hideModal(); Net.destroy(); setNet(null);
+  S.everConnected = false; S.phase = 'none'; S.role = null;
+  releaseWake();
+  history.replaceState(null, '', location.pathname + (LOCAL ? '?local' : ''));
+  show('menu');
+}
+function leave() {
+  const inGame = S.everConnected && (S.phase === 'battle');
+  const go = () => { try { Net.send({ t: 'bye' }); } catch { } setTimeout(toMenu, 150); };
+  if (inGame) modal('Выйти из игры?', 'Партия будет прервана.', [['Выйти', go, 'primary'], ['Остаться', hideModal, 'ghost']]);
+  else go();
+}
 
-            if (type === 'pyramid') {
-                const maxY = Math.max(...uniquePoints.map(v => v.y));
-                const top = uniquePoints.find(v => Math.abs(v.y - maxY) < 0.01);
-                pointDefs.push({ vec: top, label: 'S' });
-                let basePoints = sortByAngle(uniquePoints.filter(v => Math.abs(v.y - maxY) > 0.01));
-                basePoints.forEach((pt, i) => pointDefs.push({ vec: pt, label: alphabet[i % 26] }));
-            } else if (type === 'prism') {
-                const minY = Math.min(...uniquePoints.map(v => v.y));
-                const maxY = Math.max(...uniquePoints.map(v => v.y));
-                let bottomPoints = sortByAngle(uniquePoints.filter(v => Math.abs(v.y - minY) < 0.01));
-                let topPoints = sortByAngle(uniquePoints.filter(v => Math.abs(v.y - maxY) < 0.01));
-                bottomPoints.forEach((pt, i) => pointDefs.push({ vec: pt, label: alphabet[i % 26] }));
-                topPoints.forEach((pt, i) => pointDefs.push({ vec: pt, label: alphabet[i % 26] + '1' }));
-            } else if (type === 'sphere') {
-                pointDefs.push({ vec: new THREE.Vector3(0, radius, 0), label: 'N' });
-                pointDefs.push({ vec: new THREE.Vector3(0, -radius, 0), label: 'S' });
-                pointDefs.push({ vec: new THREE.Vector3(0, 0, 0), label: 'O' });
-            }
+/* ---------- Не гасить экран во время игры ---------- */
+let wakeLock = null;
+async function keepAwake() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch { } }
+function releaseWake() { try { wakeLock && wakeLock.release(); } catch { } wakeLock = null; }
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !S.everConnected) return;
+  keepAwake();
+  if (Net.peer && Net.peer.disconnected && !Net.peer.destroyed) { try { Net.peer.reconnect(); } catch { } }
+  if (S.role === 'guest' && !(Net.conn && Net.conn.open)) Net.connectToHost();
+});
 
-            pointDefs.forEach(def => {
-                const ptMesh = createPointMesh(def.vec, def.label, 'vertex', 'vertex-label');
-                verticesGroup.add(ptMesh);
-                interactablePoints.push(ptMesh);
-            });
-        }
+/* ---------- События ---------- */
+function cellFromEvent(e) {
+  const el = e.target.closest('.cell');
+  return el ? [+el.dataset.r, +el.dataset.c] : null;
+}
 
-        function createPointMesh(positionVector, labelText, typeStr, cssClass) {
-            const ptGeom = new THREE.SphereGeometry(0.18, 16, 16);
-            const ptMesh = new THREE.Mesh(ptGeom, pointMaterialDefault);
-            ptMesh.position.copy(positionVector);
-            ptMesh.userData = { type: typeStr, id: Math.random() };
+$('#nameInput').value = store.get('sb-name', '');
+$('#nameInput').addEventListener('input', e => store.set('sb-name', e.target.value.trim()));
+function readName() { S.name = $('#nameInput').value.trim() || 'Игрок'; }
 
-            const div = document.createElement('div');
-            div.className = cssClass;
-            div.textContent = labelText;
-            const label = new CSS2DObject(div);
-            label.position.set(0, 0, 0);
-            ptMesh.add(label);
+$('#hostBtn').onclick = () => { Snd.init(); readName(); S.everConnected = false; Net.host(); };
+$('#joinBtn').onclick = () => {
+  Snd.init(); readName();
+  const code = $('#codeInput').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (code.length !== 5) { toast('Код — 5 символов'); return; }
+  S.everConnected = false; Net.join(code);
+};
+$('#codeInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('#joinBtn').click(); });
+$$('.leaveBtn').forEach(b => b.onclick = leave);
 
-            return ptMesh;
-        }
+function shareLink() { return location.origin + location.pathname + '?join=' + S.code + (LOCAL ? '&local' : ''); }
+$('#shareBtn').onclick = async () => {
+  const url = shareLink(), text = `Сыграем в морской бой? Код: ${S.code}`;
+  if (navigator.share) { try { await navigator.share({ title: 'Морской бой', text, url }); return; } catch { return; } }
+  try { await navigator.clipboard.writeText(text + '\n' + url); toast('Ссылка скопирована'); } catch { toast(url, 5000); }
+};
+$('#copyBtn').onclick = async () => { try { await navigator.clipboard.writeText(S.code); toast('Код скопирован'); } catch { toast('Код: ' + S.code); } };
 
-        function handleInteractionClick(event) {
-            if (currentMode === 'view') return;
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera);
+$('#muteBtn').onclick = () => {
+  Snd.on = !Snd.on; store.set('sb-sound', Snd.on ? '1' : '0');
+  $('#muteBtn').textContent = Snd.on ? '🔊' : '🔇';
+  if (Snd.on) { Snd.init(); Snd.myTurn(); }
+};
+$('#muteBtn').textContent = Snd.on ? '🔊' : '🔇';
 
-            if (currentMode === 'point') {
-                const intersects = raycaster.intersectObject(mainMesh);
-                if (intersects.length > 0) placeUserPoint(intersects[0].point);
-            } else {
-                const closestPointMesh = getClosestPointToRay(raycaster);
-                if (closestPointMesh) togglePointSelection(closestPointMesh);
-            }
-        }
+// расстановка
+$('#placeBoard').addEventListener('click', e => {
+  if (S.myReady) return;
+  const p = cellFromEvent(e); if (!p) return;
+  Snd.init();
+  const [r, c] = p, my = S.my, idx = my.grid[r][c];
+  if (idx >= 0) { // убрать корабль
+    S.sel = my.ships[idx].size;
+    my.ships.splice(idx, 1); rebuildGrid(my);
+    S.hover = null; renderPlace(); return;
+  }
+  if (!remainingSizes(my).length) return;
+  const cells = placementCells(r, c);
+  if (canPlace(my.grid, cells)) { addShip(my, cells); S.hover = null; vib(15); }
+  else { Snd.bad(); e.target.classList.add('shake'); setTimeout(() => e.target.classList.remove('shake'), 300); return; }
+  renderPlace();
+});
+$('#placeBoard').addEventListener('pointermove', e => {
+  if (e.pointerType !== 'mouse') return;
+  const p = cellFromEvent(e);
+  const key = p ? p.join() : null;
+  if (key === (S.hover && S.hover.join())) return;
+  S.hover = p; renderPlace();
+});
+$('#placeBoard').addEventListener('pointerleave', () => { S.hover = null; renderPlace(); });
+$('#placeBoard').addEventListener('contextmenu', e => { e.preventDefault(); S.orient = S.orient === 'h' ? 'v' : 'h'; renderPlace(); });
+$('#tray').addEventListener('click', e => {
+  const b = e.target.closest('.tray-item'); if (!b || S.myReady) return;
+  const size = +b.dataset.size;
+  if (remainingSizes(S.my).includes(size)) { S.sel = size; renderPlace(); }
+});
+$('#rotateBtn').onclick = () => { S.orient = S.orient === 'h' ? 'v' : 'h'; renderPlace(); };
+$('#randomBtn').onclick = () => { S.my = randomFleet(); renderPlace(); };
+$('#clearBtn').onclick = () => { S.my = emptyMy(); S.sel = 4; renderPlace(); };
+$('#readyBtn').onclick = setReady;
+document.addEventListener('keydown', e => { if ((e.key === 'r' || e.key === 'к') && S.screen === 'place') $('#rotateBtn').click(); });
 
-        function getClosestPointToRay(raycaster) {
-            let closest = null;
-            let minDist = 0.6; 
-            interactablePoints.forEach(ptMesh => {
-                const dist = raycaster.ray.distanceToPoint(ptMesh.position);
-                if (dist < minDist) { minDist = dist; closest = ptMesh; }
-            });
-            return closest;
-        }
+// бой
+$('#enemyBoard').addEventListener('click', e => { const p = cellFromEvent(e); if (p) fire(...p); });
 
-        function placeUserPoint(position) {
-            // Назначаем автоматическую букву
-            const letter = userPointLetters[userPointIndex % userPointLetters.length];
-            userPointIndex++;
-
-            const ptMesh = createPointMesh(position, letter, 'user_point', 'user-vertex-label');
-            userGroup.add(ptMesh);
-            interactablePoints.push(ptMesh);
-        }
-
-        function togglePointSelection(mesh) {
-            const index = selectedPoints.findIndex(p => p.userData.id === mesh.userData.id);
-            if (index > -1) {
-                mesh.material = pointMaterialDefault;
-                selectedPoints.splice(index, 1);
-            } else {
-                mesh.material = pointMaterialSelected;
-                selectedPoints.push(mesh);
-                
-                if (currentMode === 'segment' && selectedPoints.length === 2) {
-                    drawSegment(selectedPoints[0], selectedPoints[1]);
-                    resetSelection();
-                } else if (currentMode === 'plane' && selectedPoints.length === 3) {
-                    drawPlane(selectedPoints[0], selectedPoints[1], selectedPoints[2]);
-                    resetSelection();
-                } else if (currentMode === 'distance' && selectedPoints.length === 2) {
-                    drawDistance(selectedPoints[0], selectedPoints[1]);
-                    resetSelection();
-                } else if (currentMode === 'angle' && selectedPoints.length === 3) {
-                    drawAngle(selectedPoints[0], selectedPoints[1], selectedPoints[2]);
-                    resetSelection();
-                }
-            }
-        }
-
-        function resetSelection() {
-            selectedPoints.forEach(mesh => mesh.material = pointMaterialDefault);
-            selectedPoints = [];
-        }
-
-        function drawSegment(p1, p2) {
-            const geometry = new THREE.BufferGeometry().setFromPoints([p1.position, p2.position]);
-            const material = new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 2, depthTest: false, transparent: true }); 
-            const line = new THREE.Line(geometry, material);
-            line.renderOrder = 999;
-            userGroup.add(line);
-        }
-
-        function drawPlane(p1, p2, p3) {
-            const geometry = new THREE.BufferGeometry();
-            const vertices = new Float32Array([
-                p1.position.x, p1.position.y, p1.position.z,
-                p2.position.x, p2.position.y, p2.position.z,
-                p3.position.x, p3.position.y, p3.position.z
-            ]);
-            geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-            geometry.computeVertexNormals();
-
-            const material = new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide, transparent: true, opacity: 0.6, depthTest: false });
-            const plane = new THREE.Mesh(geometry, material);
-            plane.renderOrder = 998;
-            
-            const edgesMat = new THREE.LineBasicMaterial({ color: 0x059669, linewidth: 2, depthTest: false });
-            const edgesMesh = new THREE.LineSegments(new THREE.EdgesGeometry(geometry), edgesMat);
-            edgesMesh.renderOrder = 999;
-
-            userGroup.add(plane);
-            userGroup.add(edgesMesh);
-        }
-
-        function drawDistance(p1, p2) {
-            const dist = p1.position.distanceTo(p2.position).toFixed(1);
-            
-            const geometry = new THREE.BufferGeometry().setFromPoints([p1.position, p2.position]);
-            const material = new THREE.LineDashedMaterial({ color: 0x38bdf8, linewidth: 2, dashSize: 0.4, gapSize: 0.2, depthTest: false, transparent: true });
-            const line = new THREE.Line(geometry, material);
-            line.computeLineDistances(); 
-            line.renderOrder = 999;
-            userGroup.add(line);
-
-            const midPoint = new THREE.Vector3().addVectors(p1.position, p2.position).multiplyScalar(0.5);
-            
-            const div = document.createElement('div');
-            div.className = 'measurement-label';
-            div.textContent = `${dist} см`;
-            const label = new CSS2DObject(div);
-            
-            const dummy = new THREE.Object3D();
-            dummy.position.copy(midPoint);
-            dummy.add(label);
-            userGroup.add(dummy);
-        }
-
-        function drawAngle(p1, p2, p3) {
-            // p2 - это вершина угла
-            const v1 = new THREE.Vector3().subVectors(p1.position, p2.position).normalize();
-            const v2 = new THREE.Vector3().subVectors(p3.position, p2.position).normalize();
-            
-            const angleRad = v1.angleTo(v2);
-            const angleDeg = THREE.MathUtils.radToDeg(angleRad).toFixed(1);
-
-            const geom1 = new THREE.BufferGeometry().setFromPoints([p1.position, p2.position]);
-            const geom2 = new THREE.BufferGeometry().setFromPoints([p2.position, p3.position]);
-            const mat = new THREE.LineBasicMaterial({ color: 0xa855f7, linewidth: 2, depthTest: false, transparent: true }); // Пурпурный
-            const line1 = new THREE.Line(geom1, mat);
-            const line2 = new THREE.Line(geom2, mat);
-            line1.renderOrder = 999; line2.renderOrder = 999;
-            
-            userGroup.add(line1); 
-            userGroup.add(line2);
-
-            // Позиция текста (чуть смещена от вершины по биссектрисе)
-            const bisector = new THREE.Vector3().addVectors(v1, v2).normalize().multiplyScalar(0.7);
-            const labelPos = new THREE.Vector3().copy(p2.position).add(bisector);
-            
-            const div = document.createElement('div');
-            div.className = 'measurement-label';
-            div.textContent = `${angleDeg}°`;
-            div.style.background = 'rgba(168, 85, 247, 0.9)'; // Пурпурный фон для угла
-            div.style.borderColor = '#d8b4fe';
-            const label = new CSS2DObject(div);
-            
-            const dummy = new THREE.Object3D();
-            dummy.position.copy(labelPos);
-            dummy.add(label);
-            userGroup.add(dummy);
-        }
-
-        function clearUserDrawings() {
-            clearGroupWithLabels(userGroup);
-            interactablePoints = interactablePoints.filter(mesh => mesh.userData.type !== 'user_point');
-            userPointIndex = 0; // Сбрасываем алфавит для новых точек
-            resetSelection();
-        }
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            labelRenderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.update();
-            renderer.render(scene, camera);
-            labelRenderer.render(scene, camera);
-        }
-    </script>
+/* ---------- Старт ---------- */
+(function boot() {
+  const q = new URLSearchParams(location.search);
+  const j = (q.get('join') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (j.length === 5) {
+    $('#codeInput').value = j;
+    if (store.get('sb-name', '')) setTimeout(() => $('#joinBtn').click(), 300); // имя уже есть — сразу подключаемся
+    else { $('#nameInput').focus(); toast('Введите имя и нажмите «Присоединиться»', 4000); }
+  }
+})();
+</script>
 </body>
 </html>
