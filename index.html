@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Морской бой</title>
 <meta name="theme-color" content="#0b1e33">
 <link rel="manifest" href="manifest.webmanifest">
@@ -16,14 +16,15 @@
 :root{
   --bg:#0b1e33; --bg2:#10294a; --card:#13304f; --line:#24507d;
   --text:#e8f1fb; --muted:#9db4cc; --accent:#3ea6ff; --accent2:#1f7fd6;
-  --water:#1a4670; --water2:#1d4f7d; --ship:#c9d6e3; --hit:#ff5a4f; --sunk:#8e2620;
+  --water:#1a4670; --ship:#c9d6e3; --hit:#ff5a4f; --sunk:#8e2620;
   --miss:#9fc3e6; --ok:#3ccf7a; --warn:#ffb648;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);
   font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
-body{min-height:100vh;padding-bottom:env(safe-area-inset-bottom)}
+body{min-height:100vh;padding-bottom:env(safe-area-inset-bottom);overflow-x:hidden}
 button,input{font:inherit}
+button{touch-action:manipulation}
 [hidden]{display:none!important}
 
 .top{display:flex;justify-content:space-between;align-items:center;
@@ -40,6 +41,7 @@ main{max-width:980px;margin:0 auto;padding:16px}
 .screen{display:flex;flex-direction:column;gap:14px;align-items:center}
 .card{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:16px;
   padding:20px;display:flex;flex-direction:column;gap:12px}
+.card-title{font-size:20px;font-weight:700}
 .center{align-items:center;text-align:center}
 .lbl{font-size:14px;color:var(--muted)}
 input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:18px}
@@ -47,6 +49,18 @@ input:focus{outline:2px solid var(--accent);border-color:transparent}
 .code-input{text-transform:uppercase;letter-spacing:.3em;text-align:center;font-size:24px;font-weight:700}
 .sep{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px}
 .sep::before,.sep::after{content:"";flex:1;height:1px;background:var(--line)}
+
+.mode-btn{display:flex;align-items:center;gap:14px;text-align:left;width:100%;padding:16px;border-radius:14px;
+  border:1px solid var(--line);background:var(--bg2);color:var(--text);cursor:pointer}
+.mode-btn:active{transform:scale(.98)}
+.mode-btn .mi{font-size:30px}
+.mode-btn b{display:block;font-size:17px}
+.mode-btn small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;padding:10px 4px;background:var(--bg);color:var(--text);border:0;cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--accent2);font-weight:600}
 
 .btn{border:1px solid var(--line);background:var(--bg2);color:var(--text);padding:10px 16px;border-radius:10px;cursor:pointer;font-size:16px}
 .btn:active{transform:scale(.97)}
@@ -57,6 +71,7 @@ input:focus{outline:2px solid var(--accent);border-color:transparent}
 .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .col{display:flex;flex-direction:column;gap:8px;width:100%}
 .muted{color:var(--muted)} .small{font-size:13px}
+p{margin:0}
 .hint{color:var(--muted);font-size:14px;max-width:420px;text-align:center;margin:0}
 .rules{max-width:420px;width:100%;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
 .rules summary{cursor:pointer;font-weight:600}
@@ -67,14 +82,15 @@ input:focus{outline:2px solid var(--accent);border-color:transparent}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 .bar{width:100%;max-width:440px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.place-msg{min-height:20px;font-size:14px;color:var(--warn);text-align:center}
 
 /* ---- доски ---- */
 .board{--size:min(calc(100vw - 32px), 440px);width:var(--size);display:grid;
-  grid-template-columns:repeat(11,1fr);gap:2px;user-select:none;touch-action:manipulation}
+  grid-template-columns:repeat(11,1fr);gap:2px;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 .small-board{--size:min(calc(100vw - 32px), 300px)}
 .board .h{display:flex;align-items:center;justify-content:center;font-size:calc(var(--size)/28);color:var(--muted);aspect-ratio:1}
 .cell{aspect-ratio:1;background:var(--water);border-radius:3px;position:relative;display:flex;align-items:center;justify-content:center;
-  font-size:calc(var(--size)/16);line-height:1;font-weight:700}
+  font-size:calc(var(--size)/16);line-height:1;font-weight:700;cursor:pointer}
 .cell.ship{background:var(--ship)}
 .cell.prev-ok{background:rgba(62,166,255,.6)}
 .cell.prev-bad{background:rgba(255,90,79,.55)}
@@ -84,16 +100,15 @@ input:focus{outline:2px solid var(--accent);border-color:transparent}
 .cell.hit::after{content:"✕";color:#fff}
 .cell.sunk{background:var(--sunk)}
 .cell.sunk::after{content:"✕";color:#ffb3ad}
-.cell.ship.hit{background:var(--hit)}
-.cell.ship.sunk{background:var(--sunk)}
 .cell.reveal{box-shadow:inset 0 0 0 2px var(--warn)}
 .cell.pending{animation:pulse .6s ease-in-out infinite alternate}
 .cell.last{outline:2px solid #fff;outline-offset:-2px}
 @keyframes pulse{from{background:var(--water)}to{background:var(--accent)}}
 .cell.shake{animation:shake .3s}
 @keyframes shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
-.enemy-wrap.active .cell.open{cursor:crosshair}
+.my-wrap .cell{cursor:default}
 .enemy-wrap.active .board{outline:2px solid var(--ok);outline-offset:4px;border-radius:4px}
+.enemy-wrap:not(.active) .cell{cursor:default}
 
 .tray{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:440px}
 .tray-item{display:flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg2);cursor:pointer;color:var(--text)}
@@ -118,33 +133,32 @@ input:focus{outline:2px solid var(--accent);border-color:transparent}
 }
 
 .modal{position:fixed;inset:0;background:rgba(3,10,20,.7);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
-.modal-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;width:100%;max-width:360px;text-align:center}
-.modal-title{font-size:28px;font-weight:800;margin-bottom:4px}
+.modal-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;width:100%;max-width:360px;text-align:center;display:flex;flex-direction:column;gap:10px}
+.modal-title{font-size:26px;font-weight:800}
+.pass{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px;z-index:9}
+.pass-card{width:100%;max-width:360px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
+.pass-icon{font-size:54px}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#000c;color:#fff;
   padding:10px 16px;border-radius:10px;z-index:20;max-width:90vw;text-align:center}
+.shot-log{min-height:20px;font-size:14px;color:var(--muted);text-align:center}
 </style>
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
 <header class="top">
   <div class="brand">⚓ Морской бой</div>
   <div class="top-right">
-    <span id="netStatus" class="pill off" hidden>не в сети</span>
-    <button id="muteBtn" class="icon-btn" aria-label="Звук">🔊</button>
+    <span id="netStatus" class="pill off" hidden>нет связи</span>
+    <button id="muteBtn" class="icon-btn" type="button" aria-label="Звук">🔊</button>
   </div>
 </header>
 
 <main>
-  <!-- МЕНЮ -->
+  <!-- ГЛАВНОЕ МЕНЮ -->
   <section id="scr-menu" class="screen">
     <div class="card">
-      <label class="lbl" for="nameInput">Ваше имя</label>
-      <input id="nameInput" maxlength="16" placeholder="Игрок" autocomplete="off">
-      <button id="hostBtn" class="btn primary big">Создать игру</button>
-      <div class="sep"><span>или</span></div>
-      <label class="lbl" for="codeInput">Код игры от соперника</label>
-      <input id="codeInput" class="code-input" maxlength="5" placeholder="XXXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
-      <button id="joinBtn" class="btn big">Присоединиться</button>
+      <button type="button" class="mode-btn" data-go="ai"><span class="mi">🤖</span><span><b>Против компьютера</b><small>3 уровня сложности</small></span></button>
+      <button type="button" class="mode-btn" data-go="hot"><span class="mi">👥</span><span><b>Вдвоём на одном устройстве</b><small>передаёте телефон по очереди</small></span></button>
+      <button type="button" class="mode-btn" data-go="net"><span class="mi">🌐</span><span><b>По сети</b><small>каждый со своего устройства</small></span></button>
     </div>
     <details class="rules">
       <summary>Правила</summary>
@@ -156,7 +170,52 @@ input:focus{outline:2px solid var(--accent);border-color:transparent}
         <li>Побеждает тот, кто первым потопит весь флот соперника.</li>
       </ul>
     </details>
-    <p class="hint">Чтобы поставить как приложение: в браузере «Поделиться» → «На экран Домой» (iPhone) или меню ⋮ → «Установить приложение» (Android).</p>
+  </section>
+
+  <!-- НАСТРОЙКА: КОМПЬЮТЕР -->
+  <section id="scr-ai" class="screen" hidden>
+    <div class="card">
+      <div class="card-title">Против компьютера</div>
+      <div class="lbl">Сложность</div>
+      <div class="seg" id="aiLevel">
+        <button type="button" data-v="easy">Лёгкий</button>
+        <button type="button" data-v="normal">Обычный</button>
+        <button type="button" data-v="hard">Сложный</button>
+      </div>
+      <p id="aiLevelHint" class="muted small"></p>
+      <button type="button" id="aiStart" class="btn primary big">Начать</button>
+      <button type="button" class="btn ghost backBtn">← Назад</button>
+    </div>
+  </section>
+
+  <!-- НАСТРОЙКА: ОДНО УСТРОЙСТВО -->
+  <section id="scr-hot" class="screen" hidden>
+    <div class="card">
+      <div class="card-title">Вдвоём на одном устройстве</div>
+      <label class="lbl" for="hotName1">Игрок 1</label>
+      <input id="hotName1" maxlength="16" placeholder="Игрок 1" autocomplete="off">
+      <label class="lbl" for="hotName2">Игрок 2</label>
+      <input id="hotName2" maxlength="16" placeholder="Игрок 2" autocomplete="off">
+      <p class="muted small">Каждый расставляет корабли, пока второй не смотрит. Между ходами приложение закрывает экран, чтобы передать устройство.</p>
+      <button type="button" id="hotStart" class="btn primary big">Начать</button>
+      <button type="button" class="btn ghost backBtn">← Назад</button>
+    </div>
+  </section>
+
+  <!-- НАСТРОЙКА: СЕТЬ -->
+  <section id="scr-net" class="screen" hidden>
+    <div class="card">
+      <div class="card-title">По сети</div>
+      <label class="lbl" for="nameInput">Ваше имя</label>
+      <input id="nameInput" maxlength="16" placeholder="Игрок" autocomplete="off">
+      <button type="button" id="hostBtn" class="btn primary big">Создать игру</button>
+      <div class="sep"><span>или</span></div>
+      <label class="lbl" for="codeInput">Код игры от соперника</label>
+      <input id="codeInput" class="code-input" maxlength="5" placeholder="XXXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <button type="button" id="joinBtn" class="btn big">Присоединиться</button>
+      <p class="muted small">Работает в опубликованной версии (например, на GitHub Pages) при наличии интернета у обоих.</p>
+      <button type="button" class="btn ghost backBtn">← Назад</button>
+    </div>
   </section>
 
   <!-- ОЖИДАНИЕ (хост) -->
@@ -165,11 +224,11 @@ input:focus{outline:2px solid var(--accent);border-color:transparent}
       <p class="muted">Код игры — продиктуйте или отправьте сопернику</p>
       <div id="hostCode" class="big-code">·····</div>
       <div class="row">
-        <button id="shareBtn" class="btn primary">Отправить ссылку</button>
-        <button id="copyBtn" class="btn">Копировать код</button>
+        <button type="button" id="shareBtn" class="btn primary">Отправить ссылку</button>
+        <button type="button" id="copyBtn" class="btn">Копировать код</button>
       </div>
       <p id="hostWait" class="muted"><span class="spinner"></span> Подключаемся к серверу…</p>
-      <button class="btn ghost leaveBtn">Отмена</button>
+      <button type="button" class="btn ghost leaveBtn">Отмена</button>
     </div>
   </section>
 
@@ -177,46 +236,58 @@ input:focus{outline:2px solid var(--accent);border-color:transparent}
   <section id="scr-join" class="screen" hidden>
     <div class="card center">
       <p><span class="spinner"></span> Подключаемся к игре <b id="joinCode"></b>…</p>
-      <button class="btn ghost leaveBtn">Отмена</button>
+      <button type="button" class="btn ghost leaveBtn">Отмена</button>
     </div>
   </section>
 
   <!-- РАССТАНОВКА -->
   <section id="scr-place" class="screen" hidden>
     <div class="bar">
-      <div>Расстановка · против <b class="peerName">Соперник</b></div>
-      <div id="peerPlaceStatus" class="muted small">соперник расставляет…</div>
+      <div id="placeTitle">Расстановка</div>
+      <div id="peerPlaceStatus" class="muted small"></div>
     </div>
     <div id="placeBoard" class="board"></div>
+    <div id="placeMsg" class="place-msg">&nbsp;</div>
     <div id="tray" class="tray"></div>
     <div class="row">
-      <button id="rotateBtn" class="btn">↔ Горизонтально</button>
-      <button id="randomBtn" class="btn">🎲 Случайно</button>
-      <button id="clearBtn" class="btn">Очистить</button>
+      <button type="button" id="rotateBtn" class="btn">↔ Горизонтально</button>
+      <button type="button" id="randomBtn" class="btn">🎲 Случайно</button>
+      <button type="button" id="clearBtn" class="btn">Очистить</button>
     </div>
-    <p class="hint small">Выберите корабль, нажмите на клетку — он встанет от неё вправо/вниз. Нажмите на поставленный корабль, чтобы убрать его.</p>
-    <button id="readyBtn" class="btn primary big" disabled>Готов</button>
-    <button class="btn ghost leaveBtn">Выйти</button>
+    <p class="hint small">Выберите корабль внизу и нажмите на клетку — он встанет от неё вправо (или вниз). Нажмите на поставленный корабль, чтобы взять его и переставить.</p>
+    <button type="button" id="readyBtn" class="btn primary big" disabled>Готов</button>
+    <button type="button" class="btn ghost leaveBtn">Выйти</button>
   </section>
 
   <!-- БОЙ -->
   <section id="scr-battle" class="screen" hidden>
     <div id="turnBanner" class="turn">…</div>
+    <div id="shotLog" class="shot-log">&nbsp;</div>
     <div class="boards">
       <div class="board-wrap enemy-wrap">
-        <div class="board-title">Поле соперника · <b class="peerName">Соперник</b></div>
+        <div class="board-title" id="enemyTitle">Поле соперника</div>
         <div id="enemyBoard" class="board"></div>
         <div id="enemyFleet" class="fleet"></div>
       </div>
       <div class="board-wrap my-wrap">
-        <div class="board-title">Ваше поле</div>
+        <div class="board-title" id="myTitle">Ваше поле</div>
         <div id="myBoard" class="board small-board"></div>
         <div id="myFleet" class="fleet"></div>
       </div>
     </div>
-    <button class="btn ghost leaveBtn">Выйти из игры</button>
+    <button type="button" class="btn ghost leaveBtn">Выйти из игры</button>
   </section>
 </main>
+
+<!-- Экран передачи устройства -->
+<div id="pass" class="pass" hidden>
+  <div class="pass-card">
+    <div class="pass-icon">🔄</div>
+    <div id="passTitle" class="modal-title"></div>
+    <p id="passText" class="muted"></p>
+    <button type="button" id="passBtn" class="btn primary big">Показать</button>
+  </div>
+</div>
 
 <!-- МОДАЛКА -->
 <div id="modal" class="modal" hidden>
@@ -230,18 +301,21 @@ input:focus{outline:2px solid var(--accent);border-color:transparent}
 
 <script>
 'use strict';
-/* ===== Морской бой: 2 игрока по сети (PeerJS / WebRTC) ===== */
+/* ===== Морской бой: против компьютера, вдвоём на одном устройстве, по сети (PeerJS) ===== */
 
 const N = 10;
 const FLEET = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
 const COLS = 'АБВГДЕЖЗИК';
 const PREFIX = 'mx-seabattle-v1-';
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const LOCAL = new URLSearchParams(location.search).has('local'); // тест в двух вкладках без сети
+const PEERJS_URL = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+const QS = (() => { try { return new URLSearchParams(location.search); } catch { return new URLSearchParams(''); } })();
+const LOCAL = QS.has('local'); // тест сетевого режима в двух вкладках одного браузера
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const rand = n => Math.floor(Math.random() * n);
+const pick = a => a[rand(a.length)];
 const randStr = (n, chars = 'abcdefghijklmnopqrstuvwxyz0123456789') => Array.from({ length: n }, () => chars[rand(chars.length)]).join('');
 const grid = v => Array.from({ length: N }, () => Array(N).fill(v));
 const inB = (r, c) => r >= 0 && r < N && c >= 0 && c < N;
@@ -250,27 +324,15 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, v); } catch { } }
 };
 
-/* ---------- Состояние ---------- */
-const S = {
-  role: null,          // 'host' | 'guest'
-  code: null,
-  name: '', peerName: 'Соперник',
-  screen: 'menu',
-  phase: 'none',       // 'place' | 'battle' | 'over'
-  gameNo: 0,
-  my: null,            // {grid, ships, shots}
-  enemy: null,         // grid: 0 ?, 1 промах, 2 попал, 3 потоплен, 4 авто-пусто, 5 показан в конце
-  enemySunk: [],
-  myReady: false, peerReady: false,
-  myTurn: false, pending: null, last: null, myLast: null,
-  myRematch: false, peerRematch: false, lastWinner: null,
-  sel: 4, orient: 'h', hover: null,
-  everConnected: false,
-};
+/* =====================================================================
+   ЛОГИКА ПОЛЯ
+   board = { grid[r][c]: индекс корабля или -1, ships: [{size,cells,hits}], shots[r][c] }
+   shots: 0 — не стреляли, 1 — промах, 2 — попадание, 3 — пусто вокруг потопленного (отмечено)
+   view (что игрок знает о поле соперника): 0 ?, 1 промах, 2 попал, 3 потоплен, 4 точно пусто, 5 показан в конце
+   ===================================================================== */
+function emptyBoard() { return { grid: grid(-1), ships: [], shots: grid(0) }; }
+function newSide(name) { return { name, my: emptyBoard(), view: grid(0), sunk: [], last: null, lastIn: null, shots: 0, hits: 0 }; }
 
-function emptyMy() { return { grid: grid(-1), ships: [], shots: grid(0) }; }
-
-/* ---------- Логика поля ---------- */
 function shipCells(r, c, size, o) {
   const cells = [];
   for (let i = 0; i < size; i++) cells.push(o === 'h' ? [r, c + i] : [r + i, c]);
@@ -286,35 +348,50 @@ function canPlace(g, cells) {
   }
   return true;
 }
-function addShip(my, cells) {
-  const idx = my.ships.length;
-  my.ships.push({ size: cells.length, cells, hits: 0 });
-  for (const [r, c] of cells) my.grid[r][c] = idx;
+function addShip(b, cells) {
+  const idx = b.ships.length;
+  b.ships.push({ size: cells.length, cells, hits: 0 });
+  for (const [r, c] of cells) b.grid[r][c] = idx;
 }
-function rebuildGrid(my) {
-  my.grid = grid(-1);
-  my.ships.forEach((s, i) => s.cells.forEach(([r, c]) => my.grid[r][c] = i));
+function removeShip(b, idx) {
+  b.ships.splice(idx, 1);
+  b.grid = grid(-1);
+  b.ships.forEach((s, i) => s.cells.forEach(([r, c]) => b.grid[r][c] = i));
 }
-function remainingSizes(my) {
+function remainingSizes(b) {
   const left = [...FLEET];
-  for (const s of my.ships) left.splice(left.indexOf(s.size), 1);
+  for (const s of b.ships) { const i = left.indexOf(s.size); if (i >= 0) left.splice(i, 1); }
+  return left;
+}
+function fleetLeftAfter(sunk) {
+  const left = [...FLEET];
+  for (const s of sunk) { const i = left.indexOf(s); if (i >= 0) left.splice(i, 1); }
   return left;
 }
 function randomFleet() {
-  for (let attempt = 0; attempt < 200; attempt++) {
-    const my = emptyMy(); let ok = true;
+  for (let attempt = 0; attempt < 500; attempt++) {
+    const b = emptyBoard(); let ok = true;
     for (const size of FLEET) {
       let placed = false;
       for (let t = 0; t < 300 && !placed; t++) {
         const o = rand(2) ? 'h' : 'v';
         const cells = shipCells(rand(N), rand(N), size, o);
-        if (canPlace(my.grid, cells)) { addShip(my, cells); placed = true; }
+        if (canPlace(b.grid, cells)) { addShip(b, cells); placed = true; }
       }
       if (!placed) { ok = false; break; }
     }
-    if (ok) return my;
+    if (ok) return b;
   }
-  return emptyMy();
+  throw new Error('randomFleet failed');
+}
+function validFleet(b) {
+  if (remainingSizes(b).length || b.ships.length !== FLEET.length) return false;
+  const g = grid(-1);
+  for (let i = 0; i < b.ships.length; i++) {
+    if (!canPlace(g, b.ships[i].cells)) return false;
+    for (const [r, c] of b.ships[i].cells) g[r][c] = i;
+  }
+  return true;
 }
 function neighbors8(r, c) {
   const out = [];
@@ -323,41 +400,345 @@ function neighbors8(r, c) {
   return out;
 }
 
-/* ---------- Звук и вибрация ---------- */
+/* Выстрел по полю защитника. Повторный выстрел в ту же клетку ничего не меняет и возвращает тот же результат. */
+function applyShot(b, r, c) {
+  const idx = b.grid[r][c];
+  const fresh = b.shots[r][c] !== 1 && b.shots[r][c] !== 2;
+  if (fresh) {
+    b.shots[r][c] = idx < 0 ? 1 : 2;
+    if (idx >= 0) b.ships[idx].hits++;
+  }
+  let res = 'miss', cells = null, size = 0;
+  if (idx >= 0) {
+    const s = b.ships[idx];
+    res = s.hits >= s.size ? 'sunk' : 'hit';
+    if (res === 'sunk') {
+      cells = s.cells; size = s.size;
+      for (const [sr, sc] of cells) for (const [nr, nc] of neighbors8(sr, sc))
+        if (b.shots[nr][nc] === 0 && b.grid[nr][nc] < 0) b.shots[nr][nc] = 3;
+    }
+  }
+  const over = b.ships.every(s => s.hits >= s.size);
+  return { r, c, res, cells, size, over, fresh };
+}
+/* Стрелок обновляет свои знания о поле соперника */
+function applyView(side, m) {
+  const V = side.view, { r, c } = m;
+  side.last = [r, c]; side.shots++;
+  if (m.res === 'miss') { V[r][c] = 1; return; }
+  side.hits++;
+  if (m.res === 'hit') {
+    V[r][c] = 2;
+    // по диагонали от попадания кораблей быть не может
+    for (const [dr, dc] of [[-1, -1], [-1, 1], [1, -1], [1, 1]])
+      if (inB(r + dr, c + dc) && V[r + dr][c + dc] === 0) V[r + dr][c + dc] = 4;
+  } else {
+    for (const [sr, sc] of m.cells) V[sr][sc] = 3;
+    for (const [sr, sc] of m.cells) for (const [nr, nc] of neighbors8(sr, sc)) if (V[nr][nc] === 0) V[nr][nc] = 4;
+    side.sunk.push(m.size);
+  }
+}
+const RES_TXT = { miss: 'мимо', hit: 'ранил', sunk: 'потопил!' };
+function logShot(who, r, c, res) { S.log = `${who}: ${COLS[c]}${r + 1} — ${RES_TXT[res]}`; }
+function revealInto(view, board) {
+  for (const s of board.ships) for (const [r, c] of s.cells) if (view[r][c] === 0 || view[r][c] === 4) view[r][c] = 5;
+}
+
+/* =====================================================================
+   ИИ
+   ===================================================================== */
+const AI_HINT = {
+  easy: 'Стреляет наугад, раненые корабли добивает не всегда.',
+  normal: 'Раненые корабли всегда добивает, но иногда стреляет впустую.',
+  hard: 'Считает вероятность для каждой клетки. Серьёзный соперник.',
+};
+function openCells(V) {
+  const o = [];
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (V[r][c] === 0) o.push([r, c]);
+  return o;
+}
+function hitCells(V) {
+  const o = [];
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (V[r][c] === 2) o.push([r, c]);
+  return o;
+}
+// клетки для добивания раненого корабля
+function targetCells(V, hits) {
+  const [r0, c0] = hits[0];
+  const isHit = (r, c) => inB(r, c) && V[r][c] === 2;
+  const open = (r, c) => inB(r, c) && V[r][c] === 0;
+  let line = null;
+  if (isHit(r0, c0 - 1) || isHit(r0, c0 + 1)) {
+    let a = c0, b = c0; while (isHit(r0, a - 1)) a--; while (isHit(r0, b + 1)) b++;
+    line = [[r0, a - 1], [r0, b + 1]];
+  } else if (isHit(r0 - 1, c0) || isHit(r0 + 1, c0)) {
+    let a = r0, b = r0; while (isHit(a - 1, c0)) a--; while (isHit(b + 1, c0)) b++;
+    line = [[a - 1, c0], [b + 1, c0]];
+  }
+  if (line) { const t = line.filter(([r, c]) => open(r, c)); if (t.length) return t; }
+  const t = [];
+  for (const [r, c] of hits) for (const [dr, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) if (open(r + dr, c + dc)) t.push([r + dr, c + dc]);
+  return t;
+}
+// корабль не может касаться чужого попадания, не входящего в него самого
+function touchesOtherHit(V, cells) {
+  const own = new Set(cells.map(([r, c]) => r * N + c));
+  for (const [r, c] of cells) for (const [nr, nc] of neighbors8(r, c))
+    if (V[nr][nc] === 2 && !own.has(nr * N + nc)) return true;
+  return false;
+}
+function densityPick(V, sunk) {
+  const left = fleetLeftAfter(sunk), hits = hitCells(V), W = grid(0);
+  for (const size of left) for (const o of size === 1 ? ['h'] : ['h', 'v'])
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      const cells = shipCells(r, c, size, o);
+      let ok = true, h = 0;
+      for (const [rr, cc] of cells) {
+        if (!inB(rr, cc)) { ok = false; break; }
+        const v = V[rr][cc];
+        if (v === 2) h++; else if (v !== 0) { ok = false; break; }
+      }
+      if (!ok) continue;
+      if (hits.length && !h) continue;
+      if (h && touchesOtherHit(V, cells)) continue;
+      const w = hits.length ? Math.pow(30, h) : 1;
+      for (const [rr, cc] of cells) if (V[rr][cc] === 0) W[rr][cc] += w;
+    }
+  let best = -1, bestCells = [];
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (V[r][c] === 0) {
+    if (W[r][c] > best) { best = W[r][c]; bestCells = [[r, c]]; }
+    else if (W[r][c] === best) bestCells.push([r, c]);
+  }
+  return bestCells.length ? pick(bestCells) : null;
+}
+function aiPick(V, sunk, level) {
+  const open = openCells(V);
+  if (!open.length && level === 'hard') return null;
+  const hits = hitCells(V);
+  if (level === 'easy' || level === 'normal') {
+    // лёгкий не пользуется подсказками «точно пусто» и добивает раненых только иногда; обычный добивает всегда
+    if (hits.length && (level === 'normal' || Math.random() < 0.6)) { const t = targetCells(V, hits); if (t.length) return pick(t); }
+    const unshot = [];
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (V[r][c] === 0 || V[r][c] === 4) unshot.push([r, c]);
+    // обычный в половине случаев учитывает «точно пусто»
+    if (level === 'normal' && open.length && Math.random() < 0.6) return pick(open);
+    return unshot.length ? pick(unshot) : null;
+  }
+  return densityPick(V, sunk) || pick(open);
+}
+
+/* =====================================================================
+   ЗВУК
+   ===================================================================== */
 const Snd = {
   ctx: null, on: store.get('sb-sound', '1') === '1',
   init() {
-    if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch { } }
-    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+    try {
+      if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+    } catch { this.ctx = null; }
   },
   tone(f1, f2, dur, type = 'sine', vol = .25, delay = 0) {
     if (!this.on || !this.ctx) return;
-    const t = this.ctx.currentTime + delay, o = this.ctx.createOscillator(), g = this.ctx.createGain();
-    o.type = type; o.frequency.setValueAtTime(f1, t); o.frequency.exponentialRampToValueAtTime(Math.max(f2, 1), t + dur);
-    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
-    o.connect(g).connect(this.ctx.destination); o.start(t); o.stop(t + dur + .05);
+    try {
+      const t = this.ctx.currentTime + delay, o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      o.type = type; o.frequency.setValueAtTime(f1, t); o.frequency.exponentialRampToValueAtTime(Math.max(f2, 1), t + dur);
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+      o.connect(g).connect(this.ctx.destination); o.start(t); o.stop(t + dur + .05);
+    } catch { }
   },
   noise(dur, freq, vol = .4, delay = 0) {
     if (!this.on || !this.ctx) return;
-    const ctx = this.ctx, t = ctx.currentTime + delay;
-    const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate), d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
-    src.buffer = buf; f.type = 'lowpass'; f.frequency.setValueAtTime(freq, t); f.frequency.exponentialRampToValueAtTime(100, t + dur);
-    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
-    src.connect(f).connect(g).connect(ctx.destination); src.start(t);
+    try {
+      const ctx = this.ctx, t = ctx.currentTime + delay;
+      const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      src.buffer = buf; f.type = 'lowpass'; f.frequency.setValueAtTime(freq, t); f.frequency.exponentialRampToValueAtTime(100, t + dur);
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+      src.connect(f).connect(g).connect(ctx.destination); src.start(t);
+    } catch { }
   },
   miss() { this.noise(.35, 1800, .25); this.tone(500, 200, .2, 'sine', .08); },
   hit() { this.noise(.4, 2500, .5); this.tone(160, 40, .35, 'square', .15); vib(60); },
   sunk() { this.noise(.9, 3000, .6); this.tone(120, 30, .8, 'sawtooth', .18); this.noise(.6, 900, .4, .25); vib([100, 50, 180]); },
+  result(res) { res === 'miss' ? this.miss() : res === 'hit' ? this.hit() : this.sunk(); },
   myTurn() { this.tone(880, 1320, .12, 'sine', .12); },
+  place() { this.tone(660, 760, .06, 'sine', .08); vib(15); },
   win() { [523, 659, 784, 1047].forEach((f, i) => this.tone(f, f, .22, 'triangle', .2, i * .14)); vib([80, 60, 80, 60, 200]); },
   lose() { [392, 330, 262, 196].forEach((f, i) => this.tone(f, f * .97, .3, 'triangle', .18, i * .2)); vib(400); },
   bad() { this.tone(200, 150, .12, 'square', .08); vib(30); },
 };
 function vib(p) { try { if (Snd.on && navigator.vibrate) navigator.vibrate(p); } catch { } }
 
-/* ---------- Сеть ---------- */
+/* =====================================================================
+   СОСТОЯНИЕ
+   ===================================================================== */
+const S = {
+  mode: null,         // 'ai' | 'hot' | 'net'
+  screen: 'menu',
+  phase: 'none',      // 'place' | 'battle' | 'over'
+  sides: [],          // ai/hot: [игрок1, игрок2]; net: [я]
+  cur: 0,             // ai/hot: чей выстрел
+  viewer: 0,          // чьими глазами показываем поле
+  placing: 0,         // кто сейчас расставляет
+  busy: false,        // идёт пауза/ход компьютера
+  winner: null,       // индекс победителя (ai/hot)
+  lastLoser: null,
+  aiLevel: store.get('sb-ai', 'normal'),
+  gen: 0,             // поколение партии — гасит отложенные таймеры старых партий
+  sel: 4, orient: 'h', hover: null,
+  // сеть
+  role: null, code: null, peerName: 'Соперник', gameNo: 0,
+  myReady: false, peerReady: false, myTurn: false, pending: null,
+  myRematch: false, peerRematch: false, lastWinnerRole: null, everConnected: false,
+};
+const me = () => S.sides[0];
+function later(fn, ms) { const g = S.gen; return setTimeout(() => { if (g === S.gen) fn(); }, ms); }
+
+/* =====================================================================
+   ЗАПУСК РЕЖИМОВ
+   ===================================================================== */
+function startLocal(mode) {
+  S.mode = mode;
+  S.gen++;
+  if (mode === 'ai') S.sides = [newSide('Вы'), newSide('Компьютер')];
+  else S.sides = [newSide(readName('#hotName1', 'Игрок 1')), newSide(readName('#hotName2', 'Игрок 2'))];
+  S.phase = 'place'; S.winner = null; S.busy = false; S.cur = 0; S.viewer = 0;
+  S.placing = 0; S.log = '';
+  if (mode === 'ai') S.sides[1].my = randomFleet();
+  hideModal(); hidePass();
+  beginPlacement();
+  keepAwake();
+}
+function rematchLocal() {
+  const names = S.sides.map(s => s.name);
+  S.gen++;
+  S.sides = [newSide(names[0]), newSide(names[1])];
+  S.phase = 'place'; S.winner = null; S.busy = false; S.cur = 0; S.viewer = 0; S.placing = 0; S.log = '';
+  if (S.mode === 'ai') S.sides[1].my = randomFleet();
+  hideModal();
+  if (S.mode === 'hot') showPass(S.sides[0].name, 'Расставьте корабли. Второй игрок, не подглядывайте!', 'Расставить', () => beginPlacement());
+  else beginPlacement();
+}
+function readName(sel, def) {
+  const v = ($(sel).value || '').trim();
+  return v || def;
+}
+
+/* ---------- Расстановка (общая для всех режимов) ---------- */
+function beginPlacement() {
+  S.sel = 4; S.orient = 'h'; S.hover = null;
+  show('place');
+  placeMsg('');
+  renderPlace();
+}
+function placingBoard() { return S.sides[S.placing].my; }
+
+function onReady() {
+  const b = placingBoard();
+  if (!validFleet(b)) { placeMsg('Расставьте все 10 кораблей'); return; }
+  Snd.init();
+  if (S.mode === 'net') return netReady();
+  if (S.mode === 'ai') return startBattleLocal();
+  // вдвоём на одном устройстве
+  if (S.placing === 0) {
+    S.placing = 1;
+    showPass(S.sides[1].name, 'Ваша очередь расставлять корабли. ' + S.sides[0].name + ', не подглядывайте!', 'Расставить', () => beginPlacement());
+    show('none');
+  } else startBattleLocal();
+}
+
+/* ---------- Бой: компьютер / одно устройство ---------- */
+function startBattleLocal() {
+  S.phase = 'battle';
+  // первым ходит проигравший прошлую партию, в первой партии — игрок 1 (против компьютера — вы)
+  S.cur = S.lastLoser == null ? (S.mode === 'hot' ? rand(2) : 0) : S.lastLoser;
+  if (S.mode === 'ai') {
+    S.viewer = 0;
+    show('battle'); renderBattle();
+    if (S.cur === 1) { toast('Первым ходит компьютер'); aiTurn(); } else Snd.myTurn();
+  } else {
+    S.viewer = S.cur;
+    show('none');
+    showPass(S.sides[S.cur].name, 'Корабли расставлены. Первым стреляет ' + S.sides[S.cur].name + '.', 'В бой', () => { show('battle'); renderBattle(); });
+  }
+}
+function localShoot(r, c) {
+  if (S.phase !== 'battle') return;
+  const A = S.sides[S.cur], D = S.sides[1 - S.cur];
+  const v = A.view[r][c];
+  // «точно пусто» (4) человеку стрелять незачем; лёгкий и обычный компьютер так ошибаются нарочно
+  if (v !== 0 && !(v === 4 && S.mode === 'ai' && S.cur === 1)) return;
+  const m = applyShot(D.my, r, c);
+  D.lastIn = [r, c];
+  applyView(A, m);
+  logShot(S.mode === 'ai' ? (S.cur === 0 ? 'Вы' : 'Компьютер') : A.name, r, c, m.res);
+  Snd.result(m.res);
+  if (m.over) { renderBattle(); return finishLocal(S.cur); }
+  if (m.res === 'miss') {
+    S.busy = true;
+    renderBattle();
+    later(() => switchTurnLocal(), S.mode === 'ai' ? 700 : 1100);
+  } else {
+    renderBattle();
+    if (S.mode === 'ai' && S.cur === 1) aiTurn();
+  }
+}
+function switchTurnLocal() {
+  S.busy = false;
+  S.cur = 1 - S.cur;
+  if (S.mode === 'ai') {
+    renderBattle();
+    if (S.cur === 1) aiTurn(); else Snd.myTurn();
+  } else {
+    show('none');
+    showPass(S.sides[S.cur].name, 'Ваш ход. Остальные — отвернитесь!', 'Показать моё поле', () => {
+      S.viewer = S.cur; show('battle'); renderBattle();
+    });
+  }
+}
+function aiTurn() {
+  S.busy = true;
+  renderBattle();
+  later(() => {
+    const A = S.sides[1];
+    const p = aiPick(A.view, A.sunk, S.aiLevel);
+    S.busy = false;
+    if (p) localShoot(p[0], p[1]);
+  }, 650 + rand(350));
+}
+function finishLocal(w) {
+  S.phase = 'over'; S.busy = false; S.winner = w; S.lastLoser = 1 - w;
+  // показать оставшиеся корабли проигравшего и победителя
+  revealInto(S.sides[w].view, S.sides[1 - w].my);
+  revealInto(S.sides[1 - w].view, S.sides[w].my);
+  if (S.mode === 'hot') S.viewer = w;
+  renderBattle();
+  const humanWon = S.mode === 'hot' || w === 0;
+  later(() => humanWon ? Snd.win() : Snd.lose(), 400);
+  later(showOverModal, 900);
+}
+
+/* =====================================================================
+   СЕТЬ (PeerJS)
+   ===================================================================== */
+let peerLoading = null;
+function loadPeerJS() {
+  if (window.Peer) return Promise.resolve();
+  if (peerLoading) return peerLoading;
+  peerLoading = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = PEERJS_URL; s.async = true;
+    const to = setTimeout(() => { peerLoading = null; reject(new Error('timeout')); }, 15000);
+    s.onload = () => { clearTimeout(to); window.Peer ? resolve() : (peerLoading = null, reject(new Error('no Peer'))); };
+    s.onerror = () => { clearTimeout(to); peerLoading = null; reject(new Error('load')); };
+    document.head.appendChild(s);
+  });
+  return peerLoading;
+}
+const NET_UNAVAILABLE = 'Сетевая игра здесь недоступна: не удалось загрузить модуль связи. Откройте опубликованную версию (например, на GitHub Pages) с интернетом. Игра против компьютера и вдвоём на одном устройстве работают и без сети.';
+
 const Net = {
   peer: null, conn: null, outbox: [], token: randStr(12), guestToken: null, retryTimer: null,
 
@@ -367,14 +748,16 @@ const Net = {
   },
   flush() { const q = this.outbox; this.outbox = []; q.forEach(m => this.send(m)); },
 
-  host() {
-    S.role = 'host'; S.code = genCode();
+  async host() {
+    S.role = 'host'; S.code = randStr(5, CODE_CHARS);
     $('#hostCode').textContent = S.code;
     $('#hostWait').innerHTML = '<span class="spinner"></span> Подключаемся к серверу…';
     show('host');
     if (LOCAL) return Local.host(S.code);
-    if (!window.Peer) return fail('Не загрузилась сетевая библиотека. Проверьте интернет и обновите страницу.');
-    const peer = this.peer = new Peer(PREFIX + S.code, { debug: 1 });
+    try { await loadPeerJS(); } catch { return fail(NET_UNAVAILABLE); }
+    if (S.screen !== 'host') return;
+    let peer;
+    try { peer = this.peer = new Peer(PREFIX + S.code, { debug: 1 }); } catch { return fail(NET_UNAVAILABLE); }
     peer.on('open', () => { $('#hostWait').innerHTML = '<span class="spinner"></span> Ждём соперника…'; setNet('wait'); });
     peer.on('connection', c => {
       const tok = c.metadata && c.metadata.token;
@@ -387,27 +770,31 @@ const Net = {
     });
     peer.on('disconnected', () => { if (!peer.destroyed) setTimeout(() => { try { peer.reconnect(); } catch { } }, 1500); });
     peer.on('error', e => {
-      if (e.type === 'unavailable-id' && !S.everConnected) { peer.destroy(); this.host(); }
-      else if (['network', 'server-error', 'socket-error', 'socket-closed'].includes(e.type)) setNet('off');
+      if (e.type === 'unavailable-id' && !S.everConnected) { try { peer.destroy(); } catch { } this.host(); }
+      else if (['network', 'server-error', 'socket-error', 'socket-closed'].includes(e.type)) { setNet('off'); if (!S.everConnected && !peer.open) fail('Нет связи с сервером. Проверьте интернет.'); }
       else if (!S.everConnected) fail('Ошибка сети: ' + e.type);
     });
   },
 
-  join(code) {
+  async join(code) {
     S.role = 'guest'; S.code = code;
     $('#joinCode').textContent = code;
     show('join');
     if (LOCAL) return Local.join(code);
-    if (!window.Peer) return fail('Не загрузилась сетевая библиотека. Проверьте интернет и обновите страницу.');
-    const peer = this.peer = new Peer({ debug: 1 });
+    try { await loadPeerJS(); } catch { return fail(NET_UNAVAILABLE); }
+    if (S.screen !== 'join') return;
+    let peer;
+    try { peer = this.peer = new Peer({ debug: 1 }); } catch { return fail(NET_UNAVAILABLE); }
     peer.on('open', () => this.connectToHost());
     peer.on('disconnected', () => { if (!peer.destroyed) setTimeout(() => { try { peer.reconnect(); } catch { } }, 1500); });
     peer.on('error', e => {
       if (e.type === 'peer-unavailable') {
         if (!S.everConnected) fail('Игра с кодом ' + code + ' не найдена. Проверьте код — или соперник ещё не создал игру.');
         else this.scheduleRetry();
-      } else if (['network', 'server-error', 'socket-error', 'socket-closed'].includes(e.type)) { setNet('off'); if (S.everConnected) this.scheduleRetry(); }
-      else if (!S.everConnected) fail('Ошибка сети: ' + e.type);
+      } else if (['network', 'server-error', 'socket-error', 'socket-closed'].includes(e.type)) {
+        setNet('off');
+        if (S.everConnected) this.scheduleRetry(); else fail('Нет связи с сервером. Проверьте интернет.');
+      } else if (!S.everConnected) fail('Ошибка сети: ' + e.type);
     });
   },
 
@@ -415,11 +802,14 @@ const Net = {
     if (!this.peer || this.peer.destroyed) return;
     if (this.peer.disconnected) { try { this.peer.reconnect(); } catch { } return this.scheduleRetry(); }
     const c = this.peer.connect(PREFIX + S.code, { reliable: true, metadata: { token: this.token } });
-    this.attach(c);
+    if (c) this.attach(c);
   },
   scheduleRetry() {
     if (S.role !== 'guest' || this.retryTimer || (this.conn && this.conn.open)) return;
-    this.retryTimer = setTimeout(() => { this.retryTimer = null; if (!(this.conn && this.conn.open)) { this.connectToHost(); this.scheduleRetry(); } }, 3000);
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null;
+      if (!(this.conn && this.conn.open) && S.mode === 'net') { this.connectToHost(); this.scheduleRetry(); }
+    }, 3000);
   },
 
   attach(c) {
@@ -428,12 +818,12 @@ const Net = {
       this.conn = c;
       clearTimeout(this.retryTimer); this.retryTimer = null;
       setNet('on');
-      onConnected();
+      onNetConnected();
       this.flush();
     });
-    c.on('data', m => { try { handle(m); } catch (e) { console.error(e); } });
-    c.on('close', () => { if (this.conn === c) { this.conn = null; onDisconnected(); } });
-    c.on('error', () => { if (this.conn === c) { this.conn = null; onDisconnected(); } });
+    c.on('data', m => { try { netHandle(m); } catch (e) { console.error(e); } });
+    c.on('close', () => { if (this.conn === c) { this.conn = null; onNetDisconnected(); } });
+    c.on('error', () => { if (this.conn === c) { this.conn = null; onNetDisconnected(); } });
   },
 
   destroy() {
@@ -445,7 +835,7 @@ const Net = {
   }
 };
 
-/* Локальный транспорт для теста в двух вкладках одного браузера (?local) */
+/* Локальный транспорт для теста сетевого режима в двух вкладках одного браузера (?local) */
 const Local = {
   bc: null,
   mkConn(bc, me) {
@@ -462,7 +852,7 @@ const Local = {
   host(code) {
     const bc = this.bc = new BroadcastChannel('sb-' + code);
     const conn = this.mkConn(bc, 'host');
-    setTimeout(() => { $('#hostWait').innerHTML = '<span class="spinner"></span> Ждём соперника… (локальный режим)'; }, 100);
+    $('#hostWait').innerHTML = '<span class="spinner"></span> Ждём соперника… (локальный режим)';
     bc.onmessage = e => {
       const d = e.data; if (d.from === 'host') return;
       if (d.hello) { bc.postMessage({ from: 'host', helloAck: true }); if (!conn.open) { conn.open = true; Net.attach(conn); conn._fire('open'); } return; }
@@ -482,36 +872,32 @@ const Local = {
   close() { this.bc && this.bc.close(); this.bc = null; }
 };
 
-function genCode() { return randStr(5, CODE_CHARS); }
-
-function onConnected() {
-  Net.send({ t: 'hello', name: S.name });
+function onNetConnected() {
+  Net.send({ t: 'hello', name: me() ? me().name : S.netName });
   if (!S.everConnected) {
     S.everConnected = true;
-    S.gameNo = 0; S.lastWinner = null;
-    newGame();
+    S.gameNo = 0; S.lastWinnerRole = null;
+    netNewGame();
     keepAwake();
     return;
   }
-  hideModalIf('net');
   toast('Связь восстановлена');
-  // повтор незавершённого выстрела и синхронизация флагов
   if (S.pending) Net.send({ t: 'shot', r: S.pending.r, c: S.pending.c, g: S.gameNo });
   Net.send({ t: 'sync', g: S.gameNo, phase: S.phase, ready: S.myReady, rematch: S.myRematch });
 }
-function onDisconnected() {
-  if (!S.everConnected) return;
+function onNetDisconnected() {
+  if (!S.everConnected || S.mode !== 'net') return;
   setNet('off');
   toast('Связь потеряна — переподключаемся…');
   Net.scheduleRetry();
 }
 
-/* ---------- Протокол ---------- */
-function handle(m) {
+function netHandle(m) {
+  if (!m || typeof m !== 'object' || S.mode !== 'net') return;
   switch (m.t) {
     case 'hello':
-      S.peerName = (m.name || 'Соперник').slice(0, 16);
-      $$('.peerName').forEach(e => e.textContent = S.peerName);
+      S.peerName = String(m.name || 'Соперник').slice(0, 16);
+      renderPlace(); renderBattle();
       break;
     case 'busy':
       fail('В этой игре уже двое игроков.');
@@ -519,167 +905,125 @@ function handle(m) {
     case 'bye':
       S.everConnected = false;
       Net.destroy(); setNet(null);
+      S.gen++;
       modal('Соперник вышел', 'Игра завершена.', [['В меню', () => toMenu(), 'primary']]);
       break;
     case 'ready':
-      if (m.g === S.gameNo) { S.peerReady = true; maybeStart(); renderPlace(); }
+      if (m.g === S.gameNo) { S.peerReady = true; netMaybeStart(); renderPlace(); }
       break;
     case 'sync':
       if (m.g !== S.gameNo) break;
-      if (m.ready && !S.peerReady) { S.peerReady = true; maybeStart(); renderPlace(); }
-      if (m.rematch && !S.peerRematch) { S.peerRematch = true; maybeRematch(); }
+      if (m.ready && !S.peerReady) { S.peerReady = true; netMaybeStart(); renderPlace(); }
+      if (m.rematch && !S.peerRematch) { S.peerRematch = true; netMaybeRematch(); }
       if (S.role === 'host' && S.phase === 'battle' && m.phase === 'place')
         Net.send({ t: 'start', g: S.gameNo, first: S.myTurn ? 'host' : 'guest' });
       break;
     case 'start':
-      if (m.g === S.gameNo && S.phase === 'place') beginBattle(m.first === S.role);
+      if (m.g === S.gameNo && S.phase === 'place' && S.myReady) netBeginBattle(m.first === S.role);
       break;
     case 'shot':
-      if (m.g === S.gameNo) onShot(m.r, m.c);
+      if (m.g === S.gameNo && inB(m.r, m.c)) netOnShot(m.r, m.c);
       break;
     case 'result':
-      if (m.g === S.gameNo) onResult(m);
+      if (m.g === S.gameNo) netOnResult(m);
       break;
     case 'reveal':
-      if (m.g === S.gameNo && S.enemy) {
-        for (const [r, c] of m.cells) if (S.enemy[r][c] === 0 || S.enemy[r][c] === 4) S.enemy[r][c] = 5;
+      if (m.g === S.gameNo && Array.isArray(m.cells)) {
+        const V = me().view;
+        for (const [r, c] of m.cells) if (inB(r, c) && (V[r][c] === 0 || V[r][c] === 4)) V[r][c] = 5;
         renderBattle();
       }
       break;
     case 'rematch':
-      if (m.g === S.gameNo) { S.peerRematch = true; maybeRematch(); }
+      if (m.g === S.gameNo) { S.peerRematch = true; netMaybeRematch(); }
       break;
   }
 }
 
-function newGame() {
-  S.gameNo++;
-  S.phase = 'place';
-  S.my = emptyMy(); S.enemy = grid(0); S.enemySunk = [];
-  S.myReady = S.peerReady = false; S.myTurn = false; S.pending = null; S.last = S.myLast = null;
+function netNewGame() {
+  S.gameNo++; S.gen++;
+  S.sides = [newSide(S.netName)];
+  S.phase = 'place'; S.viewer = 0; S.placing = 0; S.log = '';
+  S.myReady = S.peerReady = false; S.myTurn = false; S.pending = null;
   S.myRematch = S.peerRematch = false;
-  S.sel = 4; S.orient = 'h'; S.hover = null;
   hideModal();
-  show('place');
-  renderPlace();
+  beginPlacement();
 }
-
-function setReady() {
-  if (remainingSizes(S.my).length) return;
-  Snd.init();
+function netReady() {
   S.myReady = true;
   Net.send({ t: 'ready', g: S.gameNo });
-  maybeStart();
+  netMaybeStart();
   renderPlace();
 }
-function maybeStart() {
+function netMaybeStart() {
   if (S.role !== 'host' || S.phase !== 'place' || !S.myReady || !S.peerReady) return;
   let first;
-  if (S.lastWinner) first = S.lastWinner === 'host' ? 'guest' : 'host'; // проигравший ходит первым
+  if (S.lastWinnerRole) first = S.lastWinnerRole === 'host' ? 'guest' : 'host';
   else first = rand(2) ? 'host' : 'guest';
   Net.send({ t: 'start', g: S.gameNo, first });
-  beginBattle(first === 'host');
+  netBeginBattle(first === 'host');
 }
-function beginBattle(myFirst) {
+function netBeginBattle(myFirst) {
   S.phase = 'battle';
   S.myTurn = myFirst;
-  show('battle');
-  renderBattle();
+  show('battle'); renderBattle();
   if (myFirst) Snd.myTurn();
 }
-
-function fire(r, c) {
-  if (S.phase !== 'battle' || !S.myTurn || S.pending || S.enemy[r][c] !== 0) return;
-  Snd.init();
+function netFire(r, c) {
+  if (S.phase !== 'battle' || !S.myTurn || S.pending || me().view[r][c] !== 0) return;
   S.pending = { r, c };
   Net.send({ t: 'shot', r, c, g: S.gameNo });
   renderBattle();
 }
-
-function onShot(r, c) {
+function netOnShot(r, c) {
   if (S.phase !== 'battle' && S.phase !== 'over') return;
-  const my = S.my, idx = my.grid[r][c], fresh = my.shots[r][c] === 0;
-  if (fresh) {
-    my.shots[r][c] = idx < 0 ? 1 : 2;
-    if (idx >= 0) my.ships[idx].hits++;
-  }
-  let res = 'miss', cells = null, size = 0;
-  if (idx >= 0) {
-    const s = my.ships[idx];
-    res = s.hits >= s.size ? 'sunk' : 'hit';
-    if (res === 'sunk') { cells = s.cells; size = s.size; }
-  }
-  const over = my.ships.every(s => s.hits >= s.size);
-  Net.send({ t: 'result', g: S.gameNo, r, c, res, cells, size, over });
-  if (!fresh) return;
-  S.myLast = [r, c];
-  if (res === 'sunk') {
-    for (const [sr, sc] of cells) for (const [nr, nc] of neighbors8(sr, sc)) if (my.shots[nr][nc] === 0 && my.grid[nr][nc] < 0) my.shots[nr][nc] = 3;
-  }
-  if (res === 'miss') { S.myTurn = true; Snd.miss(); setTimeout(() => Snd.myTurn(), 350); }
-  else if (res === 'hit') Snd.hit(); else Snd.sunk();
-  if (over) endGame(false);
+  const m = applyShot(me().my, r, c);
+  Net.send({ t: 'result', g: S.gameNo, r, c, res: m.res, cells: m.cells, size: m.size, over: m.over });
+  if (!m.fresh || S.phase !== 'battle') return;
+  me().lastIn = [r, c];
+  logShot(S.peerName, r, c, m.res);
+  Snd.result(m.res);
+  if (m.res === 'miss') { S.myTurn = true; later(() => Snd.myTurn(), 350); }
+  if (m.over) netEndGame(false);
   renderBattle();
 }
-
-function onResult(m) {
+function netOnResult(m) {
   if (!S.pending || S.pending.r !== m.r || S.pending.c !== m.c) return; // дубликат
   S.pending = null;
-  const E = S.enemy, { r, c } = m;
-  S.last = [r, c];
-  if (m.res === 'miss') {
-    E[r][c] = 1; S.myTurn = false; Snd.miss();
-  } else if (m.res === 'hit') {
-    E[r][c] = 2; Snd.hit();
-    for (const [dr, dc] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) if (inB(r + dr, c + dc) && E[r + dr][c + dc] === 0) E[r + dr][c + dc] = 4;
-  } else {
-    for (const [sr, sc] of m.cells) E[sr][sc] = 3;
-    for (const [sr, sc] of m.cells) for (const [nr, nc] of neighbors8(sr, sc)) if (E[nr][nc] === 0) E[nr][nc] = 4;
-    S.enemySunk.push(m.size); Snd.sunk();
-  }
-  if (m.over) endGame(true);
+  if (m.res === 'sunk' && !Array.isArray(m.cells)) return;
+  applyView(me(), m);
+  logShot('Вы', m.r, m.c, m.res);
+  if (m.res === 'miss') S.myTurn = false;
+  Snd.result(m.res);
+  if (m.over) netEndGame(true);
   renderBattle();
 }
-
-function endGame(won) {
-  S.phase = 'over';
-  S.myTurn = false;
-  S.lastWinner = won ? S.role : (S.role === 'host' ? 'guest' : 'host');
-  if (won) {
-    const cells = S.my.ships.flatMap(s => s.cells);
-    Net.send({ t: 'reveal', g: S.gameNo, cells });
-  }
-  setTimeout(() => { won ? Snd.win() : Snd.lose(); }, 500);
-  setTimeout(showOverModal, 900);
+function netEndGame(won) {
+  S.phase = 'over'; S.myTurn = false;
+  S.lastWinnerRole = won ? S.role : (S.role === 'host' ? 'guest' : 'host');
+  if (won) Net.send({ t: 'reveal', g: S.gameNo, cells: me().my.ships.flatMap(s => s.cells) });
+  later(() => won ? Snd.win() : Snd.lose(), 400);
+  later(showOverModal, 900);
 }
-function showOverModal() {
-  if (S.phase !== 'over') return;
-  const won = S.lastWinner === S.role;
-  const txt = S.myRematch ? 'Ждём ответа соперника…' : S.peerRematch ? S.peerName + ' предлагает реванш!' : '';
-  modal(won ? '🏆 Победа!' : 'Поражение', txt, [
-    [S.myRematch ? 'Реванш предложен ✓' : 'Реванш', () => { if (!S.myRematch) askRematch(); }, 'primary', S.myRematch],
-    ['Посмотреть поля', () => hideModal(), ''],
-    ['Выйти в меню', () => leave(), 'ghost'],
-  ]);
-}
-function askRematch() {
+function netAskRematch() {
   S.myRematch = true;
   Net.send({ t: 'rematch', g: S.gameNo });
-  maybeRematch();
+  netMaybeRematch();
   if (S.phase === 'over') showOverModal();
 }
-function maybeRematch() {
+function netMaybeRematch() {
   if (S.phase !== 'over') return;
-  if (S.myRematch && S.peerRematch) newGame();
+  if (S.myRematch && S.peerRematch) netNewGame();
   else if (!$('#modal').hidden) showOverModal();
-  else renderBattle();
 }
 
-/* ---------- Отрисовка ---------- */
+/* =====================================================================
+   ОТРИСОВКА
+   ===================================================================== */
 function show(name) {
   S.screen = name;
   $$('.screen').forEach(s => s.hidden = s.id !== 'scr-' + name);
-  window.scrollTo(0, 0);
+  try { window.scrollTo(0, 0); } catch { }
 }
 function setNet(st) {
   const el = $('#netStatus');
@@ -688,52 +1032,74 @@ function setNet(st) {
   el.className = 'pill ' + st;
   el.textContent = st === 'on' ? 'на связи' : st === 'wait' ? 'ожидание' : 'нет связи';
 }
-function boardHTML(cls) {
-  let h = '<div class="h"></div>';
-  for (let c = 0; c < N; c++) h += `<div class="h">${COLS[c]}</div>`;
+
+// Доска строится один раз; дальше меняются только классы клеток (клики не теряются при перерисовке)
+function initBoard(el) {
+  const frag = document.createDocumentFragment();
+  const h = t => { const d = document.createElement('div'); d.className = 'h'; d.textContent = t; frag.appendChild(d); };
+  h('');
+  for (let c = 0; c < N; c++) h(COLS[c]);
+  el._cells = [];
   for (let r = 0; r < N; r++) {
-    h += `<div class="h">${r + 1}</div>`;
-    for (let c = 0; c < N; c++) h += `<div class="cell ${cls(r, c)}" data-r="${r}" data-c="${c}"></div>`;
+    h(String(r + 1));
+    for (let c = 0; c < N; c++) {
+      const d = document.createElement('div');
+      d.className = 'cell'; d.dataset.r = r; d.dataset.c = c;
+      d.setAttribute('role', 'button');
+      d.setAttribute('aria-label', COLS[c] + (r + 1));
+      frag.appendChild(d); el._cells.push(d);
+    }
   }
-  return h;
+  el.innerHTML = ''; el.appendChild(frag);
+}
+function paintBoard(el, cls) {
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+    const d = el._cells[r * N + c], k = 'cell ' + cls(r, c);
+    if (d.className !== k) d.className = k;
+  }
 }
 
 function placementCells(r, c) {
   const cells = shipCells(r, c, S.sel, S.orient);
-  // если не влезает — сдвигаем внутрь поля
-  const shift = Math.max(0, (S.orient === 'h' ? c : r) + S.sel - N);
+  const shift = Math.max(0, (S.orient === 'h' ? c : r) + S.sel - N); // если не влезает — сдвигаем внутрь поля
   return cells.map(([a, b]) => S.orient === 'h' ? [a, b - shift] : [a - shift, b]);
 }
+function placeMsg(t) { $('#placeMsg').innerHTML = t || '&nbsp;'; }
 
 function renderPlace() {
   if (S.screen !== 'place') return;
-  const my = S.my, left = remainingSizes(my);
+  const b = placingBoard(), left = remainingSizes(b);
+  const locked = S.mode === 'net' && S.myReady;
   if (!left.includes(S.sel) && left.length) S.sel = Math.max(...left);
   let prev = null, prevOk = false;
-  if (S.hover && left.length && !S.myReady && my.grid[S.hover[0]][S.hover[1]] < 0) {
+  if (S.hover && left.length && !locked && b.grid[S.hover[0]][S.hover[1]] < 0) {
     prev = placementCells(...S.hover);
-    prevOk = canPlace(my.grid, prev);
+    prevOk = canPlace(b.grid, prev);
   }
   const pset = new Set((prev || []).map(([r, c]) => r * N + c));
-  $('#placeBoard').innerHTML = boardHTML((r, c) => {
-    if (my.grid[r][c] >= 0) return 'ship';
+  paintBoard($('#placeBoard'), (r, c) => {
+    if (b.grid[r][c] >= 0) return 'ship';
     if (pset.has(r * N + c)) return prevOk ? 'prev-ok' : 'prev-bad';
     return '';
   });
-  // лоток
   let t = '';
   for (const size of [4, 3, 2, 1]) {
     const cnt = left.filter(s => s === size).length;
-    t += `<button class="tray-item ${cnt ? '' : 'done'} ${S.sel === size && cnt ? 'sel' : ''}" data-size="${size}" ${S.myReady ? 'disabled' : ''}>
+    t += `<button type="button" class="tray-item ${cnt ? '' : 'done'} ${S.sel === size && cnt ? 'sel' : ''}" data-size="${size}" ${locked ? 'disabled' : ''}>
       <span class="tray-ship">${'<i></i>'.repeat(size)}</span><b>×${cnt}</b></button>`;
   }
   $('#tray').innerHTML = t;
   $('#rotateBtn').textContent = S.orient === 'h' ? '↔ Горизонтально' : '↕ Вертикально';
-  ['#rotateBtn', '#randomBtn', '#clearBtn'].forEach(s => $(s).disabled = S.myReady);
+  ['#rotateBtn', '#randomBtn', '#clearBtn'].forEach(s => $(s).disabled = locked);
   const rb = $('#readyBtn');
-  rb.disabled = S.myReady || left.length > 0;
-  rb.textContent = S.myReady ? (S.peerReady ? 'Начинаем…' : 'Ждём соперника…') : left.length ? `Осталось кораблей: ${left.length}` : 'Готов';
-  $('#peerPlaceStatus').textContent = S.peerReady ? 'соперник готов ✓' : 'соперник расставляет…';
+  rb.disabled = locked || left.length > 0;
+  if (locked) rb.textContent = S.peerReady ? 'Начинаем…' : 'Ждём соперника…';
+  else if (left.length) rb.textContent = `Осталось поставить: ${left.length}`;
+  else rb.textContent = S.mode === 'hot' && S.placing === 0 ? 'Готово — передать устройство' : 'Готов — в бой!';
+  const title = S.mode === 'hot' ? `Расставляет: <b>${esc(S.sides[S.placing].name)}</b>`
+    : S.mode === 'net' ? `Расстановка · против <b>${esc(S.peerName)}</b>` : 'Расставьте свои корабли';
+  $('#placeTitle').innerHTML = title;
+  $('#peerPlaceStatus').textContent = S.mode === 'net' ? (S.peerReady ? 'соперник готов ✓' : 'соперник расставляет…') : '';
 }
 
 function fleetHTML(sunkSizes) {
@@ -744,58 +1110,123 @@ function fleetHTML(sunkSizes) {
     return `<span class="tray-ship ${dead ? 'dead' : ''}">${'<i></i>'.repeat(size)}</span>`;
   }).join('');
 }
+function esc(s) { return String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch])); }
+
+function canShootNow() {
+  if (S.phase !== 'battle') return false;
+  if (S.mode === 'net') return S.myTurn && !S.pending;
+  if (S.busy) return false;
+  if (S.mode === 'ai') return S.cur === 0;
+  return S.viewer === S.cur;
+}
 
 function renderBattle() {
-  if (S.screen !== 'battle') return;
-  const E = S.enemy, my = S.my;
-  const canShoot = S.phase === 'battle' && S.myTurn && !S.pending;
+  if (S.screen !== 'battle' || !S.sides.length) return;
+  const V = S.sides[S.viewer];
+  const canShoot = canShootNow();
   $('.enemy-wrap').classList.toggle('active', canShoot);
   const isLast = (p, r, c) => p && p[0] === r && p[1] === c ? ' last' : '';
-  $('#enemyBoard').innerHTML = boardHTML((r, c) => {
-    const v = E[r][c];
+  paintBoard($('#enemyBoard'), (r, c) => {
+    const v = V.view[r][c];
     let k = ['open', 'miss', 'hit', 'sunk', 'auto', 'ship reveal'][v];
-    if (S.pending && S.pending.r === r && S.pending.c === c) k = 'pending';
-    return k + isLast(S.last, r, c);
+    if (S.mode === 'net' && S.pending && S.pending.r === r && S.pending.c === c) k = 'pending';
+    return k + isLast(V.last, r, c);
   });
-  $('#myBoard').innerHTML = boardHTML((r, c) => {
+  const my = V.my;
+  paintBoard($('#myBoard'), (r, c) => {
     const idx = my.grid[r][c], sh = my.shots[r][c];
     let k = idx >= 0 ? 'ship' : '';
     if (idx >= 0 && sh === 2) k += my.ships[idx].hits >= my.ships[idx].size ? ' sunk' : ' hit';
     if (sh === 1) k += ' miss';
     if (sh === 3) k += ' auto';
-    return k + isLast(S.myLast, r, c);
+    return k + isLast(V.lastIn, r, c);
   });
-  $('#enemyFleet').innerHTML = fleetHTML(S.enemySunk);
+  $('#enemyFleet').innerHTML = fleetHTML(V.sunk);
   $('#myFleet').innerHTML = fleetHTML(my.ships.filter(s => s.hits >= s.size).map(s => s.size));
+  const oppName = S.mode === 'net' ? S.peerName : S.sides[1 - S.viewer].name;
+  $('#enemyTitle').innerHTML = S.mode === 'ai' ? 'Поле компьютера' : `Поле соперника · <b>${esc(oppName)}</b>`;
+  $('#myTitle').innerHTML = S.mode === 'hot' ? `Поле · <b>${esc(V.name)}</b>` : 'Ваше поле';
+
+  $('#shotLog').innerHTML = S.log ? esc(S.log) : '&nbsp;';
   const tb = $('#turnBanner');
   if (S.phase === 'over') {
-    const won = S.lastWinner === S.role;
+    let won, txt;
+    if (S.mode === 'net') { won = S.lastWinnerRole === S.role; txt = won ? '🏆 Победа!' : 'Поражение'; }
+    else if (S.mode === 'ai') { won = S.winner === 0; txt = won ? '🏆 Победа!' : 'Поражение'; }
+    else { won = true; txt = '🏆 Победил ' + esc(S.sides[S.winner].name); }
     tb.className = 'turn' + (won ? ' mine' : '');
-    tb.innerHTML = (won ? '🏆 Победа!' : 'Поражение') + ' <button class="btn" id="reopenModal" style="margin-left:8px;padding:4px 10px">Реванш…</button>';
+    tb.innerHTML = txt + ' <button type="button" class="btn" id="reopenModal" style="margin-left:8px;padding:4px 10px">Меню</button>';
     $('#reopenModal').onclick = showOverModal;
-  } else {
-    tb.className = 'turn' + (S.myTurn ? ' mine' : '');
-    tb.textContent = S.myTurn ? (S.pending ? 'Выстрел…' : 'Ваш ход — стреляйте') : `Ходит ${S.peerName}…`;
+    return;
   }
+  let mine, txt;
+  if (S.mode === 'net') { mine = S.myTurn; txt = S.myTurn ? (S.pending ? 'Выстрел…' : 'Ваш ход — стреляйте') : `Ходит ${esc(S.peerName)}…`; }
+  else if (S.mode === 'ai') {
+    mine = S.cur === 0 && !S.busy;
+    txt = S.cur === 0 ? (S.busy ? 'Промах…' : 'Ваш ход — стреляйте') : 'Компьютер целится…';
+  } else {
+    mine = !S.busy;
+    txt = S.busy ? 'Промах! Ход переходит…' : `Стреляет ${esc(S.sides[S.cur].name)}`;
+  }
+  tb.className = 'turn' + (mine ? ' mine' : '');
+  tb.innerHTML = txt;
 }
 
-/* ---------- UI: модалка, тосты ---------- */
-let modalTag = null;
-function modal(title, text, btns, tag = null) {
-  modalTag = tag;
+function statsLine(side) {
+  if (!side || !side.shots) return '';
+  return `Выстрелов: ${side.shots}, попаданий: ${side.hits} (${Math.round(side.hits / side.shots * 100)}%)`;
+}
+function showOverModal() {
+  if (S.phase !== 'over') return;
+  if (S.mode === 'net') {
+    const won = S.lastWinnerRole === S.role;
+    const txt = S.myRematch ? 'Ждём ответа соперника…' : S.peerRematch ? S.peerName + ' предлагает реванш!' : statsLine(me());
+    return modal(won ? '🏆 Победа!' : 'Поражение', txt, [
+      [S.myRematch ? 'Реванш предложен ✓' : 'Реванш', () => { if (!S.myRematch) netAskRematch(); }, 'primary', S.myRematch],
+      ['Посмотреть поля', hideModal, ''],
+      ['Выйти в меню', leave, 'ghost'],
+    ]);
+  }
+  const w = S.winner;
+  let title, text;
+  if (S.mode === 'ai') {
+    title = w === 0 ? '🏆 Победа!' : 'Поражение';
+    text = statsLine(S.sides[0]) + (w === 0 ? '' : '. Оставшиеся корабли компьютера обведены жёлтым.');
+  } else {
+    title = '🏆 Победил ' + S.sides[w].name;
+    text = S.sides.map(s => `${s.name}: ${s.hits} из ${s.shots}`).join(' · ');
+  }
+  modal(title, text, [
+    ['Ещё партия', rematchLocal, 'primary'],
+    ['Посмотреть поля', hideModal, ''],
+    ['В меню', toMenu, 'ghost'],
+  ]);
+}
+
+/* ---------- Модалка, экран передачи, тосты ---------- */
+function modal(title, text, btns) {
   $('#modalTitle').textContent = title;
   $('#modalText').textContent = text || '';
   $('#modalText').hidden = !text;
   const box = $('#modalBtns'); box.innerHTML = '';
   for (const [label, fn, cls, disabled] of btns) {
     const b = document.createElement('button');
+    b.type = 'button';
     b.className = 'btn big ' + (cls || ''); b.textContent = label; b.disabled = !!disabled;
     b.onclick = fn; box.appendChild(b);
   }
   $('#modal').hidden = false;
 }
-function hideModal() { $('#modal').hidden = true; modalTag = null; }
-function hideModalIf(tag) { if (modalTag === tag) hideModal(); }
+function hideModal() { $('#modal').hidden = true; }
+let passCb = null;
+function showPass(name, text, btn, cb) {
+  $('#passTitle').textContent = name;
+  $('#passText').textContent = text;
+  $('#passBtn').textContent = btn;
+  passCb = cb;
+  $('#pass').hidden = false;
+}
+function hidePass() { $('#pass').hidden = true; passCb = null; }
 let toastT;
 function toast(msg, ms = 2500) {
   const t = $('#toast'); t.textContent = msg; t.hidden = false;
@@ -803,61 +1234,106 @@ function toast(msg, ms = 2500) {
 }
 function fail(msg) {
   Net.destroy(); setNet(null);
-  modal('Не получилось', msg, [['В меню', () => toMenu(), 'primary']]);
+  S.gen++;
+  modal('Не получилось', msg, [['В меню', toMenu, 'primary']]);
 }
 function toMenu() {
-  hideModal(); Net.destroy(); setNet(null);
-  S.everConnected = false; S.phase = 'none'; S.role = null;
+  hideModal(); hidePass();
+  if (S.mode === 'net') { Net.destroy(); setNet(null); }
+  S.gen++;
+  S.everConnected = false; S.phase = 'none'; S.role = null; S.mode = null; S.sides = []; S.busy = false; S.lastLoser = null;
   releaseWake();
-  history.replaceState(null, '', location.pathname + (LOCAL ? '?local' : ''));
+  try { if (QS.has('join')) history.replaceState(null, '', location.pathname + (LOCAL ? '?local' : '')); } catch { }
   show('menu');
 }
 function leave() {
-  const inGame = S.everConnected && (S.phase === 'battle');
-  const go = () => { try { Net.send({ t: 'bye' }); } catch { } setTimeout(toMenu, 150); };
-  if (inGame) modal('Выйти из игры?', 'Партия будет прервана.', [['Выйти', go, 'primary'], ['Остаться', hideModal, 'ghost']]);
-  else go();
+  if (S.mode === 'net') {
+    const go = () => { try { Net.send({ t: 'bye' }); } catch { } S.gen++; setTimeout(toMenu, 150); };
+    if (S.everConnected && S.phase === 'battle') modal('Выйти из игры?', 'Партия будет прервана.', [['Выйти', go, 'primary'], ['Остаться', hideModal, 'ghost']]);
+    else go();
+    return;
+  }
+  if (S.phase === 'battle') modal('Выйти из игры?', 'Партия будет прервана.', [['Выйти', toMenu, 'primary'], ['Остаться', hideModal, 'ghost']]);
+  else toMenu();
 }
 
-/* ---------- Не гасить экран во время игры ---------- */
+/* ---------- Не гасить экран ---------- */
 let wakeLock = null;
-async function keepAwake() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch { } }
+async function keepAwake() { try { if ('wakeLock' in navigator && document.visibilityState === 'visible') wakeLock = await navigator.wakeLock.request('screen'); } catch { } }
 function releaseWake() { try { wakeLock && wakeLock.release(); } catch { } wakeLock = null; }
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState !== 'visible' || !S.everConnected) return;
+  if (document.visibilityState !== 'visible' || !S.mode) return;
   keepAwake();
+  if (S.mode !== 'net' || !S.everConnected) return;
   if (Net.peer && Net.peer.disconnected && !Net.peer.destroyed) { try { Net.peer.reconnect(); } catch { } }
   if (S.role === 'guest' && !(Net.conn && Net.conn.open)) Net.connectToHost();
 });
 
-/* ---------- События ---------- */
+/* =====================================================================
+   СОБЫТИЯ
+   ===================================================================== */
 function cellFromEvent(e) {
-  const el = e.target.closest('.cell');
-  return el ? [+el.dataset.r, +el.dataset.c] : null;
+  const el = e.target && e.target.closest ? e.target.closest('.cell') : null;
+  return el && el.dataset.r != null ? [+el.dataset.r, +el.dataset.c] : null;
 }
 
-$('#nameInput').value = store.get('sb-name', '');
-$('#nameInput').addEventListener('input', e => store.set('sb-name', e.target.value.trim()));
-function readName() { S.name = $('#nameInput').value.trim() || 'Игрок'; }
+['#placeBoard', '#enemyBoard', '#myBoard'].forEach(s => initBoard($(s)));
 
-$('#hostBtn').onclick = () => { Snd.init(); readName(); S.everConnected = false; Net.host(); };
-$('#joinBtn').onclick = () => {
-  Snd.init(); readName();
-  const code = $('#codeInput').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if (code.length !== 5) { toast('Код — 5 символов'); return; }
-  S.everConnected = false; Net.join(code);
-};
-$('#codeInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('#joinBtn').click(); });
+// меню
+$$('[data-go]').forEach(b => b.onclick = () => { Snd.init(); show(b.dataset.go); });
+$$('.backBtn').forEach(b => b.onclick = () => show('menu'));
 $$('.leaveBtn').forEach(b => b.onclick = leave);
 
+// компьютер
+function renderAiLevel() {
+  $$('#aiLevel button').forEach(b => b.classList.toggle('on', b.dataset.v === S.aiLevel));
+  $('#aiLevelHint').textContent = AI_HINT[S.aiLevel];
+}
+$('#aiLevel').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  S.aiLevel = b.dataset.v; store.set('sb-ai', S.aiLevel); renderAiLevel();
+});
+if (!AI_HINT[S.aiLevel]) S.aiLevel = 'normal';
+renderAiLevel();
+$('#aiStart').onclick = () => { Snd.init(); S.lastLoser = null; startLocal('ai'); };
+
+// одно устройство
+$('#hotName1').value = store.get('sb-hot1', '');
+$('#hotName2').value = store.get('sb-hot2', '');
+$('#hotName1').addEventListener('input', e => store.set('sb-hot1', e.target.value.trim()));
+$('#hotName2').addEventListener('input', e => store.set('sb-hot2', e.target.value.trim()));
+$('#hotStart').onclick = () => {
+  Snd.init(); S.lastLoser = null;
+  startLocal('hot');
+  show('none');
+  showPass(S.sides[0].name, 'Расставьте корабли. ' + S.sides[1].name + ', не подглядывайте!', 'Расставить', () => beginPlacement());
+};
+$('#passBtn').onclick = () => { Snd.init(); const cb = passCb; hidePass(); cb && cb(); };
+
+// сеть
+$('#nameInput').value = store.get('sb-name', '');
+$('#nameInput').addEventListener('input', e => store.set('sb-name', e.target.value.trim()));
+function netPrep() {
+  Snd.init();
+  S.mode = 'net'; S.everConnected = false; S.sides = []; S.phase = 'none';
+  S.netName = readName('#nameInput', 'Игрок');
+}
+$('#hostBtn').onclick = () => { netPrep(); Net.host(); };
+$('#joinBtn').onclick = () => {
+  const code = $('#codeInput').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (code.length !== 5) { toast('Код — 5 символов'); return; }
+  netPrep(); Net.join(code);
+};
+$('#codeInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('#joinBtn').click(); });
 function shareLink() { return location.origin + location.pathname + '?join=' + S.code + (LOCAL ? '&local' : ''); }
 $('#shareBtn').onclick = async () => {
   const url = shareLink(), text = `Сыграем в морской бой? Код: ${S.code}`;
-  if (navigator.share) { try { await navigator.share({ title: 'Морской бой', text, url }); return; } catch { return; } }
-  try { await navigator.clipboard.writeText(text + '\n' + url); toast('Ссылка скопирована'); } catch { toast(url, 5000); }
+  if (navigator.share) { try { await navigator.share({ title: 'Морской бой', text, url }); } catch { } return; }
+  try { await navigator.clipboard.writeText(text + '\n' + url); toast('Ссылка скопирована'); } catch { toast(url, 6000); }
 };
-$('#copyBtn').onclick = async () => { try { await navigator.clipboard.writeText(S.code); toast('Код скопирован'); } catch { toast('Код: ' + S.code); } };
+$('#copyBtn').onclick = async () => { try { await navigator.clipboard.writeText(S.code); toast('Код скопирован'); } catch { toast('Код: ' + S.code, 5000); } };
 
+// звук
 $('#muteBtn').onclick = () => {
   Snd.on = !Snd.on; store.set('sb-sound', Snd.on ? '1' : '0');
   $('#muteBtn').textContent = Snd.on ? '🔊' : '🔇';
@@ -866,53 +1342,76 @@ $('#muteBtn').onclick = () => {
 $('#muteBtn').textContent = Snd.on ? '🔊' : '🔇';
 
 // расстановка
-$('#placeBoard').addEventListener('click', e => {
-  if (S.myReady) return;
-  const p = cellFromEvent(e); if (!p) return;
+function placementLocked() { return S.screen !== 'place' || (S.mode === 'net' && S.myReady); }
+function placeAt(r, c, el) {
+  if (placementLocked()) return;
   Snd.init();
-  const [r, c] = p, my = S.my, idx = my.grid[r][c];
-  if (idx >= 0) { // убрать корабль
-    S.sel = my.ships[idx].size;
-    my.ships.splice(idx, 1); rebuildGrid(my);
-    S.hover = null; renderPlace(); return;
+  const b = placingBoard(), idx = b.grid[r][c];
+  if (idx >= 0) { // взять корабль, чтобы переставить
+    const s = b.ships[idx];
+    S.sel = s.size;
+    if (s.size > 1) S.orient = s.cells[0][0] === s.cells[1][0] ? 'h' : 'v';
+    removeShip(b, idx);
+    S.hover = null;
+    placeMsg(`Корабль снят — нажмите на клетку, чтобы поставить его снова`);
+    renderPlace(); return;
   }
-  if (!remainingSizes(my).length) return;
+  if (!remainingSizes(b).length) { placeMsg('Все корабли расставлены. Нажмите на корабль, чтобы переставить его.'); return; }
   const cells = placementCells(r, c);
-  if (canPlace(my.grid, cells)) { addShip(my, cells); S.hover = null; vib(15); }
-  else { Snd.bad(); e.target.classList.add('shake'); setTimeout(() => e.target.classList.remove('shake'), 300); return; }
+  if (canPlace(b.grid, cells)) {
+    addShip(b, cells); S.hover = null; Snd.place();
+    const left = remainingSizes(b).length;
+    placeMsg(left ? '' : 'Все корабли на месте!');
+  } else {
+    Snd.bad();
+    placeMsg('Сюда нельзя: корабли не должны касаться друг друга, даже углами');
+    if (el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); setTimeout(() => el.classList.remove('shake'), 300); }
+    return;
+  }
   renderPlace();
+}
+$('#placeBoard').addEventListener('click', e => {
+  const p = cellFromEvent(e); if (p) placeAt(p[0], p[1], e.target.closest('.cell'));
 });
 $('#placeBoard').addEventListener('pointermove', e => {
-  if (e.pointerType !== 'mouse') return;
+  if (e.pointerType !== 'mouse' || placementLocked()) return;
   const p = cellFromEvent(e);
   const key = p ? p.join() : null;
   if (key === (S.hover && S.hover.join())) return;
   S.hover = p; renderPlace();
 });
-$('#placeBoard').addEventListener('pointerleave', () => { S.hover = null; renderPlace(); });
-$('#placeBoard').addEventListener('contextmenu', e => { e.preventDefault(); S.orient = S.orient === 'h' ? 'v' : 'h'; renderPlace(); });
+$('#placeBoard').addEventListener('pointerleave', () => { if (S.hover) { S.hover = null; renderPlace(); } });
+$('#placeBoard').addEventListener('contextmenu', e => { e.preventDefault(); if (placementLocked()) return; S.orient = S.orient === 'h' ? 'v' : 'h'; renderPlace(); });
 $('#tray').addEventListener('click', e => {
-  const b = e.target.closest('.tray-item'); if (!b || S.myReady) return;
+  const b = e.target.closest('.tray-item'); if (!b || placementLocked()) return;
   const size = +b.dataset.size;
-  if (remainingSizes(S.my).includes(size)) { S.sel = size; renderPlace(); }
+  if (remainingSizes(placingBoard()).includes(size)) { S.sel = size; placeMsg(''); renderPlace(); }
 });
-$('#rotateBtn').onclick = () => { S.orient = S.orient === 'h' ? 'v' : 'h'; renderPlace(); };
-$('#randomBtn').onclick = () => { S.my = randomFleet(); renderPlace(); };
-$('#clearBtn').onclick = () => { S.my = emptyMy(); S.sel = 4; renderPlace(); };
-$('#readyBtn').onclick = setReady;
-document.addEventListener('keydown', e => { if ((e.key === 'r' || e.key === 'к') && S.screen === 'place') $('#rotateBtn').click(); });
+$('#rotateBtn').onclick = () => { if (placementLocked()) return; S.orient = S.orient === 'h' ? 'v' : 'h'; renderPlace(); };
+$('#randomBtn').onclick = () => { if (placementLocked()) return; S.sides[S.placing].my = randomFleet(); Snd.place(); placeMsg('Можно переставить любой корабль — нажмите на него'); renderPlace(); };
+$('#clearBtn').onclick = () => { if (placementLocked()) return; S.sides[S.placing].my = emptyBoard(); S.sel = 4; placeMsg(''); renderPlace(); };
+$('#readyBtn').onclick = onReady;
+document.addEventListener('keydown', e => {
+  if (S.screen === 'place' && (e.key === 'r' || e.key === 'R' || e.key === 'к' || e.key === 'К') && document.activeElement.tagName !== 'INPUT') $('#rotateBtn').click();
+});
 
 // бой
-$('#enemyBoard').addEventListener('click', e => { const p = cellFromEvent(e); if (p) fire(...p); });
+$('#enemyBoard').addEventListener('click', e => {
+  const p = cellFromEvent(e); if (!p) return;
+  Snd.init();
+  if (!canShootNow()) return;
+  if (S.mode === 'net') netFire(p[0], p[1]);
+  else localShoot(p[0], p[1]);
+});
 
 /* ---------- Старт ---------- */
 (function boot() {
-  const q = new URLSearchParams(location.search);
-  const j = (q.get('join') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const j = (QS.get('join') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (j.length === 5) {
+    show('net');
     $('#codeInput').value = j;
-    if (store.get('sb-name', '')) setTimeout(() => $('#joinBtn').click(), 300); // имя уже есть — сразу подключаемся
-    else { $('#nameInput').focus(); toast('Введите имя и нажмите «Присоединиться»', 4000); }
+    if (store.get('sb-name', '')) setTimeout(() => $('#joinBtn').click(), 300);
+    else { try { $('#nameInput').focus(); } catch { } toast('Введите имя и нажмите «Присоединиться»', 4000); }
   }
 })();
 </script>
