@@ -95,7 +95,8 @@ p{margin:0}
 .cell.prev-ok{background:rgba(62,166,255,.6)}
 .cell.prev-bad{background:rgba(255,90,79,.55)}
 .cell.miss::after{content:"";width:22%;height:22%;border-radius:50%;background:var(--miss)}
-.cell.auto::after{content:"";width:16%;height:16%;border-radius:50%;background:var(--miss);opacity:.45}
+.cell.mark{background:#6b5a2a}
+.cell.mark::after{content:"";width:38%;height:12%;border-radius:2px;background:var(--warn);transform:rotate(-35deg)}
 .cell.hit{background:var(--hit)}
 .cell.hit::after{content:"✕";color:#fff}
 .cell.sunk{background:var(--sunk)}
@@ -141,6 +142,76 @@ p{margin:0}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#000c;color:#fff;
   padding:10px 16px;border-radius:10px;z-index:20;max-width:90vw;text-align:center}
 .shot-log{min-height:20px;font-size:14px;color:var(--muted);text-align:center}
+.enemy-wrap.pencil .board{outline:2px dashed var(--warn);outline-offset:4px;border-radius:4px}
+.pencil-btn.on{background:rgba(255,182,72,.2);border-color:var(--warn);color:var(--warn);font-weight:600}
+
+/* ---- прицел и огонь ---- */
+.board .h{transition:color .15s}
+.board .h.hl{color:var(--warn);font-weight:800}
+.cell.aimline{box-shadow:inset 0 0 0 100px rgba(255,182,72,.10)}
+.cell.aim{box-shadow:inset 0 0 0 3px var(--warn),0 0 12px rgba(255,182,72,.7);z-index:1}
+.cell.aim::before,.cell.target::before{content:"";position:absolute;inset:22%;border:2px solid var(--warn);border-radius:50%;
+  animation:aimpulse 1s ease-in-out infinite}
+.cell.target{box-shadow:inset 0 0 0 3px #fff,0 0 16px rgba(255,255,255,.8);z-index:1}
+.cell.target::before{border-color:#fff;animation-duration:.4s}
+@keyframes aimpulse{0%,100%{transform:scale(.8);opacity:.6}50%{transform:scale(1.1);opacity:1}}
+.fire-bar{display:flex;gap:8px;width:min(calc(100vw - 32px),440px)}
+.fire-bar .pencil-btn{flex:0 0 auto}
+.fire-btn{flex:1;font-weight:700;font-size:17px;padding:12px 10px}
+.fire-btn.ready{background:linear-gradient(180deg,#ff7a45,#e0452f);border-color:#ff7a45;color:#fff;animation:fireglow 1.2s ease-in-out infinite}
+@keyframes fireglow{50%{box-shadow:0 0 18px rgba(255,122,69,.7)}}
+.small-btn{padding:6px 12px;font-size:14px}
+
+/* ---- объявление ---- */
+.announce{position:fixed;left:0;right:0;top:calc(62px + env(safe-area-inset-top));display:flex;justify-content:center;pointer-events:none;z-index:8;padding:0 16px}
+.ann-card{min-width:220px;max-width:340px;background:rgba(9,22,40,.95);border:2px solid var(--line);border-radius:18px;
+  padding:8px 22px 10px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.announce.show .ann-card{animation:annin .35s cubic-bezier(.2,1.4,.4,1)}
+@keyframes annin{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+.ann-who{font-size:15px;color:var(--muted)}
+.ann-coord{font-size:54px;line-height:1;font-weight:900;letter-spacing:.04em;color:#fff}
+.ann-res{font-size:28px;font-weight:900;min-height:34px;opacity:0;transform:scale(.4)}
+.ann-res.in{animation:resin .4s cubic-bezier(.2,1.6,.4,1) forwards}
+.ann-res.miss{color:var(--miss)} .ann-res.hit{color:#ff8a4f} .ann-res.sunk{color:var(--hit);text-shadow:0 0 18px rgba(255,90,79,.8)}
+@keyframes resin{to{opacity:1;transform:none}}
+
+/* ---- эффекты ---- */
+.board{position:relative}
+.fx{position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:3}
+.fx span{position:absolute;pointer-events:none;display:block}
+.fx-ripple{width:var(--s);height:var(--s);margin:calc(var(--s) / -2) 0 0 calc(var(--s) / -2);border:3px solid rgba(255,255,255,.85);border-radius:50%;
+  animation:ripple 1.3s ease-out forwards}
+.fx-ripple.blue{border-color:var(--miss);border-width:2px}
+@keyframes ripple{from{transform:scale(.08);opacity:1}to{transform:scale(1);opacity:0}}
+.fx-flash{border-radius:4px;background:radial-gradient(circle,#fff 0,#ffe08a 30%,#ff6a3d 62%,rgba(255,90,79,0) 75%);animation:flash .65s ease-out forwards}
+.fx-flash.big{animation-duration:.8s}
+@keyframes flash{0%{transform:scale(.3);opacity:1}55%{transform:scale(1.7);opacity:.95}100%{transform:scale(2.2);opacity:0}}
+.fx-spark{width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:hsl(var(--h),100%,62%);box-shadow:0 0 6px hsl(var(--h),100%,60%);
+  animation:spark .85s cubic-bezier(.1,.7,.3,1) forwards}
+@keyframes spark{to{transform:translate(var(--dx),var(--dy)) scale(.15);opacity:0}}
+.fx-sink{border-radius:8px;background:linear-gradient(180deg,#e3ebf3,#8fa6bd);box-shadow:0 0 0 2px rgba(255,255,255,.5);animation:sink 1.6s ease-in forwards}
+@keyframes sink{0%{opacity:.95;transform:none}25%{transform:rotate(-3deg) translateY(-2px)}100%{opacity:0;transform:translateY(14px) scale(.8) rotate(7deg);filter:blur(3px) brightness(.35)}}
+.quake{animation:quake .55s}
+@keyframes quake{15%{transform:translate(-5px,2px)}30%{transform:translate(5px,-2px)}45%{transform:translate(-4px,1px)}60%{transform:translate(3px,-1px)}80%{transform:translate(-1px,0)}}
+.fx-pop{border-radius:4px;border:2px solid #fff;animation:pop .5s ease-out both}
+@keyframes pop{from{transform:scale(1.5);opacity:0}40%{opacity:1}to{transform:scale(1);opacity:0}}
+.fx-bad{border-radius:4px;background:rgba(255,90,79,.6);animation:bad .6s ease-out both}
+@keyframes bad{from{opacity:1}to{opacity:0}}
+
+/* ---- расстановка: подсветка ---- */
+#placeBoard,#tray .tray-item{touch-action:none}
+#placeBoard .cell{transition:background-color .09s,box-shadow .09s}
+.cell.pv.ok{background:#4ad991;box-shadow:inset 0 0 0 2px #c8ffe0,0 0 10px rgba(74,217,145,.6);z-index:1}
+.cell.pv.bad{background:#ff6a5f;box-shadow:inset 0 0 0 2px #ffd0cc;z-index:1}
+.cell.zone.ok{background:rgba(74,217,145,.22)}
+.cell.zone.bad{background:rgba(255,90,79,.28)}
+.cell.nogo{background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.10) 0 3px,transparent 3px 7px)}
+.cell.ship.conflict{box-shadow:inset 0 0 0 3px var(--hit);animation:shake .3s}
+.drag-tag{position:fixed;transform:translateX(-50%);padding:6px 12px;border-radius:10px;font-weight:800;font-size:18px;pointer-events:none;z-index:30;
+  background:#0b1e33;border:2px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,.45);white-space:nowrap}
+.drag-tag.ok{border-color:#4ad991;color:#4ad991}
+.drag-tag.bad{border-color:var(--hit);color:#ff8a80}
+@media (prefers-reduced-motion: reduce){ .fx-spark,.quake{animation:none!important} }
 </style>
 </head>
 <body>
@@ -165,8 +236,9 @@ p{margin:0}
       <ul>
         <li>Поле 10×10. Флот: 1 четырёхпалубный, 2 трёхпалубных, 3 двухпалубных, 4 однопалубных.</li>
         <li>Корабли — прямые линии; не касаются друг друга ни сторонами, ни углами.</li>
+        <li>Нажмите клетку, чтобы прицелиться, и «Огонь!». Оба игрока видят, куда выстрел: «А3 — Мимо / Ранил / Убил».</li>
         <li>Попали — стреляете ещё раз. Промах — ход переходит сопернику.</li>
-        <li>Клетки вокруг потопленного корабля и по диагонали от попадания отмечаются автоматически: там кораблей быть не может.</li>
+        <li>Помечайте клетки карандашом ✏️ — например, там, где корабля точно нет. Отметки видны только вам.</li>
         <li>Побеждает тот, кто первым потопит весь флот соперника.</li>
       </ul>
     </details>
@@ -254,7 +326,7 @@ p{margin:0}
       <button type="button" id="randomBtn" class="btn">🎲 Случайно</button>
       <button type="button" id="clearBtn" class="btn">Очистить</button>
     </div>
-    <p class="hint small">Выберите корабль внизу и нажмите на клетку — он встанет от неё вправо (или вниз). Нажмите на поставленный корабль, чтобы взять его и переставить.</p>
+    <p class="hint small">Перетащите корабль из нижнего ряда на поле — подсветка покажет, где он встанет и какую зону вокруг займёт. Поставленный корабль можно перетащить, нажатием — повернуть, унести за поле — убрать.</p>
     <button type="button" id="readyBtn" class="btn primary big" disabled>Готов</button>
     <button type="button" class="btn ghost leaveBtn">Выйти</button>
   </section>
@@ -267,6 +339,11 @@ p{margin:0}
       <div class="board-wrap enemy-wrap">
         <div class="board-title" id="enemyTitle">Поле соперника</div>
         <div id="enemyBoard" class="board"></div>
+        <div class="fire-bar">
+          <button type="button" id="pencilBtn" class="btn pencil-btn">✏️ Карандаш</button>
+          <button type="button" id="fireBtn" class="btn fire-btn" disabled>🎯 Выберите клетку</button>
+        </div>
+        <button type="button" id="pencilClear" class="btn small-btn" hidden>Стереть все отметки</button>
         <div id="enemyFleet" class="fleet"></div>
       </div>
       <div class="board-wrap my-wrap">
@@ -288,6 +365,16 @@ p{margin:0}
     <button type="button" id="passBtn" class="btn primary big">Показать</button>
   </div>
 </div>
+
+<!-- Объявление выстрела -->
+<div id="announce" class="announce" hidden aria-live="assertive">
+  <div class="ann-card">
+    <div id="annWho" class="ann-who"></div>
+    <div id="annCoord" class="ann-coord"></div>
+    <div id="annRes" class="ann-res"></div>
+  </div>
+</div>
+<div id="dragTag" class="drag-tag" hidden></div>
 
 <!-- МОДАЛКА -->
 <div id="modal" class="modal" hidden>
@@ -331,7 +418,7 @@ const store = {
    view (что игрок знает о поле соперника): 0 ?, 1 промах, 2 попал, 3 потоплен, 4 точно пусто, 5 показан в конце
    ===================================================================== */
 function emptyBoard() { return { grid: grid(-1), ships: [], shots: grid(0) }; }
-function newSide(name) { return { name, my: emptyBoard(), view: grid(0), sunk: [], last: null, lastIn: null, shots: 0, hits: 0 }; }
+function newSide(name) { return { name, my: emptyBoard(), view: grid(0), marks: grid(false), aim: null, sunk: [], last: null, lastIn: null, shots: 0, hits: 0 }; }
 
 function shipCells(r, c, size, o) {
   const cells = [];
@@ -438,7 +525,7 @@ function applyView(side, m) {
     side.sunk.push(m.size);
   }
 }
-const RES_TXT = { miss: 'мимо', hit: 'ранил', sunk: 'потопил!' };
+const RES_TXT = { miss: 'мимо', hit: 'ранил', sunk: 'убил!' };
 function logShot(who, r, c, res) { S.log = `${who}: ${COLS[c]}${r + 1} — ${RES_TXT[res]}`; }
 function revealInto(view, board) {
   for (const s of board.ships) for (const [r, c] of s.cells) if (view[r][c] === 0 || view[r][c] === 4) view[r][c] = 5;
@@ -567,6 +654,9 @@ const Snd = {
   place() { this.tone(660, 760, .06, 'sine', .08); vib(15); },
   win() { [523, 659, 784, 1047].forEach((f, i) => this.tone(f, f, .22, 'triangle', .2, i * .14)); vib([80, 60, 80, 60, 200]); },
   lose() { [392, 330, 262, 196].forEach((f, i) => this.tone(f, f * .97, .3, 'triangle', .18, i * .2)); vib(400); },
+  whistle() { this.tone(1400, 500, .65, 'sine', .05); },
+  tick() { this.tone(1000, 1000, .03, 'square', .04); },
+  boom() { this.noise(.5, 2200, .45); this.tone(110, 35, .45, 'square', .12); },
   bad() { this.tone(200, 150, .12, 'square', .08); vib(30); },
 };
 function vib(p) { try { if (Snd.on && navigator.vibrate) navigator.vibrate(p); } catch { } }
@@ -587,7 +677,8 @@ const S = {
   lastLoser: null,
   aiLevel: store.get('sb-ai', 'normal'),
   gen: 0,             // поколение партии — гасит отложенные таймеры старых партий
-  sel: 4, orient: 'h', hover: null,
+  sel: 4, orient: 'h', hover: null, pencil: false, drag: null,
+  fx: null, anim: false, hideIn: null, resolveResult: null,
   // сеть
   role: null, code: null, peerName: 'Соперник', gameNo: 0,
   myReady: false, peerReady: false, myTurn: false, pending: null,
@@ -600,6 +691,7 @@ function later(fn, ms) { const g = S.gen; return setTimeout(() => { if (g === S.
    ЗАПУСК РЕЖИМОВ
    ===================================================================== */
 function startLocal(mode) {
+  resetFx();
   S.mode = mode;
   S.gen++;
   if (mode === 'ai') S.sides = [newSide('Вы'), newSide('Компьютер')];
@@ -612,6 +704,7 @@ function startLocal(mode) {
   keepAwake();
 }
 function rematchLocal() {
+  resetFx();
   const names = S.sides.map(s => s.name);
   S.gen++;
   S.sides = [newSide(names[0]), newSide(names[1])];
@@ -621,6 +714,11 @@ function rematchLocal() {
   if (S.mode === 'hot') showPass(S.sides[0].name, 'Расставьте корабли. Второй игрок, не подглядывайте!', 'Расставить', () => beginPlacement());
   else beginPlacement();
 }
+function resetFx() {
+  try { annHide(); } catch { }
+  S.fx = null; S.anim = false; S.hideIn = null; S.resolveResult = null; S.drag = null;
+  try { $('#dragTag').hidden = true; } catch { }
+}
 function readName(sel, def) {
   const v = ($(sel).value || '').trim();
   return v || def;
@@ -628,6 +726,7 @@ function readName(sel, def) {
 
 /* ---------- Расстановка (общая для всех режимов) ---------- */
 function beginPlacement() {
+  S.pencil = false;
   S.sel = 4; S.orient = 'h'; S.hover = null;
   show('place');
   placeMsg('');
@@ -664,33 +763,51 @@ function startBattleLocal() {
     showPass(S.sides[S.cur].name, 'Корабли расставлены. Первым стреляет ' + S.sides[S.cur].name + '.', 'В бой', () => { show('battle'); renderBattle(); });
   }
 }
+const SPEED = QS.has('fast') ? 0.04 : 1; // ?fast — только для автотестов
+const T_COORD = 750 * SPEED, T_RES = 900 * SPEED, T_SUNK = 2000 * SPEED;
+const resDur = res => res === 'sunk' ? T_SUNK : T_RES;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+// очередь объявлений: выстрелы показываются строго по одному
+let annChain = Promise.resolve(), annGen = -1;
+function queue(task) {
+  if (annGen !== S.gen) { annChain = Promise.resolve(); annGen = S.gen; }
+  const g = S.gen;
+  annChain = annChain.then(() => g === S.gen ? task(g) : null).catch(e => console.error(e));
+  return annChain;
+}
 function localShoot(r, c) {
-  if (S.phase !== 'battle') return;
+  if (S.phase !== 'battle' || S.busy) return;
   const A = S.sides[S.cur], D = S.sides[1 - S.cur];
   const v = A.view[r][c];
-  // «точно пусто» (4) человеку стрелять незачем; лёгкий и обычный компьютер так ошибаются нарочно
-  if (v !== 0 && !(v === 4 && S.mode === 'ai' && S.cur === 1)) return;
-  const m = applyShot(D.my, r, c);
-  D.lastIn = [r, c];
-  applyView(A, m);
-  logShot(S.mode === 'ai' ? (S.cur === 0 ? 'Вы' : 'Компьютер') : A.name, r, c, m.res);
-  Snd.result(m.res);
-  if (m.over) { renderBattle(); return finishLocal(S.cur); }
-  if (m.res === 'miss') {
-    S.busy = true;
-    renderBattle();
-    later(() => switchTurnLocal(), S.mode === 'ai' ? 700 : 1100);
-  } else {
-    renderBattle();
+  // 4 — внутренняя пометка «точно пусто»: игроку не показывается, сложный компьютер ею пользуется
+  if (v !== 0 && v !== 4) return;
+  S.busy = true; A.aim = null;
+  const incoming = S.viewer !== S.cur; // против компьютера: стреляют по мне
+  const who = S.mode === 'ai' ? (S.cur === 0 ? 'Ваш выстрел' : 'Компьютер стреляет') : `${A.name} стреляет`;
+  queue(async g => {
+    S.fx = { board: incoming ? 'my' : 'enemy', r, c };
+    annShow(who, r, c); renderBattle(); focusShot();
+    await sleep(T_COORD); if (g !== S.gen) return;
+    const m = applyShot(D.my, r, c);
+    D.lastIn = [r, c];
+    applyView(A, m);
+    logShot(S.mode === 'ai' ? (S.cur === 0 ? 'Вы' : 'Компьютер') : A.name, r, c, m.res);
+    renderBattle(); Snd.result(m.res); annResult(m.res);
+    fxShot($(incoming ? '#myBoard' : '#enemyBoard'), m);
+    await sleep(resDur(m.res)); if (g !== S.gen) return;
+    annHide();
+    if (m.over) { S.busy = false; return finishLocal(S.cur); }
+    if (m.res === 'miss') return switchTurnLocal();
+    S.busy = false; renderBattle();
     if (S.mode === 'ai' && S.cur === 1) aiTurn();
-  }
+  });
 }
 function switchTurnLocal() {
   S.busy = false;
   S.cur = 1 - S.cur;
   if (S.mode === 'ai') {
     renderBattle();
-    if (S.cur === 1) aiTurn(); else Snd.myTurn();
+    if (S.cur === 1) aiTurn(); else { Snd.myTurn(); focusEnemy(); }
   } else {
     show('none');
     showPass(S.sides[S.cur].name, 'Ваш ход. Остальные — отвернитесь!', 'Показать моё поле', () => {
@@ -706,7 +823,7 @@ function aiTurn() {
     const p = aiPick(A.view, A.sunk, S.aiLevel);
     S.busy = false;
     if (p) localShoot(p[0], p[1]);
-  }, 650 + rand(350));
+  }, (450 + rand(350)) * SPEED);
 }
 function finishLocal(w) {
   S.phase = 'over'; S.busy = false; S.winner = w; S.lastLoser = 1 - w;
@@ -941,6 +1058,7 @@ function netHandle(m) {
 }
 
 function netNewGame() {
+  resetFx();
   S.gameNo++; S.gen++;
   S.sides = [newSide(S.netName)];
   S.phase = 'place'; S.viewer = 0; S.placing = 0; S.log = '';
@@ -970,33 +1088,53 @@ function netBeginBattle(myFirst) {
   if (myFirst) Snd.myTurn();
 }
 function netFire(r, c) {
-  if (S.phase !== 'battle' || !S.myTurn || S.pending || me().view[r][c] !== 0) return;
-  S.pending = { r, c };
+  if (S.phase !== 'battle' || !S.myTurn || S.pending || S.anim) return;
+  const v = me().view[r][c];
+  if (v !== 0 && v !== 4) return;
+  S.pending = { r, c }; me().aim = null; S.anim = true;
+  const wait = new Promise(res => S.resolveResult = res);
   Net.send({ t: 'shot', r, c, g: S.gameNo });
-  renderBattle();
+  queue(async g => {
+    S.fx = { board: 'enemy', r, c };
+    annShow('Ваш выстрел', r, c); renderBattle();
+    await sleep(T_COORD);
+    const m = await wait; if (g !== S.gen) return;
+    applyView(me(), m);
+    logShot('Вы', r, c, m.res);
+    if (m.res === 'miss') S.myTurn = false;
+    renderBattle(); Snd.result(m.res); annResult(m.res);
+    fxShot($('#enemyBoard'), m);
+    await sleep(resDur(m.res)); if (g !== S.gen) return;
+    annHide(); S.anim = false;
+    if (m.over) netEndGame(true);
+    renderBattle();
+  });
 }
 function netOnShot(r, c) {
   if (S.phase !== 'battle' && S.phase !== 'over') return;
   const m = applyShot(me().my, r, c);
   Net.send({ t: 'result', g: S.gameNo, r, c, res: m.res, cells: m.cells, size: m.size, over: m.over });
   if (!m.fresh || S.phase !== 'battle') return;
-  me().lastIn = [r, c];
-  logShot(S.peerName, r, c, m.res);
-  Snd.result(m.res);
-  if (m.res === 'miss') { S.myTurn = true; later(() => Snd.myTurn(), 350); }
-  if (m.over) netEndGame(false);
-  renderBattle();
+  queue(async g => {
+    S.anim = true; S.hideIn = [r, c]; S.fx = { board: 'my', r, c };
+    annShow(`${S.peerName} стреляет`, r, c); renderBattle(); focusShot();
+    await sleep(T_COORD); if (g !== S.gen) return;
+    S.hideIn = null; me().lastIn = [r, c];
+    logShot(S.peerName, r, c, m.res);
+    renderBattle(); Snd.result(m.res); annResult(m.res);
+    fxShot($('#myBoard'), m);
+    await sleep(resDur(m.res)); if (g !== S.gen) return;
+    annHide(); S.anim = false;
+    if (m.over) { netEndGame(false); renderBattle(); return; }
+    if (m.res === 'miss') { S.myTurn = true; Snd.myTurn(); focusEnemy(); }
+    renderBattle();
+  });
 }
 function netOnResult(m) {
   if (!S.pending || S.pending.r !== m.r || S.pending.c !== m.c) return; // дубликат
-  S.pending = null;
   if (m.res === 'sunk' && !Array.isArray(m.cells)) return;
-  applyView(me(), m);
-  logShot('Вы', m.r, m.c, m.res);
-  if (m.res === 'miss') S.myTurn = false;
-  Snd.result(m.res);
-  if (m.over) netEndGame(true);
-  renderBattle();
+  S.pending = null;
+  if (S.resolveResult) { const f = S.resolveResult; S.resolveResult = null; f(m); }
 }
 function netEndGame(won) {
   S.phase = 'over'; S.myTurn = false;
@@ -1033,15 +1171,15 @@ function setNet(st) {
   el.textContent = st === 'on' ? 'на связи' : st === 'wait' ? 'ожидание' : 'нет связи';
 }
 
-// Доска строится один раз; дальше меняются только классы клеток (клики не теряются при перерисовке)
+// Доска строится один раз; дальше меняются только классы клеток (нажатия не теряются при перерисовке)
 function initBoard(el) {
   const frag = document.createDocumentFragment();
-  const h = t => { const d = document.createElement('div'); d.className = 'h'; d.textContent = t; frag.appendChild(d); };
+  el._hc = []; el._hr = []; el._cells = [];
+  const h = (t, arr) => { const d = document.createElement('div'); d.className = 'h'; d.textContent = t; frag.appendChild(d); if (arr) arr.push(d); };
   h('');
-  for (let c = 0; c < N; c++) h(COLS[c]);
-  el._cells = [];
+  for (let c = 0; c < N; c++) h(COLS[c], el._hc);
   for (let r = 0; r < N; r++) {
-    h(String(r + 1));
+    h(String(r + 1), el._hr);
     for (let c = 0; c < N; c++) {
       const d = document.createElement('div');
       d.className = 'cell'; d.dataset.r = r; d.dataset.c = c;
@@ -1051,6 +1189,7 @@ function initBoard(el) {
     }
   }
   el.innerHTML = ''; el.appendChild(frag);
+  el._fx = document.createElement('div'); el._fx.className = 'fx'; el.appendChild(el._fx);
 }
 function paintBoard(el, cls) {
   for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
@@ -1058,42 +1197,168 @@ function paintBoard(el, cls) {
     if (d.className !== k) d.className = k;
   }
 }
+function paintHeaders(el, rows, cols) {
+  el._hr.forEach((d, i) => d.classList.toggle('hl', rows.includes(i)));
+  el._hc.forEach((d, i) => d.classList.toggle('hl', cols.includes(i)));
+}
+const coordName = (r, c) => COLS[c] + (r + 1);
 
-function placementCells(r, c) {
-  const cells = shipCells(r, c, S.sel, S.orient);
-  const shift = Math.max(0, (S.orient === 'h' ? c : r) + S.sel - N); // если не влезает — сдвигаем внутрь поля
-  return cells.map(([a, b]) => S.orient === 'h' ? [a, b - shift] : [a - shift, b]);
+/* ---------- Эффекты ---------- */
+const REDUCED = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } })();
+function cellBox(el, r, c) { const d = el._cells[r * N + c]; return { x: d.offsetLeft, y: d.offsetTop, w: d.offsetWidth, h: d.offsetHeight }; }
+function fxSpawn(el, cls, x, y, style, life) {
+  const s = document.createElement('span');
+  s.className = cls; s.style.left = x + 'px'; s.style.top = y + 'px';
+  for (const k in style || {}) s.style.setProperty(k, style[k]);
+  el._fx.appendChild(s);
+  setTimeout(() => s.remove(), life || 1000);
+  return s;
+}
+function fxSparks(el, cx, cy, n, dist, hue) {
+  if (REDUCED) return;
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, d = dist * (0.6 + Math.random());
+    fxSpawn(el, 'fx-spark', cx, cy, { '--dx': Math.cos(a) * d + 'px', '--dy': Math.sin(a) * d + 'px', '--h': hue + rand(30) }, 900);
+  }
+}
+function fxShot(el, m) {
+  const b = cellBox(el, m.r, m.c), cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+  if (m.res === 'miss') {
+    fxSpawn(el, 'fx-ripple blue', cx, cy, { '--s': b.w * 2.4 + 'px' }, 1000);
+    if (!REDUCED) setTimeout(() => fxSpawn(el, 'fx-ripple blue', cx, cy, { '--s': b.w * 1.6 + 'px' }, 1000), 180);
+    return;
+  }
+  fxSpawn(el, 'fx-flash', b.x, b.y, { width: b.w + 'px', height: b.h + 'px' }, 700);
+  fxSparks(el, cx, cy, 12, b.w * 1.2, 20);
+  if (m.res === 'sunk') fxSunk(el, m.cells);
+}
+function fxSunk(el, cells) {
+  const step = 150;
+  const sorted = [...cells].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  sorted.forEach(([r, c], i) => setTimeout(() => {
+    const b = cellBox(el, r, c);
+    fxSpawn(el, 'fx-flash big', b.x, b.y, { width: b.w + 'px', height: b.h + 'px' }, 800);
+    fxSparks(el, b.x + b.w / 2, b.y + b.h / 2, 16, b.w * 1.6, 10);
+    if (i) Snd.boom();
+  }, i * step));
+  const boxes = sorted.map(([r, c]) => cellBox(el, r, c));
+  const x1 = Math.min(...boxes.map(b => b.x)), y1 = Math.min(...boxes.map(b => b.y));
+  const x2 = Math.max(...boxes.map(b => b.x + b.w)), y2 = Math.max(...boxes.map(b => b.y + b.h));
+  const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2, span = Math.max(x2 - x1, y2 - y1);
+  setTimeout(() => {
+    fxSpawn(el, 'fx-sink', x1, y1, { width: (x2 - x1) + 'px', height: (y2 - y1) + 'px' }, 1700);
+    for (let k = 0; k < 3; k++) setTimeout(() => fxSpawn(el, 'fx-ripple', cx, cy, { '--s': (span + boxes[0].w * 3) * (1 + k * .35) + 'px' }, 1500), k * 230);
+    if (!REDUCED) { el.classList.remove('quake'); void el.offsetWidth; el.classList.add('quake'); setTimeout(() => el.classList.remove('quake'), 600); }
+  }, sorted.length * step);
+}
+function fxCells(el, cells, cls, life) {
+  cells.forEach(([r, c], i) => {
+    const b = cellBox(el, r, c);
+    fxSpawn(el, cls, b.x, b.y, { width: b.w + 'px', height: b.h + 'px', 'animation-delay': i * 40 + 'ms' }, (life || 600) + i * 40);
+  });
+}
+
+/* ---------- Табличка «А3 — Ранил!» ---------- */
+function annShow(who, r, c) {
+  $('#annWho').textContent = who;
+  $('#annCoord').textContent = coordName(r, c);
+  const res = $('#annRes'); res.textContent = ''; res.className = 'ann-res';
+  const a = $('#announce'); a.hidden = false;
+  a.classList.remove('show'); void a.offsetWidth; a.classList.add('show');
+  Snd.whistle();
+}
+function annResult(res) {
+  const el = $('#annRes');
+  el.textContent = { miss: 'Мимо', hit: 'Ранил!', sunk: 'Убил!' }[res];
+  el.className = 'ann-res ' + res; void el.offsetWidth; el.classList.add('in');
+}
+function annHide() { $('#announce').hidden = true; S.fx = null; }
+// показать клетку, если она за пределами экрана (своё поле на телефоне ниже поля соперника)
+function ensureVisible(el) {
+  try {
+    const r = el.getBoundingClientRect(), top = 230, bottom = innerHeight - 20;
+    if (r.top >= top && r.bottom <= bottom) return;
+    scrollBy({ top: r.top - (top + bottom) / 2 + r.height / 2, behavior: REDUCED ? 'auto' : 'smooth' });
+  } catch { }
+}
+function focusShot() {
+  if (!S.fx) return;
+  const el = $(S.fx.board === 'my' ? '#myBoard' : '#enemyBoard');
+  ensureVisible(el._cells[S.fx.r * N + S.fx.c]);
+}
+function focusEnemy() { const el = $('#enemyBoard'); if (S.screen === 'battle') ensureVisible(el._cells[45]); }
+
+/* ---------- Расстановка ---------- */
+function clampShip(r, c, size, o) {
+  if (o === 'h') c = Math.max(0, Math.min(N - size, c)); else r = Math.max(0, Math.min(N - size, r));
+  return shipCells(r, c, size, o);
+}
+function dragCells(d) {
+  if (!d || !d.anchor) return null;
+  const [r, c] = d.anchor;
+  return d.orient === 'h' ? clampShip(r, c - d.grab, d.size, 'h') : clampShip(r - d.grab, c, d.size, 'v');
 }
 function placeMsg(t) { $('#placeMsg').innerHTML = t || '&nbsp;'; }
 
+// Лоток строится один раз и дальше только обновляется: если удалить элемент под пальцем,
+// мобильные браузеры теряют касание и следующие нажатия не срабатывают.
+function renderTray() {
+  const b = placingBoard(), left = remainingSizes(b), locked = placementLocked(), tray = $('#tray');
+  if (!tray._items) {
+    tray.innerHTML = '';
+    tray._items = {};
+    for (const size of [4, 3, 2, 1]) {
+      const bt = document.createElement('button');
+      bt.type = 'button'; bt.className = 'tray-item'; bt.dataset.size = size;
+      bt.innerHTML = `<span class="tray-ship">${'<i></i>'.repeat(size)}</span><b></b>`;
+      tray.appendChild(bt); tray._items[size] = bt;
+    }
+  }
+  for (const size of [4, 3, 2, 1]) {
+    const bt = tray._items[size], cnt = left.filter(x => x === size).length;
+    bt.classList.toggle('done', !cnt);
+    bt.classList.toggle('sel', S.sel === size && !!cnt);
+    bt.disabled = locked;
+    bt.querySelector('b').textContent = '×' + cnt;
+  }
+}
 function renderPlace() {
   if (S.screen !== 'place') return;
   const b = placingBoard(), left = remainingSizes(b);
-  const locked = S.mode === 'net' && S.myReady;
+  const locked = placementLocked();
   if (!left.includes(S.sel) && left.length) S.sel = Math.max(...left);
-  let prev = null, prevOk = false;
-  if (S.hover && left.length && !locked && b.grid[S.hover[0]][S.hover[1]] < 0) {
-    prev = placementCells(...S.hover);
-    prevOk = canPlace(b.grid, prev);
+  // что подсвечиваем: перетаскиваемый корабль или (мышью) корабль под курсором
+  let pv = S.drag;
+  if (!pv && S.hover && left.length && !locked && b.grid[S.hover[0]][S.hover[1]] < 0)
+    pv = { size: S.sel, orient: S.orient, grab: 0, anchor: S.hover };
+  const cells = dragCells(pv);
+  const ok = cells ? canPlace(b.grid, cells) : false;
+  const pset = new Set((cells || []).map(([r, c]) => r * N + c));
+  const zone = new Set(), conflict = new Set(), nogo = new Set();
+  if (cells) for (const [r, c] of cells) for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+    const rr = r + dr, cc = c + dc;
+    if (!inB(rr, cc)) continue;
+    if (b.grid[rr][cc] >= 0) conflict.add(b.grid[rr][cc]);
+    else if (!pset.has(rr * N + cc)) zone.add(rr * N + cc);
   }
-  const pset = new Set((prev || []).map(([r, c]) => r * N + c));
+  if (pv) b.ships.forEach(s => s.cells.forEach(([r, c]) => neighbors8(r, c).forEach(([rr, cc]) => { if (b.grid[rr][cc] < 0) nogo.add(rr * N + cc); })));
+  const okc = ok ? 'ok' : 'bad';
   paintBoard($('#placeBoard'), (r, c) => {
-    if (b.grid[r][c] >= 0) return 'ship';
-    if (pset.has(r * N + c)) return prevOk ? 'prev-ok' : 'prev-bad';
-    return '';
+    const k = r * N + c, idx = b.grid[r][c];
+    if (pset.has(k)) return 'pv ' + okc + (idx >= 0 ? ' over' : '');
+    if (idx >= 0) return 'ship' + (conflict.has(idx) ? ' conflict' : '');
+    let s = zone.has(k) ? 'zone ' + okc : '';
+    if (nogo.has(k)) s += ' nogo';
+    return s;
   });
-  let t = '';
-  for (const size of [4, 3, 2, 1]) {
-    const cnt = left.filter(s => s === size).length;
-    t += `<button type="button" class="tray-item ${cnt ? '' : 'done'} ${S.sel === size && cnt ? 'sel' : ''}" data-size="${size}" ${locked ? 'disabled' : ''}>
-      <span class="tray-ship">${'<i></i>'.repeat(size)}</span><b>×${cnt}</b></button>`;
-  }
-  $('#tray').innerHTML = t;
-  $('#rotateBtn').textContent = S.orient === 'h' ? '↔ Горизонтально' : '↕ Вертикально';
+  paintHeaders($('#placeBoard'), cells ? [...new Set(cells.map(x => x[0]))] : [], cells ? [...new Set(cells.map(x => x[1]))] : []);
+  renderTray();
+  const o = S.drag ? S.drag.orient : S.orient;
+  $('#rotateBtn').textContent = o === 'h' ? '↔ Горизонтально' : '↕ Вертикально';
   ['#rotateBtn', '#randomBtn', '#clearBtn'].forEach(s => $(s).disabled = locked);
   const rb = $('#readyBtn');
-  rb.disabled = locked || left.length > 0;
-  if (locked) rb.textContent = S.peerReady ? 'Начинаем…' : 'Ждём соперника…';
+  rb.disabled = locked || left.length > 0 || !!S.drag;
+  if (S.mode === 'net' && S.myReady) rb.textContent = S.peerReady ? 'Начинаем…' : 'Ждём соперника…';
   else if (left.length) rb.textContent = `Осталось поставить: ${left.length}`;
   else rb.textContent = S.mode === 'hot' && S.placing === 0 ? 'Готово — передать устройство' : 'Готов — в бой!';
   const title = S.mode === 'hot' ? `Расставляет: <b>${esc(S.sides[S.placing].name)}</b>`
@@ -1114,33 +1379,57 @@ function esc(s) { return String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<
 
 function canShootNow() {
   if (S.phase !== 'battle') return false;
-  if (S.mode === 'net') return S.myTurn && !S.pending;
+  if (S.mode === 'net') return S.myTurn && !S.pending && !S.anim;
   if (S.busy) return false;
   if (S.mode === 'ai') return S.cur === 0;
   return S.viewer === S.cur;
 }
+const shootable = v => v === 0 || v === 4;
 
 function renderBattle() {
   if (S.screen !== 'battle' || !S.sides.length) return;
   const V = S.sides[S.viewer];
+  if (V.aim && !shootable(V.view[V.aim[0]][V.aim[1]])) V.aim = null;
   const canShoot = canShootNow();
-  $('.enemy-wrap').classList.toggle('active', canShoot);
+  const ew = $('.enemy-wrap');
+  ew.classList.toggle('active', canShoot && !S.pencil);
+  ew.classList.toggle('pencil', S.pencil);
+  $('#pencilBtn').classList.toggle('on', S.pencil);
+  $('#pencilBtn').textContent = S.pencil ? '✏️ Вкл' : '✏️ Карандаш';
+  $('#pencilClear').hidden = !S.pencil;
+  $('#pencilBtn').disabled = S.phase !== 'battle';
+  const fb = $('#fireBtn');
+  if (S.phase !== 'battle') { fb.disabled = true; fb.textContent = '🎯 Огонь!'; fb.classList.remove('ready'); }
+  else if (S.fx) { fb.disabled = true; fb.textContent = '💥 …'; fb.classList.remove('ready'); }
+  else if (!V.aim) { fb.disabled = true; fb.textContent = canShoot ? '🎯 Выберите клетку' : '⏳ Ход соперника'; fb.classList.remove('ready'); }
+  else { fb.disabled = !canShoot; fb.textContent = canShoot ? `🔥 Огонь по ${coordName(...V.aim)}!` : `🎯 ${coordName(...V.aim)} — ждите хода`; fb.classList.toggle('ready', canShoot); }
+
   const isLast = (p, r, c) => p && p[0] === r && p[1] === c ? ' last' : '';
+  const fxE = S.fx && S.fx.board === 'enemy' ? S.fx : null, fxM = S.fx && S.fx.board === 'my' ? S.fx : null;
+  const tgt = fxE || (S.phase === 'battle' && V.aim ? { r: V.aim[0], c: V.aim[1] } : null);
   paintBoard($('#enemyBoard'), (r, c) => {
     const v = V.view[r][c];
-    let k = ['open', 'miss', 'hit', 'sunk', 'auto', 'ship reveal'][v];
-    if (S.mode === 'net' && S.pending && S.pending.r === r && S.pending.c === c) k = 'pending';
+    let k = ['open', 'miss', 'hit', 'sunk', 'open', 'ship reveal'][v];
+    if (shootable(v) && V.marks[r][c]) k += ' mark';
+    if (tgt) { if (tgt.r === r && tgt.c === c) k += fxE ? ' target' : ' aim'; else if (tgt.r === r || tgt.c === c) k += ' aimline'; }
     return k + isLast(V.last, r, c);
   });
-  const my = V.my;
+  paintHeaders($('#enemyBoard'), tgt ? [tgt.r] : [], tgt ? [tgt.c] : []);
+  const my = V.my, hid = S.hideIn;
   paintBoard($('#myBoard'), (r, c) => {
-    const idx = my.grid[r][c], sh = my.shots[r][c];
+    const idx = my.grid[r][c];
+    let sh = my.shots[r][c];
+    if (hid && hid[0] === r && hid[1] === c) sh = 0;
     let k = idx >= 0 ? 'ship' : '';
-    if (idx >= 0 && sh === 2) k += my.ships[idx].hits >= my.ships[idx].size ? ' sunk' : ' hit';
+    if (idx >= 0 && sh === 2) {
+      const s = my.ships[idx], hits = s.hits - (hid && s.cells.some(([a, b]) => a === hid[0] && b === hid[1]) ? 1 : 0);
+      k += hits >= s.size ? ' sunk' : ' hit';
+    }
     if (sh === 1) k += ' miss';
-    if (sh === 3) k += ' auto';
-    return k + isLast(V.lastIn, r, c);
+    if (fxM) { if (fxM.r === r && fxM.c === c) k += ' target'; else if (fxM.r === r || fxM.c === c) k += ' aimline'; }
+    return k + (fxM ? '' : isLast(V.lastIn, r, c));
   });
+  paintHeaders($('#myBoard'), fxM ? [fxM.r] : [], fxM ? [fxM.c] : []);
   $('#enemyFleet').innerHTML = fleetHTML(V.sunk);
   $('#myFleet').innerHTML = fleetHTML(my.ships.filter(s => s.hits >= s.size).map(s => s.size));
   const oppName = S.mode === 'net' ? S.peerName : S.sides[1 - S.viewer].name;
@@ -1160,13 +1449,16 @@ function renderBattle() {
     return;
   }
   let mine, txt;
-  if (S.mode === 'net') { mine = S.myTurn; txt = S.myTurn ? (S.pending ? 'Выстрел…' : 'Ваш ход — стреляйте') : `Ходит ${esc(S.peerName)}…`; }
-  else if (S.mode === 'ai') {
-    mine = S.cur === 0 && !S.busy;
-    txt = S.cur === 0 ? (S.busy ? 'Промах…' : 'Ваш ход — стреляйте') : 'Компьютер целится…';
+  if (S.mode === 'net') {
+    mine = S.myTurn;
+    txt = S.fx ? (S.fx.board === 'enemy' ? 'Ваш выстрел…' : `Стреляет ${esc(S.peerName)}…`)
+      : S.myTurn ? 'Ваш ход — выберите клетку' : `Ходит ${esc(S.peerName)}…`;
+  } else if (S.mode === 'ai') {
+    mine = S.cur === 0;
+    txt = S.cur === 0 ? (S.fx ? 'Ваш выстрел…' : 'Ваш ход — выберите клетку') : 'Компьютер целится…';
   } else {
-    mine = !S.busy;
-    txt = S.busy ? 'Промах! Ход переходит…' : `Стреляет ${esc(S.sides[S.cur].name)}`;
+    mine = true;
+    txt = S.fx ? `Стреляет ${esc(S.sides[S.cur].name)}…` : `Ход: ${esc(S.sides[S.cur].name)} — выберите клетку`;
   }
   tb.className = 'turn' + (mine ? ' mine' : '');
   tb.innerHTML = txt;
@@ -1220,6 +1512,7 @@ function modal(title, text, btns) {
 function hideModal() { $('#modal').hidden = true; }
 let passCb = null;
 function showPass(name, text, btn, cb) {
+  S.pencil = false;
   $('#passTitle').textContent = name;
   $('#passText').textContent = text;
   $('#passBtn').textContent = btn;
@@ -1233,11 +1526,13 @@ function toast(msg, ms = 2500) {
   clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, ms);
 }
 function fail(msg) {
+  resetFx();
   Net.destroy(); setNet(null);
   S.gen++;
   modal('Не получилось', msg, [['В меню', toMenu, 'primary']]);
 }
 function toMenu() {
+  resetFx();
   hideModal(); hidePass();
   if (S.mode === 'net') { Net.destroy(); setNet(null); }
   S.gen++;
@@ -1278,6 +1573,34 @@ function cellFromEvent(e) {
 }
 
 ['#placeBoard', '#enemyBoard', '#myBoard'].forEach(s => initBoard($(s)));
+
+/* Надёжное нажатие. Мобильные браузеры иногда «съедают» первое нажатие после перетаскивания
+   (не присылают click). Поэтому нажатие засчитываем по pointerup, а дублирующий click гасим. */
+(function reliableTap() {
+  const SEL = 'button, .cell, .mode-btn';
+  let down = null, synth = false, lastEl = null, lastT = 0;
+  document.addEventListener('pointerdown', e => {
+    const el = e.target.closest && e.target.closest(SEL);
+    down = el ? { el, id: e.pointerId, x: e.clientX, y: e.clientY } : null;
+  }, true);
+  document.addEventListener('pointerup', e => {
+    const d = down; down = null;
+    if (!d || d.id !== e.pointerId || e.pointerType === 'mouse') return;
+    if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 12) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    if (!el || !(el === d.el || d.el.contains(el))) return;
+    if (d.el.disabled || d.el.closest('#placeBoard')) return;
+    lastEl = d.el; lastT = Date.now();
+    synth = true; try { d.el.click(); } finally { synth = false; }
+  }, true);
+  // настоящий click, пришедший вслед за нашим, гасим, куда бы он ни попал: экран мог смениться,
+  // и «призрачный» click нажал бы кнопку, оказавшуюся под пальцем
+  document.addEventListener('click', e => {
+    if (synth || !lastEl) return;
+    if (Date.now() - lastT < 700) { e.stopImmediatePropagation(); e.preventDefault(); }
+    lastEl = null;
+  }, true);
+})();
 
 // меню
 $$('[data-go]').forEach(b => b.onclick = () => { Snd.init(); show(b.dataset.go); });
@@ -1341,68 +1664,165 @@ $('#muteBtn').onclick = () => {
 };
 $('#muteBtn').textContent = Snd.on ? '🔊' : '🔇';
 
-// расстановка
+// расстановка: перетаскивание пальцем/мышью
 function placementLocked() { return S.screen !== 'place' || (S.mode === 'net' && S.myReady); }
-function placeAt(r, c, el) {
-  if (placementLocked()) return;
-  Snd.init();
-  const b = placingBoard(), idx = b.grid[r][c];
-  if (idx >= 0) { // взять корабль, чтобы переставить
-    const s = b.ships[idx];
-    S.sel = s.size;
-    if (s.size > 1) S.orient = s.cells[0][0] === s.cells[1][0] ? 'h' : 'v';
-    removeShip(b, idx);
-    S.hover = null;
-    placeMsg(`Корабль снят — нажмите на клетку, чтобы поставить его снова`);
-    renderPlace(); return;
-  }
-  if (!remainingSizes(b).length) { placeMsg('Все корабли расставлены. Нажмите на корабль, чтобы переставить его.'); return; }
-  const cells = placementCells(r, c);
-  if (canPlace(b.grid, cells)) {
-    addShip(b, cells); S.hover = null; Snd.place();
-    const left = remainingSizes(b).length;
-    placeMsg(left ? '' : 'Все корабли на месте!');
+const PB = $('#placeBoard');
+function boardCellAt(el, x, y) {
+  const rc = el.getBoundingClientRect();
+  const c = Math.floor((x - rc.left) / (rc.width / 11)) - 1, r = Math.floor((y - rc.top) / (rc.height / 11)) - 1;
+  return inB(r, c) ? [r, c] : null;
+}
+const shipOrient = s => s.size > 1 && s.cells[0][1] === s.cells[1][1] ? 'v' : 'h';
+function startDrag(e, d) {
+  S.drag = Object.assign(d, { x0: e.clientX, y0: e.clientY, moved: false, id: e.pointerId, touch: e.pointerType !== 'mouse' });
+  try { e.currentTarget.setPointerCapture(e.pointerId); } catch { }
+  S.hover = null;
+  renderPlace(); updateTag(e);
+}
+function updateTag(e) {
+  const t = $('#dragTag'), d = S.drag;
+  if (!d || (!d.moved && d.src === 'tray')) { t.hidden = true; return; }
+  const cells = dragCells(d);
+  if (!cells) {
+    t.textContent = d.from ? 'Отпустите — убрать' : 'Ведите на поле';
+    t.className = 'drag-tag bad';
   } else {
-    Snd.bad();
-    placeMsg('Сюда нельзя: корабли не должны касаться друг друга, даже углами');
-    if (el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); setTimeout(() => el.classList.remove('shake'), 300); }
+    const a = coordName(...cells[0]), z = coordName(...cells[cells.length - 1]);
+    const ok = canPlace(placingBoard().grid, cells);
+    t.textContent = (cells.length > 1 ? `${a}–${z}` : a) + (ok ? ' ✓' : ' ✕');
+    t.className = 'drag-tag ' + (ok ? 'ok' : 'bad');
+  }
+  t.style.left = e.clientX + 'px';
+  t.style.top = (e.clientY - (d.touch ? 84 : 44)) + 'px';
+  t.hidden = false;
+}
+PB.addEventListener('pointerdown', e => {
+  if (placementLocked() || S.drag || e.button > 0) return;
+  const cell = boardCellAt(PB, e.clientX, e.clientY); if (!cell) return;
+  e.preventDefault(); Snd.init();
+  const b = placingBoard(), idx = b.grid[cell[0]][cell[1]];
+  if (idx >= 0) { // берём поставленный корабль
+    const s = b.ships[idx], o = shipOrient(s);
+    const grab = s.cells.findIndex(([r, c]) => r === cell[0] && c === cell[1]);
+    removeShip(b, idx);
+    startDrag(e, { size: s.size, orient: o, grab, anchor: cell, from: { cells: s.cells, orient: o }, src: 'board' });
+  } else {
+    if (!remainingSizes(b).includes(S.sel)) { placeMsg('Все корабли на поле. Перетащите любой, чтобы переставить, или нажмите — чтобы повернуть.'); return; }
+    startDrag(e, { size: S.sel, orient: S.orient, grab: 0, anchor: cell, from: null, src: 'new' });
+  }
+});
+$('#tray').addEventListener('pointerdown', e => {
+  const t = e.target.closest('.tray-item');
+  if (!t || placementLocked() || S.drag || e.button > 0) return;
+  const size = +t.dataset.size;
+  if (!remainingSizes(placingBoard()).includes(size)) return;
+  e.preventDefault(); Snd.init();
+  S.sel = size; placeMsg('');
+  $$('#tray .tray-item').forEach(x => x.classList.toggle('sel', x === t));
+  const o = S.orient;
+  // хватаем за середину, чтобы корабль был под пальцем
+  startDrag(e, { size, orient: o, grab: Math.floor((size - 1) / 2), anchor: null, from: null, src: 'tray' });
+});
+window.addEventListener('pointermove', e => {
+  const d = S.drag;
+  if (d) {
+    if (e.pointerId !== d.id) return;
+    if (!d.moved && Math.hypot(e.clientX - d.x0, e.clientY - d.y0) > 8) d.moved = true;
+    const cell = boardCellAt(PB, e.clientX, e.clientY);
+    if ((cell && cell.join()) !== (d.anchor && d.anchor.join())) { d.anchor = cell; renderPlace(); }
+    updateTag(e);
     return;
   }
+  if (e.pointerType === 'mouse' && S.screen === 'place' && !placementLocked()) {
+    const cell = boardCellAt(PB, e.clientX, e.clientY);
+    if ((cell && cell.join()) !== (S.hover && S.hover.join())) { S.hover = cell; renderPlace(); }
+  }
+});
+window.addEventListener('pointerup', e => { if (S.drag && e.pointerId === S.drag.id) endDrag(false); });
+window.addEventListener('pointercancel', e => { if (S.drag && e.pointerId === S.drag.id) endDrag(true); });
+function endDrag(cancel) {
+  const d = S.drag; S.drag = null;
+  $('#dragTag').hidden = true;
+  const b = placingBoard();
+  const restore = () => { if (d.from) addShip(b, d.from.cells); };
+  if (cancel) { restore(); return renderPlace(); }
+  // нажатие на поставленный корабль без движения — поворот
+  if (!d.moved && d.src === 'board') {
+    if (d.size === 1) { restore(); placeMsg('Перетащите корабль, чтобы переставить его'); return renderPlace(); }
+    const o2 = d.orient === 'h' ? 'v' : 'h', [r0, c0] = d.from.cells[0];
+    const cells = clampShip(r0, c0, d.size, o2);
+    if (canPlace(b.grid, cells)) { addShip(b, cells); S.orient = o2; Snd.place(); renderPlace(); fxCells(PB, cells, 'fx-pop'); placeMsg('Корабль повёрнут'); }
+    else { restore(); Snd.bad(); renderPlace(); fxCells(PB, cells.filter(([r, c]) => inB(r, c)), 'fx-bad'); placeMsg('Повернуть нельзя — мешает край поля или соседний корабль'); }
+    return;
+  }
+  if (d.src === 'tray' && !d.moved) { placeMsg('Перетащите корабль на поле или нажмите на клетку'); return renderPlace(); }
+  const cells = dragCells(d);
+  if (!cells) {
+    if (d.from) { S.sel = d.size; placeMsg('Корабль убран — он снова внизу'); Snd.bad(); }
+    return renderPlace();
+  }
+  if (canPlace(b.grid, cells)) {
+    addShip(b, cells); Snd.place();
+    renderPlace(); fxCells(PB, cells, 'fx-pop');
+    placeMsg(remainingSizes(b).length ? '' : 'Все корабли на месте! Можно в бой.');
+  } else {
+    restore(); Snd.bad();
+    renderPlace(); fxCells(PB, cells, 'fx-bad');
+    placeMsg(d.from ? 'Сюда нельзя — корабль вернулся на место. Корабли не касаются даже углами.' : 'Сюда нельзя: корабли не должны касаться друг друга, даже углами');
+  }
+}
+function rotatePlacement() {
+  if (placementLocked()) return;
+  if (S.drag) { S.drag.orient = S.drag.orient === 'h' ? 'v' : 'h'; S.drag.grab = Math.min(S.drag.grab, S.drag.size - 1); }
+  else S.orient = S.orient === 'h' ? 'v' : 'h';
   renderPlace();
 }
-$('#placeBoard').addEventListener('click', e => {
-  const p = cellFromEvent(e); if (p) placeAt(p[0], p[1], e.target.closest('.cell'));
-});
-$('#placeBoard').addEventListener('pointermove', e => {
-  if (e.pointerType !== 'mouse' || placementLocked()) return;
-  const p = cellFromEvent(e);
-  const key = p ? p.join() : null;
-  if (key === (S.hover && S.hover.join())) return;
-  S.hover = p; renderPlace();
-});
-$('#placeBoard').addEventListener('pointerleave', () => { if (S.hover) { S.hover = null; renderPlace(); } });
-$('#placeBoard').addEventListener('contextmenu', e => { e.preventDefault(); if (placementLocked()) return; S.orient = S.orient === 'h' ? 'v' : 'h'; renderPlace(); });
-$('#tray').addEventListener('click', e => {
-  const b = e.target.closest('.tray-item'); if (!b || placementLocked()) return;
-  const size = +b.dataset.size;
-  if (remainingSizes(placingBoard()).includes(size)) { S.sel = size; placeMsg(''); renderPlace(); }
-});
-$('#rotateBtn').onclick = () => { if (placementLocked()) return; S.orient = S.orient === 'h' ? 'v' : 'h'; renderPlace(); };
-$('#randomBtn').onclick = () => { if (placementLocked()) return; S.sides[S.placing].my = randomFleet(); Snd.place(); placeMsg('Можно переставить любой корабль — нажмите на него'); renderPlace(); };
+PB.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && S.hover && !S.drag) { S.hover = null; renderPlace(); } });
+PB.addEventListener('contextmenu', e => { e.preventDefault(); rotatePlacement(); });
+$('#tray').addEventListener('contextmenu', e => e.preventDefault());
+$('#rotateBtn').onclick = rotatePlacement;
+$('#randomBtn').onclick = () => { if (placementLocked()) return; S.sides[S.placing].my = randomFleet(); Snd.place(); renderPlace(); fxCells(PB, S.sides[S.placing].my.ships.flatMap(s => s.cells), 'fx-pop', 500); placeMsg('Любой корабль можно перетащить или повернуть нажатием'); };
 $('#clearBtn').onclick = () => { if (placementLocked()) return; S.sides[S.placing].my = emptyBoard(); S.sel = 4; placeMsg(''); renderPlace(); };
 $('#readyBtn').onclick = onReady;
 document.addEventListener('keydown', e => {
-  if (S.screen === 'place' && (e.key === 'r' || e.key === 'R' || e.key === 'к' || e.key === 'К') && document.activeElement.tagName !== 'INPUT') $('#rotateBtn').click();
+  const tag = document.activeElement && document.activeElement.tagName;
+  if (tag === 'INPUT') return;
+  if (S.screen === 'place' && /^[rRкК]$/.test(e.key)) rotatePlacement();
+  if (S.screen === 'battle' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); $('#fireBtn').click(); }
 });
 
-// бой
+// бой: выбор клетки → «Огонь!»
 $('#enemyBoard').addEventListener('click', e => {
   const p = cellFromEvent(e); if (!p) return;
   Snd.init();
-  if (!canShootNow()) return;
-  if (S.mode === 'net') netFire(p[0], p[1]);
-  else localShoot(p[0], p[1]);
+  if (S.pencil) return toggleMark(p[0], p[1]);
+  if (S.phase !== 'battle' || S.fx) return;
+  const V = S.sides[S.viewer];
+  if (!shootable(V.view[p[0]][p[1]])) return;
+  V.aim = p; Snd.tick(); vib(8);
+  renderBattle();
 });
+$('#fireBtn').onclick = () => {
+  Snd.init();
+  if (!canShootNow()) return;
+  const V = S.sides[S.viewer];
+  if (!V.aim) return;
+  const [r, c] = V.aim;
+  if (S.mode === 'net') netFire(r, c); else localShoot(r, c);
+};
+
+// карандаш: отметки на поле соперника (видны только тому, кто их поставил)
+function toggleMark(r, c) {
+  if (S.phase !== 'battle' || !S.sides.length) return;
+  const V = S.sides[S.viewer];
+  if (V.view[r][c] !== 0 && V.view[r][c] !== 4) return; // по этой клетке уже стреляли
+  V.marks[r][c] = !V.marks[r][c];
+  vib(10);
+  renderBattle();
+}
+function setPencil(on) { S.pencil = on; renderBattle(); }
+$('#pencilBtn').onclick = () => setPencil(!S.pencil);
+$('#pencilClear').onclick = () => { if (S.sides[S.viewer]) { S.sides[S.viewer].marks = grid(false); renderBattle(); } };
 
 /* ---------- Старт ---------- */
 (function boot() {
