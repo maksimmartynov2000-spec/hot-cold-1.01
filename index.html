@@ -223,6 +223,17 @@ table.pblk tr.pr td{background:var(--warn-soft)}
 .btn.danger{color:var(--bad);border-color:var(--bad-soft)}
 .btn[disabled]{opacity:.45;cursor:default}
 .earlynote{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;margin:10px 0}
+/* physics: unit typed by the student */
+.unitrow .inp.uinp{flex:0 0 7.5em;width:7.5em;min-width:0;text-align:center}
+.uchips{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 0 2px;scrollbar-width:none}
+.uchips::-webkit-scrollbar{display:none}
+.uchip{flex:0 0 auto;border:1.5px solid var(--line);background:var(--chip);border-radius:999px;padding:4px 11px;font-size:15px;min-height:34px;cursor:pointer;white-space:nowrap}
+.uchip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+/* next step after mastering */
+.nextbox{margin-top:12px;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:var(--card)}
+.nextbox.hot{border-color:var(--ok);background:var(--ok-soft)}
+.nextbox .t{font-size:18px}
+.nextbox.hot .t{color:var(--ok)}
 </style>
 </head>
 <body>
@@ -798,6 +809,38 @@ function gradeCS(spec, raw, keys) {
   if (keys.some(k => csNorm(k) === a)) return R_OK();
   if (keys.some(k => csNorm(k).toLowerCase() === a.toLowerCase())) return R_NO(L('Almost — check capital and small letters: the computer outputs them exactly as in the code.', 'Почти — проверьте заглавные и строчные буквы: компьютер выводит их ровно так, как в коде.'), { near: true });
   return R_NO();
+}
+/* ---------- units typed by the student (physics) ---------- */
+const U_SYM = ['L', 'kWh', 'kPa', 'min', 'mm', 'cm', 'km', 'kg', 'Pa', 'Hz', '°C', 'kJ', 'kW', 'MJ', 'g', 'm', 's', 'h', 'N', 'J', 'W', 'K', 'V', 'A', 'Ω', '%', 'C'];
+function unitParse(str) {
+  let s = String(str).trim();
+  s = s.replace(/⁻?[⁰¹²³⁴⁵⁶⁷⁸⁹]+/g, m => '^' + (m[0] === '⁻' ? '-' : '') + m.replace('⁻', '').split('').map(c => '⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(c)).join(''));
+  s = s.replace(/[º˚]|(?:deg|o)(?=C)/g, '°').replace(/[·*×]/g, ' ').replace(/−/g, '-').replace(/\s*\^\s*/g, '^');
+  if (/^(percent|per ?cent)$/i.test(s)) s = '%';
+  s = s.replace(/\b(litres?|liters?|l)\b/g, 'L');
+  const halves = s.split('/'); if (halves.length > 2 || !s) return null;
+  const out = {};
+  for (let hi = 0; hi < halves.length; hi++) {
+    let t = halves[hi].trim(); if (!t) return null;
+    while (t.length) {
+      t = t.replace(/^[\s.]+/, ''); if (!t.length) break;
+      const sym = U_SYM.find(u => t.startsWith(u)); if (!sym) return null;
+      t = t.slice(sym.length);
+      const m = /^\^?(-?\d+)/.exec(t); let e = 1; if (m) { e = +m[1]; t = t.slice(m[0].length); }
+      const key = sym === 'C' ? '°C' : sym; out[key] = (out[key] || 0) + (hi ? -e : e);
+    }
+  }
+  return Object.keys(out).filter(k => out[k]).sort().map(k => k + out[k]).join(' ');
+}
+function unitCheck(key, input) {
+  const raw = String(input || '').trim();
+  if (!raw) return { ok: false, msg: L('The number is right — now write the unit too.', 'Число верное — теперь впишите единицу измерения.') };
+  if (/[А-яЁё]/.test(raw)) return { ok: false, msg: L('Write the unit in English symbols, as in the exam (e.g. m/s, N, J).', 'Пишите единицу латиницей, как в экзамене (например, m/s, N, J).') };
+  const a = unitParse(raw), k = unitParse(key);
+  if (a && a === k) return { ok: true };
+  const lo = x => String(x || '').toLowerCase().replace(/\s+/g, '');
+  if (lo(raw) === lo(key) || (a && k && lo(a) === lo(k))) return { ok: false, msg: L('The number is right, but check capital and small letters in the unit: N, J, W, Pa start with a capital; m, s, kg are small.', 'Число верное, но проверьте заглавные и строчные буквы в единице: N, J, W, Pa — с заглавной; m, s, kg — строчные.') };
+  return { ok: false, msg: L('The number is right, but the unit is not. Think about what quantity you found.', 'Число верное, а единица — нет. Подумайте, какую величину вы нашли.') };
 }
 function formulaCount(f) {
   const s = chemNorm(f); let i = 0;
@@ -3811,7 +3854,7 @@ function importProgress(f) {
 }
 
 /* ---------- PWA ---------- */
-const APP_VERSION = '20261110-1112';
+const APP_VERSION = '20261110-1123';
 function isStandalone() { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.__installEvt = e; });
 if ('serviceWorker' in navigator) { navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())).catch(() => {}); if (window.caches) caches.keys().then(ks => ks.filter(x => x.startsWith('endterm-')).forEach(x => caches.delete(x))).catch(() => {}); }
@@ -3845,6 +3888,7 @@ const SUBJECTS = [{ id: 'math', en: 'Maths', ru: 'Математика' }, { id:
 const PFX = { math: 'm', phys: 'p', chem: 'c', cs: 's' };
 CHAPTERS.forEach(c => { c.subj = c.subj || 'math'; c.num = c.id; c.id = PFX[c.subj] + c.num; });
 SKILLS.forEach(s => { s.ch = PFX[s.subj] + s.ch; s.code = s.code || s.id; if (s.subj === 'phys' || s.subj === 'chem') s.calc = true; });
+SKILLS.filter(s => s.subj === 'phys').forEach(s => { const g0 = s.gen; s.gen = function (r, vi) { const it = g0.call(this, r, vi); const mk = sp => { if (!sp) return; if (sp.k === 'multi') sp.parts.forEach(p => mk(p.spec)); else if (sp.unit && sp.k === 'num') sp.uin = true; }; mk(it.ans); return it; }; });
 const TH = {}; Object.keys(THEORY).forEach(k => TH['m' + k] = THEORY[k]); Object.assign(TH, PTHEORY, CTHEORY, STHEORY);
 const CH = id => CHAPTERS.find(c => c.id === id);
 if (!DB.subj) DB.subj = 'math';
@@ -3936,6 +3980,9 @@ function varsFor(it) {
 
 /* ---------- answer field html ---------- */
 let UID = 0;
+const UCHIPS = ['m', 'mm', 'cm³', 'm³', 'litres', 's', 'kg', 'g', 'N', 'J', 'W', 'kWh', 'Pa', 'kPa', 'm/s', 'm/s²', 'kg/m³', 'g/cm³', 'N m', 'N/m', 'N s', 'kg m/s', '%'];
+function uval(id) { const v = (inExam() && EX ? EX.vals : P ? P.vals : {}) || {}; return v[id + '_u'] || ''; }
+function gradeU(spec, vals, id) { const g = grade(spec, vals[id]); if (!spec.uin || !spec.unit || !g.ok) return g; const u = unitCheck(spec.unit, vals[id + '_u']); return u.ok ? g : R_NO(u.msg, { near: true, unitErr: true }); }
 function fieldHtml(f, id, val, state, noHelp) {
   const sp = f.spec;
   let h = '';
@@ -3952,9 +3999,13 @@ function fieldHtml(f, id, val, state, noHelp) {
   const cls = state && state.mark ? (state.mark === 'ok' ? ' ok' : ' bad') : '';
   const nat = sp.k === 'text' && sp.norm !== 'cfg';
   h += '<input class="inp' + cls + '" id="' + id + '" data-field="' + id + '" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="' + (nat && sp.norm === 'bin' ? 'numeric' : DB.kbd || nat ? 'text' : 'none') + '"' + (nat ? ' data-nat="1"' : '') + ' value="' + esc(val || '') + '"' + (state && state.lock ? ' readonly' : '') + '>';
-  if (sp.unit) h = h.replace(/(<input[^>]*>)$/, '<div class="unitrow">$1<span class="unit">' + esc(sp.unit) + '</span></div>');
+  if (sp.unit && sp.uin) {
+    const uv = uval(id), lock = state && state.lock;
+    h = h.replace(/(<input[^>]*>)$/, '<div class="unitrow">$1<input class="inp uinp' + (state && state.umark ? (state.umark === 'ok' ? ' ok' : ' bad') : cls) + '" id="' + id + '_u" data-field="' + id + '_u" data-nat="1" data-unit="1" placeholder="единица" aria-label="единица измерения" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="text" value="' + esc(uv) + '"' + (lock ? ' readonly' : '') + '></div>');
+    if (!lock) h += '<div class="uchips" data-ufor="' + id + '_u">' + UCHIPS.map(u => '<button type="button" class="uchip" data-u="' + esc(u) + '">' + esc(u) + '</button>').join('') + '</div>';
+  } else if (sp.unit) h = h.replace(/(<input[^>]*>)$/, '<div class="unitrow">$1<span class="unit">' + esc(sp.unit) + '</span></div>');
   h += '<div class="pv" id="pv-' + id + '"></div>';
-  const fh = noHelp ? null : fmtHelp(sp); if (fh) h += '<div class="syn">' + fh.ru + '</div>';
+  const fh = noHelp ? null : fmtHelp(sp); if (fh) h += '<div class="syn">' + fh.ru + (sp.uin ? ' Единицу измерения впишите во второе поле (латиницей) или нажмите на подходящую ниже.' : '') + '</div>';
   return h;
 }
 function updatePreview(inp) {
@@ -4025,6 +4076,27 @@ function viewChapter(ch) {
 function theoryHtml(ch, open1, title) {
   return '<section class="card theory" id="thBox"><h3>' + title + '</h3><p class="syn">Нажмите на тему, чтобы раскрыть.</p>' + (TH[ch] || []).map((b, i) => '<details' + (open1 && i === 0 ? ' open' : '') + '><summary>' + NM(b.h) + '</summary>' + b.p.map(p => '<p>' + tr(p) + '</p>').join('') + (b.ex && b.ex.length ? '<div class="ex">' + b.ex.map(e => K(mi(e))).join('<br>') + '</div>' : '') + '</details>').join('') + '</section>';
 }
+/* ---------- what next after a skill / chapter is mastered ---------- */
+const isM = id => !!(DB.sk[id] || {}).m;
+function nextAfter(sk, mix) {
+  const ch = CH(sk.ch); const inCh = SKILLS.filter(s => s.ch === sk.ch);
+  if (!mix) { const i = inCh.indexOf(sk); const nx = inCh.slice(i + 1).concat(inCh.slice(0, i)).find(s => !isM(s.id)); if (nx) return { kind: 'skill', sk: nx }; }
+  else if (inCh.some(s => !isM(s.id))) return null;
+  const chs = CHAPTERS.filter(c => c.subj === ch.subj); const ci = chs.indexOf(ch);
+  const nch = chs.slice(ci + 1).concat(chs.slice(0, ci)).find(c => SKILLS.some(s => s.ch === c.id && !isM(s.id)));
+  if (nch) return { kind: 'chapter', ch: nch, sk: SKILLS.find(s => s.ch === nch.id && !isM(s.id)), done: ch };
+  return { kind: 'exam', done: ch };
+}
+function nextBoxHtml() {
+  const mix = P.target.startsWith('mix:');
+  if (!P.done || !(mix ? true : isM(P.sk.id))) return '';
+  const n = nextAfter(P.sk, mix); if (!n) return '';
+  const just = P.justM; let t, sub, btns;
+  if (n.kind === 'skill') { t = just ? 'Навык освоен!' : 'Этот навык уже освоен'; sub = 'Следующий в этой главе: <b>' + n.sk.code + ' · ' + esc(n.sk.en) + '</b> <span class="muted">' + esc(n.sk.ru) + '</span>'; btns = '<button class="btn primary" onclick="go(\'#/p/' + n.sk.id + '\')">Дальше: ' + n.sk.code + ' →</button>'; }
+  else if (n.kind === 'chapter') { t = 'Глава ' + n.done.num + ' освоена полностью!'; sub = 'Следующая: <b>Глава ' + n.ch.num + '. ' + esc(n.ch.en) + '</b> <span class="muted">' + esc(n.ch.ru) + '</span>'; btns = '<button class="btn primary" onclick="go(\'#/p/' + n.sk.id + '\')">Начать главу ' + n.ch.num + ' →</button><button class="btn" onclick="go(\'#/ch/' + n.ch.id + '\')">Сначала теория</button><button class="btn" onclick="startExam([\'' + n.done.id + '\'], \'chapter\')">Тест по главе ' + n.done.num + '</button>'; }
+  else { t = 'Все главы предмета освоены!'; sub = 'Самое время проверить себя на пробном экзамене по всем главам.'; btns = '<button class="btn primary" onclick="go(\'#/exam\')">Пробный экзамен →</button>'; }
+  return '<div class="nextbox' + (just || n.kind !== 'skill' ? ' hot' : '') + '"><b class="t">' + t + '</b><div>' + sub + '</div><div class="row">' + btns + '</div></div>';
+}
 /* ---------- practice ---------- */
 let P = null; // current practice state
 function newItem(target) {
@@ -4054,10 +4126,10 @@ function renderPractice() {
   if (it.ans.k === 'self') {
     h += '<div class="hint">Запишите решение на бумаге, затем нажмите «Показать образец» и сравните.</div>';
   } else if (fs.length > 1) {
-    h += '<div class="multi">' + fs.map((f, i) => { const id = 'f' + P.uid + '_' + i; FIELD_SPEC[id] = f.spec; FIELD_VARS[id] = varsFor(it); const st_ = P.fb && P.fb.parts ? P.fb.parts[i] : null; return '<div class="part' + (st_ ? (st_.ok ? ' ok' : ' bad') : '') + '">' + fieldHtml(f, id, P.vals[id], st_ ? { mark: st_.ok ? 'ok' : 'bad', reveal: P.done || P.showSol } : null, i > 0 && fmtHelp(f.spec).en === fmtHelp(fs[0].spec).en) + (st_ && !st_.ok && st_.msg ? '<div class="syn">' + tr(st_.msg) + '</div>' : '') + '</div>'; }).join('') + '</div>';
+    h += '<div class="multi">' + fs.map((f, i) => { const id = 'f' + P.uid + '_' + i; FIELD_SPEC[id] = f.spec; FIELD_VARS[id] = varsFor(it); const st_ = P.fb && P.fb.parts ? P.fb.parts[i] : null; return '<div class="part' + (st_ ? (st_.ok ? ' ok' : ' bad') : '') + '">' + fieldHtml(f, id, P.vals[id], st_ ? { mark: st_.ok || st_.unitErr ? 'ok' : 'bad', umark: st_.ok ? 'ok' : 'bad', reveal: P.done || P.showSol } : null, i > 0 && fmtHelp(f.spec).en === fmtHelp(fs[0].spec).en) + (st_ && !st_.ok && st_.msg ? '<div class="syn">' + tr(st_.msg) + '</div>' : '') + '</div>'; }).join('') + '</div>';
   } else {
     const id = 'f' + P.uid + '_0'; FIELD_SPEC[id] = fs[0].spec; FIELD_VARS[id] = varsFor(it);
-    h += fieldHtml(fs[0], id, P.vals[id], P.fb ? { mark: P.fb.ok ? 'ok' : 'bad', reveal: P.done || P.showSol } : null);
+    h += fieldHtml(fs[0], id, P.vals[id], P.fb ? { mark: P.fb.ok || P.fb.unitErr ? 'ok' : 'bad', umark: P.fb.ok ? 'ok' : 'bad', reveal: P.done || P.showSol } : null);
   }
   h += '</div>';
   if (P.fb) {
@@ -4065,10 +4137,11 @@ function renderPractice() {
     const cls = fb.ok ? 'ok' : fb.near ? 'near' : 'bad';
     h += '<div class="fb ' + cls + '"><b class="t">' + (fb.ok ? (P.first === true ? 'Верно!' : 'Верно.') : fb.near ? 'Почти' : 'Пока неверно') + '</b>' + (fb.msg ? '<span>' + tr(fb.msg) + '</span>' : '') + (!fb.ok && P.tries >= 2 && !P.showSol ? '<span class="muted">Не получается? Откройте решение, разберите его и возьмите новое задание.</span>' : '') + '</div>';
   }
+  const nb = nextBoxHtml(); h += nb;
   for (let i = 0; i < P.hintN && i < sk.hints.length; i++) h += '<div class="hint"><b>Подсказка:</b> ' + tr(sk.hints[i]) + '</div>';
   if (P.showSol || P.done) {
-    h += '<div class="fb info"><b class="t">' + (it.ans.k === 'self' ? 'Образец решения' : 'Ответ: ') + (it.ans.k !== 'self' && it.ans.k !== 'multi' ? K(keyTex(it.ans, it)) + (it.ans.unit ? ' ' + esc(it.ans.unit) : '') : '') + '</b>';
-    if (it.ans.k === 'multi') h += it.ans.parts.map(p => '<div>' + tr(p.lab) + ' ' + K(keyTex(p.spec)) + (p.spec.unit ? ' ' + esc(p.spec.unit) : '') + '</div>').join('');
+    h += '<div class="fb info"><b class="t">' + (it.ans.k === 'self' ? 'Образец решения' : 'Ответ: ') + (it.ans.k === 'mcq' ? '</b><div>' + tr(it.ans.opts[it.ans.c]) + '</div><b>' : it.ans.k !== 'self' && it.ans.k !== 'multi' ? K(keyTex(it.ans, it)) + (it.ans.unit ? ' ' + esc(it.ans.unit) : '') : '') + '</b>';
+    if (it.ans.k === 'multi') h += it.ans.parts.map(p => '<div>' + tr(p.lab) + ' ' + (p.spec.k === 'mcq' ? '<b>' + tr(p.spec.opts[p.spec.c]) + '</b>' : K(keyTex(p.spec))) + (p.spec.unit ? ' ' + esc(p.spec.unit) : '') + '</div>').join('');
     h += solHtml(it) + '</div>';
   }
   h += '<div class="row">';
@@ -4079,7 +4152,7 @@ function renderPractice() {
   if (!P.done && P.hintN < sk.hints.length) h += '<button class="btn" id="bHint">Подсказка' + (sk.hints.length > 1 ? ' ' + (P.hintN + 1) + '/' + sk.hints.length : '') + '</button>';
   if (!P.done && !P.showSol && it.ans.k !== 'self') h += '<button class="btn" id="bSol">Решение</button>';
   h += '<button class="btn" id="bTh">' + (P.showTh ? 'Скрыть теорию' : '📖 Теория') + '</button>';
-  h += '<button class="btn' + (P.done ? ' primary' : ' ghost') + '" id="bNext">Новое задание →</button>';
+  h += '<button class="btn' + (P.done && !nb ? ' primary' : ' ghost') + '" id="bNext">' + (nb ? 'Ещё задание по этому навыку' : 'Новое задание →') + '</button>';
   h += '</div></section>';
   if (P.showTh) h += theoryHtml(ch.id, false, 'Теория · Глава ' + ch.num + ' · ' + esc(ch.ru));
   h += '<div class="row"><button class="btn ghost small" onclick="go(\'#/ch/' + ch.id + '\')">← Глава ' + ch.num + ': теория и навыки</button></div>';
@@ -4097,12 +4170,12 @@ function renderPractice() {
   const first = $('input.inp:not([readonly])'); if (first && !P.done && !P.fb && matchMedia('(pointer:fine)').matches) first.focus();
 }
 function renderPracticeKeep() { const y = window.scrollY; renderPractice(); window.scrollTo(0, y); }
-function record(ok) { const s = skStat(P.sk.id); s.a++; if (ok) { s.c++; s.s++; if (s.s >= 3) s.m = true; } else s.s = 0; save(); }
+function record(ok) { const s = skStat(P.sk.id); const was = s.m; s.a++; if (ok) { s.c++; s.s++; if (s.s >= 3) s.m = true; } else s.s = 0; if (!was && s.m) P.justM = true; save(); }
 function collectVals(root) { $$('input.inp', root).forEach(i => { P.vals[i.dataset.field] = i.value; }); }
 function checkPractice() {
   collectVals($('#app')); hideKb();
   const it = P.it; const fs = fieldsOf(it.ans);
-  const res = fs.map((f, i) => grade(f.spec, P.vals['f' + P.uid + '_' + i]));
+  const res = fs.map((f, i) => gradeU(f.spec, P.vals, 'f' + P.uid + '_' + i));
   if (res.some(r => r.empty) && res.every(r => r.empty || r.syntax)) { toast(res[0].msg ? res[0].msg.ru : 'Введите ответ'); return; }
   const synt = res.find(r => r.syntax); if (synt) { P.fb = { ok: false, msg: synt.msg, near: true, parts: fs.length > 1 ? res : null }; renderPracticeKeep(); return; }
   const ok = res.every(r => r.ok);
@@ -4110,7 +4183,7 @@ function checkPractice() {
   if (P.first === null) { P.first = ok; record(ok); }
   if (ok) P.done = true;
   const msgR = res.find(r => !r.ok && r.msg);
-  P.fb = { ok, near: !ok && res.some(r => r.near), msg: fs.length > 1 ? (ok ? null : L('Some parts are not right yet (marked in red).', 'Некоторые части пока неверны (отмечены красным).')) : (msgR ? msgR.msg : null), parts: fs.length > 1 ? res : null };
+  P.fb = { ok, unitErr: fs.length === 1 && !!res[0].unitErr, near: !ok && res.some(r => r.near), msg: fs.length > 1 ? (ok ? null : L('Some parts are not right yet (marked in red).', 'Некоторые части пока неверны (отмечены красным).')) : (msgR ? msgR.msg : null), parts: fs.length > 1 ? res : null };
   if (!ok && P.hintN === 0 && P.tries === 1) P.hintN = 0;
   renderPracticeKeep();
 }
@@ -4124,6 +4197,7 @@ function wireFields(root) {
     inp.addEventListener('focus', () => { if (inp.readOnly) return; if (inp.dataset.nat) { hideKb(); return; } ACTIVE = inp; showKb(FIELD_VARS[inp.dataset.field] || ['x'], FIELD_SPEC[inp.dataset.field]); });
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); enterKey(); } });
   });
+  $$('.uchips', root).forEach(box => box.addEventListener('click', e => { const b = e.target.closest('.uchip'); if (!b) return; const inp = document.getElementById(box.dataset.ufor); if (!inp || inp.readOnly) return; inp.value = b.dataset.u; inp.dispatchEvent(new Event('input')); $$('.uchip', box).forEach(x => x.classList.toggle('on', x === b)); }));
   $$('[data-opt]', root).forEach(b => b.addEventListener('click', () => {
     const id = b.dataset.for; if (!inExam() && !location.hash.startsWith('#/p/')) return; if (inExam()) { if (!EX || EX.done) return; EX.vals[id] = b.dataset.opt; saveExam(); $$('[data-for="' + id + '"]').forEach(x => x.classList.toggle('on', x === b)); return; }
     if (!P || P.done) return; P.vals[id] = b.dataset.opt; collectVals($('#app')); P.fb = null; renderPracticeKeep();
@@ -4249,7 +4323,7 @@ function viewExamRun() {
   h += '<div class="sticky"><span class="meta" id="exCount"></span><button class="btn primary" id="exFinish">Завершить и проверить</button></div>';
   shell(h);
   wireFields($('#app'));
-  const upd = () => { if (!$('#exCount')) return; const tot = $$('input.inp').length + $$('.opts').length; const done = $$('input.inp').filter(i => i.value.trim()).length + $$('.opts').filter(o => o.querySelector('.on')).length; $('#exCount').textContent = 'Отвечено: ' + done + ' из ' + tot; };
+  const upd = () => { if (!$('#exCount')) return; const tot = $$('input.inp:not(.uinp)').length + $$('.opts').length; const done = $$('input.inp:not(.uinp)').filter(i => i.value.trim()).length + $$('.opts').filter(o => o.querySelector('.on')).length; $('#exCount').textContent = 'Отвечено: ' + done + ' из ' + tot; };
   upd(); $('#app').oninput = upd; $('#app').onclick = () => setTimeout(upd, 0);
   $('#exFinish').onclick = () => { const pg = examProgress(ex); if (pg.ans < pg.tot) return endSheet(); finishExam(); };
 }
@@ -4273,12 +4347,12 @@ function renderExamBody(ex, marked) {
         fs.forEach((f, fi) => {
           const id = exField(qi, pi, fi); FIELD_SPEC[id] = f.spec; FIELD_VARS[id] = varsFor(it);
           let stt = null, g = null;
-          if (marked) { g = grade(f.spec, ex.vals[id]); stt = { mark: g.ok ? 'ok' : 'bad', lock: true, reveal: true }; }
+          if (marked) { g = gradeU(f.spec, ex.vals, id); stt = { mark: g.ok || g.unitErr ? 'ok' : 'bad', umark: g.ok ? 'ok' : 'bad', lock: true, reveal: true }; }
           h += '<div class="' + (fs.length > 1 ? 'part' + (g ? (g.ok ? ' ok' : ' bad') : '') : '') + '">' + fieldHtml(f, id, ex.vals[id], stt, true);
           if (marked) h += '<div class="mark ' + (g.ok ? 'ok' : 'bad') + '">' + (g.ok ? '✓ верно' : (g.empty ? '— пропущено, ' : '✗ ') + (g.msg && !g.empty ? esc(g.msg.en) + (DB.ru ? ' (' + esc(g.msg.ru) + ')' : '') + ' — ' : '') + 'правильный ответ: ') + (g.ok ? '' : K(keyTex(f.spec, fs.length === 1 ? it : null)) + (f.spec.unit ? ' ' + esc(f.spec.unit) : '')) + '</div>';
           h += '</div>';
         });
-        if (marked) { const allOk = fs.every((f, fi) => grade(f.spec, ex.vals[exField(qi, pi, fi)]).ok); if (!allOk) h += '<details><summary class="muted">Показать решение</summary>' + solHtml(it) + '<button class="btn small" onclick="go(\'#/p/' + q.id + '\')">Потренировать этот навык →</button></details>'; }
+        if (marked) { const allOk = fs.every((f, fi) => gradeU(f.spec, ex.vals, exField(qi, pi, fi)).ok); if (!allOk) h += '<details><summary class="muted">Показать решение</summary>' + solHtml(it) + '<button class="btn small" onclick="go(\'#/p/' + q.id + '\')">Потренировать этот навык →</button></details>'; }
       }
       h += '</div></div>';
     });
@@ -4292,7 +4366,7 @@ function scoreExam(ex) {
     const fs = it.ans.k === 'self' ? [null] : fieldsOf(it.ans);
     fs.forEach((f, fi) => {
       const id = exField(qi, pi, fi); let ok;
-      if (!f) ok = ex.self[id] === true; else ok = grade(f.spec, ex.vals[id]).ok;
+      if (!f) ok = ex.self[id] === true; else ok = gradeU(f.spec, ex.vals, id).ok;
       mx++; if (ok) sc++; per[q.ch] = per[q.ch] || [0, 0]; per[q.ch][1]++; if (ok) per[q.ch][0]++;
       if (!ok) weak[q.id] = (weak[q.id] || 0) + 1;
     });
@@ -4301,7 +4375,7 @@ function scoreExam(ex) {
 }
 function examProgress(ex) {
   let tot = 0, ans = 0, ok = 0;
-  ex.items.forEach((q, qi) => q.parts.forEach((it, pi) => { if (it.ans.k === 'self') return; fieldsOf(it.ans).forEach((f, fi) => { const v = ex.vals[exField(qi, pi, fi)]; tot++; if (v != null && String(v).trim() !== '') { ans++; if (grade(f.spec, v).ok) ok++; } }); }));
+  ex.items.forEach((q, qi) => q.parts.forEach((it, pi) => { if (it.ans.k === 'self') return; fieldsOf(it.ans).forEach((f, fi) => { const v = ex.vals[exField(qi, pi, fi)]; tot++; if (v != null && String(v).trim() !== '') { ans++; if (gradeU(f.spec, ex.vals, exField(qi, pi, fi)).ok) ok++; } }); }));
   return { tot, ans, ok };
 }
 function endSheet() {
