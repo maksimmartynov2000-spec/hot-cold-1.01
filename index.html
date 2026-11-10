@@ -722,10 +722,40 @@ function numCandidates(raw, isList) {
   return [...new Set(out)];
 }
 function bestOf(cands, f) { let first = null; for (const c of cands) { let g; try { g = f(c); } catch (e) { if (e && e.merr) g = R_NO(L(e.en, e.ru), { syntax: true }); else throw e; } if (g.ok) return g; if (!first || (first.syntax && !g.syntax)) first = g; } return first; }
+const SUBD = '₀₁₂₃₄₅₆₇₈₉', SUPD = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+const CYR = { 'А': 'A', 'В': 'B', 'Е': 'E', 'К': 'K', 'М': 'M', 'Н': 'H', 'О': 'O', 'Р': 'P', 'С': 'C', 'Т': 'T', 'Х': 'X', 'а': 'a', 'е': 'e', 'о': 'o', 'р': 'p', 'с': 'c', 'у': 'y', 'х': 'x', 'к': 'k', 'м': 'm', 'т': 't', 'л': 'l', 'і': 'i' };
+function chemNorm(s) { return String(s).replace(/[А-яёі]/g, c => CYR[c] || c).replace(/[₀-₉]/g, c => SUBD.indexOf(c)).replace(/[⁰-⁹]/g, c => SUPD.indexOf(c)).replace(/\s+/g, '').replace(/[\[{]/g, '(').replace(/[\]}]/g, ')'); }
+function cfgNorm(s) { return (String(s).match(/\d+/g) || []).join(','); }
+function gradeText(spec, input) {
+  const raw = String(input || '').trim();
+  if (!raw) return R_NO(L('Type your answer.', 'Введите ответ.'), { empty: true });
+  const keys = [spec.key].concat(spec.alt || []);
+  if (spec.norm === 'cfg') {
+    const a = cfgNorm(raw); if (keys.some(k => cfgNorm(k) === a)) return R_OK();
+    const tot = a.split(',').reduce((t, x) => t + (+x || 0), 0), kt = cfgNorm(spec.key).split(',').reduce((t, x) => t + +x, 0);
+    if (a && tot !== kt) return R_NO(L('Your shells hold ' + tot + ' electrons in total, but there should be ' + kt + '.', 'В ваших оболочках всего ' + tot + ' электронов, а должно быть ' + kt + '.'), { near: true });
+    if (a.split(',').some(x => +x > 8) && kt <= 20) return R_NO(L('Up to calcium the shells fill 2, 8, 8, … — no shell here holds more than 8.', 'До кальция оболочки заполняются 2, 8, 8, … — ни одна не содержит больше 8.'), { near: true });
+    return R_NO();
+  }
+  const a = chemNorm(raw);
+  if (keys.some(k => chemNorm(k) === a)) return R_OK();
+  if (keys.some(k => chemNorm(k).toLowerCase() === a.toLowerCase())) return R_NO(L('Check capital and small letters: each symbol starts with a capital (Cl, not CL or cl).', 'Проверьте заглавные и строчные буквы: символ начинается с заглавной (Cl, а не CL или cl).'), { near: true });
+  if (spec.norm === 'chem') {
+    const cnt = f => { try { const c = formulaCount(f); return Object.keys(c).sort().map(k => k + c[k]).join(''); } catch (e) { return null; } };
+    const ca = cnt(a); if (ca && keys.some(k => cnt(k) === ca)) return R_NO(L('Right atoms, but write it in the usual way: metal first, and brackets around a group ion that appears more than once, e.g. Ca(OH)2.', 'Атомы верные, но запишите как принято: сначала металл, а сложный ион, если их несколько, — в скобках, например Ca(OH)2.'), { near: true });
+  }
+  return R_NO();
+}
+function formulaCount(f) {
+  const s = chemNorm(f); let i = 0;
+  function group() { const out = {}; while (i < s.length && s[i] !== ')') { let part; if (s[i] === '(') { i++; part = group(); if (s[i] !== ')') throw 0; i++; } else { const m = /^[A-Z][a-z]?/.exec(s.slice(i)); if (!m) throw 0; i += m[0].length; part = { [m[0]]: 1 }; } const n = /^\d+/.exec(s.slice(i)); const k = n ? +n[0] : 1; if (n) i += n[0].length; for (const e in part) out[e] = (out[e] || 0) + part[e] * k; } return out; }
+  const r = group(); if (i !== s.length) throw 0; return r;
+}
 function grade(spec, input) {
   const raw = cleanAns(input || '');
   if (spec.k === 'mcq') { if (input == null || input === '') return R_NO(L('Choose an option.', 'Выберите вариант.'), { empty: true }); return +input === spec.c ? R_OK() : R_NO(); }
   if (spec.k === 'self') return R_NO(null, { self: true });
+  if (spec.k === 'text') return gradeText(spec, input);
   if (!raw) return R_NO(L('Type your answer.', 'Введите ответ.'), { empty: true });
   try {
     if (spec.k === 'expr') return gradeExpr(spec, raw);
@@ -864,7 +894,9 @@ function gradeSubj(spec, raw) {
 }
 
 /* preview of what the student typed */
+function chemTex(f) { return '\\mathrm{' + chemNorm(f).replace(/([A-Za-z\)])(\d+)/g, '$1_{$2}') + '}'; }
 function previewTex(spec, input) {
+  if (spec.k === 'text') { const v = String(input || '').trim(); if (!v) return ''; return spec.norm === 'chem' ? chemTex(v) : '\\text{' + cfgNorm(v).replace(/,/g, ', ') + '}'; }
   const raw = cleanAns(input || '');
   if (!raw) return '';
   if (spec.k === 'sol') { return splitList(raw).map(x => { try { return tex(parse(x)); } catch (e) { return '\\text{?}'; } }).join(',\\; '); }
@@ -2085,7 +2117,8 @@ const THEORY = {
 
 /* ===================== PHYSICS (Pople, Complete Physics for Cambridge IGCSE, ch. 1–4) ===================== */
 LOADING_SUBJ = 'phys';
-const fN = v => { if (!isFinite(v)) return '?'; const a = Math.abs(v); if (a !== 0 && (a >= 1e6 || a < 1e-3)) { const { a: m, e } = stdParts(+v.toPrecision(3)); return m + ' × 10^' + e; } return String(+v.toPrecision(4)); };
+const SUPN = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+const fN = v => { if (!isFinite(v)) return '?'; const a = Math.abs(v); if (a !== 0 && (a >= 1e6 || a < 1e-3)) { const { a: m, e } = stdParts(+v.toPrecision(3)); return m + ' × 10' + String(e).split('').map(c => SUPN[c]).join(''); } return String(+v.toPrecision(4)); };
 const fM = v => { const a = Math.abs(v); if (a !== 0 && (a >= 1e6 || a < 1e-3)) { const { a: m, e } = stdParts(+v.toPrecision(3)); return m + '*10^' + (e < 0 ? '(' + e + ')' : e); } return String(+v.toPrecision(4)); }; // math syntax
 const keyS = v => { const s = String(+v.toPrecision(12)); return /e/.test(s) ? decStr(v) : s; };
 function pnum(v, unit, extra) { return Object.assign({ k: 'num', key: keyS(v), forms: ['approx'], unit }, extra || {}); }
@@ -2105,13 +2138,13 @@ function bankGen(bank) {
 /* ---------- SVG graphs ---------- */
 function svgGraph(o) {
   const W = 340, H = 220, Lm = 46, B = 38, T = 12, Rm = 14, pw = W - Lm - Rm, ph = H - T - B;
-  const X = x => Lm + x / o.xmax * pw, Y = y => T + ph - y / o.ymax * ph;
+  const y0 = o.ymin || 0; const X = x => Lm + x / o.xmax * pw, Y = y => T + ph - (y - y0) / (o.ymax - y0) * ph;
   let s = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="gr" role="img" aria-label="graph">';
   for (let x = 0; x <= o.xmax + 1e-9; x += o.xstep) s += '<line x1="' + X(x) + '" y1="' + T + '" x2="' + X(x) + '" y2="' + (T + ph) + '" class="gl"/><text x="' + X(x) + '" y="' + (T + ph + 15) + '" text-anchor="middle">' + +x.toFixed(2) + '</text>';
-  for (let y = 0; y <= o.ymax + 1e-9; y += o.ystep) s += '<line x1="' + Lm + '" y1="' + Y(y) + '" x2="' + (Lm + pw) + '" y2="' + Y(y) + '" class="gl"/><text x="' + (Lm - 6) + '" y="' + (Y(y) + 4) + '" text-anchor="end">' + +y.toFixed(2) + '</text>';
-  s += '<line x1="' + Lm + '" y1="' + (T + ph) + '" x2="' + (Lm + pw) + '" y2="' + (T + ph) + '" class="ax"/><line x1="' + Lm + '" y1="' + T + '" x2="' + Lm + '" y2="' + (T + ph) + '" class="ax"/>';
+  for (let y = y0; y <= o.ymax + 1e-9; y += o.ystep) s += '<line x1="' + Lm + '" y1="' + Y(y) + '" x2="' + (Lm + pw) + '" y2="' + Y(y) + '" class="gl"/><text x="' + (Lm - 6) + '" y="' + (Y(y) + 4) + '" text-anchor="end">' + +y.toFixed(2) + '</text>';
+  s += '<line x1="' + Lm + '" y1="' + Y(Math.max(y0, 0)) + '" x2="' + (Lm + pw) + '" y2="' + Y(Math.max(y0, 0)) + '" class="ax"/><line x1="' + Lm + '" y1="' + T + '" x2="' + Lm + '" y2="' + (T + ph) + '" class="ax"/>';
   s += '<polyline class="pl" points="' + o.pts.map(([x, y]) => X(x) + ',' + Y(y)).join(' ') + '"/>';
-  (o.labels || []).forEach(([x, y, t]) => s += '<text class="lb" x="' + (X(x) + 4) + '" y="' + (Y(y) - 6) + '">' + t + '</text>');
+  (o.labels || []).forEach(([x, y, t]) => s += '<text class="lb" x="' + Math.min(X(x) + 4, W - 10) + '" y="' + Math.max(Y(y) - 6, 11) + '">' + t + '</text>');
   s += '<text x="' + (Lm + pw / 2) + '" y="' + (H - 4) + '" text-anchor="middle" class="at">' + o.xl + '</text>';
   s += '<text x="12" y="' + (T + ph / 2) + '" text-anchor="middle" class="at" transform="rotate(-90 12 ' + (T + ph / 2) + ')">' + o.yl + '</text></svg>';
   return s;
@@ -2625,6 +2658,378 @@ p4: [
     L('Most of our energy comes originally from the Sun (fusion of hydrogen). Exceptions: geothermal and nuclear (radioactive materials), tides (the Moon).', 'Почти вся наша энергия изначально от Солнца (синтез водорода). Исключения: геотермальная и ядерная (радиоактивные вещества), приливы (Луна).')] }]
 };
 
+/* ===================== CHEMISTRY (school Term 1 notes, Cambridge IGCSE level) ===================== */
+LOADING_SUBJ = 'chem';
+const SUBU = '₀₁₂₃₄₅₆₇₈₉', SUPU = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '+': '⁺', '-': '⁻' };
+/* ascii formula → unicode: digits after a symbol/bracket become subscripts, ^2+ becomes superscript */
+const fm = s => String(s).replace(/\^([0-9]*[+-])/g, (m, c) => c.split('').map(x => SUPU[x]).join('')).replace(/([A-Za-z\)])(\d+)/g, (m, a, d) => a + d.split('').map(x => SUBU[x]).join(''));
+const AR = { H: 1, He: 4, Li: 7, Be: 9, B: 11, C: 12, N: 14, O: 16, F: 19, Ne: 20, Na: 23, Mg: 24, Al: 27, Si: 28, P: 31, S: 32, Cl: 35.5, Ar: 40, K: 39, Ca: 40, Fe: 56, Cu: 64, Zn: 65, Br: 80, Ag: 108, I: 127, Pb: 207, Ba: 137 };
+function Mr(f) { const c = formulaCount(f); return +Object.keys(c).reduce((t, e) => t + AR[e] * c[e], 0).toFixed(2); }
+function mrWork(f) { const c = formulaCount(f); return Object.keys(c).map(e => (c[e] > 1 ? c[e] + '×' : '') + AR[e]).join(' + ') + ' = ' + Mr(f); }
+const arNote = els => ' (Ar: ' + [...new Set(els)].map(e => e + ' = ' + AR[e]).join(', ') + ')';
+const arNoteF = (...fs) => arNote(fs.flatMap(f => Object.keys(formulaCount(f))));
+const EL = [[1, 'H', 'hydrogen', 'водород', 1], [2, 'He', 'helium', 'гелий', 4], [3, 'Li', 'lithium', 'литий', 7], [4, 'Be', 'beryllium', 'бериллий', 9], [5, 'B', 'boron', 'бор', 11], [6, 'C', 'carbon', 'углерод', 12], [7, 'N', 'nitrogen', 'азот', 14], [8, 'O', 'oxygen', 'кислород', 16], [9, 'F', 'fluorine', 'фтор', 19], [10, 'Ne', 'neon', 'неон', 20], [11, 'Na', 'sodium', 'натрий', 23], [12, 'Mg', 'magnesium', 'магний', 24], [13, 'Al', 'aluminium', 'алюминий', 27], [14, 'Si', 'silicon', 'кремний', 28], [15, 'P', 'phosphorus', 'фосфор', 31], [16, 'S', 'sulfur', 'сера', 32], [17, 'Cl', 'chlorine', 'хлор', 35], [18, 'Ar', 'argon', 'аргон', 40], [19, 'K', 'potassium', 'калий', 39], [20, 'Ca', 'calcium', 'кальций', 40]];
+function config(Z) { const out = []; let left = Z; for (const cap of [2, 8, 8, 2]) { if (left <= 0) break; const n = Math.min(cap, left); out.push(n); left -= n; } return out; }
+function groupOf(Z) { const c = config(Z); const v = c[c.length - 1]; return (Z === 2 || (v === 8)) ? 8 : v; } // 8 = Group VIII/0
+const ROM = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII (0)'];
+const ionCharge = Z => { const g = groupOf(Z); if (g <= 3) return g; if (g >= 5 && g <= 7) return g - 8; return 0; };
+const chg = c => c === 0 ? '' : (Math.abs(c) === 1 ? '' : Math.abs(c)) + (c > 0 ? '+' : '-');
+const nuc = (A, Z, sym, c) => '{}^{' + A + '}_{' + Z + '}\\mathrm{' + sym + '}' + (c ? '^{' + chg(c) + '}' : '');
+
+/* ===================== C1 Atomic structure ===================== */
+CHAPTERS.push({ id: 1, subj: 'chem', en: 'Atomic structure and the Periodic Table', ru: 'Строение атома и Периодическая таблица' });
+const BANKC1 = [
+  [L('Which particle has a negative charge?', 'Какая частица заряжена отрицательно?'), [L('electron', 'электрон'), L('proton', 'протон'), L('neutron', 'нейтрон'), L('nucleus', 'ядро')], L('Proton +1, neutron 0, electron −1.', 'Протон +1, нейтрон 0, электрон −1.')],
+  [L('What is the relative mass of an electron?', 'Какова относительная масса электрона?'), [L('1/1840 (almost zero)', '1/1840 (почти ноль)'), L('1', '1'), L('0', '0, точно'), L('−1', '−1')], L('Protons and neutrons have mass 1; an electron is about 1840 times lighter.', 'У протона и нейтрона масса 1; электрон примерно в 1840 раз легче.')],
+  [L('Where are the protons and neutrons found?', 'Где находятся протоны и нейтроны?'), [L('In the nucleus', 'В ядре'), L('In the shells (energy levels)', 'На оболочках (энергетических уровнях)'), L('Moving around the nucleus', 'Движутся вокруг ядра'), L('Only in ions', 'Только в ионах')], L('The nucleus contains protons and neutrons; electrons are in shells around it.', 'В ядре — протоны и нейтроны; электроны — на оболочках вокруг него.')],
+  [L('Why is an atom electrically neutral?', 'Почему атом электрически нейтрален?'), [L('It has equal numbers of protons and electrons', 'В нём поровну протонов и электронов'), L('It has equal numbers of protons and neutrons', 'В нём поровну протонов и нейтронов'), L('Neutrons cancel the charges', 'Нейтроны гасят заряды'), L('It has no electrons', 'В нём нет электронов')], L('+1 for each proton and −1 for each electron cancel out.', '+1 каждого протона и −1 каждого электрона компенсируются.')],
+  [L('The mass number (nucleon number) is…', 'Массовое число (нуклонное число) — это…'), [L('the number of protons + neutrons', 'число протонов + нейтронов'), L('the number of protons', 'число протонов'), L('the number of electrons', 'число электронов'), L('the number of neutrons', 'число нейтронов')], L('A = p + n; the atomic (proton) number Z = p.', 'A = p + n; атомный (протонный) номер Z = p.')],
+  [L('A negatively charged ion is called…', 'Отрицательно заряженный ион называется…'), [L('an anion', 'анион'), L('a cation', 'катион'), L('an isotope', 'изотоп'), L('a molecule', 'молекула')], L('Anion = negative (gained electrons); cation = positive (lost electrons).', 'Анион — отрицательный (принял электроны); катион — положительный (отдал электроны).')],
+  [L('Isotopes of an element have…', 'Изотопы одного элемента имеют…'), [L('the same number of protons but different numbers of neutrons', 'одинаковое число протонов, но разное число нейтронов'), L('different numbers of protons', 'разное число протонов'), L('different numbers of electrons', 'разное число электронов'), L('the same mass number', 'одинаковое массовое число')], L('Same element → same proton number. Different neutrons → different mass numbers.', 'Тот же элемент → то же число протонов. Разное число нейтронов → разные массовые числа.')],
+  [L('Isotopes of the same element have the same chemical properties because…', 'Изотопы одного элемента имеют одинаковые химические свойства, потому что…'), [L('they have the same number of electrons (same electronic configuration)', 'у них одинаковое число электронов (та же электронная конфигурация)'), L('they have the same mass', 'у них одинаковая масса'), L('they have the same number of neutrons', 'у них одинаковое число нейтронов'), L('they are radioactive', 'они радиоактивны')], L('Chemical reactions involve electrons, not neutrons.', 'В химических реакциях участвуют электроны, а не нейтроны.')],
+  [L('Which is a medical use of radioisotopes?', 'Какое медицинское применение радиоизотопов?'), [L('Treating cancer by killing cancer cells with radiation', 'Лечение рака: облучение убивает раковые клетки'), L('Making ionic compounds', 'Получение ионных соединений'), L('Increasing the mass of bones', 'Увеличение массы костей'), L('Cooling the body', 'Охлаждение тела')], L('Other uses: sterilising medical equipment, detecting leaks in pipes, killing bacteria in food.', 'Другие применения: стерилизация инструментов, поиск утечек в трубах, уничтожение бактерий в продуктах.')],
+  [L('Unstable isotopes that give out radiation are called…', 'Нестабильные изотопы, испускающие излучение, называются…'), [L('radioisotopes', 'радиоизотопы'), L('ions', 'ионы'), L('cations', 'катионы'), L('noble gases', 'благородные газы')], L('They release energy in the form of radiation.', 'Они выделяют энергию в виде излучения.')],
+  [L('In the Periodic Table, elements are arranged in order of increasing…', 'В Периодической таблице элементы расположены в порядке возрастания…'), [L('atomic (proton) number', 'атомного (протонного) номера'), L('mass number', 'массового числа'), L('number of neutrons', 'числа нейтронов'), L('density', 'плотности')], L('Rows are periods, columns are groups.', 'Строки — периоды, столбцы — группы.')],
+  [L('The group number of an element tells you…', 'Номер группы элемента показывает…'), [L('the number of electrons in its outer (valence) shell', 'число электронов на внешней (валентной) оболочке'), L('the number of shells', 'число оболочек'), L('the number of neutrons', 'число нейтронов'), L('its mass number', 'его массовое число')], L('The period number tells you the number of occupied shells.', 'Номер периода показывает число занятых оболочек.')]];
+skill({ id: 'C1.1', code: '1.1', ch: 1, en: 'Atoms, ions, isotopes: theory', ru: 'Атомы, ионы, изотопы: теория', variants: BANKC1.length, hints: [L('Proton: +1, mass 1, in nucleus. Neutron: 0, mass 1, in nucleus. Electron: −1, mass 1/1840, in shells.', 'Протон: +1, масса 1, в ядре. Нейтрон: 0, масса 1, в ядре. Электрон: −1, масса 1/1840, на оболочках.')], gen: bankGen(BANKC1) });
+
+function pneItem(Z, A, sym, c, q) {
+  const p = Z, n = A - Z, e = Z - c;
+  return { q, tex: nuc(A, Z, sym, c), ans: { k: 'multi', parts: [{ lab: L('protons', 'протоны'), spec: { k: 'num', key: String(p), nohelp: true } }, { lab: L('neutrons', 'нейтроны'), spec: { k: 'num', key: String(n), nohelp: true } }, { lab: L('electrons', 'электроны'), spec: { k: 'num', key: String(e), nohelp: true } }] },
+    sol: [st('protons = atomic number (bottom) = ' + p + '.', 'протоны = атомный номер (внизу) = ' + p + '.'), st('neutrons = mass number − atomic number = ' + A + ' − ' + Z + ' = ' + n + '.', 'нейтроны = массовое число − атомный номер = ' + A + ' − ' + Z + ' = ' + n + '.'), st(c === 0 ? 'Neutral atom: electrons = protons = ' + e + '.' : 'Charge ' + chg(c) + ': the atom has ' + (c > 0 ? 'lost ' + c : 'gained ' + (-c)) + ' electron(s), so electrons = ' + Z + (c > 0 ? ' − ' + c : ' + ' + (-c)) + ' = ' + e + '.', c === 0 ? 'Нейтральный атом: электроны = протоны = ' + e + '.' : 'Заряд ' + chg(c) + ': атом ' + (c > 0 ? 'отдал ' + c : 'принял ' + (-c)) + ' электрон(а), значит электронов ' + Z + (c > 0 ? ' − ' + c : ' + ' + (-c)) + ' = ' + e + '.')] };
+}
+skill({ id: 'C1.2', code: '1.2', ch: 1, en: 'Protons, neutrons, electrons in atoms', ru: 'Протоны, нейтроны, электроны в атоме', variants: 1,
+  hints: [L('Bottom number (Z) = protons. Top number (A) = protons + neutrons. Neutral atom: electrons = protons.', 'Нижнее число (Z) = протоны. Верхнее (A) = протоны + нейтроны. В нейтральном атоме электроны = протоны.')],
+  gen(r) { const extra = [[26, 'Fe', 56], [29, 'Cu', 64], [30, 'Zn', 65], [35, 'Br', 80], [47, 'Ag', 108]]; const [Z, sym, A] = r() < 0.75 ? (x => [x[0], x[1], x[4]])(r.pick(EL)) : r.pick(extra); return pneItem(Z, A, sym, 0, L('How many protons, neutrons and electrons are in this atom?', 'Сколько протонов, нейтронов и электронов в этом атоме?')); } });
+
+skill({ id: 'C1.3', code: '1.3', ch: 1, en: 'Protons, neutrons, electrons in ions', ru: 'Протоны, нейтроны, электроны в ионе', variants: 1,
+  hints: [L('A positive ion has LOST electrons; a negative ion has GAINED electrons. Protons and neutrons do not change.', 'Положительный ион ОТДАЛ электроны, отрицательный — ПРИНЯЛ. Протоны и нейтроны не меняются.')],
+  gen(r) { const ions = EL.filter(e => ionCharge(e[0]) !== 0 && e[0] > 2 && e[0] !== 4 && e[0] !== 5); const [Z, sym, , , A] = r.pick(ions); return pneItem(Z, A, sym, ionCharge(Z), L('How many protons, neutrons and electrons are in this ion?', 'Сколько протонов, нейтронов и электронов в этом ионе?')); } });
+
+skill({ id: 'C1.4', code: '1.4', ch: 1, en: 'Isotopes', ru: 'Изотопы', variants: 2,
+  hints: [L('Isotopes: same protons (same element), different neutrons. Neutrons = mass number − atomic number.', 'Изотопы: те же протоны (тот же элемент), разное число нейтронов. Нейтроны = массовое число − атомный номер.')],
+  gen(r, vi) {
+    vi = vi ?? r.ri(0, 1); const iso = r.pick([['H', 1, [1, 2, 3], 'hydrogen'], ['C', 6, [12, 13, 14], 'carbon'], ['Cl', 17, [35, 37], 'chlorine'], ['O', 8, [16, 17, 18], 'oxygen'], ['U', 92, [235, 238], 'uranium'], ['Mg', 12, [24, 25, 26], 'magnesium']]);
+    const [sym, Z, As, nm] = iso; const [a, b] = r.sh(As).slice(0, 2);
+    if (vi === 0) return { q: L('How many neutrons are in an atom of ' + nm + '-' + a + '?', 'Сколько нейтронов в атоме изотопа ' + nm + '-' + a + '?'), tex: nuc(a, Z, sym, 0), ans: { k: 'num', key: String(a - Z) }, sol: [st(a + ' − ' + Z + ' = ' + (a - Z) + '.', a + ' − ' + Z + ' = ' + (a - Z) + '.')] };
+    return { q: L('Atoms ' + nm + '-' + a + ' and ' + nm + '-' + b + ' are isotopes. How many MORE neutrons does ' + nm + '-' + Math.max(a, b) + ' have?', 'Атомы ' + nm + '-' + a + ' и ' + nm + '-' + b + ' — изотопы. На сколько нейтронов БОЛЬШЕ у ' + nm + '-' + Math.max(a, b) + '?'), ans: { k: 'num', key: String(Math.abs(a - b)) }, sol: [st('Same number of protons (' + Z + '), so the difference in mass number is all neutrons: ' + Math.abs(a - b) + '.', 'Протонов одинаково (' + Z + '), значит вся разница в массовых числах — нейтроны: ' + Math.abs(a - b) + '.')] };
+  } });
+
+skill({ id: 'C1.5', code: '1.5', ch: 1, en: 'Electronic configuration', ru: 'Электронная конфигурация', variants: 2,
+  hints: [L('Fill shells from the inside: 2, then 8, then 8 (then 2 for Ca). Type it like 2,8,3.', 'Заполняйте оболочки изнутри: 2, потом 8, потом 8 (у Ca ещё 2). Набирайте так: 2,8,3.'), L('The maximum in shell n is 2n² (2, 8, 18, 32), but for elements 1–20 the third shell stops at 8 before the fourth starts.', 'Максимум на оболочке n — 2n² (2, 8, 18, 32), но у элементов 1–20 третья оболочка заполняется до 8, затем начинается четвёртая.')],
+  gen(r, vi) {
+    vi = vi ?? r.ri(0, 1);
+    if (vi === 0) { const [Z, sym, nm, nr] = r.pick(EL); const c = config(Z); return { q: L('Write the electronic configuration of ' + nm + ' (' + sym + ', atomic number ' + Z + ').', 'Запишите электронную конфигурацию элемента ' + nr + ' (' + sym + ', атомный номер ' + Z + ').'), ans: { k: 'text', norm: 'cfg', key: c.join(',') }, show: '\\text{' + c.join(', ') + '}', sol: [st(Z + ' electrons: ' + c.join(', ') + '.', Z + ' электронов: ' + c.join(', ') + '.')] }; }
+    const ions = EL.filter(e => ionCharge(e[0]) !== 0 && e[0] > 2 && e[0] !== 4 && e[0] !== 5); const [Z, sym, nm, nr] = r.pick(ions); const c = ionCharge(Z); const cf = config(Z - c);
+    return { q: L('Write the electronic configuration of the ion ' + fm(sym + '^' + chg(c)) + ' (atomic number of ' + sym + ' = ' + Z + ').', 'Запишите электронную конфигурацию иона ' + fm(sym + '^' + chg(c)) + ' (атомный номер ' + sym + ' = ' + Z + ').'), ans: { k: 'text', norm: 'cfg', key: cf.join(',') }, show: '\\text{' + cf.join(', ') + '}', sol: [st('The ion has ' + (Z - c) + ' electrons: ' + cf.join(', ') + ' — the same as a noble gas (full outer shell).', 'У иона ' + (Z - c) + ' электронов: ' + cf.join(', ') + ' — как у благородного газа (внешняя оболочка заполнена).')] };
+  } });
+
+skill({ id: 'C1.6', code: '1.6', ch: 1, en: 'Group and period from the configuration', ru: 'Группа и период по конфигурации', variants: 2,
+  hints: [L('Group = number of outer (valence) electrons. Period = number of shells.', 'Группа = число внешних (валентных) электронов. Период = число оболочек.')],
+  gen(r, vi) {
+    vi = vi ?? r.ri(0, 1); const [Z, sym, nm, nr] = r.pick(EL.filter(e => e[0] > 2)); const c = config(Z), g = groupOf(Z);
+    return { q: vi === 0 ? L('An element has the electronic configuration ' + c.join(', ') + '. In which group and period is it?', 'Электронная конфигурация элемента ' + c.join(', ') + '. В какой группе и каком периоде он находится?') : L('In which group and period is ' + nm + ' (atomic number ' + Z + ')?', 'В какой группе и каком периоде находится ' + nr + ' (атомный номер ' + Z + ')?'),
+      ans: { k: 'multi', parts: [{ lab: L('group (number; 8 for group VIII/0)', 'группа (число; 8 для группы VIII/0)'), spec: { k: 'num', key: String(g), nohelp: true } }, { lab: L('period', 'период'), spec: { k: 'num', key: String(c.length), nohelp: true } }] },
+      sol: [st((vi ? Z + ' electrons: ' + c.join(', ') + '. ' : '') + 'Outer shell has ' + c[c.length - 1] + ' electrons → group ' + ROM[g] + '; ' + c.length + ' shells → period ' + c.length + '. (It is ' + nm + ', ' + sym + '.)', (vi ? Z + ' электронов: ' + c.join(', ') + '. ' : '') + 'На внешней оболочке ' + c[c.length - 1] + ' → группа ' + ROM[g] + '; ' + c.length + ' оболочки → период ' + c.length + '. (Это ' + nr + ', ' + sym + '.)')] };
+  } });
+
+skill({ id: 'C1.7', code: '1.7', ch: 1, en: 'Which ion does an element form?', ru: 'Какой ион образует элемент?', variants: 1,
+  hints: [L('Metals (groups I–III) LOSE their outer electrons → positive ions. Non-metals (groups V–VII) GAIN electrons to get 8 → negative ions.', 'Металлы (группы I–III) ОТДАЮТ внешние электроны → положительные ионы. Неметаллы (группы V–VII) ПРИНИМАЮТ электроны до 8 → отрицательные ионы.')],
+  gen(r) {
+    const [Z, sym, nm, nr] = r.pick(EL.filter(e => ionCharge(e[0]) !== 0 && e[0] > 2 && e[0] !== 4 && e[0] !== 5)); const c = ionCharge(Z);
+    const opts = [...new Set([c, -c, c > 0 ? c + 1 : c - 1, c > 0 ? -(8 - c) : 8 + c].filter(x => x !== 0))].slice(0, 4);
+    while (opts.length < 4) opts.push(opts.length * (c > 0 ? 1 : -1) + 5);
+    return { q: L('What is the charge on the ion formed by ' + nm + ' (configuration ' + config(Z).join(', ') + ')?', 'Какой заряд у иона, который образует ' + nr + ' (конфигурация ' + config(Z).join(', ') + ')?'), ans: mcqSh(r, opts.map(x => L(chg(x) === '+' ? '1+' : chg(x) === '-' ? '1−' : chg(x).replace('-', '−'), chg(x) === '+' ? '1+' : chg(x) === '-' ? '1−' : chg(x).replace('-', '−'))), 0), sol: [st(c > 0 ? 'It loses its ' + c + ' outer electron(s) → ' + fm(sym + '^' + chg(c)) + ' (a cation).' : 'It gains ' + (-c) + ' electron(s) to complete the outer shell → ' + fm(sym + '^' + chg(c)) + ' (an anion).', c > 0 ? 'Он отдаёт ' + c + ' внешних электрона(ов) → ' + fm(sym + '^' + chg(c)) + ' (катион).' : 'Он принимает ' + (-c) + ' электрон(а), чтобы заполнить оболочку → ' + fm(sym + '^' + chg(c)) + ' (анион).')] };
+  } });
+
+/* ===================== C2 Bonding and structure ===================== */
+CHAPTERS.push({ id: 2, subj: 'chem', en: 'Bonding and structure', ru: 'Химическая связь и строение веществ' });
+const CATS = [['Na', 1, 'sodium', 'натрия'], ['K', 1, 'potassium', 'калия'], ['Li', 1, 'lithium', 'лития'], ['Mg', 2, 'magnesium', 'магния'], ['Ca', 2, 'calcium', 'кальция'], ['Zn', 2, 'zinc', 'цинка'], ['Cu', 2, 'copper(II)', 'меди(II)'], ['Al', 3, 'aluminium', 'алюминия'], ['Fe', 3, 'iron(III)', 'железа(III)'], ['NH4', 1, 'ammonium', 'аммония']];
+const ANS = [['O', 2, 'oxide', 'Оксид'], ['Cl', 1, 'chloride', 'Хлорид'], ['S', 2, 'sulfide', 'Сульфид'], ['Br', 1, 'bromide', 'Бромид'], ['N', 3, 'nitride', 'Нитрид'], ['OH', 1, 'hydroxide', 'Гидроксид'], ['SO4', 2, 'sulfate', 'Сульфат'], ['CO3', 2, 'carbonate', 'Карбонат'], ['NO3', 1, 'nitrate', 'Нитрат'], ['PO4', 3, 'phosphate', 'Фосфат']];
+const poly = s => /[A-Z].*[A-Z]|\d/.test(s);
+function ionicFormula(ca, cc, an, ac) { const g = gcd(cc, ac); const nc = ac / g, na = cc / g; const w = (s, n) => n === 1 ? s : (poly(s) ? '(' + s + ')' : s) + n; return w(ca, nc) + w(an, na); }
+skill({ id: 'C2.1', code: '2.1', ch: 2, en: 'Formulae of ionic compounds', ru: 'Формулы ионных соединений', variants: 1,
+  hints: [L('Total positive charge = total negative charge. Criss-cross the charges: Al³⁺ and Cl⁻ → AlCl₃. Simplify: Mg²⁺ O²⁻ → MgO.', 'Суммарный положительный заряд = суммарному отрицательному. «Крест-накрест»: Al³⁺ и Cl⁻ → AlCl₃. Сокращайте: Mg²⁺ O²⁻ → MgO.'), L('Put a group ion in brackets if you need more than one: Ca(OH)₂. Type numbers normally (Al2(SO4)3) — they are shown as subscripts.', 'Сложный ион, если их больше одного, — в скобках: Ca(OH)₂. Цифры набирайте обычными (Al2(SO4)3) — они отобразятся индексами.')],
+  gen(r) {
+    let c, a; do { c = r.pick(CATS); a = r.pick(ANS); } while ((c[0] === 'NH4' && ['O', 'S', 'N'].includes(a[0])) || (c[0] === 'Cu' && a[0] === 'N'));
+    const f = ionicFormula(c[0], c[1], a[0], a[1]);
+    return { q: L('Write the formula of ' + c[2] + ' ' + a[2] + '. The ions are ' + fm(c[0] + '^' + chg(c[1])) + ' and ' + fm(a[0] + '^' + chg(-a[1])) + '.', 'Запишите формулу: ' + a[3].toLowerCase() + ' ' + c[3] + ' (' + c[2] + ' ' + a[2] + '). Ионы: ' + fm(c[0] + '^' + chg(c[1])) + ' и ' + fm(a[0] + '^' + chg(-a[1])) + '.'), ans: { k: 'text', norm: 'chem', key: f }, show: chemTex(f), sol: [st('Charges ' + c[1] + '+ and ' + a[1] + '−: you need ' + (a[1] / gcd(c[1], a[1])) + ' × ' + c[0] + ' and ' + (c[1] / gcd(c[1], a[1])) + ' × ' + a[0] + ' so that the charges cancel → ' + fm(f) + '.', 'Заряды ' + c[1] + '+ и ' + a[1] + '−: нужно ' + (a[1] / gcd(c[1], a[1])) + ' × ' + c[0] + ' и ' + (c[1] / gcd(c[1], a[1])) + ' × ' + a[0] + ', чтобы заряды скомпенсировались → ' + fm(f) + '.')] };
+  } });
+
+skill({ id: 'C2.2', code: '2.2', ch: 2, en: 'Group ions (polyatomic ions)', ru: 'Сложные (многоатомные) ионы', variants: 6,
+  hints: [L('Learn: OH⁻ hydroxide, SO₄²⁻ sulfate, CO₃²⁻ carbonate, NO₃⁻ nitrate, PO₄³⁻ phosphate, NH₄⁺ ammonium.', 'Выучите: OH⁻ гидроксид, SO₄²⁻ сульфат, CO₃²⁻ карбонат, NO₃⁻ нитрат, PO₄³⁻ фосфат, NH₄⁺ аммоний.')],
+  gen(r, vi) {
+    const P = [['OH^-', 'hydroxide', 'гидроксид'], ['SO4^2-', 'sulfate', 'сульфат'], ['CO3^2-', 'carbonate', 'карбонат'], ['NO3^-', 'nitrate', 'нитрат'], ['PO4^3-', 'phosphate', 'фосфат'], ['NH4^+', 'ammonium', 'аммоний']];
+    const it = P[vi ?? r.ri(0, 5)]; const others = r.sh(P.filter(p => p !== it)).slice(0, 3);
+    if (r() < 0.5) return { q: L('What is the formula of the ' + it[1] + ' ion?', 'Какова формула иона «' + it[2] + '»?'), ans: mcqSh(r, [it, ...others].map(p => L(fm(p[0]), fm(p[0]))), 0), sol: [st(it[1] + ': ' + fm(it[0]), it[2] + ': ' + fm(it[0]))] };
+    return { q: L('What is the name of the ion ' + fm(it[0]) + '?', 'Как называется ион ' + fm(it[0]) + '?'), ans: mcqSh(r, [it, ...others].map(p => L(p[1], p[2])), 0), sol: [st(fm(it[0]) + ' is ' + it[1] + '.', fm(it[0]) + ' — ' + it[2] + '.')] };
+  } });
+
+skill({ id: 'C2.3', code: '2.3', ch: 2, en: 'Ionic, covalent or metallic bond?', ru: 'Ионная, ковалентная или металлическая связь?', variants: 1,
+  hints: [L('Metal + non-metal → ionic (electrons transferred). Non-metal + non-metal → covalent (electrons shared). Metal atoms only → metallic.', 'Металл + неметалл → ионная (электроны передаются). Неметалл + неметалл → ковалентная (электроны обобществляются). Только металл → металлическая.')],
+  gen(r) {
+    const S = [['NaCl', 0], ['MgO', 0], ['CaCl2', 0], ['K2O', 0], ['AlF3', 0], ['LiBr', 0], ['CO2', 1], ['CH4', 1], ['H2O', 1], ['NH3', 1], ['HCl', 1], ['Cl2', 1], ['O2', 1], ['SiO2', 1], ['Cu', 2], ['Fe', 2], ['Mg', 2], ['Al', 2]];
+    const [f, t] = r.pick(S); const opts = [L('ionic', 'ионная'), L('covalent', 'ковалентная'), L('metallic', 'металлическая')];
+    return { q: L('What type of bonding is found in ' + fm(f) + '?', 'Какой тип связи в ' + fm(f) + '?'), ans: { k: 'mcq', opts, c: t }, sol: [st(['Metal + non-metal: electrons are transferred → ionic.', 'Only non-metals: electrons are shared → covalent.', 'A metal: positive ions in a sea of delocalised electrons → metallic.'][t], ['Металл + неметалл: электроны передаются → ионная.', 'Только неметаллы: электроны обобществляются → ковалентная.', 'Металл: положительные ионы в «море» делокализованных электронов → металлическая.'][t])] };
+  } });
+
+const BANKC2 = [
+  [L('Why do ionic compounds have high melting points?', 'Почему у ионных соединений высокие температуры плавления?'), [L('Strong electrostatic forces of attraction between oppositely charged ions need a lot of energy to overcome', 'Сильное электростатическое притяжение противоположно заряженных ионов требует много энергии для преодоления'), L('The molecules are very small', 'Молекулы очень маленькие'), L('They contain free electrons', 'В них есть свободные электроны'), L('Weak forces between molecules', 'Слабые силы между молекулами')], L('A giant ionic lattice is held together by strong electrostatic attraction in all directions.', 'Гигантская ионная решётка удерживается сильным электростатическим притяжением во всех направлениях.')],
+  [L('Solid sodium chloride does not conduct electricity, but molten or dissolved sodium chloride does. Why?', 'Твёрдый хлорид натрия не проводит ток, а расплав или раствор — проводит. Почему?'), [L('In the solid the ions are fixed in place; when molten or in solution the ions are free to move', 'В твёрдом веществе ионы закреплены; в расплаве или растворе ионы могут свободно двигаться'), L('Electrons are created when it melts', 'При плавлении образуются электроны'), L('Water conducts, sodium chloride does not', 'Проводит вода, а не хлорид натрия'), L('Solid NaCl has no ions', 'В твёрдом NaCl нет ионов')], L('Conduction needs mobile charged particles.', 'Для проводимости нужны подвижные заряженные частицы.')],
+  [L('Which is a property of simple covalent (molecular) substances such as O₂, CO₂ and CH₄?', 'Какое свойство у простых ковалентных (молекулярных) веществ, например O₂, CO₂ и CH₄?'), [L('Low melting and boiling points; they do not conduct electricity', 'Низкие температуры плавления и кипения; не проводят ток'), L('High melting points; conduct when molten', 'Высокие температуры плавления; проводят в расплаве'), L('They conduct as solids', 'Проводят ток в твёрдом виде'), L('They are always soluble in water', 'Всегда растворимы в воде')], L('Only weak forces between molecules have to be overcome; there are no ions or free electrons.', 'Нужно преодолеть лишь слабые силы между молекулами; ионов и свободных электронов нет.')],
+  [L('Why is graphite a good conductor of electricity?', 'Почему графит хорошо проводит электричество?'), [L('Each carbon uses only 3 electrons in bonds; the 4th is delocalised and free to move', 'Каждый атом углерода использует в связях только 3 электрона; четвёртый делокализован и может двигаться'), L('It contains ions', 'В нём есть ионы'), L('It is a metal', 'Это металл'), L('Its layers are held by strong bonds', 'Его слои связаны прочными связями')], L('Graphite: layers of hexagonal rings; weak forces between layers make it soft and slippery (a lubricant).', 'Графит: слои из шестиугольных колец; слабые силы между слоями делают его мягким и скользким (смазка).')],
+  [L('Why is diamond very hard?', 'Почему алмаз очень твёрдый?'), [L('Each carbon atom forms 4 strong covalent bonds in a giant 3-D (tetrahedral) structure', 'Каждый атом углерода образует 4 прочные ковалентные связи в гигантской трёхмерной (тетраэдрической) структуре'), L('It has delocalised electrons', 'В нём есть делокализованные электроны'), L('It is an ionic compound', 'Это ионное соединение'), L('It is made of small molecules', 'Он состоит из маленьких молекул')], L('This is why diamond is used in cutting tools; it does not conduct (no free electrons).', 'Поэтому алмаз используют в режущих инструментах; ток он не проводит (нет свободных электронов).')],
+  [L('Silicon dioxide (SiO₂, sand) has a very high melting point because…', 'Диоксид кремния (SiO₂, песок) имеет очень высокую температуру плавления, потому что…'), [L('it is a giant covalent structure: each Si bonded to 4 O, each O to 2 Si', 'это гигантская ковалентная структура: каждый Si связан с 4 O, каждый O — с 2 Si'), L('it is a simple molecule', 'это простая молекула'), L('it contains free ions', 'в нём есть свободные ионы'), L('it is a metal', 'это металл')], L('Many strong covalent bonds must be broken to melt it.', 'Чтобы расплавить его, нужно разорвать множество прочных ковалентных связей.')],
+  [L('Metallic bonding is the attraction between…', 'Металлическая связь — это притяжение между…'), [L('positive metal ions and a sea of delocalised electrons', 'положительными ионами металла и «морем» делокализованных электронов'), L('positive and negative ions', 'положительными и отрицательными ионами'), L('shared pairs of electrons', 'общими электронными парами'), L('molecules', 'молекулами')], L('Delocalised electrons can move → metals conduct electricity and heat.', 'Делокализованные электроны подвижны → металлы проводят ток и тепло.')],
+  [L('Metals are malleable (can be hammered into shape) because…', 'Металлы ковкие (их можно расплющить), потому что…'), [L('layers of positive ions can slide over each other in the sea of electrons without breaking the bonding', 'слои положительных ионов могут скользить друг по другу в «море» электронов, не разрушая связь'), L('they have low melting points', 'у них низкие температуры плавления'), L('they contain negative ions', 'в них есть отрицательные ионы'), L('their atoms are very small', 'их атомы очень маленькие')], L('Ductile (drawn into wire) for the same reason.', 'Пластичные (вытягиваются в проволоку) — по той же причине.')],
+  [L('An ionic bond is formed by…', 'Ионная связь образуется за счёт…'), [L('transfer of electrons from a metal to a non-metal', 'передачи электронов от металла к неметаллу'), L('sharing of electrons between non-metals', 'обобществления электронов неметаллами'), L('sharing of protons', 'обобществления протонов'), L('a sea of electrons', '«моря» электронов')], L('Example: Na gives 1 electron to Cl → Na⁺ and Cl⁻.', 'Пример: Na отдаёт 1 электрон Cl → Na⁺ и Cl⁻.')],
+  [L('Why do atoms form bonds?', 'Зачем атомы образуют связи?'), [L('To become stable with a full outer shell (8 electrons, or 2 for H)', 'Чтобы стать устойчивыми с заполненной внешней оболочкой (8 электронов, у H — 2)'), L('To gain protons', 'Чтобы получить протоны'), L('To become radioactive', 'Чтобы стать радиоактивными'), L('To lose neutrons', 'Чтобы потерять нейтроны')], L('Losing, gaining or sharing electrons gives the noble-gas configuration.', 'Отдавая, принимая или обобществляя электроны, атом получает конфигурацию благородного газа.')]];
+skill({ id: 'C2.4', code: '2.4', ch: 2, en: 'Structure and properties: theory', ru: 'Строение и свойства: теория', variants: BANKC2.length, hints: [L('Always link the property to the particles and forces: ions? molecules? giant structure? free electrons?', 'Всегда связывайте свойство с частицами и силами: ионы? молекулы? гигантская структура? свободные электроны?')], gen: bankGen(BANKC2) });
+
+skill({ id: 'C2.5', code: '2.5', ch: 2, en: 'Identify the structure from properties', ru: 'Определить строение по свойствам', variants: 4,
+  hints: [L('Conducts as a solid → metal (or graphite). Conducts only molten/aqueous → ionic. Low m.p., no conduction → simple molecular. Very high m.p., no conduction → giant covalent.', 'Проводит в твёрдом виде → металл (или графит). Только в расплаве/растворе → ионное. Низкая т. пл., не проводит → молекулярное. Очень высокая т. пл., не проводит → гигантское ковалентное.')],
+  gen(r, vi) {
+    const T = [['801', 'no', 'yes', 'soluble', 0], ['−182', 'no', 'no', 'insoluble', 1], ['3550', 'no', 'no', 'insoluble', 2], ['1085', 'yes', 'yes', 'insoluble', 3]];
+    const [mp, cs, cm, sol, t] = T[vi ?? r.ri(0, 3)];
+    const opts = [L('giant ionic', 'гигантская ионная'), L('simple molecular (covalent)', 'простая молекулярная (ковалентная)'), L('giant covalent', 'гигантская ковалентная'), L('metallic', 'металлическая')];
+    return { q: L('A substance has melting point ' + mp + ' °C. Conducts electricity as a solid: ' + cs + '. Conducts when molten: ' + cm + '. In water it is ' + sol + '. What is its structure?', 'Вещество плавится при ' + mp + ' °C. Проводит ток в твёрдом виде: ' + (cs === 'yes' ? 'да' : 'нет') + '. В расплаве: ' + (cm === 'yes' ? 'да' : 'нет') + '. В воде ' + (sol === 'soluble' ? 'растворимо' : 'нерастворимо') + '. Каково его строение?'), ans: { k: 'mcq', opts, c: t }, sol: [st(['High m.p. and conducts only when molten → ions that become free to move: giant ionic.', 'Very low m.p., never conducts → weak forces between small molecules: simple molecular.', 'Very high m.p., never conducts → many strong covalent bonds: giant covalent.', 'Conducts as a solid → delocalised electrons: metallic.'][t], ['Высокая т. пл. и проводит только в расплаве → ионы становятся подвижными: ионное.', 'Очень низкая т. пл., не проводит → слабые силы между малыми молекулами: молекулярное.', 'Очень высокая т. пл., не проводит → множество прочных ковалентных связей: гигантское ковалентное.', 'Проводит в твёрдом виде → делокализованные электроны: металл.'][t])] };
+  } });
+
+/* ===================== C3 States of matter ===================== */
+CHAPTERS.push({ id: 3, subj: 'chem', en: 'States of matter', ru: 'Агрегатные состояния вещества' });
+const BANKC3 = [
+  [L('In a solid the particles are…', 'В твёрдом веществе частицы…'), [L('closely packed in a regular pattern and only vibrate about fixed positions', 'плотно упакованы в правильном порядке и лишь колеблются около своих мест'), L('far apart and moving randomly at high speed', 'далеко друг от друга и быстро хаотично движутся'), L('close together but able to slide past each other', 'близко, но могут скользить друг относительно друга'), L('not moving at all', 'совсем не движутся')], L('Liquid: close, irregular, sliding. Gas: far apart, random, fast.', 'Жидкость: близко, беспорядочно, скользят. Газ: далеко, хаотично, быстро.')],
+  [L('On a heating curve, why does the temperature stay constant while a solid melts?', 'Почему на кривой нагревания температура не меняется, пока вещество плавится?'), [L('The energy supplied is used to overcome the forces between particles, not to raise the temperature', 'Подводимая энергия тратится на преодоление сил между частицами, а не на повышение температуры'), L('The heater is switched off', 'Нагреватель выключен'), L('The particles stop moving', 'Частицы перестают двигаться'), L('Energy is destroyed', 'Энергия исчезает')], L('A horizontal line on a heating/cooling curve means a change of state.', 'Горизонтальный участок на кривой нагревания/охлаждения — смена агрегатного состояния.')],
+  [L('What is diffusion?', 'Что такое диффузия?'), [L('The movement of particles from a region of higher concentration to a region of lower concentration', 'Движение частиц из области с большей концентрацией в область с меньшей'), L('The movement of particles from low to high concentration', 'Движение частиц из области с меньшей концентрацией в область с большей'), L('The melting of a solid', 'Плавление твёрдого вещества'), L('The separation of a mixture', 'Разделение смеси')], L('It happens because particles have kinetic energy and move randomly.', 'Она происходит, потому что частицы обладают кинетической энергией и хаотично движутся.')],
+  [L('How does temperature affect the rate of diffusion?', 'Как температура влияет на скорость диффузии?'), [L('Higher temperature → particles have more kinetic energy → faster diffusion', 'Выше температура → больше кинетическая энергия частиц → диффузия быстрее'), L('Higher temperature → slower diffusion', 'Выше температура → диффузия медленнее'), L('Temperature has no effect', 'Температура не влияет'), L('Diffusion only happens below 0 °C', 'Диффузия идёт только ниже 0 °C')], L('Rate of diffusion ∝ temperature; and the heavier the particle, the slower it diffuses.', 'Скорость диффузии растёт с температурой; чем тяжелее частица, тем медленнее она диффундирует.')],
+  [L('If the temperature of a gas increases (at constant pressure), its volume…', 'Если температура газа растёт (при постоянном давлении), его объём…'), [L('increases, because the particles move faster and push outwards more', 'увеличивается: частицы движутся быстрее и сильнее давят наружу'), L('decreases', 'уменьшается'), L('stays the same', 'не меняется'), L('becomes zero', 'становится нулевым')], L('If the pressure on a gas increases (constant temperature), it is squashed: its volume decreases.', 'Если давление на газ растёт (при постоянной температуре), его сжимают: объём уменьшается.')],
+  [L('A gas changing directly into a solid (or a solid into a gas) is called…', 'Переход газа прямо в твёрдое состояние (или твёрдого — в газ) называется…'), [L('sublimation (or deposition for gas → solid)', 'сублимация (обратный — десублимация)'), L('condensation', 'конденсация'), L('evaporation', 'испарение'), L('freezing', 'замерзание')], L('Melting: s → l; boiling/evaporation: l → g; condensation: g → l; freezing: l → s.', 'Плавление: т → ж; кипение/испарение: ж → г; конденсация: г → ж; замерзание: ж → т.')],
+  [L('What is the difference between boiling and evaporation?', 'Чем кипение отличается от испарения?'), [L('Evaporation happens only at the surface and at any temperature; boiling happens throughout the liquid at the boiling point', 'Испарение идёт только с поверхности и при любой температуре; кипение — во всём объёме при температуре кипения'), L('There is no difference', 'Разницы нет'), L('Boiling happens at any temperature', 'Кипение идёт при любой температуре'), L('Evaporation needs a flame', 'Для испарения нужно пламя')], L('Both change a liquid into a gas.', 'Оба процесса превращают жидкость в газ.')]];
+skill({ id: 'C3.1', code: '3.1', ch: 3, en: 'Particles, changes of state, diffusion: theory', ru: 'Частицы, переходы, диффузия: теория', variants: BANKC3.length, hints: [L('Think about the particles: how close, how ordered, how fast, how much energy.', 'Думайте о частицах: насколько близко, насколько упорядоченно, как быстро, сколько энергии.')], gen: bankGen(BANKC3) });
+
+skill({ id: 'C3.2', code: '3.2', ch: 3, en: 'Heating and cooling curves', ru: 'Кривые нагревания и охлаждения', variants: 3,
+  hints: [L('Sloping line = temperature changing (heating or cooling one state). Horizontal line = change of state at constant temperature.', 'Наклонная линия — температура меняется (нагрев или охлаждение одного состояния). Горизонтальная — смена состояния при постоянной температуре.')],
+  gen(r, vi) {
+    vi = vi ?? r.ri(0, 2); const mp = r.pick([0, 20, 40, 60, 80]), bp = mp + r.pick([60, 80, 100]), y0 = mp - 20;
+    const pts = [[0, y0], [2, mp], [5, mp], [8, bp], [12, bp], [14, bp + 20]];
+    const svg = svgGraph({ pts, xmax: 14, ymin: y0, ymax: bp + 20, xstep: 2, ystep: 20, xl: 'time / min', yl: 'temperature / °C', labels: [[0, y0, 'A'], [2, mp, 'B'], [5, mp, 'C'], [8, bp, 'D'], [12, bp, 'E'], [14, bp + 20, 'F']] });
+    const q0 = L('The graph shows a solid being heated steadily.', 'На графике — равномерное нагревание твёрдого вещества.');
+    if (vi === 0) return { q: L(q0.en + ' What is the melting point of the substance?', q0.ru + ' Какова температура плавления вещества?'), svg, ans: { k: 'num', key: String(mp), forms: ['approx'], unit: '°C', tol: 0.001 }, sol: [st('The first horizontal section (B–C) is melting: ' + mp + ' °C.', 'Первый горизонтальный участок (B–C) — плавление: ' + mp + ' °C.')] };
+    if (vi === 1) return { q: L(q0.en + ' What is the boiling point of the substance?', q0.ru + ' Какова температура кипения вещества?'), svg, ans: { k: 'num', key: String(bp), forms: ['approx'], unit: '°C', tol: 0.001 }, sol: [st('The second horizontal section (D–E) is boiling: ' + bp + ' °C.', 'Второй горизонтальный участок (D–E) — кипение: ' + bp + ' °C.')] };
+    const seg = r.pick([['A–B', 0], ['B–C', 1], ['C–D', 2], ['D–E', 3], ['E–F', 4]]);
+    const opts = [L('the solid is heating up', 'нагревается твёрдое вещество'), L('melting (solid and liquid present)', 'плавление (есть и твёрдое, и жидкость)'), L('the liquid is heating up', 'нагревается жидкость'), L('boiling (liquid and gas present)', 'кипение (есть и жидкость, и газ)'), L('the gas is heating up', 'нагревается газ')];
+    const pick = r.sh([0, 1, 2, 3, 4].filter(i => i !== seg[1])).slice(0, 3).concat([seg[1]]); const ord = r.sh(pick);
+    return { q: L(q0.en + ' What is happening in section ' + seg[0] + '?', q0.ru + ' Что происходит на участке ' + seg[0] + '?'), svg, ans: { k: 'mcq', opts: ord.map(i => opts[i]), c: ord.indexOf(seg[1]) }, sol: [st(['Sloping before melting: the solid gets hotter.', 'Flat at the melting point: energy breaks the forces holding the solid together.', 'Sloping between m.p. and b.p.: the liquid gets hotter.', 'Flat at the boiling point: the liquid turns into gas.', 'Sloping after boiling: the gas gets hotter.'][seg[1]], ['Наклон до плавления: нагревается твёрдое вещество.', 'Горизонталь при т. пл.: энергия идёт на разрушение сил в твёрдом веществе.', 'Наклон между т. пл. и т. кип.: нагревается жидкость.', 'Горизонталь при т. кип.: жидкость превращается в газ.', 'Наклон после кипения: нагревается газ.'][seg[1]])] };
+  } });
+
+skill({ id: 'C3.3', code: '3.3', ch: 3, en: 'Diffusion and molecular mass', ru: 'Диффузия и молекулярная масса', variants: 1,
+  hints: [L('Lighter molecules (smaller Mr) move faster at the same temperature, so they diffuse faster.', 'Лёгкие молекулы (меньше Mr) при той же температуре движутся быстрее и быстрее диффундируют.')],
+  gen(r) {
+    const G = ['NH3', 'HCl', 'H2', 'O2', 'CO2', 'Cl2', 'CH4', 'N2', 'SO2', 'He'];
+    let a, b; do { [a, b] = r.sh(G).slice(0, 2); } while (Mr(a) === Mr(b));
+    const fa = Mr(a) < Mr(b);
+    return { q: L('Which gas diffuses faster at the same temperature: ' + fm(a) + ' or ' + fm(b) + '?' + arNoteF(a, b), 'Какой газ диффундирует быстрее при одинаковой температуре: ' + fm(a) + ' или ' + fm(b) + '?' + arNoteF(a, b)), ans: { k: 'mcq', opts: [L(fm(a), fm(a)), L(fm(b), fm(b))], c: fa ? 0 : 1 }, sol: [st('Mr(' + fm(a) + ') = ' + Mr(a) + ', Mr(' + fm(b) + ') = ' + Mr(b) + '. The lighter gas, ' + fm(fa ? a : b) + ', diffuses faster.', 'Mr(' + fm(a) + ') = ' + Mr(a) + ', Mr(' + fm(b) + ') = ' + Mr(b) + '. Более лёгкий газ, ' + fm(fa ? a : b) + ', диффундирует быстрее.')] };
+  } });
+
+/* ===================== C4 Purity and separation ===================== */
+CHAPTERS.push({ id: 4, subj: 'chem', en: 'Pure substances and separation', ru: 'Чистые вещества и разделение смесей' });
+const SEP = [
+  [L('sand from a mixture of sand and water', 'песок из смеси песка и воды'), 0], [L('barium sulfate (insoluble) from a mixture with water', 'сульфат бария (нерастворимый) из смеси с водой'), 0],
+  [L('crystals of copper(II) sulfate from copper(II) sulfate solution', 'кристаллы сульфата меди(II) из раствора сульфата меди(II)'), 1], [L('solid salt from salt solution', 'твёрдую соль из раствора соли'), 1],
+  [L('pure water from aqueous copper(II) sulfate', 'чистую воду из раствора сульфата меди(II)'), 2], [L('pure water from sea water', 'чистую воду из морской воды'), 2],
+  [L('ethanol from a mixture of ethanol and water', 'этанол из смеси этанола и воды'), 3], [L('the different fractions of crude oil', 'разные фракции нефти'), 3],
+  [L('the different dyes in a sample of ink', 'разные красители в образце чернил'), 4], [L('the coloured pigments in a leaf extract', 'окрашенные пигменты в экстракте листа'), 4]];
+const SEPM = [L('filtration', 'фильтрование'), L('crystallisation', 'кристаллизация'), L('simple distillation', 'простая перегонка'), L('fractional distillation', 'фракционная перегонка'), L('chromatography', 'хроматография')];
+const SEPW = [L('An insoluble solid stays on the filter paper (residue); the liquid passes through (filtrate).', 'Нерастворимое вещество остаётся на фильтре (осадок), жидкость проходит (фильтрат).'), L('Heat to evaporate some solvent until the solution is saturated, then cool: crystals form.', 'Выпаривают часть растворителя до насыщения, затем охлаждают — образуются кристаллы.'), L('The solvent boils off, condenses in the condenser and is collected; the solute stays behind.', 'Растворитель выкипает, конденсируется в холодильнике и собирается; растворённое остаётся.'), L('Two (or more) miscible liquids with different boiling points: the one with the lower b.p. reaches the top of the fractionating column first.', 'Две (или больше) смешивающиеся жидкости с разными т. кип.: жидкость с меньшей т. кип. первой доходит до верха колонны.'), L('Components travel different distances up the paper depending on their solubility in the solvent / attraction to the paper.', 'Компоненты поднимаются по бумаге на разное расстояние в зависимости от растворимости в растворителе и притяжения к бумаге.')];
+skill({ id: 'C4.1', code: '4.1', ch: 4, en: 'Choose the separation method', ru: 'Выбор метода разделения', variants: SEP.length,
+  hints: [L('Insoluble solid + liquid → filtration. Dissolved solid you want → crystallisation. Liquid from a solution → simple distillation. Liquids that mix → fractional distillation. Coloured substances → chromatography.', 'Нерастворимое + жидкость → фильтрование. Нужна растворённая соль → кристаллизация. Жидкость из раствора → простая перегонка. Смешивающиеся жидкости → фракционная перегонка. Красители → хроматография.')],
+  gen(r, vi) { const [w, m] = SEP[vi ?? r.ri(0, SEP.length - 1)]; return { q: L('Which method would you use to obtain ' + w.en + '?', 'Каким методом вы получите ' + w.ru + '?'), ans: { k: 'mcq', opts: SEPM, c: m }, sol: [st(SEPM[m].en[0].toUpperCase() + SEPM[m].en.slice(1) + ': ' + SEPW[m].en, SEPM[m].ru[0].toUpperCase() + SEPM[m].ru.slice(1) + ': ' + SEPW[m].ru)] }; } });
+
+skill({ id: 'C4.2', code: '4.2', ch: 4, en: 'Chromatography: Rf values', ru: 'Хроматография: значение Rf', variants: 3,
+  hints: [L('Rf = distance moved by the spot ÷ distance moved by the solvent (both from the BASELINE). Rf is always less than 1.', 'Rf = расстояние, пройденное пятном ÷ расстояние, пройденное растворителем (оба — от ЛИНИИ СТАРТА). Rf всегда меньше 1.')],
+  gen(r, vi) {
+    vi = vi ?? r.ri(0, 2); const sf = r.pick([8, 10, 12, 9.6, 7.5]), rf = r.pick([0.25, 0.4, 0.5, 0.6, 0.75, 0.8, 0.3]); const d = +(sf * rf).toFixed(2);
+    if (vi === 0) return { q: L('In a chromatogram the solvent front moved ' + sf + ' cm from the baseline and a spot moved ' + d + ' cm. Calculate the Rf value of the spot.', 'На хроматограмме фронт растворителя прошёл ' + sf + ' см от линии старта, а пятно — ' + d + ' см. Вычислите Rf пятна.'), ans: { k: 'num', key: String(rf), forms: ['approx'], tol: 0.01, traps: [[sf / d, L('Rf = spot ÷ solvent front (it must be less than 1).', 'Rf = пятно ÷ фронт растворителя (должно быть меньше 1).')]] }, sol: [st('', '', 'Rf=' + d + '/' + sf + '=' + rf)] };
+    if (vi === 1) return { q: L('A substance has an Rf value of ' + rf + '. If the solvent front moves ' + sf + ' cm, how far does the spot move (in cm)?', 'Rf вещества ' + rf + '. Если фронт растворителя прошёл ' + sf + ' см, на сколько сантиметров сместится пятно?'), ans: pnum(d, 'cm'), sol: [su('', '', rf + '*' + sf + '=' + d, 'cm')] };
+    const lst = r.sh([['A', 0.2], ['B', 0.45], ['C', 0.7], ['D', 0.85]]); const tgt = r.pick(lst); const dd = +(tgt[1] * sf).toFixed(2);
+    return { q: L('Known substances have Rf values: ' + lst.map(x => x[0] + ' = ' + x[1]).join(', ') + '. An unknown spot moves ' + dd + ' cm when the solvent front moves ' + sf + ' cm. Which substance is it?', 'Rf известных веществ: ' + lst.map(x => x[0] + ' = ' + x[1]).join(', ') + '. Неизвестное пятно прошло ' + dd + ' см, фронт растворителя — ' + sf + ' см. Какое это вещество?'), ans: { k: 'mcq', opts: lst.map(x => L(x[0], x[0])), c: lst.indexOf(tgt) }, sol: [st('Rf = ' + dd + ' ÷ ' + sf + ' = ' + tgt[1] + ' → substance ' + tgt[0] + '.', 'Rf = ' + dd + ' ÷ ' + sf + ' = ' + tgt[1] + ' → вещество ' + tgt[0] + '.')] };
+  } });
+
+const BANKC4 = [
+  [L('How can you check whether a substance is pure?', 'Как проверить, что вещество чистое?'), [L('Measure its melting or boiling point: a pure substance has a sharp, fixed value', 'Измерить т. пл. или т. кип.: у чистого вещества она чёткая и постоянная'), L('Check its colour', 'Посмотреть на цвет'), L('Weigh it', 'Взвесить'), L('Smell it', 'Понюхать')], L('Pure water: m.p. 0 °C, b.p. 100 °C exactly.', 'Чистая вода: т. пл. 0 °C, т. кип. 100 °C точно.')],
+  [L('How do impurities affect the melting and boiling points?', 'Как примеси влияют на температуры плавления и кипения?'), [L('Melting point is lowered and boiling point is raised; it melts/boils over a range of temperatures', 'Т. пл. понижается, т. кип. повышается; плавление/кипение идёт в интервале температур'), L('Both are raised', 'Обе повышаются'), L('Both are lowered', 'Обе понижаются'), L('No effect', 'Не влияют')], L('Example: glucose solution boils above 100 °C and freezes below 0 °C.', 'Пример: раствор глюкозы кипит выше 100 °C и замерзает ниже 0 °C.')],
+  [L('Why is the baseline on chromatography paper drawn in pencil?', 'Почему линию старта на хроматографической бумаге проводят карандашом?'), [L('Pencil (graphite) does not dissolve in the solvent, so it will not run up the paper', 'Карандаш (графит) не растворяется в растворителе и не поднимется по бумаге'), L('Pencil lines are easier to see', 'Карандашная линия лучше видна'), L('Ink would make the paper wet', 'Чернила намочат бумагу'), L('Pencil absorbs the solvent', 'Карандаш впитывает растворитель')], L('The baseline must also be ABOVE the level of the solvent, or the spots dissolve into it.', 'Линия старта должна быть ВЫШЕ уровня растворителя, иначе пятна растворятся в нём.')],
+  [L('What is a locating agent used for in chromatography?', 'Для чего в хроматографии нужен проявитель (locating agent)?'), [L('To make colourless spots visible', 'Чтобы сделать видимыми бесцветные пятна'), L('To make the solvent move faster', 'Чтобы растворитель двигался быстрее'), L('To dissolve the sample', 'Чтобы растворить образец'), L('To dry the paper', 'Чтобы высушить бумагу')], L('The paper is sprayed after the run; the spots then show up and can be measured.', 'Бумагу опрыскивают после разделения; пятна проявляются, и их можно измерить.')],
+  [L('In a distillation condenser, cold water enters at the…', 'В холодильнике при перегонке холодная вода входит…'), [L('bottom, so the condenser fills completely and cools best', 'снизу — так холодильник заполняется полностью и лучше охлаждает'), L('top', 'сверху'), L('middle', 'в середине'), L('it does not matter', 'неважно где')], L('The vapour cools and condenses into the liquid (distillate).', 'Пар охлаждается и конденсируется в жидкость (дистиллят).')],
+  [L('A mixture consists of…', 'Смесь состоит из…'), [L('more than one substance not chemically joined', 'нескольких веществ, не связанных химически'), L('only one type of particle', 'только одного вида частиц'), L('only one element', 'только одного элемента'), L('a single compound', 'одного соединения')], L('A pure substance contains only one substance (e.g. pure water); water + glucose is a mixture.', 'Чистое вещество содержит только одно вещество (например, чистая вода); вода + глюкоза — смесь.')],
+  [L('How would you obtain salt from sea water (containing sand)?', 'Как получить соль из морской воды (с песком)?'), [L('Filter to remove the sand, then evaporate/crystallise the filtrate', 'Отфильтровать песок, затем выпарить/кристаллизовать фильтрат'), L('Distil the sand', 'Перегнать песок'), L('Use chromatography only', 'Только хроматографией'), L('Filter and keep the residue', 'Отфильтровать и оставить осадок')], L('The salt is dissolved, so it passes through the filter with the water.', 'Соль растворена и проходит через фильтр вместе с водой.')]];
+skill({ id: 'C4.3', code: '4.3', ch: 4, en: 'Purity and separation: theory', ru: 'Чистота и разделение: теория', variants: BANKC4.length, hints: [L('Ask: which part is dissolved, which is insoluble, and which boils first?', 'Спросите себя: что растворено, что нерастворимо и что кипит первым?')], gen: bankGen(BANKC4) });
+
+/* ===================== C5 Stoichiometry ===================== */
+CHAPTERS.push({ id: 5, subj: 'chem', en: 'Stoichiometry: formulae, equations, the mole', ru: 'Стехиометрия: формулы, уравнения, моль' });
+const MRF = ['H2O', 'CO2', 'NH3', 'CH4', 'NaCl', 'MgO', 'CaCO3', 'H2SO4', 'NaOH', 'HCl', 'C6H12O6', '(NH4)2SO4', 'Na2CO3', 'Al2O3', 'Fe2O3', 'CuSO4', 'Ca(OH)2', 'Mg(NO3)2', 'KNO3', 'Al2(SO4)3', 'CuCO3', 'O2', 'N2', 'Cl2', 'C2H5OH', 'H2S'];
+skill({ id: 'C5.1', code: '5.1', ch: 5, en: 'Relative formula mass (Mr)', ru: 'Относительная молекулярная масса (Mr)', variants: 1,
+  hints: [L('Add up Ar of every atom. A number after a bracket multiplies everything inside: (NH₄)₂ = 2 N + 8 H.', 'Сложите Ar всех атомов. Число после скобки умножает всё внутри: (NH₄)₂ = 2 N + 8 H.')],
+  gen(r) { const f = r.pick(MRF); return { q: L('Calculate the relative formula mass (Mr) of ' + fm(f) + '.' + arNoteF(f), 'Вычислите относительную молекулярную массу (Mr) ' + fm(f) + '.' + arNoteF(f)), ans: pnum(Mr(f), '', { tol: 0.001 }), sol: [st(mrWork(f), mrWork(f))] }; } });
+
+skill({ id: 'C5.2', code: '5.2', ch: 5, en: 'Moles, mass and molar mass (n = m/M)', ru: 'Моль, масса, молярная масса (n = m/M)', variants: 3,
+  hints: [L('number of moles = mass (g) ÷ molar mass (g/mol). Molar mass = Mr in g/mol. Rearranged: m = n × M.', 'количество вещества (моль) = масса (г) ÷ молярная масса (г/моль). Молярная масса = Mr в г/моль. Отсюда m = n × M.')],
+  gen(r, vi) {
+    vi = vi ?? r.ri(0, 2); const f = r.pick(['H2O', 'CO2', 'NH3', 'CH4', 'NaCl', 'MgO', 'CaCO3', 'H2SO4', 'NaOH', 'H2S', 'O2', 'C6H12O6', 'Na2CO3', 'CuSO4']); const M = Mr(f); const n = r.pick([0.1, 0.2, 0.25, 0.5, 2, 3, 1.5, 5]); const m = +(n * M).toFixed(3);
+    if (vi === 0) return { q: L('How many moles are there in ' + m + ' g of ' + fm(f) + '?' + arNoteF(f), 'Сколько моль в ' + m + ' г ' + fm(f) + '?' + arNoteF(f)), ans: pnum(n, 'mol', { traps: [[m * M, L('n = m ÷ M — divide, don’t multiply.', 'n = m ÷ M — делить, а не умножать.')]] }), sol: [st('M(' + fm(f) + ') = ' + mrWork(f) + ' g/mol', 'M(' + fm(f) + ') = ' + mrWork(f) + ' г/моль'), su('', '', 'n=' + m + '/' + M + '=' + n, 'mol')] };
+    if (vi === 1) return { q: L('What is the mass of ' + n + ' mol of ' + fm(f) + '?' + arNoteF(f), 'Какова масса ' + n + ' моль ' + fm(f) + '?' + arNoteF(f)), ans: pnum(m, 'g'), sol: [st('M(' + fm(f) + ') = ' + M + ' g/mol', 'M(' + fm(f) + ') = ' + M + ' г/моль'), su('', '', 'm=n*M=' + n + '*' + M + '=' + fM(m), 'g')] };
+    return { q: L(n + ' mol of a substance has a mass of ' + m + ' g. What is its molar mass?', n + ' моль вещества имеют массу ' + m + ' г. Какова его молярная масса?'), ans: pnum(M, 'g/mol'), sol: [su('', '', 'M=m/n=' + m + '/' + n + '=' + M, 'g/mol')] };
+  } });
+
+skill({ id: 'C5.3', code: '5.3', ch: 5, en: 'The Avogadro constant', ru: 'Постоянная Авогадро', variants: 3,
+  hints: [L('1 mole contains 6.02 × 10²³ particles. Number of particles = moles × 6.02 × 10²³. For atoms, multiply also by the number of that atom in one molecule.', '1 моль содержит 6,02 × 10²³ частиц. Число частиц = моль × 6,02 × 10²³. Для атомов умножьте ещё на число таких атомов в молекуле.'), L('Type it like 1.806*10^24.', 'Набирайте так: 1.806*10^24.')],
+  gen(r, vi) {
+    vi = vi ?? r.ri(0, 2); const NA = 6.02e23; const n = r.pick([2, 3, 0.5, 6, 0.25, 4]);
+    if (vi === 0) { const f = r.pick(['H2O', 'NH3', 'CO2', 'CH4', 'O2']); return { q: L('How many molecules are there in ' + n + ' mol of ' + fm(f) + '?', 'Сколько молекул в ' + n + ' моль ' + fm(f) + '?'), ans: pnum(n * NA, 'molecules'), sol: [st('', '', n + '*6.02*10^23=' + fM(n * NA))] }; }
+    if (vi === 1) { const [f, el, k] = r.pick([['C6H12O6', 'C', 6], ['C6H12O6', 'H', 12], ['H2O', 'H', 2], ['NH3', 'H', 3], ['CH4', 'H', 4], ['CO2', 'O', 2], ['H2SO4', 'O', 4]]); return { q: L('How many ' + el + ' atoms are there in ' + n + ' mol of ' + fm(f) + '?', 'Сколько атомов ' + el + ' в ' + n + ' моль ' + fm(f) + '?'), ans: pnum(n * k * NA, 'atoms', { traps: [[n * NA, L('That is the number of MOLECULES. Each molecule has ' + k + ' ' + el + ' atoms.', 'Это число МОЛЕКУЛ. В каждой молекуле ' + k + ' атомов ' + el + '.')]] }), sol: [st('Molecules: ' + n + ' × 6.02 × 10²³; each has ' + k + ' ' + el + ' atoms.', 'Молекул: ' + n + ' × 6,02 × 10²³; в каждой ' + k + ' атомов ' + el + '.', n + '*' + k + '*6.02*10^23=' + fM(n * k * NA))] }; }
+    const N = n * NA; return { q: L('How many moles are ' + fN(N).replace(' × 10^', ' × 10^') + ' atoms of iron?', 'Сколько моль составляют ' + fN(N) + ' атомов железа?'), ans: pnum(n, 'mol'), sol: [st('', '', fM(N) + '/(6.02*10^23)=' + n)] };
+  } });
+
+skill({ id: 'C5.4', code: '5.4', ch: 5, en: 'Molar gas volume (24 dm³)', ru: 'Молярный объём газа (24 дм³)', variants: 3,
+  hints: [L('At room temperature and pressure (r.t.p.) 1 mole of ANY gas occupies 24 dm³ = 24 000 cm³. n = V ÷ 24.', 'При комнатных условиях (к.у.) 1 моль ЛЮБОГО газа занимает 24 дм³ = 24 000 см³. n = V ÷ 24.')],
+  gen(r, vi) {
+    vi = vi ?? r.ri(0, 2); const n = r.pick([0.5, 2, 0.25, 3, 0.1, 1.5]);
+    if (vi === 0) return { q: L('What volume does ' + n + ' mol of oxygen gas occupy at r.t.p. (in dm³)?', 'Какой объём занимает ' + n + ' моль кислорода при к.у. (дм³)?'), ans: pnum(n * 24, 'dm³'), sol: [su('', '', 'V=' + n + '*24=' + fM(n * 24), 'dm³')] };
+    if (vi === 1) { const cm = n * 24000; return { q: L('How many moles of gas are in ' + cm + ' cm³ at r.t.p.?', 'Сколько моль газа в ' + cm + ' см³ при к.у.?'), ans: pnum(n, 'mol'), sol: [su('Convert: ' + cm + ' cm³ = ' + cm / 1000 + ' dm³.', 'Переводим: ' + cm + ' см³ = ' + cm / 1000 + ' дм³.', 'n=' + cm / 1000 + '/24=' + n, 'mol')] }; }
+    const f = r.pick(['CO2', 'CH4', 'NH3', 'O2', 'N2']); const m = +(n * Mr(f)).toFixed(2); return { q: L('What is the volume of ' + m + ' g of ' + fm(f) + ' gas at r.t.p. (in dm³)?' + arNoteF(f), 'Каков объём ' + m + ' г газа ' + fm(f) + ' при к.у. (дм³)?' + arNoteF(f)), ans: pnum(n * 24, 'dm³'), sol: [su('', '', 'n=' + m + '/' + Mr(f) + '=' + n, 'mol'), su('', '', 'V=' + n + '*24=' + fM(n * 24), 'dm³')] };
+  } });
+
+skill({ id: 'C5.5', code: '5.5', ch: 5, en: 'Concentration of solutions', ru: 'Концентрация растворов', variants: 4,
+  hints: [L('concentration (mol/dm³) = moles of solute ÷ volume of solution (dm³). 1 dm³ = 1000 cm³, so divide cm³ by 1000.', 'концентрация (моль/дм³) = моль растворённого ÷ объём раствора (дм³). 1 дм³ = 1000 см³ — см³ делите на 1000.'), L('In g/dm³: mass ÷ volume. Concentration (g/dm³) = concentration (mol/dm³) × molar mass.', 'В г/дм³: масса ÷ объём. Концентрация (г/дм³) = концентрация (моль/дм³) × молярная масса.')],
+  gen(r, vi) {
+    vi = vi ?? r.ri(0, 3); const c = r.pick([0.1, 0.2, 0.5, 1, 2]), Vc = r.pick([250, 500, 100, 200, 50]); const n = c * Vc / 1000;
+    if (vi === 0) return { q: L(fN(n) + ' mol of solute is dissolved to make ' + Vc + ' cm³ of solution. What is the concentration in mol/dm³?', fN(n) + ' моль вещества растворили и получили ' + Vc + ' см³ раствора. Какова концентрация в моль/дм³?'), ans: pnum(c, 'mol/dm³'), sol: [su('Convert: ' + Vc + ' cm³ = ' + Vc / 1000 + ' dm³.', 'Переводим: ' + Vc + ' см³ = ' + Vc / 1000 + ' дм³.', 'c=' + fM(n) + '/' + Vc / 1000 + '=' + c, 'mol/dm³')] };
+    if (vi === 1) { const nn = r.pick([0.6, 0.5, 0.2, 1.5]), cc = r.pick([2, 0.5, 1, 0.25]); return { q: L('What volume of ' + cc + ' mol/dm³ solution contains ' + nn + ' mol of solute (in dm³)?', 'Какой объём раствора ' + cc + ' моль/дм³ содержит ' + nn + ' моль вещества (дм³)?'), ans: pnum(nn / cc, 'dm³'), sol: [su('V = n ÷ c', 'V = n ÷ c', 'V=' + nn + '/' + cc + '=' + fM(nn / cc), 'dm³')] }; }
+    if (vi === 2) return { q: L('How many moles of solute are in ' + Vc + ' cm³ of a ' + c + ' mol/dm³ solution?', 'Сколько моль вещества в ' + Vc + ' см³ раствора ' + c + ' моль/дм³?'), ans: pnum(n, 'mol'), sol: [su('', '', 'n=c*V=' + c + '*' + Vc / 1000 + '=' + fM(n), 'mol')] };
+    const f = r.pick(['NaOH', 'NaCl', 'HCl', 'H2SO4', 'CuSO4']); const M = Mr(f); return { q: L('A solution of ' + fm(f) + ' has a concentration of ' + c + ' mol/dm³. What is its concentration in g/dm³?' + arNoteF(f), 'Концентрация раствора ' + fm(f) + ' — ' + c + ' моль/дм³. Какова концентрация в г/дм³?' + arNoteF(f)), ans: pnum(c * M, 'g/dm³'), sol: [su('', '', c + '*' + M + '=' + fM(c * M), 'g/dm³')] };
+  } });
+
+const RX = [
+  [[[1, 'CuCO3']], [[1, 'CuO'], [1, 'CO2']]], [[[1, 'CaCO3']], [[1, 'CaO'], [1, 'CO2']]], [[[2, 'Mg'], [1, 'O2']], [[2, 'MgO']]], [[[4, 'Al'], [3, 'O2']], [[2, 'Al2O3']]],
+  [[[2, 'H2'], [1, 'O2']], [[2, 'H2O']]], [[[1, 'N2'], [3, 'H2']], [[2, 'NH3']]], [[[1, 'Zn'], [2, 'HCl']], [[1, 'ZnCl2'], [1, 'H2']]], [[[1, 'Fe2O3'], [3, 'CO']], [[2, 'Fe'], [3, 'CO2']]],
+  [[[2, 'Na'], [1, 'Cl2']], [[2, 'NaCl']]], [[[1, 'CH4'], [2, 'O2']], [[1, 'CO2'], [2, 'H2O']]], [[[1, 'Mg'], [2, 'HCl']], [[1, 'MgCl2'], [1, 'H2']]], [[[2, 'NaOH'], [1, 'H2SO4']], [[1, 'Na2SO4'], [2, 'H2O']]], [[[2, 'Fe'], [3, 'Cl2']], [[2, 'FeCl3']]], [[[1, 'C3H8'], [5, 'O2']], [[3, 'CO2'], [4, 'H2O']]]];
+const eqTex = (rx, show = true) => rx[0].map(([c, f]) => (show && c > 1 ? c + '\\,' : '') + chemTex(f)).join(' + ') + ' \\rightarrow ' + rx[1].map(([c, f]) => (show && c > 1 ? c + '\\,' : '') + chemTex(f)).join(' + ');
+const eqStr = (rx, show = true) => rx[0].map(([c, f]) => (show && c > 1 ? c + ' ' : '') + fm(f)).join(' + ') + ' → ' + rx[1].map(([c, f]) => (show && c > 1 ? c + ' ' : '') + fm(f)).join(' + ');
+const RXB = RX.filter(x => [...x[0], ...x[1]].some(([c]) => c > 1));
+skill({ id: 'C5.6', code: '5.6', ch: 5, en: 'Balancing equations', ru: 'Уравнивание реакций', variants: RXB.length,
+  hints: [L('Never change the formulae — only the big numbers in front. Count each type of atom on both sides.', 'Никогда не меняйте формулы — только коэффициенты впереди. Считайте атомы каждого вида в обеих частях.'), L('Balance elements that appear in only one substance on each side first; leave H and O (or a free element) until last. Type 1 where no number is needed.', 'Сначала уравнивайте элементы, которые встречаются в одном веществе с каждой стороны; H и O (или простое вещество) — в конце. Где коэффициент не нужен, пишите 1.')],
+  gen(r, vi) {
+    const rx = RXB[vi ?? r.ri(0, RXB.length - 1)]; const all = [...rx[0], ...rx[1]];
+    return { q: L('Balance the equation (give the coefficient in front of each substance; 1 if none):', 'Уравняйте реакцию (коэффициент перед каждым веществом; 1, если не нужен):'), tex: eqTex(rx, false), ans: { k: 'multi', parts: all.map(([c, f]) => ({ lab: L(fm(f), fm(f)), spec: { k: 'num', key: String(c), nohelp: true } })) }, sol: [st(eqStr(rx), eqStr(rx))] };
+  } });
+
+skill({ id: 'C5.7', code: '5.7', ch: 5, en: 'Reacting masses', ru: 'Расчёты по уравнению (массы)', variants: 1,
+  hints: [L('1) moles of the substance you know = mass ÷ M. 2) use the ratio of the big numbers in the equation. 3) mass = moles × M of the substance you want.', '1) моль известного вещества = масса ÷ M. 2) используйте соотношение коэффициентов в уравнении. 3) масса = моль × M искомого вещества.')],
+  gen(r) {
+    const rx = r.pick(RX.filter(x => x[0].length >= 1)); const [ca, A] = r.pick(rx[0]); const [cb, B] = r.pick(rx[1]);
+    const nA = r.pick([0.1, 0.2, 0.25, 0.5, 1, 2]) * ca; const mA = +(nA * Mr(A)).toFixed(2); const nB = nA * cb / ca; const mB = nB * Mr(B);
+    return { q: L('Calculate the mass of ' + fm(B) + ' produced from ' + mA + ' g of ' + fm(A) + '.' + arNoteF(A, B), 'Вычислите массу ' + fm(B) + ', которая получится из ' + mA + ' г ' + fm(A) + '.' + arNoteF(A, B)), tex: eqTex(rx), ans: pnum(mB, 'g'),
+      sol: [su('Moles of ' + fm(A) + ':', 'Моль ' + fm(A) + ':', 'n=' + mA + '/' + Mr(A) + '=' + fM(nA), 'mol'), su('Ratio ' + fm(A) + ' : ' + fm(B) + ' = ' + ca + ' : ' + cb + ':', 'Соотношение ' + fm(A) + ' : ' + fm(B) + ' = ' + ca + ' : ' + cb + ':', 'n=' + fM(nA) + '*' + cb + '/' + ca + '=' + fM(nB), 'mol'), su('', '', 'm=' + fM(nB) + '*' + Mr(B) + '=' + fM(mB), 'g')] };
+  } });
+
+const EFS = [['Fe2O3', 'Fe2O3'], ['MgO', 'MgO'], ['CuO', 'CuO'], ['Al2O3', 'Al2O3'], ['SO2', 'SO2'], ['SO3', 'SO3'], ['NO2', 'NO2'], ['CH4', 'CH4'], ['C2H6', 'CH3'], ['C6H12O6', 'CH2O'], ['N2H4', 'NH2'], ['C4H10', 'C2H5'], ['H2O2', 'HO'], ['C2H4', 'CH2'], ['CaCO3', 'CaCO3'], ['K2O', 'K2O']];
+skill({ id: 'C5.8', code: '5.8', ch: 5, en: 'Empirical and molecular formulae', ru: 'Простейшая и молекулярная формулы', variants: 3,
+  hints: [L('Empirical formula: for each element, mass (or %) ÷ Ar → moles; divide all by the smallest; make whole numbers (× 2 if you get 1.5).', 'Простейшая формула: для каждого элемента масса (или %) ÷ Ar → моль; разделите всё на наименьшее; приведите к целым (× 2, если вышло 1,5).'), L('Molecular formula: x = Mr ÷ (empirical formula mass); multiply every number in the EF by x.', 'Молекулярная формула: x = Mr ÷ (масса простейшей формулы); умножьте все индексы EF на x.')],
+  gen(r, vi) {
+    vi = vi ?? r.ri(0, 2); const [MF, EF] = r.pick(EFS); const c = formulaCount(EF); const els = Object.keys(c); const massEF = Mr(EF);
+    if (vi <= 1) {
+      const scale = r.pick([1, 2, 0.5, 10 / massEF * 10]); const useP = vi === 1;
+      const vals = els.map(e => useP ? +(100 * AR[e] * c[e] / massEF).toFixed(1) : +(AR[e] * c[e] * (r.pick([0.5, 1, 2, 0.1]))).toFixed(2));
+      // keep proportions for mass version
+      const k = useP ? 1 : r.pick([0.1, 0.5, 1, 2]); const masses = els.map(e => +(AR[e] * c[e] * k).toFixed(2));
+      const shown = useP ? vals : masses;
+      const work = els.map((e, i) => e + ': ' + shown[i] + ' ÷ ' + AR[e] + ' = ' + +(shown[i] / AR[e]).toFixed(3)).join('; ');
+      return { q: useP ? L('A compound contains ' + els.map((e, i) => shown[i] + ' % ' + e).join(', ') + ' by mass. Find its empirical formula.' + arNote(els), 'Соединение содержит по массе ' + els.map((e, i) => shown[i] + ' % ' + e).join(', ') + '. Найдите его простейшую формулу.' + arNote(els)) : L('A sample of a compound contains ' + els.map((e, i) => shown[i] + ' g of ' + e).join(' and ') + '. Find its empirical formula.' + arNote(els), 'Образец соединения содержит ' + els.map((e, i) => shown[i] + ' г ' + e).join(' и ') + '. Найдите его простейшую формулу.' + arNote(els)),
+        ans: { k: 'text', norm: 'chem', key: EF }, show: chemTex(EF), sol: [st('Moles: ' + work + '.', 'Моль: ' + work + '.'), st('Divide by the smallest and make whole numbers → ' + els.map(e => e + ' ' + c[e]).join(' : ') + ' → ' + fm(EF) + '.', 'Делим на наименьшее и приводим к целым → ' + els.map(e => e + ' ' + c[e]).join(' : ') + ' → ' + fm(EF) + '.')] };
+    }
+    const cands = EFS.filter(x => x[0] !== x[1]); const [mf, ef] = r.pick(cands); const x = Mr(mf) / Mr(ef);
+    return { q: L('A compound has the empirical formula ' + fm(ef) + ' and a relative molecular mass of ' + Mr(mf) + '. Find its molecular formula.' + arNoteF(ef), 'Простейшая формула соединения ' + fm(ef) + ', относительная молекулярная масса ' + Mr(mf) + '. Найдите молекулярную формулу.' + arNoteF(ef)), ans: { k: 'text', norm: 'chem', key: mf }, show: chemTex(mf), sol: [st('EF mass = ' + mrWork(ef) + '.', 'Масса EF = ' + mrWork(ef) + '.'), st('x = ' + Mr(mf) + ' ÷ ' + Mr(ef) + ' = ' + x + ' → (' + fm(ef) + ') × ' + x + ' = ' + fm(mf) + '.', 'x = ' + Mr(mf) + ' ÷ ' + Mr(ef) + ' = ' + x + ' → (' + fm(ef) + ') × ' + x + ' = ' + fm(mf) + '.')] };
+  } });
+
+skill({ id: 'C5.9', code: '5.9', ch: 5, en: 'Percentage yield and purity', ru: 'Выход продукта и чистота', variants: 2,
+  hints: [L('% yield = actual mass obtained ÷ theoretical (calculated) mass × 100. It is less than 100 % because some product is lost or the reaction is incomplete.', '% выхода = полученная масса ÷ теоретическая (расчётная) масса × 100. Меньше 100 %, потому что часть продукта теряется или реакция идёт не до конца.'), L('% purity = mass of pure product ÷ mass of impure sample × 100.', '% чистоты = масса чистого вещества ÷ масса образца с примесями × 100.')],
+  gen(r, vi) {
+    vi = vi ?? r.ri(0, 1);
+    if (vi === 0) { const rx = r.pick([RX[3], RX[2], RX[1], RX[0]]); const [ca, A] = rx[0][0]; const [cb, B] = rx[1][0]; const nA = r.pick([1, 2, 4]) * ca / 2; const mA = +(nA * Mr(A)).toFixed(2); const th = nA * cb / ca * Mr(B); const y = r.pick([60, 75, 80, 85, 90]); const act = +(th * y / 100).toFixed(1); const yy = act / th * 100;
+      return { q: L(mA + ' g of ' + fm(A) + ' reacts completely. ' + act + ' g of ' + fm(B) + ' is obtained. Calculate the percentage yield.' + arNoteF(A, B), mA + ' г ' + fm(A) + ' полностью прореагировали. Получили ' + act + ' г ' + fm(B) + '. Вычислите выход продукта в процентах.' + arNoteF(A, B)), tex: eqTex(rx), ans: pnum(yy, '%', { tol: 0.01 }),
+        sol: [su('Theoretical mass of ' + fm(B) + ':', 'Теоретическая масса ' + fm(B) + ':', mA + '/' + Mr(A) + '*' + cb + '/' + ca + '*' + Mr(B) + '=' + fM(th), 'g'), su('', '', act + '/' + fM(th) + '*100=' + fM(yy), '%')] }; }
+    const tot = r.pick([2, 5, 10, 25, 50]), p = r.pick([80, 85, 90, 95, 96]); const pure = tot * p / 100;
+    return { q: L('A ' + tot + ' g sample of impure calcium carbonate contains ' + fN(pure) + ' g of pure calcium carbonate. What is its percentage purity?', 'Образец карбоната кальция с примесями массой ' + tot + ' г содержит ' + fN(pure) + ' г чистого карбоната кальция. Какова чистота образца в процентах?'), ans: pnum(p, '%'), sol: [su('', '', fM(pure) + '/' + tot + '*100=' + p, '%')] };
+  } });
+
+skill({ id: 'C5.10', code: '5.10', ch: 5, ext: true, en: 'Limiting reactant', ru: 'Реагент в недостатке', variants: 1,
+  hints: [L('Find the moles of each reactant and divide by its coefficient. The smaller result is the limiting reactant; it decides how much product forms.', 'Найдите моль каждого реагента и разделите на его коэффициент. Меньший результат — реагент в недостатке; он определяет количество продукта.')],
+  gen(r) {
+    const rx = r.pick([RX[5], RX[2], RX[4], RX[6], RX[10]]); const [[c1, A], [c2, B]] = rx[0]; const [cp, P] = rx[1][0];
+    let nA, nB; do { nA = r.pick([1, 2, 3, 0.5, 1.5]) * c1; nB = r.pick([1, 2, 3, 4, 6]) * c2 / 2; } while (nA / c1 === nB / c2);
+    const mA = +(nA * Mr(A)).toFixed(2), mB = +(nB * Mr(B)).toFixed(2); const limA = nA / c1 < nB / c2; const nP = (limA ? nA / c1 : nB / c2) * cp; const mP = nP * Mr(P);
+    return { q: L(mA + ' g of ' + fm(A) + ' and ' + mB + ' g of ' + fm(B) + ' are mixed and react.' + arNoteF(A, B, P), mA + ' г ' + fm(A) + ' и ' + mB + ' г ' + fm(B) + ' смешали, и они прореагировали.' + arNoteF(A, B, P)), tex: eqTex(rx),
+      ans: { k: 'multi', parts: [{ lab: L('a) Which reactant is limiting?', 'a) Какой реагент в недостатке?'), spec: { k: 'mcq', opts: [L(fm(A), fm(A)), L(fm(B), fm(B))], c: limA ? 0 : 1 } }, { lab: L('b) Mass of ' + fm(P) + ' formed (g)', 'b) Масса образовавшегося ' + fm(P) + ' (г)'), spec: pnum(mP, 'g') }] },
+      sol: [st('Moles: ' + fm(A) + ' = ' + fN(nA) + ', ' + fm(B) + ' = ' + fN(nB) + '. Divide by coefficients: ' + fN(nA / c1) + ' and ' + fN(nB / c2) + ' → ' + fm(limA ? A : B) + ' is limiting.', 'Моль: ' + fm(A) + ' = ' + fN(nA) + ', ' + fm(B) + ' = ' + fN(nB) + '. Делим на коэффициенты: ' + fN(nA / c1) + ' и ' + fN(nB / c2) + ' → в недостатке ' + fm(limA ? A : B) + '.'), su('Moles of ' + fm(P) + ' = ' + fN(nP) + ':', 'Моль ' + fm(P) + ' = ' + fN(nP) + ':', 'm=' + fM(nP) + '*' + Mr(P) + '=' + fM(mP), 'g')] };
+  } });
+LOADING_SUBJ = 'math';
+
+/* ===================== CHEMISTRY THEORY ===================== */
+const CTHEORY = {
+c1: [
+  { h: L('Atoms and sub-atomic particles', 'Атом и элементарные частицы'), p: [
+    L('An atom is the smallest particle of an element that can exist independently. Protons (+1, mass 1) and neutrons (0, mass 1) are in the nucleus; electrons (−1, mass 1/1840) are in shells (energy levels) around it.', 'Атом — наименьшая частица элемента, способная существовать самостоятельно. Протоны (+1, масса 1) и нейтроны (0, масса 1) — в ядре; электроны (−1, масса 1/1840) — на оболочках (энергетических уровнях) вокруг.'),
+    L('Atomic (proton) number Z = number of protons. Mass (nucleon) number A = protons + neutrons. In ²⁴₁₂Mg: p = 12, e = 12, n = 24 − 12 = 12. Atoms are neutral: electrons = protons.', 'Атомный (протонный) номер Z = число протонов. Массовое (нуклонное) число A = протоны + нейтроны. В ²⁴₁₂Mg: p = 12, e = 12, n = 24 − 12 = 12. Атомы нейтральны: электронов = протонов.'),
+    L('Ions are charged particles. A cation (+) has LOST electrons: Al³⁺ has 13 p and 10 e. An anion (−) has GAINED electrons: S²⁻ has 16 p and 18 e. Protons and neutrons never change.', 'Ионы — заряженные частицы. Катион (+) ОТДАЛ электроны: в Al³⁺ 13 p и 10 e. Анион (−) ПРИНЯЛ электроны: в S²⁻ 16 p и 18 e. Протоны и нейтроны не меняются.')] },
+  { h: L('Isotopes', 'Изотопы'), p: [
+    L('Isotopes are atoms of the same element with the same number of protons and electrons but a different number of neutrons (¹H, ²H, ³H). They have the same chemical properties because they have the same electrons.', 'Изотопы — атомы одного элемента с одинаковым числом протонов и электронов, но разным числом нейтронов (¹H, ²H, ³H). Химические свойства одинаковы, потому что электроны те же.'),
+    L('Unstable isotopes release energy as radiation — radioisotopes. Uses: treating cancer, sterilising medical equipment, detecting leaks in pipes (with a Geiger counter), killing bacteria so food keeps longer.', 'Нестабильные изотопы выделяют энергию в виде излучения — радиоизотопы. Применение: лечение рака, стерилизация медицинских инструментов, поиск утечек в трубах (счётчиком Гейгера), уничтожение бактерий в продуктах.')] },
+  { h: L('Electronic configuration and the Periodic Table', 'Электронная конфигурация и Периодическая таблица'), p: [
+    L('Shells fill from the inside: K (max 2), L (max 8), M, N… The maximum in shell n is 2n², but for elements 1–20 use 2, 8, 8, 2. Example: Al (13) → 2, 8, 3. The outer shell is the valence shell (max 8).', 'Оболочки заполняются изнутри: K (не более 2), L (не более 8), M, N… Максимум на оболочке n — 2n², но для элементов 1–20 используйте 2, 8, 8, 2. Пример: Al (13) → 2, 8, 3. Внешняя оболочка — валентная (не более 8).'),
+    L('The Periodic Table arranges elements in order of increasing atomic number: 7 periods (rows) and 8 groups (columns). Group number = number of valence electrons; period number = number of shells.', 'Периодическая таблица располагает элементы по возрастанию атомного номера: 7 периодов (строки) и 8 групп (столбцы). Номер группы = число валентных электронов; номер периода = число оболочек.'),
+    L('Metals (groups I–III) lose electrons → positive ions (Na⁺, Mg²⁺, Al³⁺). Non-metals (groups V–VII) gain electrons → negative ions (N³⁻, O²⁻, Cl⁻). Group VIII (0): noble gases, already full.', 'Металлы (группы I–III) отдают электроны → положительные ионы (Na⁺, Mg²⁺, Al³⁺). Неметаллы (группы V–VII) принимают электроны → отрицательные ионы (N³⁻, O²⁻, Cl⁻). Группа VIII (0): благородные газы, оболочка уже заполнена.')] }],
+c2: [
+  { h: L('Why atoms bond; types of bond', 'Зачем атомы образуют связь; типы связи'), p: [
+    L('A bond is an attractive force holding atoms together. Atoms bond to become stable with 8 electrons in the outer shell.', 'Связь — сила притяжения, удерживающая атомы вместе. Атомы образуют связи, чтобы стать устойчивыми с 8 электронами на внешней оболочке.'),
+    L('Ionic bond: transfer of electrons, metal + non-metal (Na–Cl). Covalent bond: sharing of electrons, non-metals only (Cl–Cl, CO₂). Metallic bond: positive ions in a sea of delocalised electrons.', 'Ионная связь: передача электронов, металл + неметалл (Na–Cl). Ковалентная: обобществление электронов, только неметаллы (Cl–Cl, CO₂). Металлическая: положительные ионы в «море» делокализованных электронов.')] },
+  { h: L('Ionic compounds', 'Ионные соединения'), p: [
+    L('Formula: the charges must cancel. Criss-cross: Mg²⁺ O²⁻ → MgO (2 : 2 = 1 : 1); Al³⁺ Cl⁻ → AlCl₃; Mg²⁺ Cl⁻ → MgCl₂. Group ions in brackets when more than one: Ca(OH)₂, Al₂(SO₄)₃.', 'Формула: заряды должны компенсироваться. Крест-накрест: Mg²⁺ O²⁻ → MgO (2 : 2 = 1 : 1); Al³⁺ Cl⁻ → AlCl₃; Mg²⁺ Cl⁻ → MgCl₂. Сложные ионы в скобках, если их больше одного: Ca(OH)₂, Al₂(SO₄)₃.'),
+    L('Group ions: OH⁻ hydroxide, SO₄²⁻ sulfate, CO₃²⁻ carbonate, PO₄³⁻ phosphate, NO₃⁻ nitrate, NH₄⁺ ammonium.', 'Сложные ионы: OH⁻ гидроксид, SO₄²⁻ сульфат, CO₃²⁻ карбонат, PO₄³⁻ фосфат, NO₃⁻ нитрат, NH₄⁺ аммоний.'),
+    L('Properties: very high melting and boiling points and hard (strong electrostatic attraction between cations and anions; low volatility); conduct electricity only when molten or in aqueous solution (ions free to move), not as solids (ions fixed); usually soluble in water.', 'Свойства: очень высокие т. пл. и т. кип., твёрдые (сильное электростатическое притяжение катионов и анионов; летучесть низкая); проводят ток только в расплаве или растворе (ионы подвижны), но не в твёрдом виде (ионы закреплены); обычно растворимы в воде.')] },
+  { h: L('Covalent substances', 'Ковалентные вещества'), p: [
+    L('Simple molecular (O₂, CO₂, CH₄): low melting and boiling points, volatile, do not conduct (no ions or free electrons), usually insoluble in water.', 'Простые молекулярные (O₂, CO₂, CH₄): низкие т. пл. и т. кип., летучие, не проводят ток (нет ионов и свободных электронов), обычно нерастворимы в воде.'),
+    L('Giant covalent: millions of atoms joined by covalent bonds. Diamond — each C bonded to 4 others (tetrahedral), very hard, high m.p., does not conduct → cutting tools, jewellery. Graphite — each C bonded to 3 others in flat hexagonal layers; the 4th electron is delocalised → conducts; layers slide → soft, slippery, lubricant, electrodes. Silicon dioxide (SiO₂, sand) — each Si bonded to 4 O; hard, high m.p., insoluble, non-conductor.', 'Гигантские ковалентные: миллионы атомов, связанных ковалентными связями. Алмаз — каждый C связан с 4 другими (тетраэдр), очень твёрдый, высокая т. пл., не проводит → режущий инструмент, украшения. Графит — каждый C связан с 3 другими в плоских шестиугольных слоях; четвёртый электрон делокализован → проводит; слои скользят → мягкий, смазка, электроды. Диоксид кремния (SiO₂, песок) — каждый Si связан с 4 O; твёрдый, высокая т. пл., нерастворим, не проводит.')] },
+  { h: L('Metals', 'Металлы'), p: [
+    L('Metallic bonding: metal atoms lose their valence electrons to form positive ions in a sea of delocalised electrons. High melting points; good conductors (delocalised electrons move); malleable and ductile (layers of ions slide over each other without the bonding breaking).', 'Металлическая связь: атомы металла отдают валентные электроны и становятся положительными ионами в «море» делокализованных электронов. Высокие т. пл.; хорошие проводники (электроны подвижны); ковкие и пластичные (слои ионов скользят, не разрушая связь).')] }],
+c3: [
+  { h: L('Particles in solids, liquids and gases', 'Частицы в твёрдых телах, жидкостях и газах'), p: [
+    L('Everything is made of tiny moving particles. Solid: close, regular, vibrate in fixed positions. Liquid: close, irregular, slide past each other. Gas: far apart, random, fast.', 'Всё состоит из мельчайших движущихся частиц. Твёрдое: близко, упорядоченно, колеблются на местах. Жидкость: близко, беспорядочно, скользят друг относительно друга. Газ: далеко, хаотично, быстро.'),
+    L('Heating/cooling curve: sloping line = the temperature of one state changes; horizontal line = change of state (melting/boiling, or condensing/freezing) — energy goes into breaking (or is released by forming) forces between particles.', 'Кривая нагревания/охлаждения: наклонный участок — меняется температура одного состояния; горизонтальный — смена состояния (плавление/кипение или конденсация/замерзание): энергия идёт на разрыв сил между частицами (или выделяется при их образовании).')] },
+  { h: L('Diffusion and gases', 'Диффузия и газы'), p: [
+    L('Diffusion: movement of particles from higher to lower concentration, caused by their kinetic energy. Faster at higher temperature (more kinetic energy) and for lighter particles (smaller Mr): NH₃ (17) diffuses faster than HCl (36.5).', 'Диффузия — движение частиц из области большей концентрации в область меньшей за счёт их кинетической энергии. Быстрее при высокой температуре (больше кинетической энергии) и для лёгких частиц (меньше Mr): NH₃ (17) диффундирует быстрее HCl (36,5).'),
+    L('Gases: temperature up → particles move faster → volume increases (at constant pressure). Pressure up → gas is squashed → volume decreases (at constant temperature).', 'Газы: температура выше → частицы быстрее → объём растёт (при постоянном давлении). Давление выше → газ сжимается → объём уменьшается (при постоянной температуре).')] }],
+c4: [
+  { h: L('Pure substances and mixtures', 'Чистые вещества и смеси'), p: [
+    L('A pure substance contains only one substance (pure water); a mixture contains more than one (water + glucose). Pure substances have sharp melting and boiling points: water m.p. 0 °C, b.p. 100 °C.', 'Чистое вещество содержит только одно вещество (чистая вода); смесь — несколько (вода + глюкоза). У чистых веществ чёткие т. пл. и т. кип.: вода — 0 °C и 100 °C.'),
+    L('Impurities lower the melting point and raise the boiling point, and the substance melts/boils over a range of temperatures (glucose solution: b.p. above 100 °C, m.p. below 0 °C).', 'Примеси понижают т. пл. и повышают т. кип., и вещество плавится/кипит в интервале температур (раствор глюкозы: т. кип. выше 100 °C, т. пл. ниже 0 °C).')] },
+  { h: L('Separation techniques', 'Методы разделения'), p: [
+    L('Filtration: insoluble solid from a liquid (sand + water): residue stays on the filter paper, filtrate passes through. Crystallisation: a dissolved solid (salt, copper(II) sulfate) — heat to a saturated solution, cool, crystals form, filter and dry.', 'Фильтрование: нерастворимое вещество из жидкости (песок + вода): осадок на фильтре, фильтрат проходит. Кристаллизация: растворённое вещество (соль, сульфат меди(II)) — выпарить до насыщения, охладить, кристаллы отфильтровать и высушить.'),
+    L('Simple distillation: a liquid (solvent) from a solution, e.g. water from copper(II) sulfate solution. Fractional distillation: miscible liquids with different boiling points (ethanol + water) using a fractionating column — the lower b.p. liquid distils first.', 'Простая перегонка: жидкость (растворитель) из раствора, например вода из раствора сульфата меди(II). Фракционная перегонка: смешивающиеся жидкости с разными т. кип. (этанол + вода) с колонной — сначала отгоняется жидкость с меньшей т. кип.'),
+    L('Paper chromatography: separates dissolved coloured substances. Baseline in pencil, above the solvent. Components move different distances. Rf = distance moved by spot ÷ distance moved by solvent. Colourless spots: spray with a locating agent.', 'Бумажная хроматография: разделяет растворённые окрашенные вещества. Линия старта — карандашом, выше уровня растворителя. Компоненты проходят разное расстояние. Rf = путь пятна ÷ путь растворителя. Бесцветные пятна проявляют проявителем (locating agent).')] }],
+c5: [
+  { h: L('Equations and relative masses', 'Уравнения и относительные массы'), p: [
+    L('Balanced equation: the same number of each type of atom on both sides — change only the coefficients: 2H₂ + O₂ → 2H₂O.', 'Уравненная реакция: число атомов каждого вида одинаково в обеих частях — меняем только коэффициенты: 2H₂ + O₂ → 2H₂O.'),
+    L('Relative atomic mass Ar: how many times heavier an atom is than 1/12 of a carbon-12 atom. Relative molecular (formula) mass Mr: sum of Ar of all atoms: Mr(H₂O) = 2(1) + 16 = 18; Mr(C₆H₁₂O₆) = 6(12) + 12(1) + 6(16) = 180.', 'Относительная атомная масса Ar показывает, во сколько раз атом тяжелее 1/12 атома углерода-12. Относительная молекулярная масса Mr — сумма Ar всех атомов: Mr(H₂O) = 2(1) + 16 = 18; Mr(C₆H₁₂O₆) = 6(12) + 12(1) + 6(16) = 180.')] },
+  { h: L('The mole', 'Моль'), p: [
+    L('1 mole of a substance contains 6.02 × 10²³ particles (the Avogadro constant). 3 mol NH₃ = 3 × 6.02 × 10²³ molecules. Atoms: multiply also by the number of that atom per molecule.', '1 моль вещества содержит 6,02 × 10²³ частиц (постоянная Авогадро). 3 моль NH₃ = 3 × 6,02 × 10²³ молекул. Для атомов умножьте ещё на число таких атомов в молекуле.'),
+    L('Molar mass M = mass of 1 mole, numerically equal to Mr, in g/mol. moles = mass ÷ molar mass, n = m/M, so m = n × M.', 'Молярная масса M — масса 1 моль, численно равна Mr, в г/моль. n = m/M, отсюда m = n × M.'),
+    L('Gases at r.t.p.: 1 mol occupies 24 dm³ (24 000 cm³): moles = volume ÷ 24. Solutions: concentration (mol/dm³) = moles ÷ volume (dm³); 1 dm³ = 1000 cm³; g/dm³ = mol/dm³ × M.', 'Газы при к.у.: 1 моль занимает 24 дм³ (24 000 см³): n = V ÷ 24. Растворы: концентрация (моль/дм³) = моль ÷ объём (дм³); 1 дм³ = 1000 см³; г/дм³ = моль/дм³ × M.')] },
+  { h: L('Formulae, reacting masses, yield', 'Формулы, расчёты по уравнению, выход'), p: [
+    L('Empirical formula: simplest whole-number ratio of atoms (glucose C₆H₁₂O₆ → CH₂O). Method: mass or % ÷ Ar → divide by smallest → whole numbers. Molecular formula = (EF) × x, where x = Mr ÷ EF mass.', 'Простейшая формула — наименьшее целочисленное соотношение атомов (глюкоза C₆H₁₂O₆ → CH₂O). Метод: масса или % ÷ Ar → делим на наименьшее → целые числа. Молекулярная формула = (EF) × x, где x = Mr ÷ масса EF.'),
+    L('Reacting masses: moles of known → use the equation ratio → moles of unknown → mass. CuCO₃ → CuO + CO₂: 124 g of CuCO₃ gives 80 g of CuO, so 31 g gives 20 g.', 'Расчёт по уравнению: моль известного → соотношение по уравнению → моль искомого → масса. CuCO₃ → CuO + CO₂: из 124 г CuCO₃ — 80 г CuO, значит из 31 г — 20 г.'),
+    L('% yield = actual mass ÷ theoretical mass × 100 (less than 100 %: losses, incomplete reaction). % purity = mass of pure product ÷ mass of sample × 100. Limiting reactant: the one completely used up — it decides the amount of product.', '% выхода = полученная масса ÷ теоретическая × 100 (меньше 100 %: потери, неполная реакция). % чистоты = масса чистого вещества ÷ масса образца × 100. Реагент в недостатке расходуется полностью и определяет количество продукта.')] }]
+};
+
 /* ===================== EXTRAS: report to tutor, settings, export/import, PWA ===================== */
 function pct(a, b) { return b ? Math.round(100 * a / b) : 0; }
 function examReport(ex, s) {
@@ -2723,7 +3128,7 @@ function importProgress(f) {
 }
 
 /* ---------- PWA ---------- */
-const APP_VERSION = '20261110-0850';
+const APP_VERSION = '20261110-0924';
 function isStandalone() { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.__installEvt = e; });
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
@@ -2752,11 +3157,11 @@ const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const SK = id => SKILLS.find(s => s.id === id);
-const SUBJECTS = [{ id: 'math', en: 'Maths', ru: 'Математика' }, { id: 'phys', en: 'Physics', ru: 'Физика' }, { id: 'chem', en: 'Chemistry', ru: 'Химия', soon: true }, { id: 'bio', en: 'Biology', ru: 'Биология', soon: true }, { id: 'cs', en: 'Computer Science', ru: 'Информатика', soon: true }];
-const PFX = { math: 'm', phys: 'p' };
+const SUBJECTS = [{ id: 'math', en: 'Maths', ru: 'Математика' }, { id: 'phys', en: 'Physics', ru: 'Физика' }, { id: 'chem', en: 'Chemistry', ru: 'Химия' }, { id: 'bio', en: 'Biology', ru: 'Биология', soon: true }, { id: 'cs', en: 'Computer Science', ru: 'Информатика', soon: true }];
+const PFX = { math: 'm', phys: 'p', chem: 'c' };
 CHAPTERS.forEach(c => { c.subj = c.subj || 'math'; c.num = c.id; c.id = PFX[c.subj] + c.num; });
-SKILLS.forEach(s => { s.ch = PFX[s.subj] + s.ch; s.code = s.code || s.id; if (s.subj === 'phys') s.calc = true; });
-const TH = {}; Object.keys(THEORY).forEach(k => TH['m' + k] = THEORY[k]); Object.assign(TH, PTHEORY);
+SKILLS.forEach(s => { s.ch = PFX[s.subj] + s.ch; s.code = s.code || s.id; if (s.subj === 'phys' || s.subj === 'chem') s.calc = true; });
+const TH = {}; Object.keys(THEORY).forEach(k => TH['m' + k] = THEORY[k]); Object.assign(TH, PTHEORY, CTHEORY);
 const CH = id => CHAPTERS.find(c => c.id === id);
 if (!DB.subj) DB.subj = 'math';
 const subjOf = ch => (CH(ch) || {}).subj || 'math';
@@ -2796,6 +3201,7 @@ function keyTex(spec, it) {
   if (spec.k === 'num') { const v = ev(parse(spec.key), {}); if (f.includes('std')) return stdTex(v); if (f.includes('sf3')) return v.toPrecision(3); if (f.includes('dp3')) return v.toFixed(3); return mi(spec.key); }
   if (spec.k === 'sol') { if (f.includes('sf3')) return 'x=' + solValues(spec.key).map(s => s.v.toPrecision(3)).join(',\\;'); return 'x=' + splitList(spec.key).map(mi).join(',\\;'); }
   if (spec.k === 'subj') return mi(spec.v + '=' + spec.key);
+  if (spec.k === 'text') return spec.norm === 'chem' ? chemTex(spec.key) : '\\text{' + spec.key.replace(/,/g, ', ') + '}';
   if (spec.k === 'mcq') return '\\text{' + (spec.opts[spec.c].en).replace(/[{}\\$]/g, '') + '}';
   return '';
 }
@@ -2811,7 +3217,8 @@ function solHtml(it) {
 function fieldsOf(spec) { return spec.k === 'multi' ? spec.parts.map(p => ({ lab: p.lab, spec: p.spec })) : [{ lab: null, spec }]; }
 function fmtHelp(spec) {
   const f = spec.forms || [];
-  if (spec.k === 'mcq' || spec.k === 'self') return '';
+  if (spec.k === 'mcq' || spec.k === 'self' || spec.nohelp) return '';
+  if (spec.k === 'text') return spec.norm === 'chem' ? L('Type the formula with the phone keyboard, e.g. <code>Al2(SO4)3</code> — numbers are shown as subscripts. Capital letters matter.', 'Набирайте формулу обычной клавиатурой, например <code>Al2(SO4)3</code> — цифры станут индексами. Заглавные буквы важны.') : L('Type the numbers of electrons in each shell, e.g. <code>2,8,3</code>', 'Наберите число электронов на каждой оболочке, например <code>2,8,3</code>');
   if (f.includes('approx')) return L('A number — decimals are fine (e.g. <code>2.5</code>, <code>3.2*10^4</code>). Round sensibly (3 s.f.).', 'Число — можно десятичное (например <code>2.5</code>, <code>3.2*10^4</code>). Округляйте разумно (3 знач. цифры).');
   if (f.includes('std')) return L('Type standard form like <code>3.5*10^4</code> or <code>7.04*10^-4</code>', 'Стандартный вид: <code>3.5*10^4</code> или <code>7.04*10^-4</code>');
   if (f.includes('sf3')) return L('Decimal, 3 significant figures (e.g. <code>4.22</code>, <code>0.0750</code>)', 'Десятичная дробь, 3 значащие цифры (например <code>4.22</code>, <code>0.0750</code>)');
@@ -2827,7 +3234,7 @@ function varsFor(it) {
   const add = str => { try { varsOf(parse(str)).forEach(v => s.add(v)); } catch (e) { (str.match(/[a-zA-Z]/g) || []).forEach(v => s.add(v)); } };
   if (it.m) String(it.m).split(/[=,]/).forEach(p => p.trim() && add(p.replace(/root\(|sqrt\(|cbrt\(/g, '(')));
   fieldsOf(it.ans).forEach(f => { if (f.spec.key && f.spec.key !== 'NONE') String(f.spec.key).split(/[,]/).forEach(p => add(p.replace('±', ''))); if (f.spec.v) s.add(f.spec.v); });
-  if (fieldsOf(it.ans).every(f => f.spec.k === 'num' || f.spec.k === 'mcq')) return [];
+  if (fieldsOf(it.ans).every(f => f.spec.k === 'num' || f.spec.k === 'mcq' || f.spec.k === 'text')) return [];
   const arr = [...s].filter(v => /^[a-zA-Z]$/.test(v));
   if (!arr.includes('x') && arr.length < 5) arr.unshift('x');
   return arr.slice(0, 5);
@@ -2849,7 +3256,8 @@ function fieldHtml(f, id, val, state, noHelp) {
   }
   if (sp.k === 'self') return '';
   const cls = state && state.mark ? (state.mark === 'ok' ? ' ok' : ' bad') : '';
-  h += '<input class="inp' + cls + '" id="' + id + '" data-field="' + id + '" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="' + (DB.kbd ? 'text' : 'none') + '" value="' + esc(val || '') + '"' + (state && state.lock ? ' readonly' : '') + '>';
+  const nat = sp.k === 'text' && sp.norm === 'chem';
+  h += '<input class="inp' + cls + '" id="' + id + '" data-field="' + id + '" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="' + (DB.kbd || nat ? 'text' : 'none') + '"' + (nat ? ' data-nat="1"' : '') + ' value="' + esc(val || '') + '"' + (state && state.lock ? ' readonly' : '') + '>';
   if (sp.unit) h = h.replace(/(<input[^>]*>)$/, '<div class="unitrow">$1<span class="unit">' + esc(sp.unit) + '</span></div>');
   h += '<div class="pv" id="pv-' + id + '"></div>';
   const fh = noHelp ? null : fmtHelp(sp); if (fh) h += '<div class="syn">' + fh.en + (DB.ru ? ' · <span class="ru">' + fh.ru + '</span>' : '') + '</div>';
@@ -3011,7 +3419,7 @@ function wireFields(root) {
   $$('input.inp', root).forEach(inp => {
     updatePreview(inp);
     inp.addEventListener('input', () => { updatePreview(inp); if (inExam() && EX) { EX.vals[inp.dataset.field] = inp.value; saveExamSoon(); } });
-    inp.addEventListener('focus', () => { if (inp.readOnly) return; ACTIVE = inp; showKb(FIELD_VARS[inp.dataset.field] || ['x'], FIELD_SPEC[inp.dataset.field]); });
+    inp.addEventListener('focus', () => { if (inp.readOnly) return; if (inp.dataset.nat) { hideKb(); return; } ACTIVE = inp; showKb(FIELD_VARS[inp.dataset.field] || ['x'], FIELD_SPEC[inp.dataset.field]); });
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); enterKey(); } });
   });
   $$('[data-opt]', root).forEach(b => b.addEventListener('click', () => {
@@ -3073,6 +3481,11 @@ Object.assign(BP, {
   p1: [['P1.1', [-1, -1, -1]], ['P1.2', [-1, -1]], ['P1.3', [0, 1]], ['P1.4', [0, 2]], ['P1.5', [0, 1]], ['P1.6', [0, 1, 2]], ['P1.7', [0, 1, 2, 3]], ['P1.8', [0, 1]], ['P1.9', [-1]], ['P1.10', [-1, -1]]],
   p2: [['P2.1', [0, 1, 2, 3]], ['P2.2', [0, 1, 2]], ['P2.3', [0, 1, 2]], ['P2.4', [0, 1, 2]], ['P2.5', [0, 1, 2, 3]], ['P2.6', [0, 1, 2]], ['P2.7', [0, 1, 3]], ['P2.8', [0, 1, 2, 3]], ['P2.9', [0, 1, 2]], ['P2.10', [0, 1]], ['P2.11', [0, 2]], ['P2.12', [-1, -1, -1]]],
   p3: [['P3.1', [0, 1]], ['P3.2', [0, 1, 2]], ['P3.3', [0, 1]], ['P3.4', [0, 1, 2, 3]], ['P3.5', [0, 1, 2, 3]], ['P3.6', [0, 1, 2]], ['P3.7', [0, 1, 2]], ['P3.8', [-1, -1, -1]]],
+  c1: [['C1.1', [-1, -1, -1]], ['C1.2', [-1, -1]], ['C1.3', [-1, -1]], ['C1.4', [0, 1]], ['C1.5', [0, 0, 1]], ['C1.6', [0, 1]], ['C1.7', [-1]]],
+  c2: [['C2.1', [-1, -1, -1, -1]], ['C2.2', [-1, -1]], ['C2.3', [-1, -1]], ['C2.4', [-1, -1, -1]], ['C2.5', [0, 1, 2, 3]]],
+  c3: [['C3.1', [-1, -1, -1]], ['C3.2', [0, 1, 2]], ['C3.3', [-1]]],
+  c4: [['C4.1', [-1, -1, -1]], ['C4.2', [0, 1, 2]], ['C4.3', [-1, -1]]],
+  c5: [['C5.1', [-1, -1]], ['C5.2', [0, 1, 2]], ['C5.3', [0, 1, 2]], ['C5.4', [0, 1, 2]], ['C5.5', [0, 1, 2, 3]], ['C5.6', [-1, -1]], ['C5.7', [-1, -1]], ['C5.8', [0, 1, 2]], ['C5.9', [0, 1]], ['C5.10', [-1]]],
   p4: [['P4.1', [0, 1, 2, 3]], ['P4.2', [0, 1, 2, 3]], ['P4.3', [0, 1, 2, 3]], ['P4.4', [0, 1, 2]], ['P4.5', [0, 1, 2, 3]], ['P4.6', [0, 1, 2, 3]], ['P4.7', [0, 1]], ['P4.8', [0, 1]], ['P4.9', [-1, -1, -1, -1]]]
 });
 const MODES = {
