@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -197,13 +197,17 @@ b.ext{display:inline-block;font-size:11px;line-height:1;padding:3px 6px;border-r
 a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 label.btn{display:inline-flex;align-items:center}
 .inp.plain{font-family:var(--f-body);font-size:18px}
+
+.steps{margin:4px 0 8px;padding-left:22px;color:var(--muted)}
+.steps li{margin:2px 0}
+.skill .ru,.qhead .ru,.chhead .ru,.tbl .ru{font-size:.85em}
 </style>
 </head>
 <body>
 <div class="page">
   <header class="top">
-    <button class="brand" id="brand" aria-label="Home"><h1>End-Term Prep</h1><small>Grade 9</small></button>
-    <div class="tools"><button class="tgl" id="tRu" aria-pressed="false" title="Show Russian translation">RU</button><button class="tgl" id="tKb" aria-pressed="false" title="Use the device keyboard instead of the maths keypad">⌨</button><button class="tgl" id="tSet" title="Settings, backup, report">⚙</button></div>
+    <button class="brand" id="brand" aria-label="На главную"><h1>End-Term Prep</h1><small>9 класс</small></button>
+    <div class="tools"><button class="tgl" id="tRu" aria-pressed="false" title="Показать русский перевод заданий и объяснений">Перевод</button><button class="tgl" id="tKb" aria-pressed="false" title="Обычная клавиатура телефона вместо математической">⌨</button><button class="tgl" id="tSet" title="Настройки, перенос прогресса, отчёт репетитору">⚙ Настройки</button></div>
   </header>
   <main id="app" style="display:flex;flex-direction:column;gap:14px"></main>
 </div>
@@ -3033,66 +3037,70 @@ c5: [
 /* ===================== EXTRAS: report to tutor, settings, export/import, PWA ===================== */
 function pct(a, b) { return b ? Math.round(100 * a / b) : 0; }
 function examReport(ex, s) {
-  const sub = SUBJECTS.find(x => x.id === ex.subj) || { en: '' };
-  const who = DB.name ? DB.name : 'Student';
+  const sub = SUBJECTS.find(x => x.id === ex.subj) || { en: '', ru: '' };
+  const who = DB.name ? DB.name : 'Ученик';
   const mins = ex.t1 && ex.t0 ? Math.round((ex.t1 - ex.t0) / 60000) : null;
   const lines = [];
-  lines.push('📘 ' + who + ' — ' + sub.en + ' mock exam (' + ex.mode + ')');
-  lines.push(new Date(ex.t1 || Date.now()).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) + (mins != null ? ' · ' + mins + ' min' : ''));
-  lines.push('Score: ' + s.sc + '/' + s.mx + ' (' + pct(s.sc, s.mx) + '%)');
+  lines.push('📘 ' + who + ' — пробный экзамен, ' + sub.ru + ' (' + (MODE_RU[ex.mode] || ex.mode) + ')');
+  lines.push(new Date(ex.t1 || Date.now()).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) + (mins != null ? ' · ' + mins + ' мин' : ''));
+  lines.push('Результат: ' + s.sc + ' из ' + s.mx + ' (' + pct(s.sc, s.mx) + '%)');
   lines.push('');
-  Object.keys(s.per).forEach(ch => { const [a, b] = s.per[ch]; const c = CH(ch); lines.push('• Ch ' + c.num + ' ' + c.en + ': ' + a + '/' + b + ' (' + pct(a, b) + '%)'); });
+  Object.keys(s.per).forEach(ch => { const [a, b] = s.per[ch]; const c = CH(ch); lines.push('• Гл. ' + c.num + ' ' + c.ru + ': ' + a + '/' + b + ' (' + pct(a, b) + '%)'); });
   const weak = Object.entries(s.weak).sort((a, b) => b[1] - a[1]).slice(0, 8);
-  if (weak.length) { lines.push(''); lines.push('Weak skills:'); weak.forEach(([id, n]) => { const k = SK(id); lines.push('– ' + k.code + ' ' + k.en + ' (' + n + ' wrong)'); }); }
+  if (weak.length) { lines.push(''); lines.push('Ошибки по навыкам:'); weak.forEach(([id, n]) => { const k = SK(id); lines.push('– ' + k.code + ' ' + k.ru + ' (' + k.en + ') — ошибок: ' + n); }); }
   const selfLeft = ex.items.reduce((n, q, qi) => n + q.parts.filter((it, pi) => it.ans.k === 'self' && ex.self[exField(qi, pi, 0)] == null).length, 0);
-  if (selfLeft) lines.push('(' + selfLeft + ' «show that» question(s) not self-marked yet)');
+  if (selfLeft) lines.push('(не оценено самостоятельно заданий «Show that»: ' + selfLeft + ')');
   return lines.join('\n');
 }
 function progressReport() {
-  const who = DB.name ? DB.name : 'Student';
-  const lines = ['📊 ' + who + ' — progress', new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })];
+  const who = DB.name ? DB.name : 'Ученик';
+  const lines = ['📊 ' + who + ' — прогресс на ' + new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' })];
+  let any = false;
   SUBJECTS.filter(x => !x.soon).forEach(sub => {
     const chs = CHAPTERS.filter(c => c.subj === sub.id);
     const sk = SKILLS.filter(k => k.subj === sub.id);
     const tried = sk.filter(k => DB.sk[k.id] && DB.sk[k.id].a);
     if (!tried.length && !DB.exams.some(e => (e.subj || 'math') === sub.id)) return;
-    lines.push(''); lines.push(sub.en + ': ' + sk.filter(k => (DB.sk[k.id] || {}).m).length + '/' + sk.length + ' skills mastered');
-    chs.forEach(c => { const [m, n] = chProgress(c.id); const ks = sk.filter(k => k.ch === c.id); const a = ks.reduce((t, k) => t + ((DB.sk[k.id] || {}).a || 0), 0), ok = ks.reduce((t, k) => t + ((DB.sk[k.id] || {}).c || 0), 0); if (a) lines.push('• Ch ' + c.num + ' ' + c.en + ': ' + m + '/' + n + ' mastered, ' + ok + '/' + a + ' first-try correct'); });
+    any = true;
+    lines.push(''); lines.push(sub.ru + ': освоено навыков ' + sk.filter(k => (DB.sk[k.id] || {}).m).length + ' из ' + sk.length);
+    chs.forEach(c => { const [m, n] = chProgress(c.id); const ks = sk.filter(k => k.ch === c.id); const a = ks.reduce((t, k) => t + ((DB.sk[k.id] || {}).a || 0), 0), ok = ks.reduce((t, k) => t + ((DB.sk[k.id] || {}).c || 0), 0); if (a) lines.push('• Гл. ' + c.num + ' ' + c.ru + ': освоено ' + m + '/' + n + ', с первой попытки верно ' + ok + ' из ' + a); });
     const ex = DB.exams.filter(e => (e.subj || 'math') === sub.id).slice(-3);
-    if (ex.length) lines.push('Last exams: ' + ex.map(e => pct(e.score, e.max) + '%').join(', '));
+    if (ex.length) lines.push('Последние экзамены: ' + ex.map(e => pct(e.score, e.max) + '%').join(', '));
   });
+  if (!any) lines.push('', 'Пока нет решённых заданий.');
   return lines.join('\n');
 }
-function shareBlock(text) {
+function shareBlock(text, title) {
   const enc = encodeURIComponent(text);
   const wa = 'https://wa.me/' + (DB.tutorWa || '').replace(/[^\d]/g, '') + '?text=' + enc;
   const tg = 'https://t.me/share/url?url=' + encodeURIComponent(' ') + '&text=' + enc;
   window.__shareText = text;
-  return '<div class="sharebox"><h3>Send to tutor · Отправить репетитору</h3>' + (DB.name ? '' : '<p class="syn">' + tr(L('Tip: add your name in ⚙ Settings so your tutor knows who sent it.', 'Совет: впишите своё имя в ⚙ Настройках, чтобы репетитор знал, от кого отчёт.')) + '</p>') +
+  return '<div class="sharebox"><h3>' + (title || 'Отправить результат репетитору') + '</h3>' +
+    '<p class="syn">Это короткий отчёт для репетитора: результат, баллы по главам и темы, где были ошибки. Нажмите «Поделиться» и выберите Telegram или WhatsApp — отчёт уйдёт обычным сообщением. Можно и просто «Скопировать» и вставить в чат.' + (DB.name ? '' : ' Чтобы репетитор видел, от кого отчёт, впишите своё имя в ⚙ Настройках.') + '</p>' +
     '<pre class="report">' + esc(text) + '</pre><div class="row">' +
-    (navigator.share ? '<button class="btn primary" onclick="navigator.share({text: window.__shareText}).catch(()=>{})">Share…</button>' : '') +
+    (navigator.share ? '<button class="btn primary" onclick="navigator.share({text: window.__shareText}).catch(()=>{})">Поделиться…</button>' : '') +
     '<a class="btn" href="' + wa + '" target="_blank" rel="noopener">WhatsApp</a><a class="btn" href="' + tg + '" target="_blank" rel="noopener">Telegram</a>' +
-    '<button class="btn ghost" onclick="copyText(window.__shareText)">Copy</button></div></div>';
+    '<button class="btn ghost" onclick="copyText(window.__shareText)">Скопировать</button></div></div>';
 }
 function copyText(t) {
-  const done = () => toast('Copied · Скопировано');
+  const done = () => toast('Скопировано');
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, () => fallbackCopy(t, done)); else fallbackCopy(t, done);
 }
 function fallbackCopy(t, cb) { const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); try { document.execCommand('copy'); cb(); } catch (e) {} a.remove(); }
 
 /* ---------- settings ---------- */
 function viewSettings() {
-  let h = crumbs([['Home', '#/'], ['Settings']]);
-  h += '<section class="card"><h2>Settings · Настройки</h2>';
-  h += '<div class="ansbox"><label for="stName">Your name · Ваше имя</label><input class="inp plain" id="stName" value="' + esc(DB.name || '') + '" placeholder="e.g. Alex" autocomplete="name"></div>';
-  h += '<div class="ansbox" style="margin-top:10px"><label for="stWa">Tutor’s WhatsApp number (optional) · Номер WhatsApp репетитора (необязательно)</label><input class="inp plain" id="stWa" inputmode="tel" value="' + esc(DB.tutorWa || '') + '" placeholder="+62…"><div class="syn">' + tr(L('If filled in, the WhatsApp button opens the chat with your tutor directly.', 'Если указать, кнопка WhatsApp сразу откроет чат с репетитором.')) + '</div></div>';
-  h += '<div class="row" style="margin-top:10px"><button class="btn primary" id="stSave">Save</button></div></section>';
-  h += '<section class="card"><h3>Progress report · Отчёт о прогрессе</h3>' + shareBlock(progressReport()).replace('<h3>Send to tutor · Отправить репетитору</h3>', '') + '</section>';
-  h += '<section class="card"><h3>Move progress to another device · Перенести прогресс</h3><p class="muted">' + tr(L('Save a backup file on this device, send it to the other device (e.g. in Telegram «Saved messages»), and load it there. Loading merges with the progress already on that device.', 'Сохраните файл на этом устройстве, перешлите его на другое (например, в «Избранное» Telegram) и загрузите там. Загрузка объединяет данные с прогрессом, который уже есть на том устройстве.')) + '</p>';
-  h += '<div class="row"><button class="btn primary" id="stExp">⬇ Save backup file</button><label class="btn" for="stImp">⬆ Load backup file</label><input type="file" id="stImp" accept=".json,application/json" hidden></div></section>';
-  h += '<section class="card"><h3>Install the app · Установка</h3><p class="muted">' + tr(L(isStandalone() ? 'The app is installed. It works offline.' : 'Android (Chrome): menu ⋮ → «Install app» / «Add to Home screen». After that it opens like an app and works without internet.', isStandalone() ? 'Приложение установлено и работает без интернета.' : 'Android (Chrome): меню ⋮ → «Установить приложение» / «Добавить на главный экран». После этого оно открывается как приложение и работает без интернета.')) + '</p>' + (window.__installEvt ? '<button class="btn primary" id="stInst">Install now</button>' : '') + '<p class="meta">Version ' + APP_VERSION + '</p></section>';
+  let h = crumbs([['Главная', '#/'], ['Настройки']]);
+  h += '<section class="card"><h2>Настройки</h2>';
+  h += '<div class="ansbox"><label for="stName">Ваше имя</label><input class="inp plain" id="stName" value="' + esc(DB.name || '') + '" placeholder="например, Тая" autocomplete="name"><div class="syn">Имя попадёт в отчёты, которые вы отправляете репетитору.</div></div>';
+  h += '<div class="ansbox" style="margin-top:10px"><label for="stWa">Номер WhatsApp репетитора (необязательно)</label><input class="inp plain" id="stWa" inputmode="tel" value="' + esc(DB.tutorWa || '') + '" placeholder="+62…"><div class="syn">Если указать номер, кнопка WhatsApp сразу откроет чат с репетитором. Без номера WhatsApp предложит выбрать, кому отправить.</div></div>';
+  h += '<div class="row" style="margin-top:10px"><button class="btn primary" id="stSave">Сохранить</button></div></section>';
+  h += '<section class="card"><h3>Отчёт о прогрессе</h3>' + shareBlock(progressReport(), 'Отправить отчёт репетитору').replace('Это короткий отчёт для репетитора: результат, баллы по главам и темы, где были ошибки.', 'Это общий отчёт для репетитора: сколько навыков освоено по каждому предмету и главе и результаты последних экзаменов.') + '</section>';
+  h += '<section class="card"><h3>Перенести прогресс на другое устройство</h3><p class="muted">Прогресс хранится только на этом устройстве. Чтобы продолжить на планшете или другом телефоне:</p><ol class="steps"><li>Нажмите «Сохранить файл прогресса» — появится маленький файл.</li><li>Перешлите его себе на другое устройство (например, в «Избранное» Telegram).</li><li>Откройте приложение там, зайдите в ⚙ Настройки и нажмите «Загрузить файл прогресса».</li></ol><p class="syn">При загрузке ничего не стирается: прогресс из файла объединяется с тем, что уже есть на устройстве. Файл заодно служит резервной копией.</p>';
+  h += '<div class="row"><button class="btn primary" id="stExp">⬇ Сохранить файл прогресса</button><label class="btn" for="stImp">⬆ Загрузить файл прогресса</label><input type="file" id="stImp" accept=".json,application/json" hidden></div></section>';
+  h += '<section class="card"><h3>Установка приложения</h3><p class="muted">' + (isStandalone() ? 'Приложение установлено и работает без интернета.' : 'На Android в Chrome: меню ⋮ → «Установить приложение» (или «Добавить на главный экран»). После этого приложение открывается с иконки на рабочем столе и работает без интернета.') + '</p>' + (window.__installEvt ? '<button class="btn primary" id="stInst">Установить сейчас</button>' : '') + '<p class="meta">Версия ' + APP_VERSION + '</p></section>';
   shell(h);
-  $('#stSave').onclick = () => { DB.name = $('#stName').value.trim(); DB.tutorWa = $('#stWa').value.trim(); save(); toast('Saved · Сохранено'); viewSettings(); };
+  $('#stSave').onclick = () => { DB.name = $('#stName').value.trim(); DB.tutorWa = $('#stWa').value.trim(); save(); toast('Сохранено'); viewSettings(); };
   $('#stExp').onclick = exportProgress;
   $('#stImp').onchange = e => { const f = e.target.files[0]; if (f) importProgress(f); };
   if ($('#stInst')) $('#stInst').onclick = () => { window.__installEvt.prompt(); window.__installEvt = null; };
@@ -3105,12 +3113,12 @@ function exportProgress() {
   if (navigator.canShare && navigator.canShare({ files: [file] }) && matchMedia('(pointer:coarse)').matches) { navigator.share({ files: [file], title: nm }).catch(() => dl(blob, nm)); return; }
   dl(blob, nm);
 }
-function dl(blob, nm) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nm; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); toast('Saved: ' + nm); }
+function dl(blob, nm) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nm; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); toast('Файл сохранён: ' + nm); }
 function importProgress(f) {
   const rd = new FileReader();
   rd.onload = () => {
-    let d; try { d = JSON.parse(rd.result); } catch (e) { return toast('This is not a backup file'); }
-    if (!d || d.app !== 'endterm-g9' || !d.db) return toast('This is not a backup file of this app');
+    let d; try { d = JSON.parse(rd.result); } catch (e) { return toast('Это не файл прогресса'); }
+    if (!d || d.app !== 'endterm-g9' || !d.db) return toast('Это не файл прогресса этого приложения');
     const src = d.db;
     Object.keys(src.sk || {}).forEach(id => {
       const a = DB.sk[id], b = src.sk[id];
@@ -3122,13 +3130,13 @@ function importProgress(f) {
     DB.exams.sort((x, y) => x.date - y.date);
     if (!DB.name && src.name) DB.name = src.name;
     if (!DB.tutorWa && src.tutorWa) DB.tutorWa = src.tutorWa;
-    save(); toast('Progress loaded · Прогресс загружен'); viewSettings();
+    save(); toast('Прогресс загружен'); viewSettings();
   };
   rd.readAsText(f);
 }
 
 /* ---------- PWA ---------- */
-const APP_VERSION = '20261110-0924';
+const APP_VERSION = '20261110-1004';
 function isStandalone() { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.__installEvt = e; });
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
@@ -3144,7 +3152,7 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
   });
 }
 function showUpdate() {
-  const t = $('#toast'); t.innerHTML = 'New version available · Есть обновление <button class="btn small" style="margin-left:8px" id="upd">Update</button>'; t.hidden = false;
+  const t = $('#toast'); t.innerHTML = 'Вышла новая версия <button class="btn small" style="margin-left:8px" id="upd">Обновить</button>'; t.hidden = false;
   $('#upd').onclick = () => navigator.serviceWorker.getRegistration().then(r => { if (r && r.waiting) r.waiting.postMessage('skip'); else location.reload(); });
 }
 
@@ -3260,20 +3268,20 @@ function fieldHtml(f, id, val, state, noHelp) {
   h += '<input class="inp' + cls + '" id="' + id + '" data-field="' + id + '" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="' + (DB.kbd || nat ? 'text' : 'none') + '"' + (nat ? ' data-nat="1"' : '') + ' value="' + esc(val || '') + '"' + (state && state.lock ? ' readonly' : '') + '>';
   if (sp.unit) h = h.replace(/(<input[^>]*>)$/, '<div class="unitrow">$1<span class="unit">' + esc(sp.unit) + '</span></div>');
   h += '<div class="pv" id="pv-' + id + '"></div>';
-  const fh = noHelp ? null : fmtHelp(sp); if (fh) h += '<div class="syn">' + fh.en + (DB.ru ? ' · <span class="ru">' + fh.ru + '</span>' : '') + '</div>';
+  const fh = noHelp ? null : fmtHelp(sp); if (fh) h += '<div class="syn">' + fh.ru + '</div>';
   return h;
 }
 function updatePreview(inp) {
   const id = inp.dataset.field, spec = FIELD_SPEC[id]; const pv = document.getElementById('pv-' + id); if (!pv || !spec) return;
   const v = inp.value.trim(); if (!v || /^-?\d+(\.\d+)?$/.test(v)) { pv.innerHTML = ''; return; }
   try { const t = previewTex(spec, v); pv.innerHTML = K(t); }
-  catch (e) { pv.innerHTML = e && e.merr ? '<span class="err">' + esc(e.en) + (DB.ru ? ' · ' + esc(e.ru) : '') + '</span>' : ''; }
+  catch (e) { pv.innerHTML = e && e.merr ? '<span class="err">' + esc(e.ru) + '</span>' : ''; }
 }
 const FIELD_SPEC = {}; const FIELD_VARS = {};
 
 /* ---------- progress ---------- */
 function skStat(id) { return DB.sk[id] || (DB.sk[id] = { a: 0, c: 0, s: 0, m: false }); }
-function dotsHtml(id) { const s = DB.sk[id] || { s: 0, m: false }; let h = '<span class="dots" title="streak">'; for (let i = 0; i < 3; i++) h += '<i class="' + (s.m || s.s > i ? 'on' : '') + '"></i>'; if (s.m) h += '<b>✓</b>'; return h + '</span>'; }
+function dotsHtml(id) { const s = DB.sk[id] || { s: 0, m: false }; let h = '<span class="dots" title="серия верных ответов подряд">'; for (let i = 0; i < 3; i++) h += '<i class="' + (s.m || s.s > i ? 'on' : '') + '"></i>'; if (s.m) h += '<b>✓</b>'; return h + '</span>'; }
 function chProgress(ch) { const ss = SKILLS.filter(s => s.ch === ch); const m = ss.filter(s => (DB.sk[s.id] || {}).m).length; return [m, ss.length]; }
 
 /* ---------- router ---------- */
@@ -3294,23 +3302,25 @@ function shell(inner) {
   $('#app').innerHTML = inner;
   window.scrollTo(0, 0);
 }
+const NM = o => esc(o.en) + ' <span class="ru">· ' + esc(o.ru) + '</span>';
+const MODE_RU = { quick: 'короткий', standard: 'стандартный', full: 'полный', chapter: 'по главе' };
 function crumbs(list) { return '<nav class="crumbs">' + list.map(([t, h]) => h ? '<a href="' + h + '">' + t + '</a>' : '<span>' + t + '</span>').join('<span>›</span>') + '</nav>'; }
 
 /* ---------- home ---------- */
 function viewHome() {
   const sub = SUBJECTS.find(x => x.id === DB.subj) || SUBJECTS[0];
-  let h = '<nav class="subjs">' + SUBJECTS.map(x => '<button class="subj' + (x.id === sub.id ? ' on' : '') + '"' + (x.soon ? ' disabled' : '') + ' onclick="go(\'#/s/' + x.id + '\')">' + esc(x.en) + (x.soon ? ' <small>soon</small>' : '') + (DB.ru ? '<span class="ru">' + esc(x.ru) + '</span>' : '') + '</button>').join('') + '</nav>';
+  let h = '<nav class="subjs">' + SUBJECTS.map(x => '<button class="subj' + (x.id === sub.id ? ' on' : '') + '"' + (x.soon ? ' disabled' : '') + ' onclick="go(\'#/s/' + x.id + '\')">' + esc(x.en) + (x.soon ? ' <small>скоро</small>' : '') + '<span class="ru">' + esc(x.ru) + '</span>' + '</button>').join('') + '</nav>';
   const cur = DB.cur && !DB.cur.done && (DB.cur.subj || 'math') === sub.id;
-  h += '<section class="card examcard"><div class="row" style="justify-content:space-between"><div><h2>' + esc(sub.en) + ' · mock end-term exam</h2><div class="muted">' + (DB.ru ? 'Пробный экзамен: задания по всем темам, каждый раз новые' : 'Questions from every chapter — new numbers every time') + '</div></div><button class="btn primary" onclick="go(\'#/exam\')">Start →</button></div>';
-  if (cur) h += '<div class="row" style="margin-top:8px"><button class="btn" onclick="go(\'#/exam/run\')">Continue unfinished exam</button></div>';
+  h += '<section class="card examcard"><div class="row" style="justify-content:space-between"><div><h2>Пробный экзамен · ' + esc(sub.ru) + '</h2><div class="muted">Задания по всем главам, числа каждый раз новые</div></div><button class="btn primary" onclick="go(\'#/exam\')">Начать →</button></div>';
+  if (cur) h += '<div class="row" style="margin-top:8px"><button class="btn" onclick="go(\'#/exam/run\')">Продолжить незаконченный экзамен</button></div>';
   const ex = DB.exams.filter(e => (e.subj || 'math') === sub.id);
-  if (ex.length) { const e = ex[ex.length - 1]; h += '<div class="meta" style="margin-top:6px">Last result: ' + e.score + ' / ' + e.max + ' (' + Math.round(100 * e.score / e.max) + '%)</div>'; }
+  if (ex.length) { const e = ex[ex.length - 1]; h += '<div class="meta" style="margin-top:6px">Последний результат: ' + e.score + ' / ' + e.max + ' (' + Math.round(100 * e.score / e.max) + '%)</div>'; }
   h += '</section><div class="grid2">';
   CHAPTERS.filter(c => c.subj === sub.id).forEach(c => {
     const [m, n] = chProgress(c.id);
-    h += '<button class="card chcard" onclick="go(\'#/ch/' + c.id + '\')"><span class="chnum">Chapter ' + c.num + '</span><span class="chtitle">' + esc(c.en) + '</span><span class="chru">' + esc(c.ru) + '</span><span class="bar"><i style="width:' + Math.round(100 * m / n) + '%"></i></span><span class="meta">' + m + ' / ' + n + ' skills mastered</span></button>';
+    h += '<button class="card chcard" onclick="go(\'#/ch/' + c.id + '\')"><span class="chnum">Глава ' + c.num + ' · Chapter ' + c.num + '</span><span class="chtitle">' + esc(c.en) + '</span><span class="chru">' + esc(c.ru) + '</span><span class="bar"><i style="width:' + Math.round(100 * m / n) + '%"></i></span><span class="meta">' + 'освоено навыков: ' + m + ' из ' + n + '</span></button>';
   });
-  h += '</div><p class="meta">' + (DB.ru ? 'Навык «освоен», когда 3 задания подряд решены с первой попытки. Прогресс хранится в этом браузере.' : 'A skill is mastered after 3 correct first-try answers in a row. Progress is saved in this browser.') + (sub.id === 'phys' ? (DB.ru ? ' Значок E — материал уровня Extended.' : ' E marks Extended-level material.') : '') + '</p>';
+  h += '</div><p class="meta">Навык считается освоенным, когда 3 задания подряд решены с первой попытки (три зелёные точки). Прогресс хранится на этом устройстве; перенести его можно в ⚙ Настройках.' + (sub.id !== 'math' ? ' Значок <b class="ext">E</b> — материал уровня Extended.' : '') + ' Кнопка «Перевод» вверху показывает русский перевод заданий и объяснений.</p>';
   shell(h);
 }
 
@@ -3318,11 +3328,11 @@ function viewHome() {
 function viewChapter(ch) {
   const c = CHAPTERS.find(x => x.id === ch); if (!c) return viewHome();
   DB.subj = c.subj; save();
-  let h = crumbs([['Home', '#/'], ['Chapter ' + c.num]]);
-  h += '<div><h2>' + esc(c.en) + '</h2><div class="muted">' + esc(c.ru) + '</div></div>';
-  h += '<section class="card theory"><h3>Theory · Теория</h3>' + (TH[ch] || []).map((b, i) => '<details' + (i === 0 ? ' open' : '') + '><summary>' + esc(b.h.en) + (DB.ru ? ' · <span class="ru">' + esc(b.h.ru) + '</span>' : '') + '</summary>' + b.p.map(p => '<p>' + tr(p) + '</p>').join('') + (b.ex && b.ex.length ? '<div class="ex">' + b.ex.map(e => K(mi(e))).join('<br>') + '</div>' : '') + '</details>').join('') + '</section>';
-  h += '<div class="row"><button class="btn primary" onclick="go(\'#/p/mix:' + ch + '\')">Mixed practice · ' + (DB.ru ? 'Вперемешку' : 'all skills') + '</button><button class="btn" onclick="startExam([\'' + ch + '\'],\'chapter\')">Chapter test</button></div>';
-  h += '<div class="skills">' + SKILLS.filter(s => s.ch === ch).map(s => '<button class="skill" onclick="go(\'#/p/' + s.id + '\')"><span class="nm"><span class="id">' + s.code + (s.ext ? ' · <b class="ext">E</b>' : '') + (s.calc && s.subj === 'math' ? ' · calculator' : '') + '</span><span>' + esc(s.en) + '</span>' + (DB.ru ? '<span class="ru">' + esc(s.ru) + '</span>' : '') + '</span>' + dotsHtml(s.id) + '</button>').join('') + '</div>';
+  let h = crumbs([['Главная', '#/'], ['Глава ' + c.num]]);
+  h += '<div><div class="meta">Глава ' + c.num + ' · Chapter ' + c.num + '</div><h2>' + esc(c.en) + '</h2><div class="muted">' + esc(c.ru) + '</div></div>';
+  h += '<section class="card theory"><h3>Теория · Theory</h3>' + (TH[ch] || []).map((b, i) => '<details' + (i === 0 ? ' open' : '') + '><summary>' + NM(b.h) + '</summary>' + b.p.map(p => '<p>' + tr(p) + '</p>').join('') + (b.ex && b.ex.length ? '<div class="ex">' + b.ex.map(e => K(mi(e))).join('<br>') + '</div>' : '') + '</details>').join('') + '</section>';
+  h += '<div class="row"><button class="btn primary" onclick="go(\'#/p/mix:' + ch + '\')">Все навыки вперемешку</button><button class="btn" onclick="startExam([\'' + ch + '\'],\'chapter\')">Тест по главе</button></div>';
+  h += '<div class="skills">' + SKILLS.filter(s => s.ch === ch).map(s => '<button class="skill" onclick="go(\'#/p/' + s.id + '\')"><span class="nm"><span class="id">' + s.code + (s.ext ? ' · <b class="ext">E</b>' : '') + (s.calc && s.subj === 'math' ? ' · калькулятор' : '') + '</span><span>' + esc(s.en) + '</span><span class="ru">' + esc(s.ru) + '</span></span>' + dotsHtml(s.id) + '</button>').join('') + '</div>';
   shell(h);
 }
 
@@ -3346,14 +3356,14 @@ function viewPractice(target) {
 function renderPractice() {
   const { sk, it } = P; const ch = CHAPTERS.find(c => c.id === sk.ch);
   const mix = P.target.startsWith('mix:');
-  let h = crumbs([['Home', '#/'], ['Ch ' + ch.num + ' ' + ch.en, '#/ch/' + ch.id], [mix ? 'Mixed' : sk.code]]);
+  let h = crumbs([['Главная', '#/'], ['Гл. ' + ch.num + ' ' + ch.en, '#/ch/' + ch.id], [mix ? 'Вперемешку' : sk.code]]);
   h += '<section class="card q">';
-  h += '<div class="qhead"><span>' + sk.code + ' · ' + esc(sk.en) + (sk.ext ? ' <b class="ext">E</b>' : '') + '</span><span>' + ((it.calc || sk.calc) ? '<span class="calc">Calculator</span>' : '<span class="nocalc">No calculator</span>') + ' ' + dotsHtml(sk.id) + '</span></div>';
+  h += '<div class="qhead"><span>' + sk.code + ' · ' + NM(sk) + (sk.ext ? ' <b class="ext">E</b>' : '') + '</span><span>' + ((it.calc || sk.calc) ? '<span class="calc">С калькулятором</span>' : '<span class="nocalc">Без калькулятора</span>') + ' ' + dotsHtml(sk.id) + '</span></div>';
   h += '<div class="instr">' + tr(it.q) + '</div>' + promptHtml(it);
   h += '<div class="ansbox">';
   const fs = fieldsOf(it.ans);
   if (it.ans.k === 'self') {
-    h += '<div class="hint">' + tr(L('Write your working on paper, then compare with the model answer.', 'Запишите решение на бумаге и сравните с образцом.')) + '</div>';
+    h += '<div class="hint">Запишите решение на бумаге, затем нажмите «Показать образец» и сравните.</div>';
   } else if (fs.length > 1) {
     h += '<div class="multi">' + fs.map((f, i) => { const id = 'f' + P.uid + '_' + i; FIELD_SPEC[id] = f.spec; FIELD_VARS[id] = varsFor(it); const st_ = P.fb && P.fb.parts ? P.fb.parts[i] : null; return '<div class="part' + (st_ ? (st_.ok ? ' ok' : ' bad') : '') + '">' + fieldHtml(f, id, P.vals[id], st_ ? { mark: st_.ok ? 'ok' : 'bad', reveal: P.done || P.showSol } : null, i > 0 && fmtHelp(f.spec).en === fmtHelp(fs[0].spec).en) + (st_ && !st_.ok && st_.msg ? '<div class="syn">' + tr(st_.msg) + '</div>' : '') + '</div>'; }).join('') + '</div>';
   } else {
@@ -3364,24 +3374,24 @@ function renderPractice() {
   if (P.fb) {
     const fb = P.fb;
     const cls = fb.ok ? 'ok' : fb.near ? 'near' : 'bad';
-    h += '<div class="fb ' + cls + '"><b class="t">' + (fb.ok ? (P.first === true ? 'Correct!' : 'Correct.') : fb.near ? 'Almost' : 'Not yet') + (DB.ru ? ' <span class="ru">· ' + (fb.ok ? 'Верно' : fb.near ? 'Почти' : 'Пока нет') + '</span>' : '') + '</b>' + (fb.msg ? '<span>' + tr(fb.msg) + '</span>' : '') + (!fb.ok && P.tries >= 2 && !P.showSol ? '<span class="muted">' + tr(L('Stuck? Open the solution, read it, then try a new question.', 'Не получается? Откройте решение, разберите его и возьмите новое задание.')) + '</span>' : '') + '</div>';
+    h += '<div class="fb ' + cls + '"><b class="t">' + (fb.ok ? (P.first === true ? 'Верно!' : 'Верно.') : fb.near ? 'Почти' : 'Пока неверно') + '</b>' + (fb.msg ? '<span>' + tr(fb.msg) + '</span>' : '') + (!fb.ok && P.tries >= 2 && !P.showSol ? '<span class="muted">Не получается? Откройте решение, разберите его и возьмите новое задание.</span>' : '') + '</div>';
   }
-  for (let i = 0; i < P.hintN && i < sk.hints.length; i++) h += '<div class="hint"><b>Hint:</b> ' + tr(sk.hints[i]) + '</div>';
+  for (let i = 0; i < P.hintN && i < sk.hints.length; i++) h += '<div class="hint"><b>Подсказка:</b> ' + tr(sk.hints[i]) + '</div>';
   if (P.showSol || P.done) {
-    h += '<div class="fb info"><b class="t">' + (it.ans.k === 'self' ? 'Model answer' : 'Answer: ') + (it.ans.k !== 'self' && it.ans.k !== 'multi' ? K(keyTex(it.ans, it)) + (it.ans.unit ? ' ' + esc(it.ans.unit) : '') : '') + '</b>';
+    h += '<div class="fb info"><b class="t">' + (it.ans.k === 'self' ? 'Образец решения' : 'Ответ: ') + (it.ans.k !== 'self' && it.ans.k !== 'multi' ? K(keyTex(it.ans, it)) + (it.ans.unit ? ' ' + esc(it.ans.unit) : '') : '') + '</b>';
     if (it.ans.k === 'multi') h += it.ans.parts.map(p => '<div>' + tr(p.lab) + ' ' + K(keyTex(p.spec)) + (p.spec.unit ? ' ' + esc(p.spec.unit) : '') + '</div>').join('');
     h += solHtml(it) + '</div>';
   }
   h += '<div class="row">';
   if (it.ans.k === 'self') {
-    if (!P.showSol) h += '<button class="btn primary" id="bSelf">Show model answer</button>';
-    else if (!P.done) h += '<button class="btn primary" id="bSelfOk">✓ I had it right</button><button class="btn" id="bSelfNo">✗ Not quite</button>';
-  } else if (!P.done) h += '<button class="btn primary" id="bCheck">Check</button>';
-  if (!P.done && P.hintN < sk.hints.length) h += '<button class="btn" id="bHint">Hint' + (sk.hints.length > 1 ? ' ' + (P.hintN + 1) + '/' + sk.hints.length : '') + '</button>';
-  if (!P.done && !P.showSol && it.ans.k !== 'self') h += '<button class="btn" id="bSol">Solution</button>';
-  h += '<button class="btn' + (P.done ? ' primary' : ' ghost') + '" id="bNext">New question →</button>';
+    if (!P.showSol) h += '<button class="btn primary" id="bSelf">Показать образец</button>';
+    else if (!P.done) h += '<button class="btn primary" id="bSelfOk">✓ У меня так же</button><button class="btn" id="bSelfNo">✗ У меня не так</button>';
+  } else if (!P.done) h += '<button class="btn primary" id="bCheck">Проверить</button>';
+  if (!P.done && P.hintN < sk.hints.length) h += '<button class="btn" id="bHint">Подсказка' + (sk.hints.length > 1 ? ' ' + (P.hintN + 1) + '/' + sk.hints.length : '') + '</button>';
+  if (!P.done && !P.showSol && it.ans.k !== 'self') h += '<button class="btn" id="bSol">Решение</button>';
+  h += '<button class="btn' + (P.done ? ' primary' : ' ghost') + '" id="bNext">Новое задание →</button>';
   h += '</div></section>';
-  h += '<div class="row"><button class="btn ghost small" onclick="go(\'#/ch/' + ch.id + '\')">← Chapter ' + ch.num + ' (theory &amp; skills)</button></div>';
+  h += '<div class="row"><button class="btn ghost small" onclick="go(\'#/ch/' + ch.id + '\')">← Глава ' + ch.num + ': теория и навыки</button></div>';
   shell(h);
   wireFields($('#app'));
   const b = id => document.getElementById(id);
@@ -3391,7 +3401,7 @@ function renderPractice() {
   if (b('bNext')) b('bNext').onclick = () => { P = newItem(P.target); renderPractice(); };
   if (b('bSelf')) b('bSelf').onclick = () => { P.showSol = true; renderPracticeKeep(); };
   if (b('bSelfOk')) b('bSelfOk').onclick = () => { P.done = true; P.first = true; record(true); P.fb = { ok: true }; renderPracticeKeep(); };
-  if (b('bSelfNo')) b('bSelfNo').onclick = () => { P.done = true; P.first = false; record(false); P.fb = { ok: false, msg: L('Read the model answer carefully, then try a new one.', 'Внимательно разберите образец и попробуйте новое задание.') }; renderPracticeKeep(); };
+  if (b('bSelfNo')) b('bSelfNo').onclick = () => { P.done = true; P.first = false; record(false); P.fb = { ok: false, msg: L('Read the model answer carefully, then try a new question.', 'Внимательно разберите образец и возьмите новое задание.') }; renderPracticeKeep(); };
   const first = $('input.inp:not([readonly])'); if (first && !P.done && !P.fb && matchMedia('(pointer:fine)').matches) first.focus();
 }
 function renderPracticeKeep() { const y = window.scrollY; renderPractice(); window.scrollTo(0, y); }
@@ -3401,7 +3411,7 @@ function checkPractice() {
   collectVals($('#app')); hideKb();
   const it = P.it; const fs = fieldsOf(it.ans);
   const res = fs.map((f, i) => grade(f.spec, P.vals['f' + P.uid + '_' + i]));
-  if (res.some(r => r.empty) && res.every(r => r.empty || r.syntax)) { toast(res[0].msg ? res[0].msg.en : 'Type your answer'); return; }
+  if (res.some(r => r.empty) && res.every(r => r.empty || r.syntax)) { toast(res[0].msg ? res[0].msg.ru : 'Введите ответ'); return; }
   const synt = res.find(r => r.syntax); if (synt) { P.fb = { ok: false, msg: synt.msg, near: true, parts: fs.length > 1 ? res : null }; renderPracticeKeep(); return; }
   const ok = res.every(r => r.ok);
   P.tries++;
@@ -3437,8 +3447,8 @@ function showKb(vars, spec) {
   const vs = vars.slice(0, 5); const rest = 9 - vs.length - 2;
   let h = '<div class="in">' + KEYS.map(([l, c, v]) => '<button type="button" class="k ' + (c || '') + '" data-k="' + esc(v || l) + '">' + l + '</button>').join('');
   vs.forEach(v => h += '<button type="button" class="k v" data-k="' + v + '">' + v + '</button>');
-  if (rest > 0) h += spec && spec.none ? '<button type="button" class="k op fn" data-k="none" style="grid-column:span ' + rest + '">none</button>' : '<button type="button" class="k op" data-k="R" style="grid-column:span ' + rest + '">→</button>';
-  h += '<button type="button" class="k go w2" data-k="ENTER">' + (inExam() ? 'Next' : 'Check') + ' ✓</button></div>';
+  if (rest > 0) h += spec && spec.none ? '<button type="button" class="k op fn" data-k="none" style="grid-column:span ' + rest + '">нельзя (none)</button>' : '<button type="button" class="k op" data-k="R" style="grid-column:span ' + rest + '">→</button>';
+  h += '<button type="button" class="k go w2" data-k="ENTER">' + (inExam() ? 'Дальше' : 'Проверить') + ' ✓</button></div>';
   kb.innerHTML = h; kb.hidden = false;
   document.documentElement.style.setProperty('--kb-h', kb.offsetHeight + 'px');
   $$('.k', kb).forEach(b => { b.addEventListener('pointerdown', e => e.preventDefault()); b.addEventListener('click', () => keyPress(b.dataset.k)); });
@@ -3489,9 +3499,9 @@ Object.assign(BP, {
   p4: [['P4.1', [0, 1, 2, 3]], ['P4.2', [0, 1, 2, 3]], ['P4.3', [0, 1, 2, 3]], ['P4.4', [0, 1, 2]], ['P4.5', [0, 1, 2, 3]], ['P4.6', [0, 1, 2, 3]], ['P4.7', [0, 1]], ['P4.8', [0, 1]], ['P4.9', [-1, -1, -1, -1]]]
 });
 const MODES = {
-  quick: { en: 'Quick · ~25 questions · ~35 min', ru: 'Короткий · ~25 заданий · ~35 мин' },
-  standard: { en: 'Standard · one part of every question · ~2 h', ru: 'Стандартный · по одному пункту из каждого задания · ~2 ч' },
-  full: { en: 'Full paper · like the school variant (all parts) · do it in several sittings', ru: 'Полный вариант · как школьный (все пункты) · можно в несколько подходов' },
+  quick: { en: 'Quick', ru: 'Короткий · около 25 заданий · примерно 35 минут' },
+  standard: { en: 'Standard', ru: 'Стандартный · по одному пункту из каждого задания · около 2 часов' },
+  full: { en: 'Full paper', ru: 'Полный вариант · как школьный, все пункты · можно в несколько подходов' },
   chapter: { en: 'Chapter test (all parts)', ru: 'Тест по главе (все пункты)' }
 };
 function buildExam(seed, chs, mode) {
@@ -3521,39 +3531,39 @@ function loadExam() { if (EX && EX.items) return EX; if (!DB.cur) return null; E
 function viewExamSetup() {
   if (EX && !EX.done) {}
   EX = null;
-  let h = crumbs([['Home', '#/'], ['Mock exam']]);
-  h += '<section class="card"><h2>' + esc((SUBJECTS.find(x => x.id === DB.subj) || {}).en) + ' · mock exam</h2><p class="muted">' + (DB.ru ? 'Экзамен собирается из той же базы заданий: структура как в школьном варианте, числа каждый раз новые. Ответы проверяются только в конце.' : 'Built from the same question bank: structure like the school paper, new numbers every time. Answers are marked only at the end.') + '</p>';
-  h += '<h3>Chapters</h3><div class="choice" id="exChs">' + CHAPTERS.filter(c => c.subj === DB.subj).map(c => '<label><input type="checkbox" value="' + c.id + '" checked> ' + c.num + '. ' + esc(c.en) + '</label>').join('') + '</div>';
-  h += '<h3 style="margin-top:14px">Length</h3><div class="choice" id="exMode" style="flex-direction:column">' + ['quick', 'standard', 'full'].map((m, i) => '<label><input type="radio" name="exm" value="' + m + '"' + (i === 0 ? ' checked' : '') + '> <span>' + esc(MODES[m].en) + (DB.ru ? '<br><span class="ru">' + esc(MODES[m].ru) + '</span>' : '') + '</span></label>').join('') + '</div>';
-  h += '<div class="row" style="margin-top:14px"><button class="btn primary" id="exGo">Start exam</button>' + (DB.cur && !DB.cur.done && (DB.cur.subj || 'math') === DB.subj ? '<button class="btn" onclick="go(\'#/exam/run\')">Continue unfinished</button>' : '') + '</div></section>';
+  let h = crumbs([['Главная', '#/'], ['Пробный экзамен']]);
+  h += '<section class="card"><h2>Пробный экзамен · ' + esc((SUBJECTS.find(x => x.id === DB.subj) || {}).ru) + '</h2><p class="muted">Экзамен собирается из той же базы заданий, что и тренировка: структура как в школьном варианте, числа каждый раз новые. Подсказок нет, ответы проверяются только в конце.</p>';
+  h += '<h3>Главы</h3><div class="choice" id="exChs">' + CHAPTERS.filter(c => c.subj === DB.subj).map(c => '<label><input type="checkbox" value="' + c.id + '" checked> ' + c.num + '. ' + NM(c) + '</label>').join('') + '</div>';
+  h += '<h3 style="margin-top:14px">Длина</h3><div class="choice" id="exMode" style="flex-direction:column">' + ['quick', 'standard', 'full'].map((m, i) => '<label><input type="radio" name="exm" value="' + m + '"' + (i === 0 ? ' checked' : '') + '> <span>' + esc(MODES[m].ru) + '</span></label>').join('') + '</div>';
+  h += '<div class="row" style="margin-top:14px"><button class="btn primary" id="exGo">Начать экзамен</button>' + (DB.cur && !DB.cur.done && (DB.cur.subj || 'math') === DB.subj ? '<button class="btn" onclick="go(\'#/exam/run\')">Продолжить незаконченный</button>' : '') + '</div></section>';
   const hist = DB.exams.filter(e => (e.subj || 'math') === DB.subj);
   if (hist.length) {
-    h += '<section class="card"><h3>History</h3><table class="tbl"><tr><th>Date</th><th>Type</th><th>Score</th></tr>' + hist.slice().reverse().slice(0, 15).map(e => { const p = Math.round(100 * e.score / e.max); return '<tr><td>' + new Date(e.date).toLocaleDateString() + '</td><td>' + esc(e.mode) + ' · ch ' + e.chs.map(c => typeof c === 'number' ? c : (CH(c) || {}).num).join(',') + '</td><td><span class="pill ' + (p >= 80 ? 'g' : p >= 55 ? 'y' : 'r') + '">' + e.score + '/' + e.max + ' · ' + p + '%</span></td></tr>'; }).join('') + '</table></section>';
+    h += '<section class="card"><h3>История</h3><table class="tbl"><tr><th>Дата</th><th>Вариант</th><th>Результат</th></tr>' + hist.slice().reverse().slice(0, 15).map(e => { const p = Math.round(100 * e.score / e.max); return '<tr><td>' + new Date(e.date).toLocaleDateString() + '</td><td>' + esc(MODE_RU[e.mode] || e.mode) + ' · гл. ' + e.chs.map(c => typeof c === 'number' ? c : (CH(c) || {}).num).join(',') + '</td><td><span class="pill ' + (p >= 80 ? 'g' : p >= 55 ? 'y' : 'r') + '">' + e.score + '/' + e.max + ' · ' + p + '%</span></td></tr>'; }).join('') + '</table></section>';
   }
   shell(h);
-  $('#exGo').onclick = () => { const chs = $$('#exChs input:checked').map(i => i.value); if (!chs.length) return toast('Choose at least one chapter'); if (DB.cur && !DB.cur.done && !confirm('Start a new exam? The unfinished one will be discarded.')) return; startExam(chs, $('#exMode input:checked').value); };
+  $('#exGo').onclick = () => { const chs = $$('#exChs input:checked').map(i => i.value); if (!chs.length) return toast('Выберите хотя бы одну главу'); if (DB.cur && !DB.cur.done && !confirm('Начать новый экзамен? Незаконченный будет удалён.')) return; startExam(chs, $('#exMode input:checked').value); };
 }
 function exField(qi, pi, fi) { return 'e' + qi + '_' + pi + '_' + fi; }
 function viewExamRun() {
   const ex = loadExam(); if (!ex) return go('#/exam');
   if (ex.done) return go('#/exam/res');
-  let h = crumbs([['Home', '#/'], ['Mock exam', '#/exam'], ['In progress']]);
-  h += '<section class="card"><div class="row" style="justify-content:space-between"><div><h2>Mock exam</h2><div class="meta">' + esc(MODES[ex.mode].en) + ' · started ' + new Date(ex.t0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '</div></div></div><p class="muted" style="margin:6px 0 0">' + (DB.ru ? 'Решайте на бумаге, ответы вводите здесь. Можно уйти и вернуться — ответы сохраняются.' : 'Work on paper and type your answers here. You can leave and come back — answers are saved.') + '</p><div class="syn" style="margin-top:6px">' + 'Typing: power <code>^</code> · root <code>√</code> · fraction <code>/</code> · mixed number <code>2 1/8</code> · two solutions <code>±3</code> or <code>3, -3</code> · standard form <code>3.5*10^4</code> · «not possible» → <code>none</code>' + '</div></section>';
+  let h = crumbs([['Главная', '#/'], ['Пробный экзамен', '#/exam'], ['Идёт экзамен']]);
+  h += '<section class="card"><div class="row" style="justify-content:space-between"><div><h2>Пробный экзамен · ' + esc((SUBJECTS.find(x => x.id === ex.subj) || {}).ru || '') + '</h2><div class="meta">' + esc((MODES[ex.mode] || {}).ru || '') + ' · начат в ' + new Date(ex.t0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '</div></div></div><p class="muted" style="margin:6px 0 0">' + 'Решайте на бумаге, ответы вводите здесь. Можно выйти и вернуться позже — ответы сохраняются.' + '</p><div class="syn" style="margin-top:6px">' + 'Как вводить: степень <code>^</code> · корень <code>√</code> · дробь <code>/</code> · смешанное число <code>2 1/8</code> · два ответа <code>±3</code> или <code>3, -3</code> · стандартный вид <code>3.5*10^4</code> · «нельзя разложить» → <code>none</code> · химические формулы — обычной клавиатурой: <code>Al2(SO4)3</code>' + '</div></section>';
   h += renderExamBody(ex, false);
-  h += '<div class="sticky"><span class="meta" id="exCount"></span><button class="btn primary" id="exFinish">Finish &amp; mark</button></div>';
+  h += '<div class="sticky"><span class="meta" id="exCount"></span><button class="btn primary" id="exFinish">Завершить и проверить</button></div>';
   shell(h);
   wireFields($('#app'));
-  const upd = () => { if (!$('#exCount')) return; const tot = $$('input.inp').length + $$('.opts').length; const done = $$('input.inp').filter(i => i.value.trim()).length + $$('.opts').filter(o => o.querySelector('.on')).length; $('#exCount').textContent = done + ' / ' + tot + ' answered'; };
+  const upd = () => { if (!$('#exCount')) return; const tot = $$('input.inp').length + $$('.opts').length; const done = $$('input.inp').filter(i => i.value.trim()).length + $$('.opts').filter(o => o.querySelector('.on')).length; $('#exCount').textContent = 'Отвечено: ' + done + ' из ' + tot; };
   upd(); $('#app').oninput = upd; $('#app').onclick = () => setTimeout(upd, 0);
-  $('#exFinish').onclick = () => { const empty = $$('input.inp').filter(i => !i.value.trim()).length; if (empty && !confirm(empty + ' answer field(s) are empty. Finish anyway?')) return; finishExam(); };
+  $('#exFinish').onclick = () => { const empty = $$('input.inp').filter(i => !i.value.trim()).length; if (empty && !confirm('Пустых полей: ' + empty + '. Всё равно завершить?')) return; finishExam(); };
 }
 function renderExamBody(ex, marked) {
   let h = '<section class="card">'; let lastCh = null; let qn = 0;
   ex.items.forEach((q, qi) => {
-    if (q.ch !== lastCh) { lastCh = q.ch; qn = 0; const c = CH(q.ch); h += '<div class="chhead">Chapter ' + c.num + '. ' + esc(c.en) + '</div>'; }
+    if (q.ch !== lastCh) { lastCh = q.ch; qn = 0; const c = CH(q.ch); h += '<div class="chhead">Глава ' + c.num + '. ' + NM(c) + '</div>'; }
     qn++;
     const p0 = q.parts[0]; const sameQ = q.parts.every(p => p.q.en === p0.q.en) && (p0.m || p0.tex);
-    h += '<div class="exq"><div><span class="exnum">' + qn + '</span>' + (sameQ ? tr(p0.q) : '') + (q.parts.some(p => p.calc || SK(q.id).calc) ? ' <span class="calc">Calculator</span>' : '') + '</div><div class="subs">';
+    h += '<div class="exq"><div><span class="exnum">' + qn + '</span>' + (sameQ ? tr(p0.q) : '') + (q.parts.some(p => p.calc || SK(q.id).calc) ? ' <span class="calc">С калькулятором</span>' : '') + '</div><div class="subs">';
     q.parts.forEach((it, pi) => {
       const fs = fieldsOf(it.ans);
       h += '<div class="sub"><span class="lt">' + (q.parts.length > 1 ? 'abcdefgh'[pi] : '') + '</span><div class="ansbox">';
@@ -3561,18 +3571,18 @@ function renderExamBody(ex, marked) {
       h += promptHtml(it);
       if (it.ans.k === 'self') {
         const key = exField(qi, pi, 0);
-        if (!marked) h += '<div class="syn">' + tr(L('Write this on paper. After marking you will compare it with the model answer.', 'Решите на бумаге. После проверки сравните с образцом.')) + '</div>';
-        else { h += '<div class="fb info">' + solHtml(it) + '</div><div class="row"><span class="mark self">' + (ex.self[key] == null ? 'Mark yourself:' : '') + '</span><button class="btn small' + (ex.self[key] === true ? ' primary' : '') + '" data-self="' + key + '" data-v="1">✓ Correct</button><button class="btn small' + (ex.self[key] === false ? ' primary' : '') + '" data-self="' + key + '" data-v="0">✗ Wrong</button></div>'; }
+        if (!marked) h += '<div class="syn">' + 'Решите на бумаге. После проверки появится образец — сравните и оцените себя.' + '</div>';
+        else { h += '<div class="fb info">' + solHtml(it) + '</div><div class="row"><span class="mark self">' + (ex.self[key] == null ? 'Оцените себя:' : '') + '</span><button class="btn small' + (ex.self[key] === true ? ' primary' : '') + '" data-self="' + key + '" data-v="1">✓ Верно</button><button class="btn small' + (ex.self[key] === false ? ' primary' : '') + '" data-self="' + key + '" data-v="0">✗ Неверно</button></div>'; }
       } else {
         fs.forEach((f, fi) => {
           const id = exField(qi, pi, fi); FIELD_SPEC[id] = f.spec; FIELD_VARS[id] = varsFor(it);
           let stt = null, g = null;
           if (marked) { g = grade(f.spec, ex.vals[id]); stt = { mark: g.ok ? 'ok' : 'bad', lock: true, reveal: true }; }
           h += '<div class="' + (fs.length > 1 ? 'part' + (g ? (g.ok ? ' ok' : ' bad') : '') : '') + '">' + fieldHtml(f, id, ex.vals[id], stt, true);
-          if (marked) h += '<div class="mark ' + (g.ok ? 'ok' : 'bad') + '">' + (g.ok ? '✓ correct' : '✗ ' + (g.msg && !g.empty ? esc(g.msg.en) : 'answer') + ': ') + (g.ok ? '' : K(keyTex(f.spec, fs.length === 1 ? it : null)) + (f.spec.unit ? ' ' + esc(f.spec.unit) : '')) + '</div>';
+          if (marked) h += '<div class="mark ' + (g.ok ? 'ok' : 'bad') + '">' + (g.ok ? '✓ верно' : '✗ ' + (g.msg && !g.empty ? esc(g.msg.en) + (DB.ru ? ' (' + esc(g.msg.ru) + ')' : '') + ' — ' : '') + 'правильный ответ: ') + (g.ok ? '' : K(keyTex(f.spec, fs.length === 1 ? it : null)) + (f.spec.unit ? ' ' + esc(f.spec.unit) : '')) + '</div>';
           h += '</div>';
         });
-        if (marked) { const allOk = fs.every((f, fi) => grade(f.spec, ex.vals[exField(qi, pi, fi)]).ok); if (!allOk) h += '<details><summary class="muted">Solution · ' + (DB.ru ? 'решение' : 'worked solution') + '</summary>' + solHtml(it) + '<button class="btn small" onclick="go(\'#/p/' + q.id + '\')">Practise ' + q.id + ' →</button></details>'; }
+        if (marked) { const allOk = fs.every((f, fi) => grade(f.spec, ex.vals[exField(qi, pi, fi)]).ok); if (!allOk) h += '<details><summary class="muted">Показать решение</summary>' + solHtml(it) + '<button class="btn small" onclick="go(\'#/p/' + q.id + '\')">Потренировать этот навык →</button></details>'; }
       }
       h += '</div></div>';
     });
@@ -3603,14 +3613,14 @@ function viewExamResult() {
   const ex = loadExam(); if (!ex) return go('#/exam');
   const s = scoreExam(ex); const p = Math.round(100 * s.sc / s.mx);
   if (ex.histIdx != null && DB.exams[ex.histIdx]) { DB.exams[ex.histIdx].score = s.sc; save(); }
-  let h = crumbs([['Home', '#/'], ['Mock exam', '#/exam'], ['Result']]);
-  h += '<section class="card"><div class="row" style="justify-content:space-between;align-items:flex-end"><div><div class="meta">Score · Результат</div><div class="score">' + s.sc + ' / ' + s.mx + '</div></div><span class="pill ' + (p >= 80 ? 'g' : p >= 55 ? 'y' : 'r') + '" style="font-size:20px">' + p + '%</span></div>';
-  if (Object.keys(ex.self).length < ex.items.reduce((n, q) => n + q.parts.filter(it => it.ans.k === 'self').length, 0)) h += '<p class="muted">' + tr(L('Some «Show that» questions still need your self-mark (below).', 'Некоторые задания «Покажите, что…» ждут вашей самопроверки (ниже).')) + '</p>';
-  h += '<table class="tbl"><tr><th>Chapter</th><th>Score</th></tr>' + Object.keys(s.per).map(ch => { const [a, b] = s.per[ch]; const q = Math.round(100 * a / b); const c = CH(ch); return '<tr><td>' + c.num + '. ' + esc(c.en) + '</td><td><span class="pill ' + (q >= 80 ? 'g' : q >= 55 ? 'y' : 'r') + '">' + a + '/' + b + '</span></td></tr>'; }).join('') + '</table>';
+  let h = crumbs([['Главная', '#/'], ['Пробный экзамен', '#/exam'], ['Результат']]);
+  h += '<section class="card"><div class="row" style="justify-content:space-between;align-items:flex-end"><div><div class="meta">Результат · ' + esc((SUBJECTS.find(x => x.id === ex.subj) || {}).ru || '') + '</div><div class="score">' + s.sc + ' / ' + s.mx + '</div></div><span class="pill ' + (p >= 80 ? 'g' : p >= 55 ? 'y' : 'r') + '" style="font-size:20px">' + p + '%</span></div>';
+  if (Object.keys(ex.self).length < ex.items.reduce((n, q) => n + q.parts.filter(it => it.ans.k === 'self').length, 0)) h += '<p class="muted">' + 'Некоторые задания «Show that…» ждут вашей самопроверки — они ниже.' + '</p>';
+  h += '<table class="tbl"><tr><th>Глава</th><th>Баллы</th></tr>' + Object.keys(s.per).map(ch => { const [a, b] = s.per[ch]; const q = Math.round(100 * a / b); const c = CH(ch); return '<tr><td>' + c.num + '. ' + NM(c) + '</td><td><span class="pill ' + (q >= 80 ? 'g' : q >= 55 ? 'y' : 'r') + '">' + a + '/' + b + '</span></td></tr>'; }).join('') + '</table>';
   const weak = Object.entries(s.weak).sort((a, b) => b[1] - a[1]).slice(0, 8);
-  if (weak.length) h += '<h3 style="margin-top:12px">Practise next · Что потренировать</h3><div class="row">' + weak.map(([id, n]) => '<button class="btn small" onclick="go(\'#/p/' + id + '\')">' + id + ' ' + esc(SK(id).en) + ' (' + n + '✗)</button>').join('') + '</div>';
+  if (weak.length) h += '<h3 style="margin-top:12px">Что потренировать</h3><div class="row">' + weak.map(([id, n]) => '<button class="btn small" onclick="go(\'#/p/' + id + '\')">' + SK(id).code + ' ' + NM(SK(id)) + ' — ошибок: ' + n + '</button>').join('') + '</div>';
   h += shareBlock(examReport(ex, s));
-  h += '<div class="row" style="margin-top:12px"><button class="btn primary" onclick="startExam(EX.chs, EX.mode)">New exam, same settings</button><button class="btn" onclick="go(\'#/exam\')">Exam settings</button></div></section>';
+  h += '<div class="row" style="margin-top:12px"><button class="btn primary" onclick="startExam(EX.chs, EX.mode)">Новый экзамен с теми же настройками</button><button class="btn" onclick="go(\'#/exam\')">Настройки экзамена</button></div></section>';
   h += renderExamBody(ex, true);
   shell(h);
   wireFields($('#app'));
@@ -3621,7 +3631,7 @@ function viewExamResult() {
 function syncHeader() { $('#tRu').setAttribute('aria-pressed', DB.ru); $('#tKb').setAttribute('aria-pressed', DB.kbd); }
 document.addEventListener('DOMContentLoaded', () => {
   $('#tRu').onclick = () => { DB.ru = !DB.ru; save(); syncHeader(); if (P && location.hash.startsWith('#/p/')) { collectVals($('#app')); renderPracticeKeep(); } else { const y = scrollY; route(); scrollTo(0, y); } };
-  $('#tKb').onclick = () => { DB.kbd = !DB.kbd; save(); syncHeader(); hideKb(); $$('input.inp').forEach(i => i.inputMode = DB.kbd ? 'text' : 'none'); toast(DB.kbd ? 'Device keyboard on' : 'Maths keypad on'); };
+  $('#tKb').onclick = () => { DB.kbd = !DB.kbd; save(); syncHeader(); hideKb(); $$('input.inp').forEach(i => i.inputMode = DB.kbd ? 'text' : 'none'); toast(DB.kbd ? 'Включена обычная клавиатура телефона' : 'Включена математическая клавиатура'); };
   $('#brand').onclick = () => go('#/');
   $('#tSet').onclick = () => go('#/settings');
   syncHeader(); route();
