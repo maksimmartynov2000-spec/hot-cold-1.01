@@ -187,7 +187,9 @@ h3{font-family:var(--f-display);font-weight:400;font-size:20px;margin:0 0 6px}
 .gr .pv{fill:var(--muted)}
 .gr .ar{stroke:var(--accent);stroke-width:2.4}
 .gr .ahd{fill:var(--accent)}
-.gr .dm{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
+.gr .dm{stroke:var(--muted);stroke-width:1.2}
+.gr .dg{stroke:var(--faint);stroke-width:1;stroke-dasharray:2 3}
+.gr .dmh{fill:var(--muted)}
 .gr .dt{font-size:12px;fill:var(--ink)}
 b.ext{display:inline-block;font-size:11px;line-height:1;padding:3px 6px;border-radius:6px;background:var(--warn-soft);color:var(--warn);letter-spacing:.3px;vertical-align:1px}
 
@@ -2245,18 +2247,32 @@ function svgGraph(o) {
   s += '<text x="12" y="' + (T + ph / 2) + '" text-anchor="middle" class="at" transform="rotate(-90 12 ' + (T + ph / 2) + ')">' + o.yl + '</text></svg>';
   return s;
 }
-function svgBeam(o) { // o: {len, pivot, forces:[{x, label, up}], marks:[x...]}
-  const W = 340, H = 150, Lm = 20, pw = W - 40, X = x => Lm + x / o.len * pw, y0 = 70;
+function svgBeam(o) { // o: {len, pivot | pivots, forces:[{x, label, up}], dims:[[a, b, text]]}
+  const W = 340, Lm = 30, pw = W - 2 * Lm, y0 = o.forces.some(f => f.up) ? 64 : 22;
+  // piecewise scale: every gap between marked points gets at least ~14% of the width so labels never collide
+  const pts = [...new Set([0, o.len].concat(o.pivots || [o.pivot]).concat(o.forces.map(f => f.x)).concat((o.dims || []).flat().filter(v => typeof v === 'number')).filter(v => v != null).map(v => +v.toFixed(6)))].sort((a, b) => a - b);
+  const wts = pts.slice(1).map((v, i) => Math.max(v - pts[i], o.len * 0.14)); const tw = wts.reduce((a, b) => a + b, 0);
+  const X = x => { let acc = 0; for (let i = 0; i < wts.length; i++) { if (x <= pts[i + 1] + 1e-9) return Lm + (acc + (x - pts[i]) / (pts[i + 1] - pts[i] || 1) * wts[i]) / tw * pw; acc += wts[i]; } return Lm + pw; };
+  const downX = o.forces.filter(f => !f.up).map(f => f.x);
+  // dimension lines go below the beam, each on its own row if they overlap
+  const dims = (o.dims || []).map(([a, b, t]) => [Math.min(a, b), Math.max(a, b), t]).sort((p, q) => p[0] - q[0] || p[1] - q[1]);
+  const rows = []; const rowOf = dims.map(([a, b]) => { let k = rows.findIndex(end => end <= a + 1e-9); if (k < 0) { k = rows.length; rows.push(b); } else rows[k] = b; return k; });
+  const rowY = k => y0 + 92 + 26 * k; const H = rows.length ? rowY(rows.length - 1) + 12 : y0 + 80;
   let s = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="gr" role="img" aria-label="beam">';
   s += '<rect x="' + Lm + '" y="' + (y0 - 5) + '" width="' + pw + '" height="10" rx="3" class="bm"/>';
   (o.pivots || [o.pivot]).forEach(p => { if (p == null) return; s += '<polygon class="pv" points="' + X(p) + ',' + (y0 + 5) + ' ' + (X(p) - 12) + ',' + (y0 + 27) + ' ' + (X(p) + 12) + ',' + (y0 + 27) + '"/>'; });
+  dims.forEach(([a, b, t], i) => {
+    const y = rowY(rowOf[i]);
+    [a, b].forEach(x => { const top = downX.some(d => Math.abs(d - x) < 1e-9) ? y0 + 74 : y0 + 8; s += '<line class="dg" x1="' + X(x) + '" y1="' + top + '" x2="' + X(x) + '" y2="' + (y + 6) + '"/>'; });
+    s += '<line class="dm" x1="' + X(a) + '" y1="' + y + '" x2="' + X(b) + '" y2="' + y + '" marker-start="url(#dmA)" marker-end="url(#dmA)"/>';
+    s += '<text class="dt dtb" x="' + (X(a) + X(b)) / 2 + '" y="' + (y - 5) + '" text-anchor="middle">' + t + '</text>';
+  });
   o.forces.forEach(f => {
     const x = X(f.x);
-    if (f.up) s += '<line class="ar" x1="' + x + '" y1="' + (y0 - 6) + '" x2="' + x + '" y2="' + (y0 - 46) + '" marker-end="url(#ah)"/><text class="lb" x="' + x + '" y="' + (y0 - 52) + '" text-anchor="middle">' + f.label + '</text>';
-    else s += '<line class="ar" x1="' + x + '" y1="' + (y0 + 6) + '" x2="' + x + '" y2="' + (y0 + 50) + '" marker-end="url(#ah)"/><text class="lb" x="' + x + '" y="' + (y0 + 66) + '" text-anchor="middle">' + f.label + '</text>';
+    if (f.up) s += '<line class="ar" x1="' + x + '" y1="' + (y0 - 6) + '" x2="' + x + '" y2="' + (y0 - 42) + '" marker-end="url(#ah)"/><text class="lb" x="' + x + '" y="' + (y0 - 48) + '" text-anchor="middle">' + f.label + '</text>';
+    else s += '<line class="ar" x1="' + x + '" y1="' + (y0 + 6) + '" x2="' + x + '" y2="' + (y0 + 48) + '" marker-end="url(#ah)"/><text class="lb" x="' + x + '" y="' + (y0 + 66) + '" text-anchor="middle">' + f.label + '</text>';
   });
-  (o.dims || []).forEach(([a, b, t]) => { const ya = y0 - 22; s += '<line class="dm" x1="' + X(a) + '" y1="' + ya + '" x2="' + X(b) + '" y2="' + ya + '"/><text class="dt" x="' + (X(a) + X(b)) / 2 + '" y="' + (ya - 4) + '" text-anchor="middle">' + t + '</text>'; });
-  s += '<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ahd"/></marker></defs></svg>';
+  s += '<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ahd"/></marker><marker id="dmA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="dmh"/></marker></defs></svg>';
   return s;
 }
 
@@ -2520,7 +2536,7 @@ skill({ id: 'P3.2', code: '3.2', ch: 3, en: 'Principle of moments', ru: 'Пра�
   sk.gen = function (r, vi) {
     vi = vi ?? r.ri(0, 2); if (vi <= 1) return g0.call(this, r, vi);
     let A, a, B, b, C, X; do { A = r.pick([2, 4, 6]); a = r.pick([0.2, 0.4]); B = r.pick([4, 5, 8, 10]); b = r.pick([0.3, 0.5, 0.6]); C = r.pick([0.2, 0.4, 0.5]); X = (B * b - A * a) / C; } while (X <= 0 || !Number.isInteger(X * 10));
-    const svg = svgBeam({ len: a + Math.max(b, C) + 0.1, pivot: a, forces: [{ x: 0, label: A + ' N' }, { x: a + b, label: B + ' N' }, { x: a + C, label: 'F', up: true }], dims: [[0, a, a + ' m']] });
+    const svg = svgBeam({ len: a + Math.max(b, C) + 0.1, pivot: a, forces: [{ x: 0, label: A + ' N' }, { x: a + b, label: B + ' N' }, { x: a + C, label: 'F', up: true }], dims: [[0, a, a + ' m'], [a, a + C, C + ' m'], [a, a + b, b + ' m']] });
     return { q: PQ('A light beam is pivoted. A ' + A + ' N weight hangs ' + a + ' m to the left of the pivot and a ' + B + ' N weight hangs ' + b + ' m to the right. What upward force F, applied ' + C + ' m to the right of the pivot, keeps the beam balanced?', 'Лёгкий брусок на опоре. Груз ' + A + ' Н висит в ' + a + ' м слева от опоры, груз ' + B + ' Н — в ' + b + ' м справа. Какая сила F, направленная вверх и приложенная в ' + C + ' м справа от опоры, удержит равновесие?'), svg,
       ans: pnum(X, 'N'), sol: [st('Clockwise: the ' + B + ' N weight. Anticlockwise: the ' + A + ' N weight AND the upward force F on the right.', 'По часовой: груз ' + B + ' Н. Против часовой: груз ' + A + ' Н И сила F вверх справа.'), su('', '', B + '*' + b + '=' + A + '*' + a + '+F*' + C, ''), su('', '', 'F=(' + fM(B * b) + '-' + fM(A * a) + ')/' + C + '=' + fM(X), 'N')] };
   };
@@ -2531,11 +2547,12 @@ skill({ id: 'P3.3', code: '3.3', ch: 3, ext: true, en: 'Moments: supports and he
   gen(r, vi) {
     vi = vi ?? r.ri(0, 1);
     if (vi === 0) { const W = r.pick([400, 500, 600, 800]), Lt = r.pick([4, 5, 6]), x = r.pick([1, 2, 1.5]); const RB = W * x / Lt, RA = W - RB; const ask = r.pick(['A', 'B']);
-      const svg = svgBeam({ len: Lt, pivots: [0, Lt], forces: [{ x, label: W + ' N' }, { x: 0, label: 'A', up: true }, { x: Lt, label: 'B', up: true }], dims: [[0, x, x + ' m'], [x, Lt, (Lt - x) + ' m']] });
+      const svg = svgBeam({ len: Lt, pivots: [0, Lt], forces: [{ x, label: W + ' N' }, { x: 0, label: 'A', up: true }, { x: Lt, label: 'B', up: true }], dims: [[0, x, x + ' m'], [x, Lt, (Lt - x) + ' m'], [0, Lt, Lt + ' m']] });
       return { q: PQ('A person of weight ' + W + ' N stands on a light plank supported at its ends A and B. The plank is ' + Lt + ' m long and the person is ' + x + ' m from A. What is the upward force from support ' + ask + '?', 'Человек весом ' + W + ' Н стоит на лёгкой доске, опирающейся концами на A и B. Длина доски ' + Lt + ' м, человек в ' + x + ' м от A. Какова сила реакции опоры ' + ask + '?'), svg, ans: pnum(ask === 'A' ? RA : RB, 'N'),
         sol: [su('Moments about A:', 'Моменты относительно A:', W + '*' + x + '=F_B*' + Lt, ''), su('', '', 'F_B=' + fM(RB), 'N'), su('Up = down:', 'Вверх = вниз:', 'F_A=' + W + '-' + fM(RB) + '=' + fM(RA), 'N')] }; }
     const m = r.pick([1.5, 2, 3, 0.5]), g = gPick(r), a = r.pick([0.2, 0.25, 0.3]), Lb = 1; const bW = m * g * a / (Lb / 2 - a);
-    return { q: PQ('A uniform 1.0 m bar balances on a pivot ' + a + ' m from one end when a ' + m + ' kg mass is hung from that end' + gT(g) + '. What is the weight of the bar?', 'Однородный стержень длиной 1,0 м уравновешен на опоре в ' + a + ' м от одного конца, когда к этому концу подвешен груз ' + m + ' кг' + gTr(g) + '. Каков вес стержня?'),
+    const svgB = svgBeam({ len: 1, pivot: a, forces: [{ x: 0, label: m + ' kg' }, { x: 0.5, label: 'W = ?' }], dims: [[0, a, a + ' m'], [a, 0.5, fN(0.5 - a) + ' m'], [0.5, 1, '0.5 m']] });
+    return { svg: svgB, q: PQ('A uniform 1.0 m bar balances on a pivot ' + a + ' m from one end when a ' + m + ' kg mass is hung from that end' + gT(g) + '. What is the weight of the bar?', 'Однородный стержень длиной 1,0 м уравновешен на опоре в ' + a + ' м от одного конца, когда к этому концу подвешен груз ' + m + ' кг' + gTr(g) + '. Каков вес стержня?'),
       ans: pnum(bW, 'N'), sol: [st('The bar’s weight acts at its centre, ' + (0.5 - a) + ' m from the pivot.', 'Вес стержня приложен в середине, в ' + (0.5 - a) + ' м от опоры.'), su('', '', fM(m * g) + '*' + a + '=W*' + fM(0.5 - a), ''), su('', '', 'W=' + fM(bW), 'N')] };
   } });
 
@@ -3854,7 +3871,7 @@ function importProgress(f) {
 }
 
 /* ---------- PWA ---------- */
-const APP_VERSION = '20261110-1123';
+const APP_VERSION = '20261110-1129';
 function isStandalone() { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.__installEvt = e; });
 if ('serviceWorker' in navigator) { navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())).catch(() => {}); if (window.caches) caches.keys().then(ks => ks.filter(x => x.startsWith('endterm-')).forEach(x => caches.delete(x))).catch(() => {}); }
