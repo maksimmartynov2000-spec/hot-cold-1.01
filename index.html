@@ -213,6 +213,16 @@ table.pblk th{color:var(--muted);font-weight:400;background:var(--chip);font-siz
 table.pblk td.pb{background:var(--accent-soft)}
 table.pblk tr.pr td{background:var(--warn-soft)}
 .ansbox,.instr,.opt,.sol,.fb{overflow-wrap:anywhere;min-width:0}
+/* early finish */
+.curex{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);display:flex;flex-direction:column;gap:6px}
+.sheetbg{position:fixed;inset:0;z-index:50;background:rgba(10,15,30,.45);display:flex;align-items:flex-end;justify-content:center;padding:16px}
+.sheet{background:var(--card);color:var(--ink);border-radius:18px;padding:18px 18px calc(18px + env(safe-area-inset-bottom));width:100%;max-width:480px;display:flex;flex-direction:column;gap:10px;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+.sheet h3{margin:0;font-family:var(--f-display);font-weight:400;font-size:22px}
+.sheet p{margin:0 0 4px}
+.btn.wide{width:100%}
+.btn.danger{color:var(--bad);border-color:var(--bad-soft)}
+.btn[disabled]{opacity:.45;cursor:default}
+.earlynote{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;margin:10px 0}
 </style>
 </head>
 <body>
@@ -3708,6 +3718,7 @@ function examReport(ex, s) {
   lines.push('📘 ' + who + ' — пробный экзамен, ' + sub.ru + ' (' + (MODE_RU[ex.mode] || ex.mode) + ')');
   lines.push(new Date(ex.t1 || Date.now()).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) + (mins != null ? ' · ' + mins + ' мин' : ''));
   lines.push('Результат: ' + s.sc + ' из ' + s.mx + ' (' + pct(s.sc, s.mx) + '%)');
+  if (ex.early) { const pg = examProgress(ex); lines.push('Завершён досрочно: решено ' + pg.ans + ' из ' + pg.tot + '; из решённого верно ' + pg.ok + ' (' + pct(pg.ok, pg.ans) + '%)'); }
   lines.push('');
   Object.keys(s.per).forEach(ch => { const [a, b] = s.per[ch]; const c = CH(ch); lines.push('• Гл. ' + c.num + ' ' + c.ru + ': ' + a + '/' + b + ' (' + pct(a, b) + '%)'); });
   const weak = Object.entries(s.weak).sort((a, b) => b[1] - a[1]).slice(0, 8);
@@ -3800,7 +3811,7 @@ function importProgress(f) {
 }
 
 /* ---------- PWA ---------- */
-const APP_VERSION = '20261110-1109';
+const APP_VERSION = '20261110-1112';
 function isStandalone() { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.__installEvt = e; });
 if ('serviceWorker' in navigator) { navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())).catch(() => {}); if (window.caches) caches.keys().then(ks => ks.filter(x => x.startsWith('endterm-')).forEach(x => caches.delete(x))).catch(() => {}); }
@@ -3987,7 +3998,7 @@ function viewHome() {
   let h = '<nav class="subjs">' + SUBJECTS.map(x => '<button class="subj' + (x.id === sub.id ? ' on' : '') + '"' + (x.soon ? ' disabled' : '') + ' onclick="go(\'#/s/' + x.id + '\')">' + esc(x.en) + (x.soon ? ' <small>скоро</small>' : '') + '<span class="ru">' + esc(x.ru) + '</span>' + '</button>').join('') + '</nav>';
   const cur = DB.cur && !DB.cur.done && (DB.cur.subj || 'math') === sub.id;
   h += '<section class="card examcard"><div class="row" style="justify-content:space-between"><div><h2>Пробный экзамен · ' + esc(sub.ru) + '</h2><div class="muted">Задания по всем главам, числа каждый раз новые</div></div><button class="btn primary" onclick="go(\'#/exam\')">Начать →</button></div>';
-  if (cur) h += '<div class="row" style="margin-top:8px"><button class="btn" onclick="go(\'#/exam/run\')">Продолжить незаконченный экзамен</button></div>';
+  if (cur) { const pg = examProgress(loadExam()); h += '<div class="curex"><div class="meta">Незаконченный экзамен · отвечено ' + pg.ans + ' из ' + pg.tot + '</div><div class="row"><button class="btn" onclick="go(\'#/exam/run\')">Продолжить</button><button class="btn" onclick="endSheet()">Завершить досрочно</button></div></div>'; }
   const ex = DB.exams.filter(e => (e.subj || 'math') === sub.id);
   if (ex.length) { const e = ex[ex.length - 1]; h += '<div class="meta" style="margin-top:6px">Последний результат: ' + e.score + ' / ' + e.max + ' (' + Math.round(100 * e.score / e.max) + '%)</div>'; }
   h += '</section><div class="grid2">';
@@ -4206,7 +4217,7 @@ function buildExam(seed, chs, mode) {
 }
 let EX = null; let saveT = null;
 function saveExamSoon() { clearTimeout(saveT); saveT = setTimeout(saveExam, 400); }
-function saveExam() { if (!EX) return; DB.cur = { subj: EX.subj, seed: EX.seed, chs: EX.chs, mode: EX.mode, vals: EX.vals, self: EX.self, t0: EX.t0, t1: EX.t1, done: EX.done }; save(); }
+function saveExam() { if (!EX) return; DB.cur = { subj: EX.subj, seed: EX.seed, chs: EX.chs, mode: EX.mode, vals: EX.vals, self: EX.self, t0: EX.t0, t1: EX.t1, done: EX.done, early: EX.early }; save(); }
 function startExam(chs, mode) {
   const seed = (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0;
   EX = { subj: subjOf(chs[0]), seed, chs, mode, vals: {}, self: {}, t0: Date.now(), done: false };
@@ -4233,14 +4244,14 @@ function viewExamRun() {
   const ex = loadExam(); if (!ex) return go('#/exam');
   if (ex.done) return go('#/exam/res');
   let h = crumbs([['Главная', '#/'], ['Пробный экзамен', '#/exam'], ['Идёт экзамен']]);
-  h += '<section class="card"><div class="row" style="justify-content:space-between"><div><h2>Пробный экзамен · ' + esc((SUBJECTS.find(x => x.id === ex.subj) || {}).ru || '') + '</h2><div class="meta">' + esc((MODES[ex.mode] || {}).ru || '') + ' · начат в ' + new Date(ex.t0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '</div></div></div><p class="muted" style="margin:6px 0 0">' + 'Решайте на бумаге, ответы вводите здесь. Можно выйти и вернуться позже — ответы сохраняются.' + '</p><div class="syn" style="margin-top:6px">' + 'Как вводить: степень <code>^</code> · корень <code>√</code> · дробь <code>/</code> · смешанное число <code>2 1/8</code> · два ответа <code>±3</code> или <code>3, -3</code> · стандартный вид <code>3.5*10^4</code> · «нельзя разложить» → <code>none</code> · химические формулы — обычной клавиатурой: <code>Al2(SO4)3</code>' + '</div></section>';
+  h += '<section class="card"><div class="row" style="justify-content:space-between"><div><h2>Пробный экзамен · ' + esc((SUBJECTS.find(x => x.id === ex.subj) || {}).ru || '') + '</h2><div class="meta">' + esc((MODES[ex.mode] || {}).ru || '') + ' · начат в ' + new Date(ex.t0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '</div></div><button class="btn small" onclick="endSheet()">Завершить досрочно</button></div><p class="muted" style="margin:6px 0 0">' + 'Решайте на бумаге, ответы вводите здесь. Можно выйти и вернуться позже — ответы сохраняются.' + '</p><div class="syn" style="margin-top:6px">' + 'Как вводить: степень <code>^</code> · корень <code>√</code> · дробь <code>/</code> · смешанное число <code>2 1/8</code> · два ответа <code>±3</code> или <code>3, -3</code> · стандартный вид <code>3.5*10^4</code> · «нельзя разложить» → <code>none</code> · химические формулы — обычной клавиатурой: <code>Al2(SO4)3</code>' + '</div></section>';
   h += renderExamBody(ex, false);
   h += '<div class="sticky"><span class="meta" id="exCount"></span><button class="btn primary" id="exFinish">Завершить и проверить</button></div>';
   shell(h);
   wireFields($('#app'));
   const upd = () => { if (!$('#exCount')) return; const tot = $$('input.inp').length + $$('.opts').length; const done = $$('input.inp').filter(i => i.value.trim()).length + $$('.opts').filter(o => o.querySelector('.on')).length; $('#exCount').textContent = 'Отвечено: ' + done + ' из ' + tot; };
   upd(); $('#app').oninput = upd; $('#app').onclick = () => setTimeout(upd, 0);
-  $('#exFinish').onclick = () => { const empty = $$('input.inp').filter(i => !i.value.trim()).length; if (empty && !confirm('Пустых полей: ' + empty + '. Всё равно завершить?')) return; finishExam(); };
+  $('#exFinish').onclick = () => { const pg = examProgress(ex); if (pg.ans < pg.tot) return endSheet(); finishExam(); };
 }
 function renderExamBody(ex, marked) {
   let h = '<section class="card">'; let lastCh = null; let qn = 0;
@@ -4264,7 +4275,7 @@ function renderExamBody(ex, marked) {
           let stt = null, g = null;
           if (marked) { g = grade(f.spec, ex.vals[id]); stt = { mark: g.ok ? 'ok' : 'bad', lock: true, reveal: true }; }
           h += '<div class="' + (fs.length > 1 ? 'part' + (g ? (g.ok ? ' ok' : ' bad') : '') : '') + '">' + fieldHtml(f, id, ex.vals[id], stt, true);
-          if (marked) h += '<div class="mark ' + (g.ok ? 'ok' : 'bad') + '">' + (g.ok ? '✓ верно' : '✗ ' + (g.msg && !g.empty ? esc(g.msg.en) + (DB.ru ? ' (' + esc(g.msg.ru) + ')' : '') + ' — ' : '') + 'правильный ответ: ') + (g.ok ? '' : K(keyTex(f.spec, fs.length === 1 ? it : null)) + (f.spec.unit ? ' ' + esc(f.spec.unit) : '')) + '</div>';
+          if (marked) h += '<div class="mark ' + (g.ok ? 'ok' : 'bad') + '">' + (g.ok ? '✓ верно' : (g.empty ? '— пропущено, ' : '✗ ') + (g.msg && !g.empty ? esc(g.msg.en) + (DB.ru ? ' (' + esc(g.msg.ru) + ')' : '') + ' — ' : '') + 'правильный ответ: ') + (g.ok ? '' : K(keyTex(f.spec, fs.length === 1 ? it : null)) + (f.spec.unit ? ' ' + esc(f.spec.unit) : '')) + '</div>';
           h += '</div>';
         });
         if (marked) { const allOk = fs.every((f, fi) => grade(f.spec, ex.vals[exField(qi, pi, fi)]).ok); if (!allOk) h += '<details><summary class="muted">Показать решение</summary>' + solHtml(it) + '<button class="btn small" onclick="go(\'#/p/' + q.id + '\')">Потренировать этот навык →</button></details>'; }
@@ -4288,10 +4299,30 @@ function scoreExam(ex) {
   }));
   return { sc, mx, per, weak };
 }
-function finishExam() {
-  const ex = loadExam(); ex.done = true; ex.t1 = Date.now();
-  const s = scoreExam(ex);
-  DB.exams.push({ subj: ex.subj, date: Date.now(), mode: ex.mode, chs: ex.chs, score: s.sc, max: s.mx, mins: Math.round((ex.t1 - ex.t0) / 60000) });
+function examProgress(ex) {
+  let tot = 0, ans = 0, ok = 0;
+  ex.items.forEach((q, qi) => q.parts.forEach((it, pi) => { if (it.ans.k === 'self') return; fieldsOf(it.ans).forEach((f, fi) => { const v = ex.vals[exField(qi, pi, fi)]; tot++; if (v != null && String(v).trim() !== '') { ans++; if (grade(f.spec, v).ok) ok++; } }); }));
+  return { tot, ans, ok };
+}
+function endSheet() {
+  const ex = loadExam(); if (!ex) return; if (inExam() && !ex.done) { $$('input.inp').forEach(i => { if (i.dataset.field) ex.vals[i.dataset.field] = i.value; }); saveExam(); }
+  const pg = examProgress(ex); closeSheet();
+  const d = document.createElement('div'); d.className = 'sheetbg'; d.id = 'endSheet';
+  d.innerHTML = '<div class="sheet" role="dialog" aria-modal="true"><h3>Завершить экзамен досрочно?</h3><p class="muted">Отвечено ' + pg.ans + ' из ' + pg.tot + '. Пустые ответы считаются неверными, но в результате отдельно будет видно, сколько верно из того, что решено.</p>'
+    + '<button class="btn primary wide" id="shCheck"' + (pg.ans ? '' : ' disabled') + '>Проверить то, что решено</button>'
+    + '<button class="btn wide" id="shBack">Продолжить решать</button>'
+    + '<button class="btn wide danger" id="shDel">Удалить экзамен без результата</button></div>';
+  document.body.appendChild(d); hideKb();
+  d.onclick = e => { if (e.target === d) closeSheet(); };
+  $('#shBack').onclick = () => { closeSheet(); if (!location.hash.startsWith('#/exam/run')) go('#/exam/run'); };
+  $('#shCheck').onclick = () => { closeSheet(); finishExam(pg.ans < pg.tot); };
+  $('#shDel').onclick = () => { if (!confirm('Удалить этот экзамен? Ответы не сохранятся.')) return; closeSheet(); DB.cur = null; EX = null; save(); go('#/s/' + DB.subj); toast('Экзамен удалён'); };
+}
+function closeSheet() { const d = $('#endSheet'); if (d) d.remove(); }
+function finishExam(early) {
+  const ex = loadExam(); ex.done = true; ex.t1 = Date.now(); ex.early = !!early;
+  const s = scoreExam(ex); const pg = examProgress(ex);
+  DB.exams.push({ subj: ex.subj, date: Date.now(), mode: ex.mode, chs: ex.chs, score: s.sc, max: s.mx, mins: Math.round((ex.t1 - ex.t0) / 60000), early: ex.early || undefined, ans: pg.ans, tot: pg.tot });
   ex.histIdx = DB.exams.length - 1; saveExam(); save(); go('#/exam/res');
 }
 function viewExamResult() {
@@ -4300,6 +4331,7 @@ function viewExamResult() {
   if (ex.histIdx != null && DB.exams[ex.histIdx]) { DB.exams[ex.histIdx].score = s.sc; save(); }
   let h = crumbs([['Главная', '#/'], ['Пробный экзамен', '#/exam'], ['Результат']]);
   h += '<section class="card"><div class="row" style="justify-content:space-between;align-items:flex-end"><div><div class="meta">Результат · ' + esc((SUBJECTS.find(x => x.id === ex.subj) || {}).ru || '') + '</div><div class="score">' + s.sc + ' / ' + s.mx + '</div></div><span class="pill ' + (p >= 80 ? 'g' : p >= 55 ? 'y' : 'r') + '" style="font-size:20px">' + p + '%</span></div>';
+  if (ex.early) { const pg = examProgress(ex); h += '<p class="earlynote">Завершён досрочно: решено ' + pg.ans + ' из ' + pg.tot + '. Из решённого верно ' + pg.ok + ' из ' + pg.ans + ' (' + Math.round(100 * pg.ok / Math.max(1, pg.ans)) + '%).</p>'; }
   if (Object.keys(ex.self).length < ex.items.reduce((n, q) => n + q.parts.filter(it => it.ans.k === 'self').length, 0)) h += '<p class="muted">' + 'Некоторые задания «Show that…» ждут вашей самопроверки — они ниже.' + '</p>';
   h += '<table class="tbl"><tr><th>Глава</th><th>Баллы</th></tr>' + Object.keys(s.per).map(ch => { const [a, b] = s.per[ch]; const q = Math.round(100 * a / b); const c = CH(ch); return '<tr><td>' + c.num + '. ' + NM(c) + '</td><td><span class="pill ' + (q >= 80 ? 'g' : q >= 55 ? 'y' : 'r') + '">' + a + '/' + b + '</span></td></tr>'; }).join('') + '</table>';
   const weak = Object.entries(s.weak).sort((a, b) => b[1] - a[1]).slice(0, 8);
