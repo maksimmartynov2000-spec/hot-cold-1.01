@@ -8,6 +8,8 @@
 <meta name="apple-mobile-web-app-title" content="End-Term">
 <meta name="theme-color" content="#1F5BD8">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%20512%20512%27%3E%3Crect%20width=%27512%27%20height=%27512%27%20rx=%27112%27%20fill=%27%231F5BD8%27/%3E%3Ctext%20x=%27256%27%20y=%27330%27%20font-family=%27Georgia,serif%27%20font-size=%27230%27%20font-style=%27italic%27%20fill=%27white%27%20text-anchor=%27middle%27%3Ex²%3C/text%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>End-Term Prep · Grade 9</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&family=Young+Serif&display=swap">
@@ -189,13 +191,19 @@ h3{font-family:var(--f-display);font-weight:400;font-size:20px;margin:0 0 6px}
 b.ext{display:inline-block;font-size:11px;line-height:1;padding:3px 6px;border-radius:6px;background:var(--warn-soft);color:var(--warn);letter-spacing:.3px;vertical-align:1px}
 
 .qhead>span:first-child{text-transform:none;letter-spacing:.2px;font-size:14px}
+
+.sharebox{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:8px}
+.report{white-space:pre-wrap;font-family:var(--f-mono);font-size:13px;background:var(--chip);border-radius:10px;padding:10px 12px;margin:0;max-height:240px;overflow:auto}
+a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
+label.btn{display:inline-flex;align-items:center}
+.inp.plain{font-family:var(--f-body);font-size:18px}
 </style>
 </head>
 <body>
 <div class="page">
   <header class="top">
     <button class="brand" id="brand" aria-label="Home"><h1>End-Term Prep</h1><small>Grade 9</small></button>
-    <div class="tools"><button class="tgl" id="tRu" aria-pressed="false" title="Show Russian translation">RU</button><button class="tgl" id="tKb" aria-pressed="false" title="Use the device keyboard instead of the maths keypad">⌨ Keyboard</button></div>
+    <div class="tools"><button class="tgl" id="tRu" aria-pressed="false" title="Show Russian translation">RU</button><button class="tgl" id="tKb" aria-pressed="false" title="Use the device keyboard instead of the maths keypad">⌨</button><button class="tgl" id="tSet" title="Settings, backup, report">⚙</button></div>
   </header>
   <main id="app" style="display:flex;flex-direction:column;gap:14px"></main>
 </div>
@@ -209,7 +217,8 @@ function MErr(en, ru) { this.en = en; this.ru = ru; this.merr = true; }
 function normInput(s) {
   return String(s)
     .replace(/[−–—]/g, '-').replace(/[×·∙⋅]/g, '*').replace(/÷/g, '÷')
-    .replace(/²/g, '^2').replace(/³/g, '^3').replace(/⁴/g, '^4')
+    .replace(/[аеkкмортсуxх]/g, c => ({ 'а': 'a', 'е': 'e', 'к': 'k', 'м': 'm', 'о': 'o', 'р': 'p', 'т': 't', 'с': 'c', 'у': 'y', 'х': 'x' }[c] || c)).replace(/[ХX]/g, c => c === 'Х' ? 'X' : c)
+    .replace(/²/g, '^2').replace(/³/g, '^3').replace(/⁴/g, '^4').replace(/⁵/g, '^5').replace(/⁶/g, '^6').replace(/⁷/g, '^7').replace(/⁸/g, '^8').replace(/⁹/g, '^9').replace(/⁰/g, '^0').replace(/¹/g, '^1').replace(/⁻/g, '^-')
     .replace(/\*\*/g, '^').replace(/\s+/g, ' ').trim();
 }
 
@@ -273,6 +282,7 @@ function parse(src) {
     let a = pow();
     while (startsPrimary(peek())) {
       const prev = tk[p - 1], nx = peek();
+      if (prev.k === 'v' && nx.k === 'n' && (prev.v === 'x' || prev.v === 'X') && tk[p - 2] && tk[p - 2].k === 'n') throw new MErr('To multiply numbers use the × key (or *), not the letter x: ' + tk[p - 2].v + '×' + nx.v + '.', 'Для умножения используйте клавишу × (или *), а не букву x: ' + tk[p - 2].v + '×' + nx.v + '.');
       if (prev.k === 'v' && nx.k === 'n') throw new MErr('After the letter ' + prev.v + ' comes a number. For a power use ^ : ' + prev.v + '^' + nx.v + '.', 'После буквы ' + prev.v + ' стоит число. Степень пишут через ^ : ' + prev.v + '^' + nx.v + '.');
       if (prev.k === 'n' && nx.k === 'n') throw new MErr('Two numbers in a row. Put an operation between them.', 'Два числа подряд. Поставьте между ними знак действия.');
       if (prev.k === 'o' && prev.v === ')' && nx.k === 'n') throw new MErr('A number right after «)». Use ^ for a power or * to multiply.', 'Число сразу после «)». Для степени — ^, для умножения — *.');
@@ -699,6 +709,19 @@ function gradeApprox(spec, raw, v, K) {
 const R_OK = (msg) => ({ ok: true, msg: msg || null });
 const R_NO = (msg, extra) => Object.assign({ ok: false, msg: msg || null }, extra || {});
 
+/* In number-only answers, accept common ways of writing: x or х for ×, decimal comma, spaces in thousands, 3.5e4 */
+function numCandidates(raw, isList) {
+  let a = raw.replace(/\s*[xXхХ]\s*(?=\d)/g, (m, i) => /\d\s*$/.test(raw.slice(0, i)) || /\)\s*$/.test(raw.slice(0, i)) ? '*' : m)
+    .replace(/(\d)\s*[eE]\s*([-+]?\d+)\b/g, '$1*10^($2)')
+    .replace(/(\d) (?=\d{3}(?!\d))/g, '$1');
+  const out = [a];
+  if (/\d,\d/.test(a)) {
+    if (!isList || !/,\s/.test(a)) out.push(a.replace(/(\d),(\d)/g, '$1.$2'));
+    if (!isList && /^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(a)) out.push(a.replace(/,/g, ''));
+  }
+  return [...new Set(out)];
+}
+function bestOf(cands, f) { let first = null; for (const c of cands) { let g; try { g = f(c); } catch (e) { if (e && e.merr) g = R_NO(L(e.en, e.ru), { syntax: true }); else throw e; } if (g.ok) return g; if (!first || (first.syntax && !g.syntax)) first = g; } return first; }
 function grade(spec, input) {
   const raw = cleanAns(input || '');
   if (spec.k === 'mcq') { if (input == null || input === '') return R_NO(L('Choose an option.', 'Выберите вариант.'), { empty: true }); return +input === spec.c ? R_OK() : R_NO(); }
@@ -706,8 +729,8 @@ function grade(spec, input) {
   if (!raw) return R_NO(L('Type your answer.', 'Введите ответ.'), { empty: true });
   try {
     if (spec.k === 'expr') return gradeExpr(spec, raw);
-    if (spec.k === 'num') return gradeNum(spec, raw);
-    if (spec.k === 'sol') return gradeSol(spec, raw);
+    if (spec.k === 'num') return bestOf(numCandidates(raw, false), c => gradeNum(spec, c));
+    if (spec.k === 'sol') return bestOf(numCandidates(raw, true), c => gradeSol(spec, c));
     if (spec.k === 'subj') return gradeSubj(spec, raw);
   } catch (e) {
     if (e && e.merr) return R_NO(L(e.en, e.ru), { syntax: true });
@@ -724,7 +747,7 @@ function gradeExpr(spec, raw) {
   const A = parse(s), K = parse(spec.key);
   const vA = varsOf(A), vK = varsOf(K);
   const extra = [...vA].filter(v => !vK.has(v) && !(spec.vars || []).includes(v));
-  if (extra.length) return R_NO(L('Your answer contains ' + extra.join(', ') + ', which is not in the question.', 'В ответе есть ' + extra.join(', ') + ', которой нет в задании.'));
+  if (extra.length) { if (extra.includes('x') && /\dx\d|\d x \d|\dx \d|\d xd/.test(raw)) return R_NO(L('The letter x is a variable here. To multiply, use the × key (or *).', 'Буква x здесь — переменная. Для умножения используйте клавишу × (или *).'), { near: true }); return R_NO(L('Your answer contains ' + extra.join(', ') + ', which is not in the question.', 'В ответе есть ' + extra.join(', ') + ', которой нет в задании.')); }
   let same = equiv(A, K);
   if (!same && spec.anySign) same = equiv({ t: 'neg', a: A }, K);
   if (!same) {
@@ -2602,6 +2625,124 @@ p4: [
     L('Most of our energy comes originally from the Sun (fusion of hydrogen). Exceptions: geothermal and nuclear (radioactive materials), tides (the Moon).', 'Почти вся наша энергия изначально от Солнца (синтез водорода). Исключения: геотермальная и ядерная (радиоактивные вещества), приливы (Луна).')] }]
 };
 
+/* ===================== EXTRAS: report to tutor, settings, export/import, PWA ===================== */
+function pct(a, b) { return b ? Math.round(100 * a / b) : 0; }
+function examReport(ex, s) {
+  const sub = SUBJECTS.find(x => x.id === ex.subj) || { en: '' };
+  const who = DB.name ? DB.name : 'Student';
+  const mins = ex.t1 && ex.t0 ? Math.round((ex.t1 - ex.t0) / 60000) : null;
+  const lines = [];
+  lines.push('📘 ' + who + ' — ' + sub.en + ' mock exam (' + ex.mode + ')');
+  lines.push(new Date(ex.t1 || Date.now()).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) + (mins != null ? ' · ' + mins + ' min' : ''));
+  lines.push('Score: ' + s.sc + '/' + s.mx + ' (' + pct(s.sc, s.mx) + '%)');
+  lines.push('');
+  Object.keys(s.per).forEach(ch => { const [a, b] = s.per[ch]; const c = CH(ch); lines.push('• Ch ' + c.num + ' ' + c.en + ': ' + a + '/' + b + ' (' + pct(a, b) + '%)'); });
+  const weak = Object.entries(s.weak).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  if (weak.length) { lines.push(''); lines.push('Weak skills:'); weak.forEach(([id, n]) => { const k = SK(id); lines.push('– ' + k.code + ' ' + k.en + ' (' + n + ' wrong)'); }); }
+  const selfLeft = ex.items.reduce((n, q, qi) => n + q.parts.filter((it, pi) => it.ans.k === 'self' && ex.self[exField(qi, pi, 0)] == null).length, 0);
+  if (selfLeft) lines.push('(' + selfLeft + ' «show that» question(s) not self-marked yet)');
+  return lines.join('\n');
+}
+function progressReport() {
+  const who = DB.name ? DB.name : 'Student';
+  const lines = ['📊 ' + who + ' — progress', new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })];
+  SUBJECTS.filter(x => !x.soon).forEach(sub => {
+    const chs = CHAPTERS.filter(c => c.subj === sub.id);
+    const sk = SKILLS.filter(k => k.subj === sub.id);
+    const tried = sk.filter(k => DB.sk[k.id] && DB.sk[k.id].a);
+    if (!tried.length && !DB.exams.some(e => (e.subj || 'math') === sub.id)) return;
+    lines.push(''); lines.push(sub.en + ': ' + sk.filter(k => (DB.sk[k.id] || {}).m).length + '/' + sk.length + ' skills mastered');
+    chs.forEach(c => { const [m, n] = chProgress(c.id); const ks = sk.filter(k => k.ch === c.id); const a = ks.reduce((t, k) => t + ((DB.sk[k.id] || {}).a || 0), 0), ok = ks.reduce((t, k) => t + ((DB.sk[k.id] || {}).c || 0), 0); if (a) lines.push('• Ch ' + c.num + ' ' + c.en + ': ' + m + '/' + n + ' mastered, ' + ok + '/' + a + ' first-try correct'); });
+    const ex = DB.exams.filter(e => (e.subj || 'math') === sub.id).slice(-3);
+    if (ex.length) lines.push('Last exams: ' + ex.map(e => pct(e.score, e.max) + '%').join(', '));
+  });
+  return lines.join('\n');
+}
+function shareBlock(text) {
+  const enc = encodeURIComponent(text);
+  const wa = 'https://wa.me/' + (DB.tutorWa || '').replace(/[^\d]/g, '') + '?text=' + enc;
+  const tg = 'https://t.me/share/url?url=' + encodeURIComponent(' ') + '&text=' + enc;
+  window.__shareText = text;
+  return '<div class="sharebox"><h3>Send to tutor · Отправить репетитору</h3>' + (DB.name ? '' : '<p class="syn">' + tr(L('Tip: add your name in ⚙ Settings so your tutor knows who sent it.', 'Совет: впишите своё имя в ⚙ Настройках, чтобы репетитор знал, от кого отчёт.')) + '</p>') +
+    '<pre class="report">' + esc(text) + '</pre><div class="row">' +
+    (navigator.share ? '<button class="btn primary" onclick="navigator.share({text: window.__shareText}).catch(()=>{})">Share…</button>' : '') +
+    '<a class="btn" href="' + wa + '" target="_blank" rel="noopener">WhatsApp</a><a class="btn" href="' + tg + '" target="_blank" rel="noopener">Telegram</a>' +
+    '<button class="btn ghost" onclick="copyText(window.__shareText)">Copy</button></div></div>';
+}
+function copyText(t) {
+  const done = () => toast('Copied · Скопировано');
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, () => fallbackCopy(t, done)); else fallbackCopy(t, done);
+}
+function fallbackCopy(t, cb) { const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); try { document.execCommand('copy'); cb(); } catch (e) {} a.remove(); }
+
+/* ---------- settings ---------- */
+function viewSettings() {
+  let h = crumbs([['Home', '#/'], ['Settings']]);
+  h += '<section class="card"><h2>Settings · Настройки</h2>';
+  h += '<div class="ansbox"><label for="stName">Your name · Ваше имя</label><input class="inp plain" id="stName" value="' + esc(DB.name || '') + '" placeholder="e.g. Alex" autocomplete="name"></div>';
+  h += '<div class="ansbox" style="margin-top:10px"><label for="stWa">Tutor’s WhatsApp number (optional) · Номер WhatsApp репетитора (необязательно)</label><input class="inp plain" id="stWa" inputmode="tel" value="' + esc(DB.tutorWa || '') + '" placeholder="+62…"><div class="syn">' + tr(L('If filled in, the WhatsApp button opens the chat with your tutor directly.', 'Если указать, кнопка WhatsApp сразу откроет чат с репетитором.')) + '</div></div>';
+  h += '<div class="row" style="margin-top:10px"><button class="btn primary" id="stSave">Save</button></div></section>';
+  h += '<section class="card"><h3>Progress report · Отчёт о прогрессе</h3>' + shareBlock(progressReport()).replace('<h3>Send to tutor · Отправить репетитору</h3>', '') + '</section>';
+  h += '<section class="card"><h3>Move progress to another device · Перенести прогресс</h3><p class="muted">' + tr(L('Save a backup file on this device, send it to the other device (e.g. in Telegram «Saved messages»), and load it there. Loading merges with the progress already on that device.', 'Сохраните файл на этом устройстве, перешлите его на другое (например, в «Избранное» Telegram) и загрузите там. Загрузка объединяет данные с прогрессом, который уже есть на том устройстве.')) + '</p>';
+  h += '<div class="row"><button class="btn primary" id="stExp">⬇ Save backup file</button><label class="btn" for="stImp">⬆ Load backup file</label><input type="file" id="stImp" accept=".json,application/json" hidden></div></section>';
+  h += '<section class="card"><h3>Install the app · Установка</h3><p class="muted">' + tr(L(isStandalone() ? 'The app is installed. It works offline.' : 'Android (Chrome): menu ⋮ → «Install app» / «Add to Home screen». After that it opens like an app and works without internet.', isStandalone() ? 'Приложение установлено и работает без интернета.' : 'Android (Chrome): меню ⋮ → «Установить приложение» / «Добавить на главный экран». После этого оно открывается как приложение и работает без интернета.')) + '</p>' + (window.__installEvt ? '<button class="btn primary" id="stInst">Install now</button>' : '') + '<p class="meta">Version ' + APP_VERSION + '</p></section>';
+  shell(h);
+  $('#stSave').onclick = () => { DB.name = $('#stName').value.trim(); DB.tutorWa = $('#stWa').value.trim(); save(); toast('Saved · Сохранено'); viewSettings(); };
+  $('#stExp').onclick = exportProgress;
+  $('#stImp').onchange = e => { const f = e.target.files[0]; if (f) importProgress(f); };
+  if ($('#stInst')) $('#stInst').onclick = () => { window.__installEvt.prompt(); window.__installEvt = null; };
+}
+function exportProgress() {
+  const data = { app: 'endterm-g9', v: 1, exported: new Date().toISOString(), db: { sk: DB.sk, exams: DB.exams, name: DB.name, tutorWa: DB.tutorWa, ru: DB.ru, subj: DB.subj } };
+  const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+  const nm = 'endterm-progress' + (DB.name ? '-' + DB.name.replace(/[^\wа-яА-Я-]+/g, '_') : '') + '-' + new Date().toISOString().slice(0, 10) + '.json';
+  const file = new File([blob], nm, { type: 'application/json' });
+  if (navigator.canShare && navigator.canShare({ files: [file] }) && matchMedia('(pointer:coarse)').matches) { navigator.share({ files: [file], title: nm }).catch(() => dl(blob, nm)); return; }
+  dl(blob, nm);
+}
+function dl(blob, nm) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nm; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); toast('Saved: ' + nm); }
+function importProgress(f) {
+  const rd = new FileReader();
+  rd.onload = () => {
+    let d; try { d = JSON.parse(rd.result); } catch (e) { return toast('This is not a backup file'); }
+    if (!d || d.app !== 'endterm-g9' || !d.db) return toast('This is not a backup file of this app');
+    const src = d.db;
+    Object.keys(src.sk || {}).forEach(id => {
+      const a = DB.sk[id], b = src.sk[id];
+      if (!a) { DB.sk[id] = b; return; }
+      DB.sk[id] = { a: Math.max(a.a, b.a), c: Math.max(a.c, b.c), s: Math.max(a.s, b.s), m: a.m || b.m };
+    });
+    const seen = new Set(DB.exams.map(e => e.date + ':' + e.score));
+    (src.exams || []).forEach(e => { if (!seen.has(e.date + ':' + e.score)) DB.exams.push(e); });
+    DB.exams.sort((x, y) => x.date - y.date);
+    if (!DB.name && src.name) DB.name = src.name;
+    if (!DB.tutorWa && src.tutorWa) DB.tutorWa = src.tutorWa;
+    save(); toast('Progress loaded · Прогресс загружен'); viewSettings();
+  };
+  rd.readAsText(f);
+}
+
+/* ---------- PWA ---------- */
+const APP_VERSION = '20261110-0850';
+function isStandalone() { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.__installEvt = e; });
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing; if (!nw) return;
+        nw.addEventListener('statechange', () => { if (nw.state === 'installed' && navigator.serviceWorker.controller) showUpdate(); });
+      });
+    }).catch(() => {});
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded) return; reloaded = true; location.reload(); });
+  });
+}
+function showUpdate() {
+  const t = $('#toast'); t.innerHTML = 'New version available · Есть обновление <button class="btn small" style="margin-left:8px" id="upd">Update</button>'; t.hidden = false;
+  $('#upd').onclick = () => navigator.serviceWorker.getRegistration().then(r => { if (r && r.waiting) r.waiting.postMessage('skip'); else location.reload(); });
+}
+
 /* ===================== APP ===================== */
 const STORE = 'g9-endterm-math-v1';
 let DB = { sk: {}, exams: [], ru: false, kbd: false, cur: null };
@@ -2736,6 +2877,7 @@ function route() {
   const [a, b] = h.split('/');
   if (a === 'ch') return viewChapter(b);
   if (a === 's') { DB.subj = b; save(); return viewHome(); }
+  if (a === 'settings') return viewSettings();
   if (a === 'p') return viewPractice(decodeURIComponent(b));
   if (a === 'exam') return b === 'run' ? viewExamRun() : b === 'res' ? viewExamResult() : viewExamSetup();
   return viewHome();
@@ -2879,7 +3021,7 @@ function wireFields(root) {
 }
 const KEYS = [
   ['7'], ['8'], ['9'], ['+', 'op'], ['−', 'op', '-'], ['(', 'op'], [')', 'op'], ['^', 'op'], ['⌫', 'op', 'BK'],
-  ['4'], ['5'], ['6'], ['×', 'op', '*'], ['/', 'op'], ['√', 'op'], ['∛', 'op'], ['x²', 'op', '^2'], ['±', 'op'],
+  ['4'], ['5'], ['6'], ['×', 'op', '×'], ['/', 'op'], ['√', 'op'], ['∛', 'op'], ['x²', 'op', '^2'], ['±', 'op'],
   ['1'], ['2'], ['3'], ['0'], ['.'], [',', 'op', ', '], ['=', 'op'], ['␣', 'op', ' '], ['←', 'op', 'L']];
 function showKb(vars, spec) {
   const kb = $('#kb');
@@ -2956,7 +3098,7 @@ function buildExam(seed, chs, mode) {
 }
 let EX = null; let saveT = null;
 function saveExamSoon() { clearTimeout(saveT); saveT = setTimeout(saveExam, 400); }
-function saveExam() { if (!EX) return; DB.cur = { subj: EX.subj, seed: EX.seed, chs: EX.chs, mode: EX.mode, vals: EX.vals, self: EX.self, t0: EX.t0, done: EX.done }; save(); }
+function saveExam() { if (!EX) return; DB.cur = { subj: EX.subj, seed: EX.seed, chs: EX.chs, mode: EX.mode, vals: EX.vals, self: EX.self, t0: EX.t0, t1: EX.t1, done: EX.done }; save(); }
 function startExam(chs, mode) {
   const seed = (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0;
   EX = { subj: subjOf(chs[0]), seed, chs, mode, vals: {}, self: {}, t0: Date.now(), done: false };
@@ -3054,6 +3196,7 @@ function viewExamResult() {
   h += '<table class="tbl"><tr><th>Chapter</th><th>Score</th></tr>' + Object.keys(s.per).map(ch => { const [a, b] = s.per[ch]; const q = Math.round(100 * a / b); const c = CH(ch); return '<tr><td>' + c.num + '. ' + esc(c.en) + '</td><td><span class="pill ' + (q >= 80 ? 'g' : q >= 55 ? 'y' : 'r') + '">' + a + '/' + b + '</span></td></tr>'; }).join('') + '</table>';
   const weak = Object.entries(s.weak).sort((a, b) => b[1] - a[1]).slice(0, 8);
   if (weak.length) h += '<h3 style="margin-top:12px">Practise next · Что потренировать</h3><div class="row">' + weak.map(([id, n]) => '<button class="btn small" onclick="go(\'#/p/' + id + '\')">' + id + ' ' + esc(SK(id).en) + ' (' + n + '✗)</button>').join('') + '</div>';
+  h += shareBlock(examReport(ex, s));
   h += '<div class="row" style="margin-top:12px"><button class="btn primary" onclick="startExam(EX.chs, EX.mode)">New exam, same settings</button><button class="btn" onclick="go(\'#/exam\')">Exam settings</button></div></section>';
   h += renderExamBody(ex, true);
   shell(h);
@@ -3067,6 +3210,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#tRu').onclick = () => { DB.ru = !DB.ru; save(); syncHeader(); if (P && location.hash.startsWith('#/p/')) { collectVals($('#app')); renderPracticeKeep(); } else { const y = scrollY; route(); scrollTo(0, y); } };
   $('#tKb').onclick = () => { DB.kbd = !DB.kbd; save(); syncHeader(); hideKb(); $$('input.inp').forEach(i => i.inputMode = DB.kbd ? 'text' : 'none'); toast(DB.kbd ? 'Device keyboard on' : 'Maths keypad on'); };
   $('#brand').onclick = () => go('#/');
+  $('#tSet').onclick = () => go('#/settings');
   syncHeader(); route();
 });
 
