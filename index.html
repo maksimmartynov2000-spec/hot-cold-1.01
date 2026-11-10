@@ -432,6 +432,17 @@ details.syn summary{cursor:pointer;color:var(--accent);font-weight:700}
 .badge.got[data-s] .bm{background:linear-gradient(145deg,var(--sc),color-mix(in srgb,var(--sc) 70%,#000));color:#fff;box-shadow:0 4px 12px color-mix(in srgb,var(--sc) 35%,transparent)}
 .badge:not(.got){opacity:.78}
 @media (max-width:370px){.badges{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.rcard{display:flex;align-items:center;gap:12px}
+.rcard .lt{flex:1;display:flex;flex-direction:column;min-width:0}
+.rcard .lt .muted{font-size:14px;line-height:1.35}
+.rcard.late{border-color:var(--accent);background:linear-gradient(135deg,var(--accent-soft),var(--card) 80%)}
+.rcard.sent .lic{background:var(--ok-soft);color:var(--ok)}
+.guide{border-color:var(--accent);background:linear-gradient(135deg,var(--accent-soft),var(--card) 85%)}
+.gsteps{margin:6px 0 8px;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.rsec{font-size:15px;line-height:1.45;margin-top:6px}
+.rsec .up{color:var(--ok);font-weight:700}.rsec .dn{color:var(--bad);font-weight:700}
+textarea.inp{resize:vertical;font-size:17px;line-height:1.4}
+.btn.wide .ico{width:20px;height:20px}
 </style>
 </head>
 <body>
@@ -471,7 +482,7 @@ details.syn summary{cursor:pointer;color:var(--accent);font-weight:700}
 <nav class="tabbar" aria-label="Разделы">
   <button class="tab"><svg class="ico" viewBox="0 0 24 24"><path d="M3.5 11 12 3.8l8.5 7.2V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z"/></svg><span>Сегодня</span></button>
   <button class="tab"><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg><span>Предметы</span></button>
-  <button class="tab"><svg class="ico" viewBox="0 0 24 24"><rect x="5" y="4.5" width="14" height="17" rx="2.5"/><path d="M9 3h6v3H9zM8.8 13.5l2.2 2.2 4.4-4.4"/></svg><span>Экзамен</span></button>
+  <button class="tab"><svg class="ico" viewBox="0 0 24 24"><rect x="5" y="4.5" width="14" height="17" rx="2.5"/><path d="M9 3h6v3H9zM8.8 13.5l2.2 2.2 4.4-4.4"/></svg><span>Пробники</span></button>
   <button class="tab"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20V11M10 20V5M16 20v-6M2.5 20.5h19"/></svg><span>Прогресс</span></button>
 </nav>
 <div class="kb" id="kb" hidden></div>
@@ -5285,7 +5296,7 @@ function examReport(ex, s) {
   const who = DB.name ? DB.name : 'Ученик';
   const mins = ex.t1 && ex.t0 ? Math.round((ex.t1 - ex.t0) / 60000) : null;
   const lines = [];
-  lines.push('📘 ' + who + ' — пробный экзамен, ' + sub.ru + ' (' + (MODE_RU[ex.mode] || ex.mode) + ')');
+  lines.push('📘 ' + who + ' — пробник, ' + sub.ru + ' (' + (MODE_RU[ex.mode] || ex.mode) + ')');
   lines.push(new Date(ex.t1 || Date.now()).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) + (mins != null ? ' · ' + mins + ' мин' : ''));
   lines.push('Результат: ' + s.sc + ' из ' + s.mx + ' (' + pct(s.sc, s.mx) + '%)');
   if (ex.early) { const pg = examProgress(ex); lines.push('Завершён досрочно: решено ' + pg.ans + ' из ' + pg.tot + '; из решённого верно ' + pg.ok + ' (' + pct(pg.ok, pg.ans) + '%)'); }
@@ -5310,14 +5321,14 @@ function progressReport() {
     lines.push(''); lines.push(sub.ru + ': освоено навыков ' + sk.filter(k => (DB.sk[k.id] || {}).m).length + ' из ' + sk.length);
     chs.forEach(c => { const [m, n] = chProgress(c.id); const ks = sk.filter(k => k.ch === c.id); const a = ks.reduce((t, k) => t + ((DB.sk[k.id] || {}).a || 0), 0), ok = ks.reduce((t, k) => t + ((DB.sk[k.id] || {}).c || 0), 0); if (a) lines.push('• Гл. ' + c.num + ' ' + c.ru + ': освоено ' + m + '/' + n + ', с первой попытки верно ' + ok + ' из ' + a); });
     const ex = DB.exams.filter(e => (e.subj || 'math') === sub.id).slice(-3);
-    if (ex.length) lines.push('Последние экзамены: ' + ex.map(e => pct(e.score, e.max) + '%').join(', '));
+    if (ex.length) lines.push('Последние пробники: ' + ex.map(e => pct(e.score, e.max) + '%').join(', '));
   });
   if (!any) lines.push('', 'Пока нет решённых заданий.');
   return lines.join('\n');
 }
 function shareBlock(text, title) {
   const enc = encodeURIComponent(text);
-  const wa = 'https://wa.me/' + (DB.tutorWa || '').replace(/[^\d]/g, '') + '?text=' + enc;
+  const wa = 'https://wa.me/' + (DB.tutorWa || TUTOR_WA).replace(/[^\d]/g, '') + '?text=' + enc;
   const tg = 'https://t.me/share/url?url=' + encodeURIComponent(' ') + '&text=' + enc;
   window.__shareText = text;
   return '<div class="sharebox"><h3>' + (title || 'Отправить результат репетитору') + '</h3>' +
@@ -5338,11 +5349,13 @@ function viewSettings() {
   let h = crumbs([['Главная', '#/'], ['Настройки']]);
   h += '<section class="card">';
   h += '<div class="ansbox"><label for="stName">Ваше имя</label><input class="inp plain" id="stName" value="' + esc(DB.name || '') + '" placeholder="например, Тая" autocomplete="name"><div class="syn">Имя попадёт в отчёты, которые вы отправляете репетитору.</div></div>';
-  h += '<div class="ansbox" style="margin-top:10px"><label for="stWa">Номер WhatsApp репетитора (необязательно)</label><input class="inp plain" id="stWa" inputmode="tel" value="' + esc(DB.tutorWa || '') + '" placeholder="+62…"><div class="syn">Если указать номер, кнопка WhatsApp сразу откроет чат с репетитором. Без номера WhatsApp предложит выбрать, кому отправить.</div></div>';
+  h += '<div class="ansbox" style="margin-top:10px"><label for="stWa">Номер WhatsApp репетитора (необязательно)</label><input class="inp plain" id="stWa" inputmode="tel" value="' + esc(DB.tutorWa || '') + '" placeholder="+62 813 3875 4531 (Максим)"><div class="syn">Если указать номер, кнопка WhatsApp сразу откроет чат с репетитором. Без номера WhatsApp предложит выбрать, кому отправить.</div></div>';
   h += '<div class="row" style="margin-top:10px"><button class="btn primary" id="stSave">Сохранить</button></div></section>';
   h += '<section class="card"><h3>Отчёт о прогрессе</h3>' + shareBlock(progressReport(), 'Отправить отчёт репетитору').replace('Это короткий отчёт для репетитора: результат, баллы по главам и темы, где были ошибки.', 'Это общий отчёт для репетитора: сколько навыков освоено по каждому предмету и главе и результаты последних экзаменов.') + '</section>';
   h += '<section class="card"><h3>Перенести прогресс на другое устройство</h3><p class="muted">Прогресс хранится только на этом устройстве. Чтобы продолжить на планшете или другом телефоне:</p><ol class="steps"><li>Нажмите «Сохранить файл прогресса» — появится маленький файл.</li><li>Перешлите его себе на другое устройство (например, в «Избранное» Telegram).</li><li>Откройте приложение там, зайдите в ⚙ Настройки и нажмите «Загрузить файл прогресса».</li></ol><p class="syn">При загрузке ничего не стирается: прогресс из файла объединяется с тем, что уже есть на устройстве. Файл заодно служит резервной копией.</p>';
-  h += '<div class="row"><button class="btn primary" id="stExp">⬇ Сохранить файл прогресса</button><label class="btn" for="stImp">⬆ Загрузить файл прогресса</label><input type="file" id="stImp" accept=".json,application/json" hidden></div></section>';
+  h += '<div class="row"><button class="btn primary" id="stExp">⬇ Сохранить файл прогресса</button><label class="btn" for="stImp">⬆ Загрузить файл прогресса</label><input type="file" id="stImp" accept=".json,.pdf,application/json,application/pdf" hidden></div><p class="meta">Загрузить можно и любой PDF-отчёт за день — в нём есть копия прогресса на момент отправки.</p></section>';
+  h += '<button class="card prow" onclick="go(\'#/sync\')"><span class="lic">' + ico('send') + '</span><span class="lt"><b>Перенос прогресса кодом</b><span class="muted">скопировать или вставить код, профили учеников</span></span></button>';
+  h += tgSetupHtml();
   h += '<section class="card"><h3>Цель на день</h3><p class="muted">Сколько заданий решать в день. Серия дней растёт, когда цель выполнена.</p><div class="row">' + [10, 15, 20, 30].map(n => '<button class="btn' + (GOAL() === n ? ' primary' : '') + '" onclick="DB.goal=' + n + ';save();viewSettings()">' + n + '</button>').join('') + '</div></section>';
   h += '<section class="card"><h3>Отклик</h3><div class="row"><button class="btn' + (DB.vib !== false ? ' primary' : '') + '" onclick="DB.vib=true;save();vib(20);viewSettings()">Вибрация включена</button><button class="btn' + (DB.vib === false ? ' primary' : '') + '" onclick="DB.vib=false;save();viewSettings()">Без вибрации</button></div><p class="meta">Короткая вибрация при проверке ответа. Работает на Android; браузер на iPhone вибрацию не поддерживает.</p>';
   h += '<div class="row" style="margin-top:8px"><button class="btn' + (!DB.kbd ? ' primary' : '') + '" onclick="DB.kbd=false;save();syncHeader();viewSettings()">Математическая клавиатура</button><button class="btn' + (DB.kbd ? ' primary' : '') + '" onclick="DB.kbd=true;save();syncHeader();viewSettings()">Обычная клавиатура</button></div><p class="meta">Переключить можно и кнопкой с клавиатурой вверху во время задания.</p></section>';
@@ -5350,12 +5363,12 @@ function viewSettings() {
   h += '<section class="card"><h3>Установка приложения</h3><p class="muted">' + (isStandalone() ? 'Приложение открыто с рабочего стола.' : 'Чтобы открывать приложение с иконки, как обычное:<br>• <b>iPhone / iPad</b> (Safari): «Поделиться» (на iPad — вверху справа) → «На экран «Домой»».<br>• <b>Android</b> (Chrome): меню ⋮ → «Добавить на главный экран» → «Установить». В Samsung Internet: ≡ → «Добавить страницу» → «Главный экран».<br>На iPhone и iPad прогресс в Safari и в приложении с иконки хранится отдельно — поэтому лучше сразу заниматься через иконку. Для работы нужен интернет.') + '</p>' + (window.__installEvt ? '<button class="btn primary" id="stInst">Установить сейчас</button>' : '') + '<p class="meta">Версия ' + APP_VERSION + '</p></section>';
   shell(h);
   $('#stSave').onclick = () => { DB.name = $('#stName').value.trim(); DB.tutorWa = $('#stWa').value.trim(); save(); toast('Сохранено'); viewSettings(); };
-  $('#stExp').onclick = exportProgress;
+  $('#stExp').onclick = exportProgress; wireTgSetup();
   $('#stImp').onchange = e => { const f = e.target.files[0]; if (f) importProgress(f); };
   if ($('#stInst')) $('#stInst').onclick = () => { window.__installEvt.prompt(); window.__installEvt = null; };
 }
 function exportProgress() {
-  const data = { app: 'endterm-g9', v: 1, exported: new Date().toISOString(), db: { sk: DB.sk, sc: DB.sc, scr: DB.scr, exams: DB.exams, name: DB.name, tutorWa: DB.tutorWa, ru: DB.ru, subj: DB.subj, days: DB.days, goal: DB.goal, badges: DB.badges, runBest: DB.runBest, vib: DB.vib, theme: DB.theme } };
+  const data = backupData();
   const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
   const nm = 'endterm-progress' + (DB.name ? '-' + DB.name.replace(/[^\wа-яА-Я-]+/g, '_') : '') + '-' + new Date().toISOString().slice(0, 10) + '.json';
   const file = new File([blob], nm, { type: 'application/json' });
@@ -5366,31 +5379,19 @@ function dl(blob, nm) { const a = document.createElement('a'); a.href = URL.crea
 function importProgress(f) {
   const rd = new FileReader();
   rd.onload = () => {
-    let d; try { d = JSON.parse(rd.result); } catch (e) { return toast('Это не файл прогресса'); }
+    const u8 = new Uint8Array(rd.result); let txt;
+    if (u8[0] === 0x25 && u8[1] === 0x50 && u8[2] === 0x44 && u8[3] === 0x46) { txt = backupFromPdfBytes(u8); if (!txt) return toast('В этом PDF нет резервной копии'); }
+    else txt = new TextDecoder().decode(u8);
+    let d; try { d = JSON.parse(txt); } catch (e) { return toast('Это не файл прогресса'); }
     if (!d || d.app !== 'endterm-g9' || !d.db) return toast('Это не файл прогресса этого приложения');
-    const src = d.db;
-    Object.keys(src.sc || {}).forEach(id => { const a = DB.sc[id], b = src.sc[id]; DB.sc[id] = !a ? b : { n: Math.max(a.n, b.n), rd: Math.max(a.rd, b.rd) }; });
-    Object.keys(src.scr || {}).forEach(ch => { DB.scr[ch] = Math.max(DB.scr[ch] || 1, src.scr[ch]); });
-    Object.keys(src.sk || {}).forEach(id => {
-      const a = DB.sk[id], b = src.sk[id];
-      if (!a) { DB.sk[id] = b; return; }
-      DB.sk[id] = { a: Math.max(a.a, b.a), c: Math.max(a.c, b.c), s: Math.max(a.s, b.s), m: a.m || b.m };
-    });
-    const seen = new Set(DB.exams.map(e => e.date + ':' + e.score));
-    (src.exams || []).forEach(e => { if (!seen.has(e.date + ':' + e.score)) DB.exams.push(e); });
-    DB.exams.sort((x, y) => x.date - y.date);
-    DB.days = DB.days || {}; Object.keys(src.days || {}).forEach(k => { DB.days[k] = Math.max(DB.days[k] || 0, src.days[k]); });
-    if (!DB.goal && src.goal) DB.goal = src.goal;
-    DB.badges = Object.assign({}, src.badges || {}, DB.badges || {}); DB.runBest = Math.max(DB.runBest || 0, src.runBest || 0);
-    if (!DB.name && src.name) DB.name = src.name;
-    if (!DB.tutorWa && src.tutorWa) DB.tutorWa = src.tutorWa;
-    save(); toast('Прогресс загружен'); viewSettings();
+    const sw = applyBackup(d.db);
+    toast(sw ? 'Открыт профиль «' + (d.db.name || 'ученик') + '», прогресс загружен' : 'Прогресс загружен'); go('#/'); route();
   };
-  rd.readAsText(f);
+  rd.readAsArrayBuffer(f);
 }
 
 /* ---------- PWA ---------- */
-const APP_VERSION = '20261110-1405';
+const APP_VERSION = '20261110-1448';
 function isStandalone() { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.__installEvt = e; });
 if ('serviceWorker' in navigator) { navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())).catch(() => {}); if (window.caches) caches.keys().then(ks => ks.filter(x => x.startsWith('endterm-')).forEach(x => caches.delete(x))).catch(() => {}); }
@@ -5412,7 +5413,7 @@ function showUpdate() {
 }
 
 /* ===================== MOTIVATION: readiness, plan to the exams, badges ===================== */
-/* readiness = 60 % skills mastered + 15 % «Как в школе» done + 25 % latest mock exam */
+/* readiness = 60 % skills mastered + 15 % «Подобные задания» done + 25 % latest mock exam */
 function ready(id) {
   const sk = SKILLS.filter(s => s.subj === id); const m = sk.filter(s => isM(s.id)).length;
   const sc = SCHOOL.filter(t => t.subj === id); const sd = sc.filter(scDone).length;
@@ -5420,7 +5421,7 @@ function ready(id) {
   const p = Math.round(100 * (0.6 * (sk.length ? m / sk.length : 0) + 0.15 * (sc.length ? sd / sc.length : 0) + 0.25 * ep));
   return { p, m, n: sk.length, sd, sn: sc.length, ep: e ? Math.round(100 * ep) : null };
 }
-const readyNote = r => 'навыки ' + r.m + '/' + r.n + ' · в школе ' + r.sd + '/' + r.sn + ' · пробный ' + (r.ep == null ? 'не было' : r.ep + '%');
+const readyNote = r => 'навыки ' + r.m + '/' + r.n + ' · в школе ' + r.sd + '/' + r.sn + ' · пробник ' + (r.ep == null ? 'не было' : r.ep + '%');
 
 /* ---------- plan by days until the last exam ---------- */
 function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
@@ -5442,7 +5443,7 @@ function planBuild(from, exclude) {
 }
 function todayPlan() {
   const k = ymd(new Date());
-  if (!DB.plan || DB.plan.d !== k) { const p = planBuild(0).days[0]; DB.plan = { d: k, sk: p ? p.items.flatMap(x => x.sk.map(s => s.id)) : [], mocks: p ? p.mocks : [], exams: p ? p.exams : [] }; save(); }
+  if (!DB.plan || DB.plan.d !== k) { const p = planBuild(0).days[0]; DB.plan = { d: k, sk: p ? p.items.flatMap(x => x.sk.map(s => s.id)) : [], mocks: p ? p.mocks : [], exams: p ? p.exams : [] }; DB.planH = DB.planH || {}; DB.planH[k] = { sk: DB.plan.sk, mocks: DB.plan.mocks }; Object.keys(DB.planH).sort().slice(0, -40).forEach(x => delete DB.planH[x]); save(); }
   return DB.plan;
 }
 function planCardHtml() {
@@ -5451,22 +5452,22 @@ function planCardHtml() {
   const tot = tp.sk.length + mk.length, ok = done + mk.filter(x => x.ok).length;
   let h = '<section class="card"><div class="row" style="justify-content:space-between;align-items:baseline"><h3 style="margin:0">План на сегодня</h3><span class="meta">' + ok + ' из ' + tot + '</span></div>';
   if (tp.exams.length) h += '<div class="planex">Сегодня экзамен: ' + tp.exams.map(s => esc(SUBJ(s).ru)).join(' и ') + '. Удачи!</div>';
-  h += '<div class="lst" style="margin-top:8px">' + mk.map(x => '<button class="lrow' + (x.ok ? ' done' : '') + '" data-s="' + x.s + '" onclick="DB.subj=\'' + x.s + '\';save();go(\'#/exam\')"><span class="lic">' + ico('exam') + '</span><span class="lt"><b>Пробный экзамен · ' + esc(SUBJ(x.s).ru) + '</b><span class="ru">завтра экзамен — проверьте себя целиком</span></span>' + (x.ok ? '<span class="ok">' + ico('check') + '</span>' : '') + '</button>').join('') + tp.sk.map(id => { const s = SK(id); return s ? skRow(s, isM(id) ? '<span class="ok">' + ico('check') + '</span>' : null) : ''; }).join('') + '</div>';
+  h += '<div class="lst" style="margin-top:8px">' + mk.map(x => '<button class="lrow' + (x.ok ? ' done' : '') + '" data-s="' + x.s + '" onclick="DB.subj=\'' + x.s + '\';save();go(\'#/exam\')"><span class="lic">' + ico('exam') + '</span><span class="lt"><b>Пробник · ' + esc(SUBJ(x.s).ru) + '</b><span class="ru">завтра экзамен — проверьте себя целиком</span></span>' + (x.ok ? '<span class="ok">' + ico('check') + '</span>' : '') + '</button>').join('') + tp.sk.map(id => { const s = SK(id); return s ? skRow(s, isM(id) ? '<span class="ok">' + ico('check') + '</span>' : null) : ''; }).join('') + '</div>';
   if (ok === tot && tot) h += '<p class="syn" style="margin-top:8px">План на сегодня выполнен. Можно отдохнуть или заглянуть в план на завтра.</p>';
   return h + '<div class="row" style="margin-top:8px"><button class="btn ghost small" onclick="go(\'#/plan\')">Весь план до ' + dateRu(EXD[PLAN_SUBJ().sort((a, b) => daysTo(EXD[b]) - daysTo(EXD[a]))[0] || 'bio']) + ' →</button></div></section>';
 }
 function viewPlan() {
   const tp = todayPlan(); const P0 = planBuild(1, new Set(tp.sk)); const cap = Math.max(3, Math.round(GOAL() / 3));
-  let h = '<section class="card"><p class="muted" style="margin:0">План пересчитывается каждый день по тому, что уже освоено: пропущенное само переезжает на следующие дни. Ближайшие экзамены идут первыми, накануне каждого — пробный экзамен. Сейчас в день примерно ' + cap + ' ' + plural(cap, 'навык', 'навыка', 'навыков') + ' (цель дня ' + GOAL() + ' заданий).</p>';
+  let h = '<section class="card"><p class="muted" style="margin:0">План пересчитывается каждый день по тому, что уже освоено: пропущенное само переезжает на следующие дни. Ближайшие экзамены идут первыми, накануне каждого — пробник. Сейчас в день примерно ' + cap + ' ' + plural(cap, 'навык', 'навыка', 'навыков') + ' (цель дня ' + GOAL() + ' заданий).</p>';
   const bh = Object.keys(P0.behind);
   if (bh.length) { const need = bh.reduce((t, s) => t + P0.behind[s], 0); const g0 = DB.goal; let rec = null; for (let g = GOAL() + 5; g <= 60; g += 5) { DB.goal = g; if (!Object.keys(planBuild(1, new Set(tp.sk)).behind).length) { rec = g; break; } } DB.goal = g0;
-    h += '<div class="planwarn">В этом темпе до экзаменов не хватит дней ещё на ' + need + ' ' + plural(need, 'навык', 'навыка', 'навыков') + ' (' + bh.map(s => esc(SUBJ(s).ru) + ' ' + P0.behind[s]).join(', ') + '). Знакомый навык осваивается за 3 задания, поэтому на деле темп часто выше. ' + (rec ? 'Чтобы план покрыл всё, нужна цель около ' + rec + ' заданий в день.' : 'Покрыть всё не получится — сначала идите по слабым темам и пробным экзаменам.') + '</div>' + (rec ? '<div class="row" style="margin-top:8px"><button class="btn small" onclick="DB.goal=' + rec + ';DB.plan=null;save();viewPlan();toast(\'Цель дня: ' + rec + ' заданий\')">Поставить цель ' + rec + '</button></div>' : ''); }
+    h += '<div class="planwarn">В этом темпе до экзаменов не хватит дней ещё на ' + need + ' ' + plural(need, 'навык', 'навыка', 'навыков') + ' (' + bh.map(s => esc(SUBJ(s).ru) + ' ' + P0.behind[s]).join(', ') + '). Знакомый навык осваивается за 3 задания, поэтому на деле темп часто выше. ' + (rec ? 'Чтобы план покрыл всё, нужна цель около ' + rec + ' заданий в день.' : 'Покрыть всё не получится — сначала идите по слабым темам и пробникам.') + '</div>' + (rec ? '<div class="row" style="margin-top:8px"><button class="btn small" onclick="DB.goal=' + rec + ';DB.plan=null;save();viewPlan();toast(\'Цель дня: ' + rec + ' заданий\')">Поставить цель ' + rec + '</button></div>' : ''); }
   h += '</section><div class="lst">';
   P0.days.forEach(day => {
     const wd = day.d.toLocaleDateString('ru-RU', { weekday: 'short' }); const lab = day.i === 1 ? 'завтра' : wd;
     let b = '';
     day.exams.forEach(s => b += '<div class="pi ex" data-s="' + s + '">' + ico(s) + '<b>Экзамен: ' + esc(SUBJ(s).ru) + '</b></div>');
-    day.mocks.forEach(s => b += '<div class="pi" data-s="' + s + '">' + ico('exam') + '<span><b>Пробный экзамен · ' + esc(SUBJ(s).ru) + '</b></span></div>');
+    day.mocks.forEach(s => b += '<div class="pi" data-s="' + s + '">' + ico('exam') + '<span><b>Пробник · ' + esc(SUBJ(s).ru) + '</b></span></div>');
     day.items.forEach(x => { const byCh = {}; x.sk.forEach(k => (byCh[k.ch] = byCh[k.ch] || []).push(k.code)); b += '<div class="pi" data-s="' + x.s + '">' + ico(x.s) + '<span><b>' + esc(SUBJ(x.s).ru) + '</b> · ' + Object.keys(byCh).map(c => 'гл. ' + CH(c).num + ': ' + byCh[c].join(', ')).join('; ') + '</span></div>'; });
     if (!b) b = '<div class="pi muted">Свободный день — повторите то, где были ошибки.</div>';
     h += '<div class="card pday"><div class="pd"><b>' + day.d.getDate() + '</b><small>' + lab + '</small></div><div class="pb">' + b + '</div></div>';
@@ -5499,11 +5500,11 @@ function badgeList() {
     { id: 'run20', ic: 'target', t: 'Точность', d: '20 заданий подряд верно с первой попытки', a: Math.min(DB.runBest || 0, 20), b: 20 },
     { id: 'ch1', ic: 'book', t: 'Глава закрыта', d: 'Освоить все навыки одной главы', a: Math.min(chDone, 1), b: 1 },
     { id: 'ch10', ic: 'book', t: 'Десять глав', d: 'Освоить все навыки в 10 главах', a: Math.min(chDone, 10), b: 10 },
-    { id: 'sc1', ic: 'school', t: 'Как в школе', d: 'Сделать все школьные задания одного предмета', a: Math.max(...scSub.map(x => x[1] ? x[0] / x[1] : 0)) >= 1 ? 1 : 0, b: 1 },
-    { id: 'mock1', ic: 'exam', t: 'Первый пробный', d: 'Пройти пробный экзамен до конца', a: Math.min(ex.filter(e => !e.early).length, 1), b: 1 },
-    { id: 'mock80', ic: 'medal', t: 'Уверенно', d: 'Пробный экзамен на 80 % и выше', a: ex.some(e => !e.early && e.score / e.max >= 0.8) ? 1 : 0, b: 1 },
-    { id: 'mock90', ic: 'medal', t: 'На A*', d: 'Полный пробный экзамен на 90 % и выше', a: ex.some(e => !e.early && e.mode === 'full' && e.score / e.max >= 0.9) ? 1 : 0, b: 1 },
-    { id: 'mock5', ic: 'exam', t: 'Все пять', d: 'Пробный экзамен по каждому из 5 предметов', a: subs.filter(s => ex.some(e => (e.subj || 'math') === s.id && !e.early)).length, b: subs.length }
+    { id: 'sc1', ic: 'school', t: 'Подобные задания', d: 'Сделать все школьные задания одного предмета', a: Math.max(...scSub.map(x => x[1] ? x[0] / x[1] : 0)) >= 1 ? 1 : 0, b: 1 },
+    { id: 'mock1', ic: 'exam', t: 'Первый пробник', d: 'Пройти пробник до конца', a: Math.min(ex.filter(e => !e.early).length, 1), b: 1 },
+    { id: 'mock80', ic: 'medal', t: 'Уверенно', d: 'Пробник на 80 % и выше', a: ex.some(e => !e.early && e.score / e.max >= 0.8) ? 1 : 0, b: 1 },
+    { id: 'mock90', ic: 'medal', t: 'На A*', d: 'Полный пробник на 90 % и выше', a: ex.some(e => !e.early && e.mode === 'full' && e.score / e.max >= 0.9) ? 1 : 0, b: 1 },
+    { id: 'mock5', ic: 'exam', t: 'Все пять', d: 'Пробник по каждому из 5 предметов', a: subs.filter(s => ex.some(e => (e.subj || 'math') === s.id && !e.early)).length, b: subs.length }
   ];
   subs.forEach(s => { const r = ready(s.id); L_.push({ id: 'all_' + s.id, ic: s.id, s: s.id, t: s.ru + ': всё освоено', d: 'Освоить все навыки предмета', a: r.m, b: r.n }); });
   subs.forEach(s => { const r = ready(s.id); L_.push({ id: 'rd_' + s.id, ic: 'target', s: s.id, t: s.ru + ': готовность 80 %', d: 'Готовность к экзамену 80 % и выше', a: Math.min(r.p, 80), b: 80 }); });
@@ -5520,7 +5521,281 @@ function badgesHtml(limit) {
   const L_ = badgeList(); const got = L_.filter(x => x.got).length; const show = limit ? L_.filter(x => x.got).concat(L_.filter(x => !x.got).sort((a, b) => b.a / b.b - a.a / a.b)).slice(0, limit) : L_;
   return '<section class="card"><div class="row" style="justify-content:space-between;align-items:baseline"><h3 style="margin:0">Значки</h3><span class="meta">' + got + ' из ' + L_.length + '</span></div><div class="badges">' + show.map(x => '<div class="badge' + (x.got ? ' got' : '') + '"' + (x.s ? ' data-s="' + x.s + '"' : '') + '><span class="bm">' + bico(x.ic) + '</span><b>' + esc(x.t) + '</b><small>' + esc(x.d) + '</small>' + (!x.got && x.b > 1 ? '<span class="bar"><i style="width:' + pct(x.a, x.b) + '%"></i></span>' : '') + '</div>').join('') + '</div>' + (limit && L_.length > limit ? '<div class="row" style="margin-top:8px"><button class="btn ghost small" onclick="go(\'#/badges\')">Все значки →</button></div>' : '') + '</section>';
 }
-function viewBadges() { shell(badgesHtml(0) + '<p class="meta">Значки даются только за реальную подготовку: освоенные навыки, школьные задания, пробные экзамены и регулярность.</p>'); }
+function viewBadges() { shell(badgesHtml(0) + '<p class="meta">Значки даются только за реальную подготовку: освоенные навыки, школьные задания, пробники и регулярность.</p>'); }
+
+/* ===================== DAILY REPORT: PDF for the tutor (day + whole period), backup inside, Telegram in one tap ===================== */
+const TUTOR_WA = '6281338754531';
+const TUTOR_NAME = 'Максим Николаевич';
+const TUTOR_DAT = 'Максиму Николаевичу';
+const BALI_TZ = 'Asia/Makassar';
+const REMIND_H = 21;
+const balNow = () => +new Date().toLocaleString('en-US', { timeZone: BALI_TZ, hour: 'numeric', hourCycle: 'h23' });
+
+/* ---------- what happened each day ---------- */
+const EMPTY_LOG = () => ({ n: 0, ok: 0, wr: {}, ms: [], sc: [], ex: [] });
+function dlog() { DB.dlog = DB.dlog || {}; const k = ymd(new Date()); return DB.dlog[k] || (DB.dlog[k] = EMPTY_LOG()); }
+function logAnswer(skId, ok, mastered) { const d = dlog(); d.n++; if (ok) d.ok++; else d.wr[skId] = (d.wr[skId] || 0) + 1; if (mastered && !d.ms.includes(skId)) d.ms.push(skId); }
+function logSchool(id) { const d = dlog(); if (!d.sc.includes(id)) d.sc.push(id); }
+function logExam(e) { dlog().ex.push({ s: e.subj, sc: e.score, mx: e.max, m: e.mode, early: !!e.early }); }
+function snapReady() { DB.rdy = DB.rdy || {}; const k = ymd(new Date()); if (!DB.rdy[k]) { DB.rdy[k] = {}; SUBJECTS.filter(s => !s.soon).forEach(s => DB.rdy[k][s.id] = ready(s.id).p); Object.keys(DB.rdy).sort().slice(0, -40).forEach(x => delete DB.rdy[x]); save(); } return DB.rdy[k]; }
+const isSent = k => !!(DB.repSent || {})[k];
+const sentToday = () => isSent(ymd(new Date()));
+const parseYmd = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
+const dateLong = d => d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+/* which day the report is about: today, or yesterday if today is still empty and yesterday was not sent */
+function reportDay() { const t = ymd(new Date()); const y = ymd(addDays(today0(), -1)); const D = DB.dlog || {}; if (!(D[t] && D[t].n) && !(DB.days || {})[t] && D[y] && D[y].n && !isSent(y)) return y; return t; }
+function streakAt(k) { const D = DB.days || {}; let s = 0; let d = parseYmd(k); if ((D[ymd(d)] || 0) < GOAL()) d = addDays(d, -1); while ((D[ymd(d)] || 0) >= GOAL()) { s++; d = addDays(d, -1); } return s; }
+function firstDay() { const ks = Object.keys(DB.days || {}).filter(k => DB.days[k] > 0).concat(Object.keys(DB.dlog || {}).filter(k => DB.dlog[k].n)).sort(); return ks[0] || ymd(new Date()); }
+
+function reportData(k) {
+  k = k || reportDay(); const isToday = k === ymd(new Date()); const D = DB.dlog || {}; const d = D[k] || EMPTY_LOG();
+  snapReady(); const nx = ymd(addDays(parseYmd(k), 1)); const r0 = (DB.rdy || {})[k] || {}; const r1 = isToday ? null : (DB.rdy || {})[nx];
+  const pl = isToday ? todayPlan() : ((DB.planH || {})[k] || { sk: [], mocks: [] });
+  const pd = pl.sk.filter(id => (D[k] && D[k].ms.includes(id)) || (isToday && isM(id))).length + (pl.mocks || []).filter(s => d.ex.some(e => e.s === s)).length; const pt = pl.sk.length + (pl.mocks || []).length;
+  const subs = SUBJECTS.filter(s => !s.soon).map(s => { const p = r1 && r1[s.id] != null ? r1[s.id] : ready(s.id).p; return { id: s.id, ru: s.ru, p, dp: r0[s.id] != null ? p - r0[s.id] : 0, date: EXD[s.id], days: daysTo(EXD[s.id]) }; });
+  const wr = Object.entries(d.wr).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([id, n]) => ({ sk: SK(id), n })).filter(x => x.sk);
+  const n = Math.max(d.n, (DB.days || {})[k] || 0);
+  // whole period
+  const f = firstDay(); const span = Math.round((parseYmd(k) - parseYmd(f)) / 864e5) + 1; const days = DB.days || {};
+  const inP = Object.keys(days).filter(x => x >= f && x <= k); const act = inP.filter(x => days[x] > 0).length; const goalDays = inP.filter(x => days[x] >= GOAL()).length;
+  const tot = inP.reduce((t, x) => t + days[x], 0); const sa = Object.values(DB.sk).reduce((t, s) => t + (s.a || 0), 0), sc = Object.values(DB.sk).reduce((t, s) => t + (s.c || 0), 0);
+  const mAll = SKILLS.filter(s => isM(s.id)).length; const scAll = SCHOOL.filter(scDone).length;
+  const exs = DB.exams.filter(e => !e.early); const best = SUBJECTS.filter(s => !s.soon).map(s => { const l = exs.filter(e => (e.subj || 'math') === s.id); return l.length ? { ru: s.ru, n: l.length, best: Math.max(...l.map(e => pct(e.score, e.max))), last: pct(l[l.length - 1].score, l[l.length - 1].max) } : null; }).filter(Boolean);
+  const chart = []; for (let i = Math.max(0, span - 21); i < span; i++) { const x = ymd(addDays(parseYmd(f), i)); chart.push([parseYmd(x), days[x] || 0]); }
+  return { k, isToday, date: parseYmd(k), name: DB.name || 'Тая', n, ok: d.ok, nAns: d.n, goal: GOAL(), streak: streakAt(k), pd, pt, ms: d.ms.map(SK).filter(Boolean), sc: d.sc.map(ST).filter(Boolean), ex: d.ex, wr, subs,
+    per: { first: f, span, act, goalDays, tot, acc: pct(sc, sa), mAll, nAll: SKILLS.length, scAll, scN: SCHOOL.length, exN: exs.length, best, bestStreak: Math.max(bestStreak(), streakAt(k)), chart } };
+}
+function reportText(R) {
+  return '📘 ' + R.name + ' · отчёт за ' + R.date.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }) + '\n' +
+    'Задания: ' + R.n + ' из ' + R.goal + (R.n >= R.goal ? ' ✅' : '') + (R.nAns ? ' · верно сразу ' + pct(R.ok, R.nAns) + '%' : '') + ' · серия ' + dn(R.streak) + ' · план ' + R.pd + '/' + R.pt + '\n' +
+    (R.ex.length ? 'Пробники: ' + R.ex.map(e => SUBJ(e.s).ru + ' ' + pct(e.sc, e.mx) + '%').join(', ') + '\n' : '') +
+    'Готовность: общая ' + Math.round(R.subs.reduce((t, s) => t + s.p, 0) / R.subs.length) + '% · ' + R.subs.map(s => s.ru + ' ' + s.p + '%').join(', ') + '\n' +
+    'С ' + dateRu(R.per.first) + ': ' + R.per.act + ' ' + plural(R.per.act, 'день', 'дня', 'дней') + ' занятий, ' + R.per.tot + ' заданий, освоено ' + R.per.mAll + ' из ' + R.per.nAll + ' навыков';
+}
+
+/* ---------- PDF: A4 pages drawn on canvas, packed as JPEG images; backup JSON embedded ---------- */
+const PW = 1240, PH = 1754, PM = 84; // A4 at 150 dpi
+const PCOL = { math: '#1F5BD8', phys: '#C2410C', chem: '#BE185D', cs: '#6D28D9', bio: '#0E7490' };
+/* period summary: union of all logged days from the first study day to k */
+function periodData(R) {
+  const D = DB.dlog || {}; const ks = Object.keys(D).filter(x => x >= R.per.first && x <= R.k).sort();
+  const ms = [], sc = [], ex = [], wr = {};
+  ks.forEach(x => { const d = D[x]; d.ms.forEach(id => { if (!ms.includes(id)) ms.push(id); }); d.sc.forEach(id => { if (!sc.includes(id)) sc.push(id); }); d.ex.forEach(e => ex.push(Object.assign({ d: x }, e))); Object.entries(d.wr).forEach(([id, n]) => wr[id] = (wr[id] || 0) + n); });
+  const r0 = (DB.rdy || {})[R.per.first] || (DB.rdy || {})[Object.keys(DB.rdy || {}).sort()[0]] || {};
+  return { ms: ms.map(SK).filter(Boolean), sc: sc.map(ST).filter(Boolean), ex, wr: Object.entries(wr).filter(([id]) => !ms.includes(id) || wr[id] > 1).sort((a, b) => b[1] - a[1]).slice(0, 30).map(([id, n]) => ({ sk: SK(id), n })).filter(x => x.sk), subs: R.subs.map(s => Object.assign({}, s, { dp: r0[s.id] != null ? s.p - r0[s.id] : 0 })) };
+}
+function reportPages(R) {
+  const pages = []; let x, y, cv, head;
+  const F = (w, s) => w + ' ' + s + 'px "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  const FD = s => s + 'px "Young Serif", Georgia, serif';
+  const T = (t, f, c, xx, yy, al) => { x.font = f; x.fillStyle = c; x.textAlign = al || 'left'; x.fillText(t, xx, yy); };
+  const wrap = (t, w, font) => { x.font = font; const out = []; let line = ''; String(t).split(' ').forEach(wd => { const tt = line ? line + ' ' + wd : wd; if (x.measureText(tt).width > w && line) { out.push(line); line = wd; } else line = tt; }); out.push(line); return out; };
+  const rr = (xx, yy, w, h, r, c) => { x.fillStyle = c; x.beginPath(); x.roundRect(xx, yy, w, h, r); x.fill(); };
+  const newPage = (cont) => { cv = document.createElement('canvas'); cv.width = PW; cv.height = PH; x = cv.getContext('2d'); x.fillStyle = '#FFFFFF'; x.fillRect(0, 0, PW, PH); pages.push(cv); x.fillStyle = '#1F5BD8'; x.fillRect(0, 0, PW, 16); y = 60;
+    T(head[0], F(700, 24), '#1F5BD8', PM, y + 24); T(R.name + ' · Cambridge IGCSE', F(400, 24), '#8A93A8', PW - PM, y + 24, 'right'); y += 52;
+    T(cont ? head[1] + ' (продолжение)' : head[1], FD(cont ? 34 : 54), '#15203A', PM, y + (cont ? 34 : 54)); y += cont ? 60 : 84; };
+  const need = h => { if (y + h > PH - 96) newPage(true); };
+  const H2 = (t, sub) => { need(120); y += 10; T(t, FD(36), '#15203A', PM, y + 36); if (sub) T(sub, F(400, 22), '#5A6580', PW - PM, y + 34, 'right'); y += 54; x.fillStyle = '#E7EBF3'; x.fillRect(PM, y, PW - 2 * PM, 2); y += 22; };
+  const list = (title, lines, col, empty) => { H2(title); if (!lines.length) { T(empty, F(400, 25), '#8A93A8', PM, y + 25); y += 52; return; } x.font = F(700, 26); const lw = Math.max(...lines.map(l => x.measureText(l[0]).width)) + 48; lines.forEach(l => { const w = wrap(l[1], PW - 2 * PM - lw, F(400, 26)); need(w.length * 36 + 6); x.fillStyle = col; x.beginPath(); x.arc(PM + 8, y + 17, 6, 0, 7); x.fill(); T(l[0], F(700, 26), '#15203A', PM + 28, y + 26); w.forEach((ln, j) => T(ln, F(400, 26), '#2A3550', PM + lw, y + 26 + j * 36)); y += w.length * 36 + 8; }); y += 18; };
+  const glist = (title, arr, col, empty) => { H2(title); if (!arr.length) { T(empty, F(400, 25), '#8A93A8', PM, y + 25); y += 52; return; }
+    const cw = (PW - 2 * PM - 30) / 2; SUBJECTS.forEach(sb => { const it = arr.filter(a => a.subj === sb.id); if (!it.length) return; need(80); x.fillStyle = PCOL[sb.id]; x.beginPath(); x.arc(PM + 8, y + 15, 7, 0, 7); x.fill(); T(sb.ru + ' · ' + it.length, F(700, 25), '#15203A', PM + 26, y + 24); y += 40;
+      const cells = it.map(a => wrap(a.code + '  ' + a.ru, cw - 10, F(400, 22))); for (let i = 0; i < cells.length; i += 2) { const h = Math.max(cells[i].length, (cells[i + 1] || []).length) * 30; need(h + 4); [cells[i], cells[i + 1]].forEach((c, j) => (c || []).forEach((ln, q) => T(ln, F(400, 22), '#2A3550', PM + 26 + j * (cw + 30), y + 22 + q * 30))); y += h + 4; } y += 12; }); y += 8; };
+  const secLines = arr => arr.map(s => [SUBJ(s.subj).ru + ' ' + s.code, s.ru]);
+  const readiness = (subs, sub) => { H2('Готовность к экзаменам', sub);
+    subs.forEach(s => { need(70); T(s.ru, F(700, 27), '#15203A', PM, y + 27); T(dateRu(s.date) + ' · ' + (s.days < 0 ? 'прошёл' : s.days === 0 ? 'сегодня' : 'через ' + dn(s.days)), F(400, 22), '#8A93A8', PM + 230, y + 26); T(s.p + '%', F(700, 30), '#15203A', PW - PM - 90, y + 28, 'right'); T(s.dp ? (s.dp > 0 ? '+' : '') + s.dp : '·', F(700, 24), s.dp > 0 ? '#17784A' : s.dp < 0 ? '#BC2D45' : '#C0C6D4', PW - PM, y + 27, 'right'); y += 38; rr(PM, y, PW - 2 * PM, 12, 6, '#E7EBF3'); rr(PM, y, Math.max(12, (PW - 2 * PM) * s.p / 100), 12, 6, PCOL[s.id] || '#1F5BD8'); y += 32; });
+    const av = Math.round(subs.reduce((t, q) => t + q.p, 0) / subs.length), ad = Math.round(subs.reduce((t, q) => t + q.dp, 0) / subs.length);
+    need(80); y += 6; rr(PM - 16, y - 6, PW - 2 * PM + 32, 72, 16, '#F4F5F8'); T('Общая готовность', F(700, 28), '#15203A', PM, y + 28); x.font = F(700, 28); T('среднее по ' + subs.length + ' предметам', F(400, 22), '#8A93A8', PM + x.measureText('Общая готовность').width + 24, y + 27); T(av + '%', F(700, 34), '#15203A', PW - PM - 90, y + 30, 'right'); T(ad ? (ad > 0 ? '+' : '') + ad : '·', F(700, 24), ad > 0 ? '#17784A' : ad < 0 ? '#BC2D45' : '#C0C6D4', PW - PM, y + 28, 'right'); y += 40; rr(PM, y, PW - 2 * PM, 12, 6, '#E7EBF3'); rr(PM, y, Math.max(12, (PW - 2 * PM) * av / 100), 12, 6, '#15203A'); y += 40;
+    T('Готовность = 60 % освоенные навыки + 15 % «Подобные задания» + 25 % последний пробник.', F(400, 20), '#8A93A8', PM, y + 20); y += 44; };
+  const body = (d, labDay) => {
+    list('Освоено ' + labDay, secLines(d.ms), '#17784A', 'Новых освоенных разделов нет.');
+    list('Где были ошибки', d.wr.map(z => [SUBJ(z.sk.subj).ru + ' ' + z.sk.code, z.sk.ru]), '#BC2D45', 'Ошибок не было.');
+    if (d.ex.length) list('Пробники', d.ex.map(e => [SUBJ(e.s).ru, (e.d ? dateRu(e.d) + ' · ' : '') + (MODE_RU[e.m] || e.m) + (e.early ? ', досрочно' : '') + ': ' + e.sc + ' из ' + e.mx + ' (' + pct(e.sc, e.mx) + '%)']), '#1F5BD8');
+  };
+  // page 1 — the day
+  head = ['END TERM · ОТЧЁТ ЗА ДЕНЬ', dateLong(R.date).replace(/^./, c => c.toUpperCase())]; newPage();
+  body(R, 'за день'); readiness(R.subs, 'изменение за день');
+  // page 2 — the whole period
+  const P = periodData(R); const fd = parseYmd(R.per.first);
+  head = ['END TERM · ОТЧЁТ ЗА ВЕСЬ ПЕРИОД', (R.per.first === R.k ? dateRu(R.k) : fd.getDate() + (fd.getMonth() === R.date.getMonth() ? '' : ' ' + MON[fd.getMonth()]) + ' — ' + dateRu(R.k)) + ' ' + R.date.getFullYear()]; newPage();
+  readiness(P.subs, 'изменение за период');
+  glist('Освоено за период', P.ms, '#17784A', 'Пока нет освоенных разделов.');
+  glist('Ошибки в разделах, которые ещё не освоены', P.wr.map(z => z.sk).filter(k => !isM(k.id)), '#BC2D45', 'Таких разделов нет.');
+  if (P.ex.length) list('Пробники', P.ex.map(e => [SUBJ(e.s).ru, (e.d ? dateRu(e.d) + ' · ' : '') + (MODE_RU[e.m] || e.m) + (e.early ? ', досрочно' : '') + ': ' + e.sc + ' из ' + e.mx + ' (' + pct(e.sc, e.mx) + '%)']), '#1F5BD8');
+  pages.forEach((c, i) => { const g = c.getContext('2d'); g.font = F(400, 20); g.fillStyle = '#8A93A8'; g.textAlign = 'left'; g.fillText('Сформировано ' + new Date().toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) + ' · в файле есть резервная копия прогресса', PM, PH - 56); g.textAlign = 'right'; g.fillText((i + 1) + ' / ' + pages.length, PW - PM, PH - 56); });
+  return pages;
+}
+async function reportPdf(R) {
+  const pages = reportPages(R); const enc = new TextEncoder(); const parts = []; const offs = []; let len = 0;
+  const push = b => { const u = typeof b === 'string' ? enc.encode(b) : b; parts.push(u); len += u.length; };
+  const obj = (n, body, stream) => { offs[n] = len; push(n + ' 0 obj\n' + body); if (stream) { push('\nstream\n'); push(stream); push('\nendstream'); } push('\nendobj\n'); };
+  const jpgs = await Promise.all(pages.map(c => new Promise(r => c.toBlob(b => b.arrayBuffer().then(a => r(new Uint8Array(a))), 'image/jpeg', 0.9))));
+  const n = pages.length; const kids = []; push('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+  obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  for (let i = 0; i < n; i++) kids.push((3 + i * 3) + ' 0 R');
+  obj(2, '<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + n + ' >>');
+  jpgs.forEach((j, i) => { const p = 3 + i * 3; const cs = 'q 595.28 0 0 841.89 0 0 cm /Im0 Do Q';
+    obj(p, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 ' + (p + 2) + ' 0 R >> >> /Contents ' + (p + 1) + ' 0 R >>');
+    obj(p + 1, '<< /Length ' + cs.length + ' >>', enc.encode(cs));
+    obj(p + 2, '<< /Type /XObject /Subtype /Image /Width ' + PW + ' /Height ' + PH + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + j.length + ' >>', j); });
+  const bk = 'ENDTERM-BACKUP:' + b64utf8(JSON.stringify(backupData())) + ':END'; const bn = 3 + n * 3;
+  obj(bn, '<< /Length ' + bk.length + ' >>', enc.encode(bk));
+  const info = bn + 1; obj(info, '<< /Title (End Term report ' + R.k + ') /Producer (End Term) >>');
+  const xref = len; let xr = 'xref\n0 ' + (info + 1) + '\n0000000000 65535 f \n'; for (let i = 1; i <= info; i++) xr += String(offs[i]).padStart(10, '0') + ' 00000 n \n';
+  push(xr + 'trailer\n<< /Size ' + (info + 1) + ' /Root 1 0 R /Info ' + info + ' 0 R >>\nstartxref\n' + xref + '\n%%EOF');
+  return new Blob(parts, { type: 'application/pdf' });
+}
+function b64utf8(s) { const b = new TextEncoder().encode(s); let r = ''; for (let i = 0; i < b.length; i += 0x8000) r += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(r); }
+function unb64utf8(s) { const r = atob(s); const b = new Uint8Array(r.length); for (let i = 0; i < r.length; i++) b[i] = r.charCodeAt(i); return new TextDecoder().decode(b); }
+/* a PDF report can be loaded back as a progress file */
+function backupFromPdfBytes(u8) { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); const m = s.match(/ENDTERM-BACKUP:([A-Za-z0-9+/=]+):END/); return m ? unb64utf8(m[1]) : null; }
+
+function backupData() { return { app: 'endterm-g9', v: 1, exported: new Date().toISOString(), db: { sk: DB.sk, sc: DB.sc, scr: DB.scr, exams: DB.exams, name: DB.name, tutorWa: DB.tutorWa, ru: DB.ru, subj: DB.subj, days: DB.days, goal: DB.goal, badges: DB.badges, runBest: DB.runBest, vib: DB.vib, theme: DB.theme, dlog: DB.dlog, repSent: DB.repSent, rdy: DB.rdy, planH: DB.planH, excov: DB.excov, sid: DB.sid } }; }
+const pdfName = k => 'EndTerm-' + (DB.name || 'report').replace(/[^\wа-яА-ЯёЁ-]+/g, '_') + '-' + k + '.pdf';
+
+/* ---------- sending ---------- */
+async function tgCall(method, fd) {
+  const u = 'https://api.telegram.org/bot' + DB.tg.token + '/' + method;
+  try { const r = await fetch(u, { method: 'POST', body: fd }); const j = await r.json(); if (!j.ok) throw new Error(j.description || 'Telegram error'); return true; }
+  catch (e) { if (e instanceof TypeError) { await fetch(u, { method: 'POST', body: fd, mode: 'no-cors' }); return true; } throw e; }
+}
+let SENDING = false;
+async function sendReport(how, k) {
+  if (SENDING) return; SENDING = true; const R = reportData(k); const btns = $$('[data-send]'); btns.forEach(b => { b.disabled = true; b.dataset.t = b.innerHTML; b.textContent = 'Готовлю PDF…'; });
+  const reset = () => { SENDING = false; btns.forEach(b => { b.disabled = false; if (b.dataset.t) b.innerHTML = b.dataset.t; }); };
+  const done = msg => { SENDING = false; DB.repSent = DB.repSent || {}; DB.repSent[R.k] = Date.now(); save(); if (msg) toast(msg); confetti(); route(); };
+  try {
+    if (how === 'wa') { window.open('https://wa.me/' + (DB.tutorWa || TUTOR_WA).replace(/\D/g, '') + '?text=' + encodeURIComponent(reportText(R)), '_blank'); done(''); return; }
+    const pdf = await reportPdf(R); const nm = pdfName(R.k);
+    if (DB.tg && DB.tg.token && DB.tg.chat) { const f = new FormData(); f.append('chat_id', DB.tg.chat); f.append('document', pdf, nm); f.append('caption', reportText(R).slice(0, 1000)); await tgCall('sendDocument', f); try { const c = await progressCode(); const t = 'Код прогресса (скопировать и вставить в приложении):\n' + codeLink(c); if (t.length < 4000) { const f2 = new FormData(); f2.append('chat_id', DB.tg.chat); f2.append('text', t); f2.append('disable_notification', 'true'); f2.append('disable_web_page_preview', 'true'); await tgCall('sendMessage', f2); } } catch (e) {} done('Отчёт отправлен ' + TUTOR_DAT + ' в Telegram'); return; }
+    const file = new File([pdf], nm, { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: nm }); done('Отчёт отправлен'); } catch (e) { reset(); } return; }
+    dl(pdf, nm); done('PDF сохранён — отправьте его ' + TUTOR_DAT + ' в Telegram');
+  } catch (e) { reset(); toast('Не получилось отправить: ' + e.message); }
+}
+
+/* ---------- screens ---------- */
+function reportCardHtml() {
+  const k = reportDay(); const isT = k === ymd(new Date());
+  if (isSent(k)) return '<section class="card rcard sent"><span class="lic">' + ico('check') + '</span><div class="lt"><b>Отчёт за ' + (isT ? 'сегодня' : dateRu(k)) + ' отправлен</b><span class="muted">Завтра — новый.</span></div><button class="btn small" onclick="go(\'#/report\')">Открыть</button></section>';
+  const late = balNow() >= REMIND_H || !isT;
+  return '<section class="card rcard' + (late ? ' late' : '') + '"><span class="lic">' + ico('send') + '</span><div class="lt"><b>' + (isT ? (late ? 'Пора отправить отчёт за день' : 'Отчёт за день') : 'Отчёт за вчера, ' + dateRu(k)) + '</b><span class="muted">' + (late ? 'Одно нажатие — и ' + TUTOR_NAME + ' получит PDF.' : 'Отправьте вечером, после занятий.') + '</span></div><button class="btn primary" data-send onclick="sendReport(\'tg\',\'' + k + '\')">' + ico('send') + '</button></section>';
+}
+function viewReport() {
+  const R = reportData(); const tg = !!(DB.tg && DB.tg.token && DB.tg.chat);
+  let h = '';
+  if (!DB.repOnb) h += '<section class="card guide"><h3>Как отправлять отчёт</h3><ol class="gsteps"><li>Вечером на экране «Сегодня» нажмите синюю кнопку отчёта (или «Отправить PDF» здесь).</li>' + (tg ? '<li>Готово — PDF сразу придёт ' + TUTOR_DAT + ' в Telegram.</li>' : '<li>В меню «Поделиться» выберите Telegram → ' + TUTOR_NAME + ' → «Отправить».</li>') + '</ol><p class="syn">В PDF есть резервная копия прогресса: если данные на телефоне пропадут, этот файл можно загрузить обратно в Настройках.</p><button class="btn small" onclick="DB.repOnb=1;save();viewReport()">Понятно</button></section>';
+  h += '<section class="card"><div class="meta">Отчёт за</div><h2 style="margin:2px 0 10px">' + esc(dateLong(R.date)) + '</h2><div class="pstats" style="margin:0 0 6px;grid-template-columns:repeat(4,minmax(0,1fr))"><div><b>' + R.n + '</b><span>из ' + R.goal + ' заданий</span></div><div><b>' + (R.nAns ? pct(R.ok, R.nAns) + '%' : '—') + '</b><span>верно сразу</span></div><div><b>' + R.streak + '</b><span>серия</span></div><div><b>' + R.pd + '/' + R.pt + '</b><span>план дня</span></div></div>';
+  h += '<div class="rsec"><b>За весь период</b> (с ' + dateRu(R.per.first) + ', ' + dn(R.per.span) + '): ' + R.per.act + ' ' + plural(R.per.act, 'день', 'дня', 'дней') + ' занятий · ' + R.per.tot + ' заданий · навыков ' + R.per.mAll + ' из ' + R.per.nAll + ' · пробников ' + R.per.exN + '</div>';
+  h += '<button class="btn primary wide" data-send id="rpSend" style="margin-top:14px" onclick="DB.repOnb=1;sendReport(\'tg\',\'' + R.k + '\')">' + ico('send') + (isSent(R.k) ? ' Отправить ещё раз' : ' Отправить PDF ' + TUTOR_DAT + '') + '</button>';
+  h += '<button class="btn wide" style="margin-top:8px" onclick="copyCode()">Скопировать код прогресса</button>';
+  h += '<div class="row" style="margin-top:8px;justify-content:center"><button class="btn ghost small" id="rpPrev">Посмотреть PDF</button><button class="btn ghost small" data-send onclick="sendReport(\'wa\',\'' + R.k + '\')">Коротко текстом в WhatsApp</button></div>';
+  h += '<p class="syn" style="text-align:center">' + (tg ? 'Отправка сразу в Telegram ' + TUTOR_DAT + '.' : 'Откроется «Поделиться» → Telegram → ' + TUTOR_NAME + '.') + '</p></section>';
+  shell(h);
+  $('#rpPrev').onclick = async () => { const b = await reportPdf(reportData(R.k)); const u = URL.createObjectURL(b); const w = window.open(u, '_blank'); if (!w) dl(b, pdfName(R.k)); };
+}
+function tgSetupHtml() {
+  const t = DB.tg || {};
+  return '<section class="card"><details' + (t.token && !t.chat ? ' open' : '') + '><summary><b>Для репетитора: отчёты сразу в Telegram</b></summary><ol class="steps"><li>В Telegram откройте @BotFather → /newbot → получите токен бота.</li><li>Вставьте токен ниже и нажмите «Проверить».</li><li>Напишите своему боту любое сообщение (например, /start) и нажмите «Найти мой чат».</li><li>Отправьте ученику ссылку, которая появится ниже: после открытия её телефон будет отправлять отчёты одним нажатием.</li></ol><div class="ansbox"><input class="inp plain" id="tgTok" placeholder="123456:ABC…" value="' + esc(t.token || '') + '" autocomplete="off"></div><div class="row" style="margin-top:8px"><button class="btn" id="tgChk">Проверить</button><button class="btn" id="tgFind">Найти мой чат</button>' + (t.token ? '<button class="btn ghost" id="tgOff">Отключить</button>' : '') + '</div><div class="syn" id="tgSt" style="margin-top:6px">' + (t.chat ? 'Подключено: чат ' + esc(String(t.chat)) + (t.bot ? ' · бот @' + esc(t.bot) : '') : t.token ? 'Токен сохранён, чат ещё не найден.' : '') + '</div>' + (t.token && t.chat ? '<div class="ansbox" style="margin-top:8px"><label>Ссылка для ученика (открыть один раз на её телефоне)</label><input class="inp plain" readonly value="' + esc(tgLink()) + '" onclick="this.select()"></div><div class="row" style="margin-top:6px"><button class="btn small" onclick="copyText(tgLink())">Скопировать ссылку</button>' + (navigator.share ? '<button class="btn small" onclick="navigator.share({text: tgLink()}).catch(()=>{})">Поделиться…</button>' : '') + '<button class="btn small" id="tgTest">Тестовое сообщение</button></div>' : '') + '<p class="meta">Токен хранится только на устройствах, где открыта ссылка, в общем файле приложения его нет. Если ссылка попадёт к кому-то ещё, в @BotFather можно выпустить новый токен (/revoke).</p></details></section>';
+}
+const tgLink = () => location.href.split('#')[0] + '#tg=' + encodeURIComponent(DB.tg.token) + '.' + DB.tg.chat;
+function wireTgSetup() {
+  const st = m => { const e = $('#tgSt'); if (e) e.textContent = m; };
+  const tok = () => ($('#tgTok').value || '').trim();
+  if ($('#tgChk')) $('#tgChk').onclick = async () => { try { const j = await (await fetch('https://api.telegram.org/bot' + tok() + '/getMe')).json(); if (!j.ok) throw new Error(j.description); DB.tg = Object.assign({}, DB.tg, { token: tok(), bot: j.result.username }); save(); st('Бот @' + j.result.username + ' найден. Теперь напишите ему сообщение и нажмите «Найти мой чат».'); } catch (e) { st('Не получилось: ' + e.message); } };
+  if ($('#tgFind')) $('#tgFind').onclick = async () => { try { const j = await (await fetch('https://api.telegram.org/bot' + tok() + '/getUpdates')).json(); if (!j.ok) throw new Error(j.description); const m = j.result.map(u => u.message || u.edited_message).filter(m => m && m.chat && m.chat.type === 'private').pop(); if (!m) throw new Error('сообщений боту не найдено — напишите ему /start'); DB.tg = Object.assign({}, DB.tg, { token: tok(), chat: m.chat.id }); save(); toast('Чат найден: ' + (m.chat.first_name || m.chat.id)); viewSettings(); } catch (e) { st('Не получилось: ' + e.message); } };
+  if ($('#tgOff')) $('#tgOff').onclick = () => { DB.tg = null; save(); viewSettings(); };
+  if ($('#tgTest')) $('#tgTest').onclick = async () => { try { const f = new FormData(); f.append('chat_id', DB.tg.chat); f.append('text', 'End Term: связь работает ✅'); await tgCall('sendMessage', f); toast('Отправлено'); } catch (e) { toast('Ошибка: ' + e.message); } };
+}
+/* one-time link: #tg=<token>.<chat> */
+function tgLinkCheck() { const m = location.hash.match(/^#tg=([^.]+:[^.]+)\.(-?\d+)/); if (!m) return; try { DB.tg = { token: decodeURIComponent(m[1]), chat: +m[2] }; DB.repOnb = 0; save(); history.replaceState(null, '', location.pathname + location.search + '#/report'); window.__tgLinked = true; } catch (e) {} }
+if (window.CanvasRenderingContext2D && !CanvasRenderingContext2D.prototype.roundRect) CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); this.moveTo(x + r, y); this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r); this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r); this.closePath(); };
+
+/* ===================== PROGRESS CODE: copy / paste between devices (student ↔ tutor) ===================== */
+const PROF_KEY = STORE_PROFILES();
+function STORE_PROFILES() { return 'g9-endterm-profiles-v1'; }
+function b64url(u8) { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function unb64url(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; const r = atob(s); const u = new Uint8Array(r.length); for (let i = 0; i < r.length; i++) u[i] = r.charCodeAt(i); return u; }
+async function pipe(u8, T) { const s = new Blob([u8]).stream().pipeThrough(T); return new Uint8Array(await new Response(s).arrayBuffer()); }
+function codeData() {
+  const db = backupData().db; const keep = (o, n) => { const r = {}; Object.keys(o || {}).sort().slice(-n).forEach(k => r[k] = o[k]); return r; };
+  const sk = {}; Object.keys(db.sk || {}).forEach(id => { const s = db.sk[id]; if (s && (s.a || s.m)) sk[id] = [s.a || 0, s.c || 0, s.s || 0, s.m ? 1 : 0]; });
+  return { app: 'endterm-g9', v: 2, at: Date.now(), db: { sid: DB.sid, name: db.name, sk, sc: db.sc, scr: db.scr, exams: (db.exams || []).map(e => [e.subj, e.date, e.mode, e.score, e.max, e.early ? 1 : 0, e.chs]), days: db.days, goal: db.goal, badges: db.badges, runBest: db.runBest, dlog: keep(db.dlog, 30), rdy: keep(db.rdy, 30), repSent: keep(db.repSent, 30), excov: DB.excov } };
+}
+function codeExpand(d) {
+  const db = d.db; const sk = {}; Object.keys(db.sk || {}).forEach(id => { const a = db.sk[id]; sk[id] = Array.isArray(a) ? { a: a[0], c: a[1], s: a[2], m: !!a[3] } : a; });
+  return { app: 'endterm-g9', db: Object.assign({}, db, { sk, exams: (db.exams || []).map(e => Array.isArray(e) ? { subj: e[0], date: e[1], mode: e[2], score: e[3], max: e[4], early: e[5] ? true : undefined, chs: e[6] || [] } : e) }) };
+}
+async function progressCode() {
+  const js = new TextEncoder().encode(JSON.stringify(codeData()));
+  if (window.CompressionStream) { try { return 'ET1.' + b64url(await pipe(js, new CompressionStream('deflate-raw'))); } catch (e) {} }
+  return 'ET0.' + b64url(js);
+}
+async function decodeCode(txt) {
+  const m = String(txt || '').match(/ET([01])\.([A-Za-z0-9_-]{20,})/); if (!m) throw new Error('код не найден');
+  let u = unb64url(m[2]); if (m[1] === '1') { if (!window.DecompressionStream) throw new Error('этот браузер не умеет распаковывать код'); u = await pipe(u, new DecompressionStream('deflate-raw')); }
+  const d = JSON.parse(new TextDecoder().decode(u)); if (!d || d.app !== 'endterm-g9' || !d.db) throw new Error('это не код этого приложения'); return codeExpand(d);
+}
+const codeLink = c => location.href.split('#')[0] + '#c=' + c;
+
+/* ---------- merging and student profiles ---------- */
+function mergeInto(T, src) {
+  T.sk = T.sk || {}; T.sc = T.sc || {}; T.scr = T.scr || {}; T.exams = T.exams || []; T.days = T.days || {};
+  Object.keys(src.sc || {}).forEach(id => { const a = T.sc[id], b = src.sc[id]; T.sc[id] = !a ? b : { n: Math.max(a.n, b.n), rd: Math.max(a.rd, b.rd) }; });
+  Object.keys(src.scr || {}).forEach(ch => { T.scr[ch] = Math.max(T.scr[ch] || 1, src.scr[ch]); });
+  Object.keys(src.sk || {}).forEach(id => { const a = T.sk[id], b = src.sk[id]; T.sk[id] = !a ? b : { a: Math.max(a.a || 0, b.a || 0), c: Math.max(a.c || 0, b.c || 0), s: Math.max(a.s || 0, b.s || 0), m: !!(a.m || b.m) }; });
+  const seen = new Set(T.exams.map(e => e.date + ':' + e.score)); (src.exams || []).forEach(e => { if (!seen.has(e.date + ':' + e.score)) T.exams.push(e); }); T.exams.sort((x, y) => x.date - y.date);
+  Object.keys(src.days || {}).forEach(k => { T.days[k] = Math.max(T.days[k] || 0, src.days[k]); });
+  T.dlog = T.dlog || {}; Object.keys(src.dlog || {}).forEach(k => { const a = T.dlog[k], b = src.dlog[k]; if (!a) { T.dlog[k] = b; return; }
+    const wr = Object.assign({}, a.wr); Object.keys(b.wr || {}).forEach(id => wr[id] = Math.max(wr[id] || 0, b.wr[id])); const ex = a.ex.slice(); (b.ex || []).forEach(e => { if (!ex.some(z => z.s === e.s && z.sc === e.sc && z.mx === e.mx && z.m === e.m)) ex.push(e); });
+    T.dlog[k] = { n: Math.max(a.n, b.n), ok: Math.max(a.ok, b.ok), wr, ms: [...new Set(a.ms.concat(b.ms || []))], sc: [...new Set(a.sc.concat(b.sc || []))], ex }; });
+  T.badges = Object.assign({}, src.badges || {}, T.badges || {}); T.runBest = Math.max(T.runBest || 0, src.runBest || 0);
+  T.repSent = Object.assign({}, src.repSent || {}, T.repSent || {}); T.rdy = Object.assign({}, src.rdy || {}, T.rdy || {}); T.planH = Object.assign({}, src.planH || {}, T.planH || {});
+  T.excov = T.excov || {}; Object.keys(src.excov || {}).forEach(s => { T.excov[s] = [...new Set((T.excov[s] || []).concat(src.excov[s]))]; });
+  if (!T.goal && src.goal) T.goal = src.goal; if (!T.name && src.name) T.name = src.name;
+  return T;
+}
+function profiles() { try { return JSON.parse(localStorage.getItem(PROF_KEY) || '{}') || {}; } catch (e) { return {}; } }
+function saveProfiles(p) { try { localStorage.setItem(PROF_KEY, JSON.stringify(p)); } catch (e) {} }
+const hasProgress = T => Object.values(T.sk || {}).some(s => s.a || s.m) || (T.exams || []).length;
+const normName = s => String(s || '').trim().toLowerCase();
+/* same student → merge; another student → keep the current one as a profile and open (or create) theirs */
+function applyBackup(src) {
+  let switched = false; const keep = () => ({ theme: DB.theme, kbd: DB.kbd, vib: DB.vib, tg: DB.tg, ru: DB.ru });
+  if (src.sid && src.sid !== DB.sid && hasProgress(DB)) {
+    const Pr = profiles(); if (normName(DB.name) === normName(src.name)) DB.name = 'Моё устройство'; Pr[DB.sid] = DB; const saved = Pr[src.sid]; delete Pr[src.sid]; saveProfiles(Pr);
+    DB = Object.assign({ sk: {}, exams: [], ru: false, kbd: false, cur: null }, saved || {}, keep(), { sid: src.sid, name: src.name || (saved || {}).name || 'Ученик', plan: null }); switched = true;
+  } else { if (src.sid) DB.sid = src.sid; if (src.name && !hasProgress(DB)) DB.name = src.name; }
+  mergeInto(DB, src); DB.plan = null; EX = null; P = null; save(); return switched;
+}
+function switchProfile(key) { const Pr = profiles(); if (!Pr[key]) return; const k = { theme: DB.theme, kbd: DB.kbd, vib: DB.vib, tg: DB.tg, ru: DB.ru }; Pr[DB.sid] = DB; DB = Object.assign({}, Pr[key], k); delete Pr[key]; saveProfiles(Pr); DB.plan = null; EX = null; P = null; save(); applyTheme(); toast('Открыт профиль: ' + (DB.name || 'без имени')); go('#/'); }
+
+/* ---------- actions ---------- */
+async function copyCode(withLink) {
+  try { const c = await progressCode(); const t = (withLink !== false ? 'Прогресс End Term (' + (DB.name || 'ученик') + ', ' + dateRu(ymd(new Date())) + '). Открыть ссылку или вставить код в приложении:\n' + codeLink(c) : c);
+    if (navigator.clipboard && navigator.clipboard.writeText) { try { await navigator.clipboard.writeText(t); toast('Код прогресса скопирован — вставьте его в чат'); return t; } catch (e) {} }
+    fallbackCopy(t, () => toast('Код прогресса скопирован')); return t;
+  } catch (e) { toast('Не получилось: ' + e.message); }
+}
+async function shareCode() { const c = await progressCode(); const t = 'Прогресс End Term (' + (DB.name || 'ученик') + ', ' + dateRu(ymd(new Date())) + '):\n' + codeLink(c); if (navigator.share) { try { await navigator.share({ text: t }); return; } catch (e) { return; } } copyCode(); }
+async function useCode(txt) {
+  try { const d = await decodeCode(txt); const sw = applyBackup(d.db); toast(sw ? 'Открыт профиль «' + (d.db.name || 'ученик') + '», прогресс загружен' : 'Прогресс обновлён'); confetti(); go('#/'); route(); }
+  catch (e) { toast('Не получилось: ' + e.message); }
+}
+async function pasteCode() {
+  let t = ''; try { if (navigator.clipboard && navigator.clipboard.readText) t = await navigator.clipboard.readText(); } catch (e) {}
+  if (/ET[01]\.[A-Za-z0-9_-]{20,}/.test(t)) return useCode(t);
+  const box = $('#codeBox'); if (box) { box.hidden = false; const ta = $('#codeIn'); ta.focus(); toast('Вставьте код в поле (долгое нажатие → «Вставить»)'); } else go('#/sync');
+}
+/* link with a code: #c=ET1.… */
+function codeLinkCheck() { const m = location.hash.match(/^#c=(ET[01]\.[A-Za-z0-9_-]+)/); if (!m) return false; history.replaceState(null, '', location.pathname + location.search + '#/'); useCode(m[1]); return true; }
+
+function viewSync() {
+  const Pp = profiles(); const pk = Object.keys(Pp);
+  let h = '<section class="card"><h3>Передать прогресс</h3><p class="muted" style="margin:0 0 10px">Код со всем прогрессом. Отправьте его в чат — на другом устройстве нажмите ссылку или «Вставить код».</p><div class="row"><button class="btn primary" onclick="copyCode()">Скопировать код</button>' + (navigator.share ? '<button class="btn" onclick="shareCode()">Поделиться…</button>' : '') + '</div></section>';
+  h += '<section class="card"><h3>Получить прогресс</h3><p class="muted" style="margin:0 0 10px">Скопируйте сообщение с кодом в чате и нажмите кнопку. Прогресс того же ученика объединяется, ничего не теряется.</p><button class="btn primary" onclick="pasteCode()">Вставить код</button><div id="codeBox" hidden style="margin-top:10px"><textarea class="inp plain" id="codeIn" rows="3" placeholder="вставьте сюда сообщение с кодом"></textarea><div class="row" style="margin-top:8px"><button class="btn" onclick="useCode($(\'#codeIn\').value)">Загрузить</button></div></div></section>';
+  if (pk.length) h += '<section class="card"><h3>Профили на этом устройстве</h3><p class="muted" style="margin:0 0 8px">Сейчас открыт: <b>' + esc(DB.name || 'без имени') + '</b>.</p><div class="row">' + pk.map(k => '<button class="btn" onclick="switchProfile(\'' + esc(k) + '\')">' + esc(Pp[k].name || 'без имени') + '</button>').join('') + '</div><p class="meta">Профиль ученика появляется сам, когда вставляют его код. Данные разных учеников не смешиваются.</p></section>';
+  shell(h);
+}
 
 /* ===================== APP SHELL: app bar, bottom tabs, Today, Subjects, Progress, motivation ===================== */
 const IC = {
@@ -5538,7 +5813,8 @@ const IC = {
   flame: '<path d="M12 21c-4 0-6.5-2.6-6.5-6.2 0-3.4 2.3-5.4 3.6-7.6.3 1.8 1.3 3 2.4 3.4C11.6 7.6 12.7 5 15 3c.2 3.2 3.5 5.6 3.5 10.4C18.5 18.2 16 21 12 21z"/>',
   kb: '<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6 10h.01M9.3 10h.01M12.6 10h.01M15.9 10h.01M18 10h.01M6.5 14h11"/>',
   play: '<path d="M8 5.5v13l10.5-6.5z"/>',
-  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>'
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  send: '<path d="M21 3 10.5 13.5M21 3l-6.5 18-4-7.5L3 9.5z"/>'
 };
 const ico = (k, cls) => '<svg class="ico' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true">' + IC[k] + '</svg>';
 const EXD = { math: '2026-11-24', phys: '2026-11-24', chem: '2026-11-26', cs: '2026-11-27', bio: '2026-11-30' };
@@ -5587,7 +5863,7 @@ function confetti() {
 }
 
 /* ---------- app bar + tab bar ---------- */
-const TABS = [['#/', 'home', 'Сегодня'], ['#/subj', 'books', 'Предметы'], ['#/exam', 'exam', 'Экзамен'], ['#/prog', 'chart', 'Прогресс']];
+const TABS = [['#/', 'home', 'Сегодня'], ['#/subj', 'books', 'Предметы'], ['#/exam', 'exam', 'Пробники'], ['#/prog', 'chart', 'Прогресс']];
 let AB = { title: '', back: null, tab: 0, subj: null };
 function chromeFor(h) {
   const [a, b] = h.replace(/^#\/?/, '').split('/'); const id = decodeURIComponent(b || '');
@@ -5596,11 +5872,13 @@ function chromeFor(h) {
   if (a === 'prog') return { title: 'Прогресс', tab: 3 };
   if (a === 's') return { title: SUBJ(id).ru, back: '#/subj', tab: 1, subj: id };
   if (a === 'ch') { const c = CH(id); return c ? { title: 'Глава ' + c.num, back: '#/s/' + c.subj, tab: 1, subj: c.subj } : { title: '', tab: 1 }; }
-  if (a === 'p') { let sk, ch, lab; if (id.startsWith('t:')) { const t = ST(id.slice(2)); sk = t && SK(t.sk); lab = 'Как в школе'; } else if (id.startsWith('mix:')) { ch = id.slice(4); lab = 'Вперемешку'; } else { sk = SK(id); lab = sk && sk.code; } ch = ch || (sk && sk.ch); const c = CH(ch); return c ? { title: id.startsWith('t:') ? lab : 'Гл. ' + c.num + ' · ' + lab, back: '#/ch/' + c.id, tab: 1, subj: c.subj } : { title: '', tab: 1 }; }
-  if (a === 'exam') return b === 'run' ? { title: 'Идёт экзамен', back: '#/exam', tab: 2, subj: (DB.cur || {}).subj || DB.subj } : b === 'res' ? { title: 'Результат', back: '#/exam', tab: 2, subj: (EX || DB.cur || {}).subj } : { title: 'Пробный экзамен', tab: 2, subj: DB.subj };
+  if (a === 'p') { let sk, ch, lab; if (id.startsWith('t:')) { const t = ST(id.slice(2)); sk = t && SK(t.sk); lab = 'Подобные задания'; } else if (id.startsWith('mix:')) { ch = id.slice(4); lab = 'Вперемешку'; } else { sk = SK(id); lab = sk && sk.code; } ch = ch || (sk && sk.ch); const c = CH(ch); return c ? { title: id.startsWith('t:') ? lab : 'Гл. ' + c.num + ' · ' + lab, back: '#/ch/' + c.id, tab: 1, subj: c.subj } : { title: '', tab: 1 }; }
+  if (a === 'exam') return b === 'run' ? { title: 'Идёт пробник', back: '#/exam', tab: 2, subj: (DB.cur || {}).subj || DB.subj } : b === 'res' ? { title: 'Результат', back: '#/exam', tab: 2, subj: (EX || DB.cur || {}).subj } : { title: 'Пробники', tab: 2, subj: DB.subj };
   if (a === 'settings') return { title: 'Настройки', back: 'BACK', tab: -1 };
   if (a === 'plan') return { title: 'План до экзаменов', back: '#/', tab: 0 };
   if (a === 'badges') return { title: 'Значки', back: '#/prog', tab: 3 };
+  if (a === 'report') return { title: 'Отчёт за день', back: '#/', tab: 0 };
+  if (a === 'sync') return { title: 'Перенос прогресса', back: 'BACK', tab: -1 };
   return { title: '', tab: 0 };
 }
 function syncChrome() {
@@ -5625,7 +5903,7 @@ function suggestFor(subjId, n) {
 }
 function lastLabel() {
   const l = DB.last; if (!l) return null; const t = l.t;
-  if (t.startsWith('t:')) { const x = ST(t.slice(2)); return x ? { t, sub: x.subj, en: x.en, ru: 'Как в школе · ' + x.ru } : null; }
+  if (t.startsWith('t:')) { const x = ST(t.slice(2)); return x ? { t, sub: x.subj, en: x.en, ru: 'Подобные задания · ' + x.ru } : null; }
   if (t.startsWith('mix:')) { const c = CH(t.slice(4)); return c ? { t, sub: c.subj, en: c.en, ru: 'Глава ' + c.num + ' вперемешку' } : null; }
   const k = SK(t); return k ? { t, sub: k.subj, en: k.code + ' · ' + k.en, ru: k.ru } : null;
 }
@@ -5633,21 +5911,25 @@ function skRow(s, extra) { const c = CH(s.ch); return '<button class="lrow" data
 function viewToday() {
   const up = upcoming(); const next = up.find(x => x.d >= 0); const hr = new Date().getHours();
   let h = '<div class="hello"><div class="hi">' + (hr < 5 ? 'Доброй ночи' : hr < 12 ? 'Доброе утро' : hr < 18 ? 'Добрый день' : 'Добрый вечер') + (DB.name ? ', ' + esc(DB.name) : '') + '!</div><div class="muted">' + new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }) + '</div></div>';
+  if (balNow() >= REMIND_H && !sentToday()) h += reportCardHtml();
   // goal + streak
   const n = todayN(), g = GOAL(), st = streak();
   h += '<div class="duo"><section class="card goal"><div class="gring">' + ring(n, g, 76, Math.min(n, 999)) + '</div><div class="gtx"><b>' + (n >= g ? 'Цель дня выполнена' : 'Цель дня: ' + g + ' ' + plural(g, 'задание', 'задания', 'заданий')) + '</b><span class="muted">' + (n >= g ? 'Всё, что сверху, — бонус.' : 'Осталось ' + (g - n) + ' — и день засчитан в серию.') + '</span></div><div class="streak' + (st ? ' on' : '') + '">' + ico('flame') + '<b>' + st + '</b><span>' + plural(st, 'день', 'дня', 'дней') + ' подряд</span></div></section>';
   // countdown
   if (next) {
     const same = up.filter(x => x.d === next.d); const left = same.reduce((t, x) => t + subjSkills(x.s.id).length - subjMastered(x.s.id), 0);
-    h += '<section class="card count" data-s="' + next.s.id + '"><div class="cbig"><span class="num">' + (next.d === 0 ? '0' : next.d) + '</span><span class="lab">' + (next.d === 0 ? 'экзамен сегодня' : plural(next.d, 'день', 'дня', 'дней') + ' до экзамена') + '</span></div><div class="ctx"><b>' + same.map(x => esc(x.s.ru)).join(' и ') + '</b><span>' + dateRu(next.date) + '</span><span class="muted">Готовность: ' + same.map(x => x.s.ru.toLowerCase() + ' ' + ready(x.s.id).p + '%').join(', ') + '. ' + (left ? 'Осталось освоить ' + left + ' ' + plural(left, 'навык', 'навыка', 'навыков') + (next.d > 0 ? ' — примерно ' + Math.ceil(left / next.d) + ' в день' : '') : 'Все навыки освоены — устройте пробный экзамен') + '</span></div></section></div>';
+    h += '<section class="card count" data-s="' + next.s.id + '"><div class="cbig"><span class="num">' + (next.d === 0 ? '0' : next.d) + '</span><span class="lab">' + (next.d === 0 ? 'экзамен сегодня' : plural(next.d, 'день', 'дня', 'дней') + ' до экзамена') + '</span></div><div class="ctx"><b>' + same.map(x => esc(x.s.ru)).join(' и ') + '</b><span>' + dateRu(next.date) + '</span><span class="muted">Готовность: ' + same.map(x => x.s.ru.toLowerCase() + ' ' + ready(x.s.id).p + '%').join(', ') + '. ' + (left ? 'Осталось освоить ' + left + ' ' + plural(left, 'навык', 'навыка', 'навыков') + (next.d > 0 ? ' — примерно ' + Math.ceil(left / next.d) + ' в день' : '') : 'Все навыки освоены — устройте пробник') + '</span></div></section></div>';
     h += '<div class="exrow">' + up.map(x => '<button class="exchip' + (x.d < 0 ? ' past' : '') + '" data-s="' + x.s.id + '" onclick="go(\'#/s/' + x.s.id + '\')">' + ico(x.s.id) + '<span><b>' + esc(x.s.ru) + '</b><small>' + dateRu(x.date) + ' · ' + whenRu(x.date) + '</small></span></button>').join('') + '</div>';
   }
   if (!next) h += '</div>';
   // unfinished exam / continue
-  if (DB.cur && !DB.cur.done) { const pg = examProgress(loadExam()); h += '<section class="card cont" data-s="' + (DB.cur.subj || 'math') + '"><div class="lt"><b>Незаконченный экзамен · ' + esc(SUBJ(DB.cur.subj).ru) + '</b><span class="muted">Отвечено ' + pg.ans + ' из ' + pg.tot + '</span></div><button class="btn primary" onclick="DB.subj=\'' + (DB.cur.subj || 'math') + '\';go(\'#/exam/run\')">Продолжить</button></section>'; }
+  if (DB.cur && !DB.cur.done) { const pg = examProgress(loadExam()); h += '<section class="card cont" data-s="' + (DB.cur.subj || 'math') + '"><div class="lt"><b>Незаконченный пробник · ' + esc(SUBJ(DB.cur.subj).ru) + '</b><span class="muted">Отвечено ' + pg.ans + ' из ' + pg.tot + '</span></div><button class="btn primary" onclick="DB.subj=\'' + (DB.cur.subj || 'math') + '\';go(\'#/exam/run\')">Продолжить</button></section>'; }
   const ll = lastLabel();
   if (ll) h += '<section class="card cont" data-s="' + ll.sub + '"><span class="lic big">' + ico(ll.sub) + '</span><div class="lt"><span class="muted">Продолжить с того же места</span><b>' + esc(ll.en) + '</b><span class="ru">' + esc(ll.ru) + '</span></div><button class="btn primary round" aria-label="Продолжить" onclick="go(\'#/p/' + encodeURIComponent(ll.t) + '\')">' + ico('play') + '</button></section>';
+  snapReady();
   h += planCardHtml();
+  if (!(balNow() >= REMIND_H && !sentToday())) h += reportCardHtml();
+  h += '<button class="card prow" onclick="go(\'#/sync\')"><span class="lic">' + ico('send') + '</span><span class="lt"><b>Перенос прогресса</b><span class="muted">скопировать или вставить код — для урока или другого устройства</span></span></button>';
   shell(h);
 }
 
@@ -5661,14 +5943,14 @@ function viewSubject(id) {
   const sub = SUBJ(id); DB.subj = sub.id; save(); const sk = subjSkills(sub.id), m = subjMastered(sub.id);
   let h = '<section class="card hero" data-s="' + sub.id + '"><div class="hrow"><span class="stile big">' + ico(sub.id) + '</span><div class="htx"><h2>' + esc(sub.ru) + '</h2><span class="ru">' + esc(sub.en) + ' · экзамен ' + dateRu(EXD[sub.id]) + ', ' + whenRu(EXD[sub.id]) + '</span></div>' + ring(ready(sub.id).p, 100, 58, ready(sub.id).p + '%') + '</div><div class="meta">Готовность к экзамену: ' + readyNote(ready(sub.id)) + '</div>';
   const cur = DB.cur && !DB.cur.done && (DB.cur.subj || 'math') === sub.id;
-  h += '<div class="row"><button class="btn primary" onclick="go(\'#/exam\')">' + ico('exam') + ' Пробный экзамен</button>' + (cur ? '<button class="btn" onclick="go(\'#/exam/run\')">Продолжить экзамен</button><button class="btn ghost" onclick="endSheet()">Завершить досрочно</button>' : '') + '</div>';
+  h += '<div class="row"><button class="btn primary" onclick="go(\'#/exam\')">' + ico('exam') + ' Пробник</button>' + (cur ? '<button class="btn" onclick="go(\'#/exam/run\')">Продолжить пробник</button><button class="btn ghost" onclick="endSheet()">Завершить досрочно</button>' : '') + '</div>';
   const ex = DB.exams.filter(e => (e.subj || 'math') === sub.id);
-  if (cur) { const pg = examProgress(loadExam()); h += '<div class="meta curex">Незаконченный экзамен · отвечено ' + pg.ans + ' из ' + pg.tot + '</div>'; }
-  if (ex.length) { const e = ex[ex.length - 1]; h += '<div class="meta">Последний пробный: ' + e.score + ' / ' + e.max + ' (' + pct(e.score, e.max) + '%)</div>'; }
+  if (cur) { const pg = examProgress(loadExam()); h += '<div class="meta curex">Незаконченный пробник · отвечено ' + pg.ans + ' из ' + pg.tot + '</div>'; }
+  if (ex.length) { const e = ex[ex.length - 1]; h += '<div class="meta">Последний пробник: ' + e.score + ' / ' + e.max + ' (' + pct(e.score, e.max) + '%)</div>'; }
   h += '</section><div class="lst">';
   CHAPTERS.filter(c => c.subj === sub.id).forEach(c => {
     const [mm, n] = chProgress(c.id); const sc = scOf(c.id); const [sd, sn] = scCount(sc);
-    h += '<button class="card chcard" onclick="go(\'#/ch/' + c.id + '\')"><span class="chnum">Глава ' + c.num + '</span><span class="chtitle">' + esc(c.en) + '</span><span class="chru">' + esc(c.ru) + '</span><span class="bar"><i style="width:' + pct(mm, n) + '%"></i></span><span class="meta">навыки ' + mm + ' из ' + n + (sn ? ' · как в школе ' + sd + ' из ' + sn + (sd === sn ? ' ✓' : '') : '') + '</span></button>';
+    h += '<button class="card chcard" onclick="go(\'#/ch/' + c.id + '\')"><span class="chnum">Глава ' + c.num + '</span><span class="chtitle">' + esc(c.en) + '</span><span class="chru">' + esc(c.ru) + '</span><span class="bar"><i style="width:' + pct(mm, n) + '%"></i></span><span class="meta">навыки ' + mm + ' из ' + n + (sn ? ' · подобные задания ' + sd + ' из ' + sn + (sd === sn ? ' ✓' : '') : '') + '</span></button>';
   });
   h += '</div>' + (sub.id !== 'math' ? '<p class="meta">Значок <b class="ext">E</b> — материал уровня Extended.</p>' : '');
   shell(h);
@@ -5680,9 +5962,9 @@ function viewProgress() {
   const mx = Math.max(g, ...days.map(x => x[1])); const tot = Object.values(D).reduce((a, b) => a + b, 0);
   let h = '<section class="card"><div class="pstats"><div><b>' + streak() + '</b><span>' + plural(streak(), 'день', 'дня', 'дней') + ' подряд</span></div><div><b>' + tot + '</b><span>заданий всего</span></div><div><b>' + SUBJECTS.reduce((t, s) => t + subjMastered(s.id), 0) + '</b><span>навыков освоено</span></div></div>';
   h += '<div class="bplot" aria-label="Задания за 14 дней">' + days.map(([d, v]) => '<div class="bcol' + (v >= g ? ' ok' : '') + '"><i style="height:' + (v ? Math.max(6, Math.round(100 * v / mx)) : 2) + '%"></i></div>').join('') + '<div class="gline" style="bottom:' + (100 * g / mx).toFixed(1) + '%"></div></div><div class="blab">' + days.map(([d]) => '<span' + (ymd(d) === ymd(new Date()) ? ' class="now"' : '') + '>' + d.getDate() + '</span>').join('') + '</div>' + '<div class="meta">Задания за 14 дней · пунктир — цель дня (' + g + '). Цель меняется в настройках.</div></section>';
-  h += '<section class="card"><h3>По предметам</h3><div class="lst">' + SUBJECTS.filter(s => !s.soon).map(s => { const sk = subjSkills(s.id), m = subjMastered(s.id); const ex = DB.exams.filter(e => (e.subj || 'math') === s.id); const e = ex[ex.length - 1]; return '<button class="prow" data-s="' + s.id + '" onclick="go(\'#/s/' + s.id + '\')"><span class="lic">' + ico(s.id) + '</span><span class="lt"><b>' + esc(s.ru) + '</b><span class="bar"><i style="width:' + pct(m, sk.length) + '%"></i></span><span class="meta">готовность ' + ready(s.id).p + '% · навыки ' + m + '/' + sk.length + (e ? ' · пробный ' + pct(e.score, e.max) + '%' : '') + '</span></span></button>'; }).join('') + '</div></section>';
+  h += '<section class="card"><h3>По предметам</h3><div class="lst">' + SUBJECTS.filter(s => !s.soon).map(s => { const sk = subjSkills(s.id), m = subjMastered(s.id); const ex = DB.exams.filter(e => (e.subj || 'math') === s.id); const e = ex[ex.length - 1]; return '<button class="prow" data-s="' + s.id + '" onclick="go(\'#/s/' + s.id + '\')"><span class="lic">' + ico(s.id) + '</span><span class="lt"><b>' + esc(s.ru) + '</b><span class="bar"><i style="width:' + pct(m, sk.length) + '%"></i></span><span class="meta">готовность ' + ready(s.id).p + '% · навыки ' + m + '/' + sk.length + (e ? ' · пробник ' + pct(e.score, e.max) + '%' : '') + '</span></span></button>'; }).join('') + '</div></section>';
   const hist = DB.exams.slice().reverse().slice(0, 12);
-  if (hist.length) h += '<section class="card"><h3>Пробные экзамены</h3><table class="tbl">' + hist.map(e => { const p = pct(e.score, e.max); return '<tr><td>' + new Date(e.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) + '</td><td>' + esc(SUBJ(e.subj || 'math').ru) + '<span class="ru"> · ' + esc(MODE_RU[e.mode] || e.mode) + '</span></td><td><span class="pill ' + (p >= 80 ? 'g' : p >= 55 ? 'y' : 'r') + '">' + p + '%</span></td></tr>'; }).join('') + '</table></section>';
+  if (hist.length) h += '<section class="card"><h3>Пробники</h3><table class="tbl">' + hist.map(e => { const p = pct(e.score, e.max); return '<tr><td>' + new Date(e.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) + '</td><td>' + esc(SUBJ(e.subj || 'math').ru) + '<span class="ru"> · ' + esc(MODE_RU[e.mode] || e.mode) + '</span></td><td><span class="pill ' + (p >= 80 ? 'g' : p >= 55 ? 'y' : 'r') + '">' + p + '%</span></td></tr>'; }).join('') + '</table></section>';
   h += badgesHtml(6);
   h += '<button class="card prow" onclick="go(\'#/settings\')"><span class="lic">' + ico('gear') + '</span><span class="lt"><b>Отчёт репетитору и перенос прогресса</b><span class="muted">в настройках</span></span></button>';
   shell(h);
@@ -5697,6 +5979,8 @@ window.addEventListener('scroll', () => { const a = document.querySelector('.app
 const STORE = 'g9-endterm-math-v1';
 let DB = { sk: {}, exams: [], ru: false, kbd: false, cur: null };
 try { const s = JSON.parse(localStorage.getItem(STORE) || 'null'); if (s) DB = Object.assign(DB, s); } catch (e) {}
+if (!DB.name) DB.name = 'Тая';
+if (!DB.sid) { DB.sid = Math.random().toString(36).slice(2, 10); try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch (e) {} }
 function save() { try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch (e) {} }
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -5716,13 +6000,13 @@ const scOf = ch => SCHOOL.filter(t => t.ch === ch);
 const scOfSk = id => SCHOOL.filter(t => t.sk === id);
 const scCount = list => [list.filter(scDone).length, list.length];
 const ST = id => SCHOOL.find(t => t.id === id);
-function scMark(t) { const v = DB.sc[t.id] || { n: 0, rd: 0 }; v.n++; v.rd = scRound(t.ch); DB.sc[t.id] = v; save(); }
+function scMark(t) { const v = DB.sc[t.id] || { n: 0, rd: 0 }; v.n++; v.rd = scRound(t.ch); DB.sc[t.id] = v; logSchool(t.id); save(); }
 function scAgain(ch) { DB.scr[ch] = scRound(ch) + 1; save(); const f = scOf(ch)[0]; if (f) go('#/p/' + encodeURIComponent('t:' + f.id)); }
 function scRow(t) { return '<button class="scrow' + (scDone(t) ? ' done' : '') + '" onclick="go(\'#/p/' + encodeURIComponent('t:' + t.id) + '\')"><span class="ck">' + (scDone(t) ? '✓' : '') + '</span><span class="nm"><span>' + esc(t.en) + '</span><span class="ru">' + esc(t.ru) + '</span><span class="src">' + esc(t.src.ru) + '</span></span></button>'; }
 function scSection(ch) {
   const list = scOf(ch); if (!list.length) return '';
   const [d, n] = scCount(list); const rd = scRound(ch); const nx = list.find(t => !scDone(t));
-  let h = '<section class="card school"><div class="row" style="justify-content:space-between;align-items:baseline"><h3 style="margin:0">Как в школе</h3><span class="pill ' + (d === n ? 'g' : 'y') + '">сделано ' + d + ' из ' + n + '</span></div>';
+  let h = '<section class="card school"><div class="row" style="justify-content:space-between;align-items:baseline"><h3 style="margin:0">Подобные задания</h3><span class="pill ' + (d === n ? 'g' : 'y') + '">сделано ' + d + ' из ' + n + '</span></div>';
   h += '<p class="syn">Задания из школьных материалов: тот же сюжет и рисунок. В первый раз — школьные числа, потом немного другие.' + (rd > 1 ? ' Круг ' + rd + '.' : '') + '</p>';
   h += '<div class="bar"><i style="width:' + Math.round(100 * d / n) + '%"></i></div>';
   h += '<div class="row">' + (nx ? '<button class="btn primary" onclick="go(\'#/p/' + encodeURIComponent('t:' + nx.id) + '\')">' + (d ? 'Продолжить по порядку →' : 'Решать по порядку →') + '</button>' : '<span class="pill g">Глава пройдена ✓</span><button class="btn" onclick="scAgain(\'' + ch + '\')">Пройти заново (круг ' + (rd + 1) + ') — новые числа</button>') + '</div>';
@@ -5866,6 +6150,8 @@ function chProgress(ch) { const ss = SKILLS.filter(s => s.ch === ch); const m = 
 function go(h) { if (location.hash === h) route(); else location.hash = h; }
 window.addEventListener('hashchange', route);
 function route() {
+  if (location.hash.startsWith('#c=') && codeLinkCheck()) return;
+  if (location.hash.startsWith('#tg=')) { tgLinkCheck(); if (window.__tgLinked) setTimeout(() => toast('Telegram подключён: отчёт уходит ' + TUTOR_DAT + ' одним нажатием'), 600); }
   hideKb(); if (!DB.subj) DB.subj = 'math';
   const h = location.hash.replace(/^#\/?/, '');
   const [a, b] = h.split('/');
@@ -5875,6 +6161,8 @@ function route() {
   if (a === 'prog') return viewProgress();
   if (a === 'plan') return viewPlan();
   if (a === 'badges') return viewBadges();
+  if (a === 'report') return viewReport();
+  if (a === 'sync') return viewSync();
   if (a === 'settings') return viewSettings();
   if (a === 'p') return viewPractice(decodeURIComponent(b));
   if (a === 'exam') return b === 'run' ? viewExamRun() : b === 'res' ? viewExamResult() : viewExamSetup();
@@ -5885,7 +6173,7 @@ function shell(inner) {
   window.scrollTo(0, 0); syncChrome(); animateView(); checkBadges();
 }
 const NM = o => esc(o.en) + ' <span class="ru">· ' + esc(o.ru) + '</span>';
-const MODE_RU = { quick: 'короткий', standard: 'стандартный', full: 'полный', chapter: 'по главе' };
+const MODE_RU = { quick: 'экспресс', standard: 'обычный', full: 'полный', chapter: 'по главе' };
 function crumbs() { return ''; }
 
 /* ---------- home ---------- */
@@ -5898,7 +6186,7 @@ function viewChapter(ch) {
   let h = crumbs([['Главная', '#/'], ['Глава ' + c.num]]);
   h += '<div><div class="meta">Глава ' + c.num + ' · Chapter ' + c.num + '</div><h2>' + esc(c.en) + '</h2><div class="muted">' + esc(c.ru) + '</div></div>';
   h += '<div class="row"><button class="btn primary" onclick="go(\'#/p/mix:' + ch + '\')">Все навыки вперемешку</button><button class="btn" onclick="startExam([\'' + ch + '\'],\'chapter\')">Тест по главе</button></div>';
-  h += '<div class="skills">' + SKILLS.filter(s => s.ch === ch).map(s => '<button class="skill" onclick="go(\'#/p/' + s.id + '\')"><span class="nm"><span class="id">' + s.code + (s.ext ? ' · <b class="ext">E</b>' : '') + (s.calc && s.subj === 'math' ? ' · калькулятор' : '') + '</span><span>' + esc(s.en) + '</span><span class="ru">' + esc(s.ru) + '</span>' + (scOfSk(s.id).length ? '<span class="scb">как в школе: ' + scCount(scOfSk(s.id)).join(' из ') + '</span>' : '') + '</span>' + dotsHtml(s.id) + '</button>').join('') + '</div>';
+  h += '<div class="skills">' + SKILLS.filter(s => s.ch === ch).map(s => '<button class="skill" onclick="go(\'#/p/' + s.id + '\')"><span class="nm"><span class="id">' + s.code + (s.ext ? ' · <b class="ext">E</b>' : '') + (s.calc && s.subj === 'math' ? ' · калькулятор' : '') + '</span><span>' + esc(s.en) + '</span><span class="ru">' + esc(s.ru) + '</span>' + (scOfSk(s.id).length ? '<span class="scb">подобные задания: ' + scCount(scOfSk(s.id)).join(' из ') + '</span>' : '') + '</span>' + dotsHtml(s.id) + '</button>').join('') + '</div>';
   h += scSection(ch);
   h += theoryHtml(ch, false, 'Теория по главе · Theory');
   shell(h);
@@ -5933,7 +6221,7 @@ function nextBoxHtml() {
   const just = P.justM; let t, sub, btns;
   if (n.kind === 'skill') { t = just ? 'Навык освоен!' : 'Этот навык уже освоен'; sub = 'Следующий в этой главе: <b>' + n.sk.code + ' · ' + esc(n.sk.en) + '</b> <span class="muted">' + esc(n.sk.ru) + '</span>'; btns = '<button class="btn primary" onclick="go(\'#/p/' + n.sk.id + '\')">Дальше: ' + n.sk.code + ' →</button>'; }
   else if (n.kind === 'chapter') { t = 'Глава ' + n.done.num + ' освоена полностью!'; sub = 'Следующая: <b>Глава ' + n.ch.num + '. ' + esc(n.ch.en) + '</b> <span class="muted">' + esc(n.ch.ru) + '</span>'; btns = '<button class="btn primary" onclick="go(\'#/p/' + n.sk.id + '\')">Начать главу ' + n.ch.num + ' →</button><button class="btn" onclick="go(\'#/ch/' + n.ch.id + '\')">Сначала теория</button><button class="btn" onclick="startExam([\'' + n.done.id + '\'], \'chapter\')">Тест по главе ' + n.done.num + '</button>'; }
-  else { t = 'Все главы предмета освоены!'; sub = 'Самое время проверить себя на пробном экзамене по всем главам.'; btns = '<button class="btn primary" onclick="go(\'#/exam\')">Пробный экзамен →</button>'; }
+  else { t = 'Все главы предмета освоены!'; sub = 'Самое время проверить себя на пробнике по всем главам.'; btns = '<button class="btn primary" onclick="go(\'#/exam\')">Пробник →</button>'; }
   return '<div class="nextbox' + (just || n.kind !== 'skill' ? ' hot' : '') + '"><b class="t">' + t + '</b><div>' + sub + '</div><div class="row">' + btns + '</div></div>';
 }
 /* ---------- wide landscape tablets: task left, theory right ---------- */
@@ -5967,10 +6255,10 @@ function viewPractice(target) {
 function renderPractice() {
   const { sk, it } = P; const ch = CHAPTERS.find(c => c.id === sk.ch);
   const mix = P.target.startsWith('mix:'); const sc = P.school;
-  let h = crumbs([['Главная', '#/'], ['Гл. ' + ch.num + ' ' + ch.en, '#/ch/' + ch.id], [sc ? 'Как в школе' : mix ? 'Вперемешку' : sk.code]]);
+  let h = crumbs([['Главная', '#/'], ['Гл. ' + ch.num + ' ' + ch.en, '#/ch/' + ch.id], [sc ? 'Подобные задания' : mix ? 'Вперемешку' : sk.code]]);
   const cut = h.length; const wide = WIDE(); const thOn = wide ? P.showTh !== false : !!P.showTh;
   h += '<section class="card q">';
-  if (sc) { const [d, n] = scCount(scOf(ch.id)); h += '<div class="schead"><span class="pill b">Как в школе</span> <b>' + esc(sc.en) + '</b> <span class="ru">· ' + esc(sc.ru) + '</span><div class="meta">' + esc(sc.src.ru) + ' · ' + (P.orig >= 0 ? (sc.sets.length > 1 ? 'школьные числа (' + (P.orig + 1) + ' из ' + sc.sets.length + ')' : 'школьные числа') : 'числа изменены') + ' · в главе сделано ' + d + ' из ' + n + (scDone(sc) ? ' · это задание уже сделано ✓' : '') + '</div></div>'; }
+  if (sc) { const [d, n] = scCount(scOf(ch.id)); h += '<div class="schead"><span class="pill b">Подобные задания</span> <b>' + esc(sc.en) + '</b> <span class="ru">· ' + esc(sc.ru) + '</span><div class="meta">' + esc(sc.src.ru) + ' · ' + (P.orig >= 0 ? (sc.sets.length > 1 ? 'школьные числа (' + (P.orig + 1) + ' из ' + sc.sets.length + ')' : 'школьные числа') : 'числа изменены') + ' · в главе сделано ' + d + ' из ' + n + (scDone(sc) ? ' · это задание уже сделано ✓' : '') + '</div></div>'; }
   h += '<div class="qhead"><span>' + sk.code + ' · ' + NM(sk) + (sk.ext ? ' <b class="ext">E</b>' : '') + '</span><span>' + ((it.calc || sk.calc) ? '<span class="calc">С калькулятором</span>' : '<span class="nocalc">Без калькулятора</span>') + ' ' + dotsHtml(sk.id) + '</span></div>';
   h += '<div class="instr">' + tr(it.q) + '</div>' + promptHtml(it);
   h += '<div class="ansbox">';
@@ -6006,7 +6294,7 @@ function renderPractice() {
   h += '<button class="btn" id="bTh">' + (thOn ? 'Скрыть теорию' : '📖 Теория') + '</button>';
   h += '<button class="btn' + (P.done && !nb ? ' primary' : ' ghost') + '" id="bNext">' + (P.school ? 'То же задание, другие числа' : nb ? 'Ещё задание по этому навыку' : 'Новое задание →') + '</button>';
   h += '</div></section>';
-  if (!sc && !mix && scOfSk(sk.id).length) h += '<section class="card school"><div class="meta">Как в школе по этому навыку: ' + scCount(scOfSk(sk.id)).join(' из ') + '</div>' + scOfSk(sk.id).map(scRow).join('') + '</section>';
+  if (!sc && !mix && scOfSk(sk.id).length) h += '<section class="card school"><div class="meta">Подобные задания по этому навыку: ' + scCount(scOfSk(sk.id)).join(' из ') + '</div>' + scOfSk(sk.id).map(scRow).join('') + '</section>';
   if (thOn && !wide) h += theoryHtml(ch.id, false, 'Теория · Глава ' + ch.num + ' · ' + esc(ch.ru));
   if (wide && thOn) h = h.slice(0, cut) + '<div class="pgrid"><div class="pmain">' + h.slice(cut) + '</div><aside class="pside">' + theoryHtml(ch.id, true, 'Теория · Глава ' + ch.num + ' · ' + esc(ch.ru)) + '</aside></div>';
   const anim = P.anim; P.anim = null;
@@ -6025,7 +6313,7 @@ function renderPractice() {
   const first = $('input.inp:not([readonly])'); if (first && !P.done && !P.fb && matchMedia('(pointer:fine)').matches) first.focus();
 }
 function renderPracticeKeep() { const y = window.scrollY; renderPractice(); window.scrollTo(0, y); }
-function record(ok) { DB.run = ok ? (DB.run || 0) + 1 : 0; DB.runBest = Math.max(DB.runBest || 0, DB.run); const s = skStat(P.sk.id); const was = s.m; s.a++; if (ok) { s.c++; s.s++; if (s.s >= 3) s.m = true; } else s.s = 0; if (!was && s.m) P.justM = true; save(); bump(1); }
+function record(ok) { DB.run = ok ? (DB.run || 0) + 1 : 0; DB.runBest = Math.max(DB.runBest || 0, DB.run); const s = skStat(P.sk.id); const was = s.m; s.a++; if (ok) { s.c++; s.s++; if (s.s >= 3) s.m = true; } else s.s = 0; if (!was && s.m) P.justM = true; logAnswer(P.sk.id, ok, !was && s.m); save(); bump(1); }
 function collectVals(root) { $$('input.inp', root).forEach(i => { P.vals[i.dataset.field] = i.value; }); }
 function checkPractice() {
   collectVals($('#app')); hideKb();
@@ -6131,57 +6419,61 @@ Object.assign(BP, {
   p4: [['P4.1', [0, 1, 2, 3]], ['P4.2', [0, 1, 2, 3]], ['P4.3', [0, 1, 2, 3]], ['P4.4', [0, 1, 2]], ['P4.5', [0, 1, 2, 3]], ['P4.6', [0, 1, 2, 3]], ['P4.7', [0, 1]], ['P4.8', [0, 1]], ['P4.9', [-1, -1, -1, -1]]]
 });
 const MODES = {
-  quick: { en: 'Quick', ru: 'Короткий · около 25 заданий · примерно 35 минут' },
-  standard: { en: 'Standard', ru: 'Стандартный · по одному пункту из каждого задания · около 2 часов' },
+  quick: { en: 'Express', ru: 'Экспресс · около 12 заданий · 15 минут', n: 12 },
+  standard: { en: 'Standard', ru: 'Обычный · около 22 заданий · 30 минут', n: 22 },
   full: { en: 'Full paper', ru: 'Полный вариант · как школьный, все пункты · можно в несколько подходов' },
   chapter: { en: 'Chapter test (all parts)', ru: 'Тест по главе (все пункты)' }
 };
-function buildExam(seed, chs, mode) {
+/* short mocks cover every chapter; topics not yet seen in earlier mocks go first, so a few mocks cover the whole subject */
+function pickExam(r, chs, mode) {
+  const N = MODES[mode].n; const all = chs.flatMap(ch => BP[ch].map(e => [ch, e[0]])); const subj = subjOf(chs[0]);
+  const cov = new Set((DB.excov || {})[subj] || []); const per = {}; chs.forEach(ch => per[ch] = 1);
+  let left = Math.max(N, chs.length) - chs.length; const sizes = chs.map(ch => BP[ch].length); const tot = sizes.reduce((a, b) => a + b, 0);
+  chs.forEach((ch, i) => { const q = Math.floor(left * sizes[i] / tot); per[ch] += q; }); let rest = Math.max(N, chs.length) - Object.values(per).reduce((a, b) => a + b, 0);
+  r.sh(chs.slice()).forEach(ch => { if (rest > 0 && per[ch] < BP[ch].length) { per[ch]++; rest--; } });
+  const out = []; chs.forEach(ch => { const es = BP[ch].map(e => e[0]); const uniq = [...new Set(es)]; const fresh = r.sh(uniq.filter(id => !cov.has(id))), seen = r.sh(uniq.filter(id => cov.has(id))); fresh.concat(seen).slice(0, Math.min(per[ch], uniq.length)).sort((a, b) => es.indexOf(a) - es.indexOf(b)).forEach(id => out.push([ch, id])); });
+  return out;
+}
+function buildExam(seed, chs, mode, pick) {
   const r = mkRng(seed); const qs = [];
-  chs.forEach(ch => {
-    let entries = BP[ch].slice();
-    if (mode === 'quick') { const n = Math.max(2, Math.round(entries.length * 0.32)); entries = r.sh(entries).slice(0, n).sort((a, b) => BP[ch].indexOf(a) - BP[ch].indexOf(b)); }
-    entries.forEach(([id, vis]) => {
-      const sk = SK(id); let use = vis;
-      if (mode === 'quick') use = [r.pick(vis)];
-      else if (mode === 'standard') use = [r.pick(vis)];
-      const seen = new Set(); const parts = use.map(vi => { let it; for (let g = 0; g < 6; g++) { it = sk.gen(r, vi < 0 ? undefined : vi); const k = it.q.en + (it.m || it.tex || it.code || it.html || ''); if (!seen.has(k)) { seen.add(k); break; } } return it; });
-      qs.push({ ch, id, parts });
-    });
-  });
-  return qs;
+  const quickish = mode === 'quick' || mode === 'standard';
+  if (quickish && !pick) pick = pickExam(r, chs, mode);
+  const gen = (ch, id, vis) => { const sk = SK(id); const seen = new Set(); const parts = vis.map(vi => { let it; for (let g = 0; g < 6; g++) { it = sk.gen(r, vi < 0 ? undefined : vi); const k = it.q.en + (it.m || it.tex || it.code || it.html || ''); if (!seen.has(k)) { seen.add(k); break; } } return it; }); qs.push({ ch, id, parts }); };
+  if (quickish) { pick.forEach(([ch, id]) => { const e = BP[ch].find(x => x[0] === id); gen(ch, id, [r.pick(e[1])]); }); return { qs, pick }; }
+  chs.forEach(ch => BP[ch].forEach(([id, vis]) => gen(ch, id, vis)));
+  return { qs, pick: null };
 }
 let EX = null; let saveT = null;
 function saveExamSoon() { clearTimeout(saveT); saveT = setTimeout(saveExam, 400); }
-function saveExam() { if (!EX) return; DB.cur = { subj: EX.subj, seed: EX.seed, chs: EX.chs, mode: EX.mode, vals: EX.vals, self: EX.self, t0: EX.t0, t1: EX.t1, done: EX.done, early: EX.early }; save(); }
+function saveExam() { if (!EX) return; DB.cur = { subj: EX.subj, seed: EX.seed, chs: EX.chs, mode: EX.mode, pick: EX.pick, vals: EX.vals, self: EX.self, t0: EX.t0, t1: EX.t1, done: EX.done, early: EX.early }; save(); }
 function startExam(chs, mode) {
   const seed = (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0;
   EX = { subj: subjOf(chs[0]), seed, chs, mode, vals: {}, self: {}, t0: Date.now(), done: false };
-  EX.items = buildExam(seed, chs, mode); saveExam(); go('#/exam/run');
+  const b = buildExam(seed, chs, mode); EX.items = b.qs; EX.pick = b.pick; saveExam(); go('#/exam/run');
 }
-function loadExam() { if (EX && EX.items) return EX; if (!DB.cur) return null; EX = Object.assign({}, DB.cur); EX.chs = EX.chs.map(c => typeof c === 'number' ? 'm' + c : c); EX.subj = EX.subj || subjOf(EX.chs[0]); EX.vals = EX.vals || {}; EX.self = EX.self || {}; EX.items = buildExam(EX.seed, EX.chs, EX.mode); return EX; }
+function loadExam() { if (EX && EX.items) return EX; if (!DB.cur) return null; EX = Object.assign({}, DB.cur); EX.chs = EX.chs.map(c => typeof c === 'number' ? 'm' + c : c); EX.subj = EX.subj || subjOf(EX.chs[0]); EX.vals = EX.vals || {}; EX.self = EX.self || {}; const b = buildExam(EX.seed, EX.chs, EX.mode, EX.pick); EX.items = b.qs; EX.pick = b.pick; return EX; }
 function viewExamSetup() {
   if (EX && !EX.done) {}
   EX = null;
-  let h = crumbs([['Главная', '#/'], ['Пробный экзамен']]);
+  let h = crumbs([['Главная', '#/'], ['Пробник']]);
   h += '<nav class="segs">' + SUBJECTS.filter(x => !x.soon).map(x => '<button class="seg' + (x.id === DB.subj ? ' on' : '') + '" data-s="' + x.id + '" onclick="DB.subj=\'' + x.id + '\';save();viewExamSetup()">' + ico(x.id) + '<span>' + esc(x.ru) + '</span></button>').join('') + '</nav>';
-  h += '<section class="card"><h2>' + esc((SUBJECTS.find(x => x.id === DB.subj) || {}).ru) + '</h2><div class="meta">экзамен ' + dateRu(EXD[DB.subj] || EXD.math) + ' · ' + whenRu(EXD[DB.subj] || EXD.math) + '</div><p class="muted">Как школьный вариант, числа каждый раз новые. Подсказок нет — проверка в конце.</p>';
+  h += '<section class="card"><h2>' + esc((SUBJECTS.find(x => x.id === DB.subj) || {}).ru) + '</h2><div class="meta">экзамен ' + dateRu(EXD[DB.subj] || EXD.math) + ' · ' + whenRu(EXD[DB.subj] || EXD.math) + ' · тем уже было в пробниках: ' + ((DB.excov || {})[DB.subj] || []).length + ' из ' + new Set(CHAPTERS.filter(c => c.subj === DB.subj).flatMap(c => (BP[c.id] || []).map(e => e[0]))).size + '</div><p class="muted">Как школьный вариант, числа каждый раз новые. Подсказок нет — проверка в конце.</p>';
   h += '<h3>Главы</h3><div class="choice" id="exChs">' + CHAPTERS.filter(c => c.subj === DB.subj).map(c => '<label><input type="checkbox" value="' + c.id + '" checked><span>' + c.num + '. ' + NM(c) + '</span></label>').join('') + '</div>';
   h += '<h3 style="margin-top:14px">Длина</h3><div class="choice" id="exMode" style="flex-direction:column">' + ['quick', 'standard', 'full'].map((m, i) => '<label><input type="radio" name="exm" value="' + m + '"' + (i === 0 ? ' checked' : '') + '> <span>' + esc(MODES[m].ru) + '</span></label>').join('') + '</div>';
-  h += '<div class="row" style="margin-top:14px"><button class="btn primary" id="exGo">Начать экзамен</button>' + (DB.cur && !DB.cur.done && (DB.cur.subj || 'math') === DB.subj ? '<button class="btn" onclick="go(\'#/exam/run\')">Продолжить незаконченный</button>' : '') + '</div></section>';
+  h += '<div class="row" style="margin-top:14px"><button class="btn primary" id="exGo">Начать пробник</button>' + (DB.cur && !DB.cur.done && (DB.cur.subj || 'math') === DB.subj ? '<button class="btn" onclick="go(\'#/exam/run\')">Продолжить незаконченный</button>' : '') + '</div></section>';
   const hist = DB.exams.filter(e => (e.subj || 'math') === DB.subj);
   if (hist.length) {
     h += '<section class="card"><h3>История</h3><table class="tbl"><tr><th>Дата</th><th>Вариант</th><th>Результат</th></tr>' + hist.slice().reverse().slice(0, 15).map(e => { const p = Math.round(100 * e.score / e.max); return '<tr><td>' + new Date(e.date).toLocaleDateString() + '</td><td>' + esc(MODE_RU[e.mode] || e.mode) + ' · гл. ' + e.chs.map(c => typeof c === 'number' ? c : (CH(c) || {}).num).join(',') + '</td><td><span class="pill ' + (p >= 80 ? 'g' : p >= 55 ? 'y' : 'r') + '">' + e.score + '/' + e.max + ' · ' + p + '%</span></td></tr>'; }).join('') + '</table></section>';
   }
   shell(h);
   const segOn = $('.seg.on'); if (segOn) segOn.scrollIntoView({ block: 'nearest', inline: 'center' });
-  $('#exGo').onclick = () => { const chs = $$('#exChs input:checked').map(i => i.value); if (!chs.length) return toast('Выберите хотя бы одну главу'); if (DB.cur && !DB.cur.done && !confirm('Начать новый экзамен? Незаконченный будет удалён.')) return; startExam(chs, $('#exMode input:checked').value); };
+  $('#exGo').onclick = () => { const chs = $$('#exChs input:checked').map(i => i.value); if (!chs.length) return toast('Выберите хотя бы одну главу'); if (DB.cur && !DB.cur.done && !confirm('Начать новый пробник? Незаконченный будет удалён.')) return; startExam(chs, $('#exMode input:checked').value); };
 }
 function exField(qi, pi, fi) { return 'e' + qi + '_' + pi + '_' + fi; }
 function viewExamRun() {
   const ex = loadExam(); if (!ex) return go('#/exam');
   if (ex.done) return go('#/exam/res');
-  let h = crumbs([['Главная', '#/'], ['Пробный экзамен', '#/exam'], ['Идёт экзамен']]);
+  let h = crumbs([['Главная', '#/'], ['Пробник', '#/exam'], ['Идёт пробник']]);
   h += '<section class="card"><div class="row" style="justify-content:space-between"><div><h2>' + esc((SUBJECTS.find(x => x.id === ex.subj) || {}).ru || '') + '</h2><div class="meta">' + esc((MODES[ex.mode] || {}).ru || '') + ' · начат в ' + new Date(ex.t0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '</div></div><button class="btn small" onclick="endSheet()">Завершить досрочно</button></div><p class="muted" style="margin:6px 0 0">' + 'Решайте на бумаге, ответы вводите здесь. Можно выйти и вернуться позже — ответы сохраняются.' + '</p><details class="syn" style="margin-top:6px"><summary>Как вводить ответы</summary>' + 'Степень: степень <code>^</code> · корень <code>√</code> · дробь <code>/</code> · смешанное число <code>2 1/8</code> · два ответа <code>±3</code> или <code>3, -3</code> · стандартный вид <code>3.5*10^4</code> · «нельзя разложить» → <code>none</code> · химические формулы — обычной клавиатурой: <code>Al2(SO4)3</code>' + '</details></section>';
   h += renderExamBody(ex, false);
   h += '<div class="sticky"><span class="meta" id="exCount"></span><button class="btn primary" id="exFinish">Завершить и проверить</button></div>';
@@ -6246,28 +6538,28 @@ function endSheet() {
   const ex = loadExam(); if (!ex) return; if (inExam() && !ex.done) { $$('input.inp').forEach(i => { if (i.dataset.field) ex.vals[i.dataset.field] = i.value; }); saveExam(); }
   const pg = examProgress(ex); closeSheet();
   const d = document.createElement('div'); d.className = 'sheetbg'; d.id = 'endSheet';
-  d.innerHTML = '<div class="sheet" role="dialog" aria-modal="true"><h3>Завершить экзамен досрочно?</h3><p class="muted">Отвечено ' + pg.ans + ' из ' + pg.tot + '. Пустые ответы считаются неверными, но в результате отдельно будет видно, сколько верно из того, что решено.</p>'
+  d.innerHTML = '<div class="sheet" role="dialog" aria-modal="true"><h3>Завершить пробник досрочно?</h3><p class="muted">Отвечено ' + pg.ans + ' из ' + pg.tot + '. Пустые ответы считаются неверными, но в результате отдельно будет видно, сколько верно из того, что решено.</p>'
     + '<button class="btn primary wide" id="shCheck"' + (pg.ans ? '' : ' disabled') + '>Проверить то, что решено</button>'
     + '<button class="btn wide" id="shBack">Продолжить решать</button>'
-    + '<button class="btn wide danger" id="shDel">Удалить экзамен без результата</button></div>';
+    + '<button class="btn wide danger" id="shDel">Удалить пробник без результата</button></div>';
   document.body.appendChild(d); hideKb();
   d.onclick = e => { if (e.target === d) closeSheet(); };
   $('#shBack').onclick = () => { closeSheet(); if (!location.hash.startsWith('#/exam/run')) go('#/exam/run'); };
   $('#shCheck').onclick = () => { closeSheet(); finishExam(pg.ans < pg.tot); };
-  $('#shDel').onclick = () => { if (!confirm('Удалить этот экзамен? Ответы не сохранятся.')) return; closeSheet(); DB.cur = null; EX = null; save(); go('#/s/' + DB.subj); toast('Экзамен удалён'); };
+  $('#shDel').onclick = () => { if (!confirm('Удалить этот пробник? Ответы не сохранятся.')) return; closeSheet(); DB.cur = null; EX = null; save(); go('#/s/' + DB.subj); toast('Пробник удалён'); };
 }
 function closeSheet() { const d = $('#endSheet'); if (d) d.remove(); }
 function finishExam(early) {
   const ex = loadExam(); ex.done = true; ex.t1 = Date.now(); ex.early = !!early;
   const s = scoreExam(ex); const pg = examProgress(ex);
   DB.exams.push({ subj: ex.subj, date: Date.now(), mode: ex.mode, chs: ex.chs, score: s.sc, max: s.mx, mins: Math.round((ex.t1 - ex.t0) / 60000), early: ex.early || undefined, ans: pg.ans, tot: pg.tot });
-  ex.histIdx = DB.exams.length - 1; saveExam(); save(); bump(pg.ans); go('#/exam/res'); if (s.mx && s.sc / s.mx >= 0.8) setTimeout(confetti, 300);
+  ex.histIdx = DB.exams.length - 1; logExam(DB.exams[ex.histIdx]); if (ex.pick) { DB.excov = DB.excov || {}; const cv = new Set(DB.excov[ex.subj] || []); ex.pick.forEach(p => cv.add(p[1])); const allIds = new Set(CHAPTERS.filter(c => c.subj === ex.subj).flatMap(c => (BP[c.id] || []).map(e => e[0]))); DB.excov[ex.subj] = [...allIds].every(id => cv.has(id)) ? [] : [...cv]; } saveExam(); save(); bump(pg.ans); go('#/exam/res'); if (s.mx && s.sc / s.mx >= 0.8) setTimeout(confetti, 300);
 }
 function viewExamResult() {
   const ex = loadExam(); if (!ex) return go('#/exam');
   const s = scoreExam(ex); const p = Math.round(100 * s.sc / s.mx);
   if (ex.histIdx != null && DB.exams[ex.histIdx]) { DB.exams[ex.histIdx].score = s.sc; save(); }
-  let h = crumbs([['Главная', '#/'], ['Пробный экзамен', '#/exam'], ['Результат']]);
+  let h = crumbs([['Главная', '#/'], ['Пробник', '#/exam'], ['Результат']]);
   h += '<section class="card"><div class="row" style="justify-content:space-between;align-items:flex-end"><div><div class="meta">Результат · ' + esc((SUBJECTS.find(x => x.id === ex.subj) || {}).ru || '') + '</div><div class="score">' + s.sc + ' / ' + s.mx + '</div></div><span class="pill ' + (p >= 80 ? 'g' : p >= 55 ? 'y' : 'r') + '" style="font-size:20px">' + p + '%</span></div>';
   if (ex.early) { const pg = examProgress(ex); h += '<p class="earlynote">Завершён досрочно: решено ' + pg.ans + ' из ' + pg.tot + '. Из решённого верно ' + pg.ok + ' из ' + pg.ans + ' (' + Math.round(100 * pg.ok / Math.max(1, pg.ans)) + '%).</p>'; }
   if (Object.keys(ex.self).length < ex.items.reduce((n, q) => n + q.parts.filter(it => it.ans.k === 'self').length, 0)) h += '<p class="muted">' + 'Некоторые задания «Show that…» ждут вашей самопроверки — они ниже.' + '</p>';
@@ -6275,7 +6567,7 @@ function viewExamResult() {
   const weak = Object.entries(s.weak).sort((a, b) => b[1] - a[1]).slice(0, 8);
   if (weak.length) h += '<h3 style="margin-top:12px">Что потренировать</h3><div class="row">' + weak.map(([id, n]) => '<button class="btn small" onclick="go(\'#/p/' + id + '\')">' + SK(id).code + ' ' + NM(SK(id)) + ' — ошибок: ' + n + '</button>').join('') + '</div>';
   h += shareBlock(examReport(ex, s));
-  h += '<div class="row" style="margin-top:12px"><button class="btn primary" onclick="startExam(EX.chs, EX.mode)">Новый экзамен с теми же настройками</button><button class="btn" onclick="go(\'#/exam\')">Настройки экзамена</button></div></section>';
+  h += '<div class="row" style="margin-top:12px"><button class="btn primary" onclick="startExam(EX.chs, EX.mode)">Новый пробник с теми же настройками</button><button class="btn" onclick="go(\'#/exam\')">Настройки пробника</button></div></section>';
   h += renderExamBody(ex, true);
   shell(h);
   wireFields($('#app'));
