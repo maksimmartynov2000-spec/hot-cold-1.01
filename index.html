@@ -443,6 +443,8 @@ details.syn summary{cursor:pointer;color:var(--accent);font-weight:700}
 .rsec .up{color:var(--ok);font-weight:700}.rsec .dn{color:var(--bad);font-weight:700}
 textarea.inp{resize:vertical;font-size:17px;line-height:1.4}
 .btn.wide .ico{width:20px;height:20px}
+.tgl .sm{display:none}
+@media (max-width:380px){.tgl .lg{display:none}.tgl .sm{display:inline}.appbar #tRu{min-width:44px;padding:6px 8px}}
 </style>
 </head>
 <body>
@@ -474,7 +476,7 @@ textarea.inp{resize:vertical;font-size:17px;line-height:1.4}
 <header class="appbar">
   <button class="ab-back" id="abBack" aria-label="Назад" hidden><svg class="ico" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
   <div class="ab-title" id="abTitle"></div>
-  <div class="tools"><button class="tgl" id="tRu" aria-pressed="false" title="Показать русский перевод заданий и объяснений">Перевод</button><button class="tgl ic" id="tKb" aria-pressed="false" title="Обычная клавиатура телефона вместо математической" aria-label="Клавиатура"><svg class="ico" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6 10h.01M9.3 10h.01M12.6 10h.01M15.9 10h.01M18 10h.01M6.5 14h11"/></svg></button><button class="tgl ic" id="tSet" title="Настройки" aria-label="Настройки"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/></svg></button></div>
+  <div class="tools"><button class="tgl" id="tRu" aria-pressed="false" title="Показать русский перевод заданий и объяснений"><span class="lg">Перевод</span><span class="sm">RU</span></button><button class="tgl ic" id="tKb" aria-pressed="false" title="Обычная клавиатура телефона вместо математической" aria-label="Клавиатура"><svg class="ico" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6 10h.01M9.3 10h.01M12.6 10h.01M15.9 10h.01M18 10h.01M6.5 14h11"/></svg></button><button class="tgl ic" id="tSet" title="Настройки" aria-label="Настройки"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/></svg></button></div>
 </header>
 <div class="page">
   <main id="app" style="display:flex;flex-direction:column;gap:14px"></main>
@@ -5348,22 +5350,19 @@ function fallbackCopy(t, cb) { const a = document.createElement('textarea'); a.v
 function viewSettings() {
   let h = crumbs([['Главная', '#/'], ['Настройки']]);
   h += '<section class="card">';
-  h += '<div class="ansbox"><label for="stName">Ваше имя</label><input class="inp plain" id="stName" value="' + esc(DB.name || '') + '" placeholder="например, Тая" autocomplete="name"><div class="syn">Имя попадёт в отчёты, которые вы отправляете репетитору.</div></div>';
-  h += '<div class="ansbox" style="margin-top:10px"><label for="stWa">Номер WhatsApp репетитора (необязательно)</label><input class="inp plain" id="stWa" inputmode="tel" value="' + esc(DB.tutorWa || '') + '" placeholder="+62 813 3875 4531 (Максим)"><div class="syn">Если указать номер, кнопка WhatsApp сразу откроет чат с репетитором. Без номера WhatsApp предложит выбрать, кому отправить.</div></div>';
+  h += '<div class="ansbox"><label for="stName">Ваше имя</label><input class="inp plain" id="stName" value="' + esc(DB.name || '') + '" placeholder="например, Тая" autocomplete="name"><div class="syn">Имя стоит в отчётах для Максима Николаевича.</div></div>';
   h += '<div class="row" style="margin-top:10px"><button class="btn primary" id="stSave">Сохранить</button></div></section>';
-  h += '<section class="card"><h3>Отчёт о прогрессе</h3>' + shareBlock(progressReport(), 'Отправить отчёт репетитору').replace('Это короткий отчёт для репетитора: результат, баллы по главам и темы, где были ошибки.', 'Это общий отчёт для репетитора: сколько навыков освоено по каждому предмету и главе и результаты последних экзаменов.') + '</section>';
   h += '<section class="card"><h3>Перенести прогресс на другое устройство</h3><p class="muted">Прогресс хранится только на этом устройстве. Чтобы продолжить на планшете или другом телефоне:</p><ol class="steps"><li>Нажмите «Сохранить файл прогресса» — появится маленький файл.</li><li>Перешлите его себе на другое устройство (например, в «Избранное» Telegram).</li><li>Откройте приложение там, зайдите в ⚙ Настройки и нажмите «Загрузить файл прогресса».</li></ol><p class="syn">При загрузке ничего не стирается: прогресс из файла объединяется с тем, что уже есть на устройстве. Файл заодно служит резервной копией.</p>';
   h += '<div class="row"><button class="btn primary" id="stExp">⬇ Сохранить файл прогресса</button><label class="btn" for="stImp">⬆ Загрузить файл прогресса</label><input type="file" id="stImp" accept=".json,.pdf,application/json,application/pdf" hidden></div><p class="meta">Загрузить можно и любой PDF-отчёт за день — в нём есть копия прогресса на момент отправки.</p></section>';
   h += '<button class="card prow" onclick="go(\'#/sync\')"><span class="lic">' + ico('send') + '</span><span class="lt"><b>Перенос прогресса кодом</b><span class="muted">скопировать или вставить код, профили учеников</span></span></button>';
-  h += tgSetupHtml();
   h += '<section class="card"><h3>Цель на день</h3><p class="muted">Сколько заданий решать в день. Серия дней растёт, когда цель выполнена.</p><div class="row">' + [10, 15, 20, 30].map(n => '<button class="btn' + (GOAL() === n ? ' primary' : '') + '" onclick="DB.goal=' + n + ';save();viewSettings()">' + n + '</button>').join('') + '</div></section>';
   h += '<section class="card"><h3>Отклик</h3><div class="row"><button class="btn' + (DB.vib !== false ? ' primary' : '') + '" onclick="DB.vib=true;save();vib(20);viewSettings()">Вибрация включена</button><button class="btn' + (DB.vib === false ? ' primary' : '') + '" onclick="DB.vib=false;save();viewSettings()">Без вибрации</button></div><p class="meta">Короткая вибрация при проверке ответа. Работает на Android; браузер на iPhone вибрацию не поддерживает.</p>';
   h += '<div class="row" style="margin-top:8px"><button class="btn' + (!DB.kbd ? ' primary' : '') + '" onclick="DB.kbd=false;save();syncHeader();viewSettings()">Математическая клавиатура</button><button class="btn' + (DB.kbd ? ' primary' : '') + '" onclick="DB.kbd=true;save();syncHeader();viewSettings()">Обычная клавиатура</button></div><p class="meta">Переключить можно и кнопкой с клавиатурой вверху во время задания.</p></section>';
   h += '<section class="card"><h3>Оформление</h3><p class="muted">Тема:</p><div class="row">' + THEMES.map(t => '<button class="btn' + ((DB.theme || 'auto') === t ? ' primary' : '') + '" onclick="setTheme(\'' + t + '\');viewSettings()">' + ({ auto: '◐ Как в системе', light: '☀ Светлая', dark: '☾ Тёмная' })[t] + '</button>').join('') + '</div><p class="meta">На планшете в альбомной ориентации задание и теория показываются рядом, в две колонки.</p></section>';
   h += '<section class="card"><h3>Установка приложения</h3><p class="muted">' + (isStandalone() ? 'Приложение открыто с рабочего стола.' : 'Чтобы открывать приложение с иконки, как обычное:<br>• <b>iPhone / iPad</b> (Safari): «Поделиться» (на iPad — вверху справа) → «На экран «Домой»».<br>• <b>Android</b> (Chrome): меню ⋮ → «Добавить на главный экран» → «Установить». В Samsung Internet: ≡ → «Добавить страницу» → «Главный экран».<br>На iPhone и iPad прогресс в Safari и в приложении с иконки хранится отдельно — поэтому лучше сразу заниматься через иконку. Для работы нужен интернет.') + '</p>' + (window.__installEvt ? '<button class="btn primary" id="stInst">Установить сейчас</button>' : '') + '<p class="meta">Версия ' + APP_VERSION + '</p></section>';
   shell(h);
-  $('#stSave').onclick = () => { DB.name = $('#stName').value.trim(); DB.tutorWa = $('#stWa').value.trim(); save(); toast('Сохранено'); viewSettings(); };
-  $('#stExp').onclick = exportProgress; wireTgSetup();
+  $('#stSave').onclick = () => { DB.name = $('#stName').value.trim() || 'Тая'; DB.nameAuto = 0; save(); toast('Сохранено'); viewSettings(); };
+  $('#stExp').onclick = exportProgress;
   $('#stImp').onchange = e => { const f = e.target.files[0]; if (f) importProgress(f); };
   if ($('#stInst')) $('#stInst').onclick = () => { window.__installEvt.prompt(); window.__installEvt = null; };
 }
@@ -5384,14 +5383,14 @@ function importProgress(f) {
     else txt = new TextDecoder().decode(u8);
     let d; try { d = JSON.parse(txt); } catch (e) { return toast('Это не файл прогресса'); }
     if (!d || d.app !== 'endterm-g9' || !d.db) return toast('Это не файл прогресса этого приложения');
-    const sw = applyBackup(d.db);
+    const sw = applyBackup(sanitizeDb(d.db));
     toast(sw ? 'Открыт профиль «' + (d.db.name || 'ученик') + '», прогресс загружен' : 'Прогресс загружен'); go('#/'); route();
   };
   rd.readAsArrayBuffer(f);
 }
 
 /* ---------- PWA ---------- */
-const APP_VERSION = '20261110-1448';
+const APP_VERSION = '20261110-1456';
 function isStandalone() { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.__installEvt = e; });
 if ('serviceWorker' in navigator) { navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())).catch(() => {}); if (window.caches) caches.keys().then(ks => ks.filter(x => x.startsWith('endterm-')).forEach(x => caches.delete(x))).catch(() => {}); }
@@ -5595,13 +5594,16 @@ function reportPages(R) {
     T(head[0], F(700, 24), '#1F5BD8', PM, y + 24); T(R.name + ' · Cambridge IGCSE', F(400, 24), '#8A93A8', PW - PM, y + 24, 'right'); y += 52;
     T(cont ? head[1] + ' (продолжение)' : head[1], FD(cont ? 34 : 54), '#15203A', PM, y + (cont ? 34 : 54)); y += cont ? 60 : 84; };
   const need = h => { if (y + h > PH - 96) newPage(true); };
-  const H2 = (t, sub) => { need(120); y += 10; T(t, FD(36), '#15203A', PM, y + 36); if (sub) T(sub, F(400, 22), '#5A6580', PW - PM, y + 34, 'right'); y += 54; x.fillStyle = '#E7EBF3'; x.fillRect(PM, y, PW - 2 * PM, 2); y += 22; };
-  const list = (title, lines, col, empty) => { H2(title); if (!lines.length) { T(empty, F(400, 25), '#8A93A8', PM, y + 25); y += 52; return; } x.font = F(700, 26); const lw = Math.max(...lines.map(l => x.measureText(l[0]).width)) + 48; lines.forEach(l => { const w = wrap(l[1], PW - 2 * PM - lw, F(400, 26)); need(w.length * 36 + 6); x.fillStyle = col; x.beginPath(); x.arc(PM + 8, y + 17, 6, 0, 7); x.fill(); T(l[0], F(700, 26), '#15203A', PM + 28, y + 26); w.forEach((ln, j) => T(ln, F(400, 26), '#2A3550', PM + lw, y + 26 + j * 36)); y += w.length * 36 + 8; }); y += 18; };
-  const glist = (title, arr, col, empty) => { H2(title); if (!arr.length) { T(empty, F(400, 25), '#8A93A8', PM, y + 25); y += 52; return; }
-    const cw = (PW - 2 * PM - 30) / 2; SUBJECTS.forEach(sb => { const it = arr.filter(a => a.subj === sb.id); if (!it.length) return; need(80); x.fillStyle = PCOL[sb.id]; x.beginPath(); x.arc(PM + 8, y + 15, 7, 0, 7); x.fill(); T(sb.ru + ' · ' + it.length, F(700, 25), '#15203A', PM + 26, y + 24); y += 40;
-      const cells = it.map(a => wrap(a.code + '  ' + a.ru, cw - 10, F(400, 22))); for (let i = 0; i < cells.length; i += 2) { const h = Math.max(cells[i].length, (cells[i + 1] || []).length) * 30; need(h + 4); [cells[i], cells[i + 1]].forEach((c, j) => (c || []).forEach((ln, q) => T(ln, F(400, 22), '#2A3550', PM + 26 + j * (cw + 30), y + 22 + q * 30))); y += h + 4; } y += 12; }); y += 8; };
+  const H2 = (t, sub, first) => { need(110 + (first || 50)); y += 10; T(t, FD(36), '#15203A', PM, y + 36); if (sub) T(sub, F(400, 22), '#5A6580', PW - PM, y + 34, 'right'); y += 54; x.fillStyle = '#E7EBF3'; x.fillRect(PM, y, PW - 2 * PM, 2); y += 22; };
+  const list = (title, lines, col, empty) => { H2(title, null, 44); if (!lines.length) { T(empty, F(400, 25), '#8A93A8', PM, y + 25); y += 52; return; } x.font = F(700, 26); const lw = Math.max(...lines.map(l => x.measureText(l[0]).width)) + 48; lines.forEach(l => { const w = wrap(l[1], PW - 2 * PM - lw, F(400, 26)); need(w.length * 36 + 6); x.fillStyle = col; x.beginPath(); x.arc(PM + 8, y + 17, 6, 0, 7); x.fill(); T(l[0], F(700, 26), '#15203A', PM + 28, y + 26); w.forEach((ln, j) => T(ln, F(400, 26), '#2A3550', PM + lw, y + 26 + j * 36)); y += w.length * 36 + 8; }); y += 18; };
+  const glist = (title, arr, col, empty) => {
+    const cw = (PW - 2 * PM - 30) / 2; const groups = SUBJECTS.map(sb => { const it = arr.filter(a => a.subj === sb.id); if (!it.length) return null; const cells = it.map(a => wrap(a.code + '  ' + a.ru, cw - 10, F(400, 22))); const rows = []; for (let i = 0; i < cells.length; i += 2) rows.push([cells[i], cells[i + 1], Math.max(cells[i].length, (cells[i + 1] || []).length) * 30 + 4]); const h = 40 + rows.reduce((t, r) => t + r[2], 0) + 12; return { sb, n: it.length, rows, h, first: h <= PH - 96 - 260 ? h : 40 + rows.slice(0, 4).reduce((t, r) => t + r[2], 0) }; }).filter(Boolean);
+    const room = PH - 96 - 200;
+    H2(title, null, groups.length ? groups[0].first : 50); if (!groups.length) { T(empty, F(400, 25), '#8A93A8', PM, y + 25); y += 52; return; }
+    groups.forEach(g => { need(g.first); x.fillStyle = PCOL[g.sb.id]; x.beginPath(); x.arc(PM + 8, y + 15, 7, 0, 7); x.fill(); T(g.sb.ru + ' · ' + g.n, F(700, 25), '#15203A', PM + 26, y + 24); y += 40;
+      g.rows.forEach(r => { if (y + r[2] > PH - 96) { newPage(true); T(g.sb.ru + ' (продолжение)', F(700, 25), '#15203A', PM + 26, y + 24); y += 40; } [r[0], r[1]].forEach((c, j) => (c || []).forEach((ln, q) => T(ln, F(400, 22), '#2A3550', PM + 26 + j * (cw + 30), y + 22 + q * 30))); y += r[2]; }); y += 12; }); y += 8; };
   const secLines = arr => arr.map(s => [SUBJ(s.subj).ru + ' ' + s.code, s.ru]);
-  const readiness = (subs, sub) => { H2('Готовность к экзаменам', sub);
+  const readiness = (subs, sub) => { need(110 + subs.length * 70 + 130); H2('Готовность к экзаменам', sub);
     subs.forEach(s => { need(70); T(s.ru, F(700, 27), '#15203A', PM, y + 27); T(dateRu(s.date) + ' · ' + (s.days < 0 ? 'прошёл' : s.days === 0 ? 'сегодня' : 'через ' + dn(s.days)), F(400, 22), '#8A93A8', PM + 230, y + 26); T(s.p + '%', F(700, 30), '#15203A', PW - PM - 90, y + 28, 'right'); T(s.dp ? (s.dp > 0 ? '+' : '') + s.dp : '·', F(700, 24), s.dp > 0 ? '#17784A' : s.dp < 0 ? '#BC2D45' : '#C0C6D4', PW - PM, y + 27, 'right'); y += 38; rr(PM, y, PW - 2 * PM, 12, 6, '#E7EBF3'); rr(PM, y, Math.max(12, (PW - 2 * PM) * s.p / 100), 12, 6, PCOL[s.id] || '#1F5BD8'); y += 32; });
     const av = Math.round(subs.reduce((t, q) => t + q.p, 0) / subs.length), ad = Math.round(subs.reduce((t, q) => t + q.dp, 0) / subs.length);
     need(80); y += 6; rr(PM - 16, y - 6, PW - 2 * PM + 32, 72, 16, '#F4F5F8'); T('Общая готовность', F(700, 28), '#15203A', PM, y + 28); x.font = F(700, 28); T('среднее по ' + subs.length + ' предметам', F(400, 22), '#8A93A8', PM + x.measureText('Общая готовность').width + 24, y + 27); T(av + '%', F(700, 34), '#15203A', PW - PM - 90, y + 30, 'right'); T(ad ? (ad > 0 ? '+' : '') + ad : '·', F(700, 24), ad > 0 ? '#17784A' : ad < 0 ? '#BC2D45' : '#C0C6D4', PW - PM, y + 28, 'right'); y += 40; rr(PM, y, PW - 2 * PM, 12, 6, '#E7EBF3'); rr(PM, y, Math.max(12, (PW - 2 * PM) * av / 100), 12, 6, '#15203A'); y += 40;
@@ -5678,7 +5680,7 @@ function reportCardHtml() {
   const k = reportDay(); const isT = k === ymd(new Date());
   if (isSent(k)) return '<section class="card rcard sent"><span class="lic">' + ico('check') + '</span><div class="lt"><b>Отчёт за ' + (isT ? 'сегодня' : dateRu(k)) + ' отправлен</b><span class="muted">Завтра — новый.</span></div><button class="btn small" onclick="go(\'#/report\')">Открыть</button></section>';
   const late = balNow() >= REMIND_H || !isT;
-  return '<section class="card rcard' + (late ? ' late' : '') + '"><span class="lic">' + ico('send') + '</span><div class="lt"><b>' + (isT ? (late ? 'Пора отправить отчёт за день' : 'Отчёт за день') : 'Отчёт за вчера, ' + dateRu(k)) + '</b><span class="muted">' + (late ? 'Одно нажатие — и ' + TUTOR_NAME + ' получит PDF.' : 'Отправьте вечером, после занятий.') + '</span></div><button class="btn primary" data-send onclick="sendReport(\'tg\',\'' + k + '\')">' + ico('send') + '</button></section>';
+  return '<section class="card rcard' + (late ? ' late' : '') + '"><span class="lic">' + ico('send') + '</span><div class="lt"><b>' + (isT ? (late ? 'Пора отправить отчёт за день' : 'Отчёт за день') : 'Отчёт за вчера, ' + dateRu(k)) + '</b><span class="muted">' + (late ? 'PDF для ' + 'Максима Николаевича — в пару нажатий.' : 'Отправьте вечером, после занятий.') + '</span></div><button class="btn primary" data-send onclick="sendReport(\'tg\',\'' + k + '\')">' + ico('send') + '</button></section>';
 }
 function viewReport() {
   const R = reportData(); const tg = !!(DB.tg && DB.tg.token && DB.tg.chat);
@@ -5737,6 +5739,28 @@ async function decodeCode(txt) {
 }
 const codeLink = c => location.href.split('#')[0] + '#c=' + c;
 
+/* ---------- strict check of incoming data: only known ids and sane numbers get through ---------- */
+function sanitizeDb(src) {
+  const o = src && typeof src === 'object' ? src : {}; const num = v => (typeof v === 'number' && isFinite(v) && v >= 0) ? Math.min(Math.round(v), 1e7) : 0;
+  const isDay = k => /^\d{4}-\d{2}-\d{2}$/.test(k); const obj = v => v && typeof v === 'object' && !Array.isArray(v) ? v : {}; const strs = v => Array.isArray(v) ? v.filter(x => typeof x === 'string').slice(0, 500) : [];
+  const out = { sid: typeof o.sid === 'string' && /^[a-z0-9]{4,16}$/.test(o.sid) ? o.sid : null, name: typeof o.name === 'string' ? o.name.trim().slice(0, 40) : '', sk: {}, sc: {}, scr: {}, exams: [], days: {}, dlog: {}, badges: {}, rdy: {}, repSent: {}, planH: {}, excov: {}, goal: [10, 15, 20, 30].includes(o.goal) ? o.goal : undefined, runBest: num(o.runBest) };
+  Object.entries(obj(o.sk)).forEach(([id, v]) => { if (SK(id) && v && typeof v === 'object') out.sk[id] = { a: num(v.a), c: num(v.c), s: num(v.s), m: v.m === true }; });
+  Object.entries(obj(o.sc)).forEach(([id, v]) => { if (ST(id) && v) out.sc[id] = { n: num(v.n), rd: Math.max(1, num(v.rd)) }; });
+  Object.entries(obj(o.scr)).forEach(([ch, v]) => { if (CH(ch)) out.scr[ch] = Math.max(1, num(v)); });
+  (Array.isArray(o.exams) ? o.exams : []).forEach(e => { if (e && SUBJECTS.some(s => s.id === e.subj) && MODES[e.mode] && num(e.max) > 0) out.exams.push({ subj: e.subj, date: (typeof e.date === 'number' && e.date > 0 && e.date < 4e12) ? Math.round(e.date) : 0, mode: e.mode, chs: strs(e.chs).filter(c => CH(c)), score: Math.min(num(e.score), num(e.max)), max: num(e.max), early: e.early === true ? true : undefined, mins: num(e.mins) || undefined }); });
+  Object.entries(obj(o.days)).forEach(([k, v]) => { if (isDay(k)) out.days[k] = num(v); });
+  Object.entries(obj(o.dlog)).forEach(([k, d]) => { if (!isDay(k) || !d) return; const wr = {}; Object.entries(obj(d.wr)).forEach(([id, n]) => { if (SK(id)) wr[id] = num(n); }); out.dlog[k] = { n: num(d.n), ok: num(d.ok), wr, ms: strs(d.ms).filter(SK), sc: strs(d.sc).filter(ST), ex: (Array.isArray(d.ex) ? d.ex : []).filter(e => e && SUBJECTS.some(s => s.id === e.s)).map(e => ({ s: e.s, sc: num(e.sc), mx: num(e.mx), m: MODES[e.m] ? e.m : 'quick', early: e.early === true })) }; });
+  Object.entries(obj(o.badges)).forEach(([k, v]) => { if (/^[a-z0-9_]{2,20}$/.test(k)) out.badges[k] = (typeof v === 'number' && v > 0 && v < 4e12) ? v : 1; });
+  Object.entries(obj(o.rdy)).forEach(([k, v]) => { if (!isDay(k)) return; const r = {}; Object.entries(obj(v)).forEach(([s, p]) => { if (SUBJECTS.some(x => x.id === s)) r[s] = Math.min(100, num(p)); }); out.rdy[k] = r; });
+  Object.entries(obj(o.repSent)).forEach(([k, v]) => { if (isDay(k)) out.repSent[k] = (typeof v === 'number' && v > 0 && v < 4e12) ? v : 1; });
+  Object.entries(obj(o.planH)).forEach(([k, v]) => { if (isDay(k) && v) out.planH[k] = { sk: strs(v.sk).filter(SK), mocks: strs(v.mocks) }; });
+  Object.entries(obj(o.excov)).forEach(([s, v]) => { if (SUBJECTS.some(x => x.id === s)) out.excov[s] = strs(v).filter(SK); });
+  return out;
+}
+const UNDO_KEY = 'g9-endterm-undo-v1';
+function undoInfo() { try { const u = JSON.parse(localStorage.getItem(UNDO_KEY) || 'null'); return u && Date.now() - u.at < 14 * 864e5 ? u : null; } catch (e) { return null; } }
+function undoPaste() { const u = undoInfo(); if (!u || !confirm('Вернуть прогресс к состоянию до последней загрузки кода?')) return; DB = u.db; saveProfiles(u.prof || {}); save(); try { localStorage.removeItem(UNDO_KEY); } catch (e) {} P = null; EX = null; toast('Вернули как было'); go('#/'); }
+
 /* ---------- merging and student profiles ---------- */
 function mergeInto(T, src) {
   T.sk = T.sk || {}; T.sc = T.sc || {}; T.scr = T.scr || {}; T.exams = T.exams || []; T.days = T.days || {};
@@ -5760,11 +5784,13 @@ const hasProgress = T => Object.values(T.sk || {}).some(s => s.a || s.m) || (T.e
 const normName = s => String(s || '').trim().toLowerCase();
 /* same student → merge; another student → keep the current one as a profile and open (or create) theirs */
 function applyBackup(src) {
+  try { localStorage.setItem(UNDO_KEY, JSON.stringify({ at: Date.now(), db: DB, prof: profiles() })); } catch (e) {}
   let switched = false; const keep = () => ({ theme: DB.theme, kbd: DB.kbd, vib: DB.vib, tg: DB.tg, ru: DB.ru });
-  if (src.sid && src.sid !== DB.sid && hasProgress(DB)) {
+  const same = !src.sid || src.sid === DB.sid || !hasProgress(DB) || (!DB.nameAuto && normName(src.name) === normName(DB.name));
+  if (!same) {
     const Pr = profiles(); if (normName(DB.name) === normName(src.name)) DB.name = 'Моё устройство'; Pr[DB.sid] = DB; const saved = Pr[src.sid]; delete Pr[src.sid]; saveProfiles(Pr);
-    DB = Object.assign({ sk: {}, exams: [], ru: false, kbd: false, cur: null }, saved || {}, keep(), { sid: src.sid, name: src.name || (saved || {}).name || 'Ученик', plan: null }); switched = true;
-  } else { if (src.sid) DB.sid = src.sid; if (src.name && !hasProgress(DB)) DB.name = src.name; }
+    DB = Object.assign({ sk: {}, exams: [], ru: false, kbd: false, cur: null }, saved || {}, keep(), { sid: src.sid, name: src.name || (saved || {}).name || 'Ученик', nameAuto: 0, plan: null }); switched = true;
+  } else { if (src.sid) DB.sid = src.sid; if (src.name && (DB.nameAuto || !hasProgress(DB))) { DB.name = src.name; DB.nameAuto = 0; } }
   mergeInto(DB, src); DB.plan = null; EX = null; P = null; save(); return switched;
 }
 function switchProfile(key) { const Pr = profiles(); if (!Pr[key]) return; const k = { theme: DB.theme, kbd: DB.kbd, vib: DB.vib, tg: DB.tg, ru: DB.ru }; Pr[DB.sid] = DB; DB = Object.assign({}, Pr[key], k); delete Pr[key]; saveProfiles(Pr); DB.plan = null; EX = null; P = null; save(); applyTheme(); toast('Открыт профиль: ' + (DB.name || 'без имени')); go('#/'); }
@@ -5778,7 +5804,7 @@ async function copyCode(withLink) {
 }
 async function shareCode() { const c = await progressCode(); const t = 'Прогресс End Term (' + (DB.name || 'ученик') + ', ' + dateRu(ymd(new Date())) + '):\n' + codeLink(c); if (navigator.share) { try { await navigator.share({ text: t }); return; } catch (e) { return; } } copyCode(); }
 async function useCode(txt) {
-  try { const d = await decodeCode(txt); const sw = applyBackup(d.db); toast(sw ? 'Открыт профиль «' + (d.db.name || 'ученик') + '», прогресс загружен' : 'Прогресс обновлён'); confetti(); go('#/'); route(); }
+  try { const d = await decodeCode(txt); const sw = applyBackup(sanitizeDb(d.db)); toast(sw ? 'Открыт профиль «' + (d.db.name || 'ученик') + '», прогресс загружен' : 'Прогресс обновлён'); confetti(); go('#/'); route(); }
   catch (e) { toast('Не получилось: ' + e.message); }
 }
 async function pasteCode() {
@@ -5793,6 +5819,7 @@ function viewSync() {
   const Pp = profiles(); const pk = Object.keys(Pp);
   let h = '<section class="card"><h3>Передать прогресс</h3><p class="muted" style="margin:0 0 10px">Код со всем прогрессом. Отправьте его в чат — на другом устройстве нажмите ссылку или «Вставить код».</p><div class="row"><button class="btn primary" onclick="copyCode()">Скопировать код</button>' + (navigator.share ? '<button class="btn" onclick="shareCode()">Поделиться…</button>' : '') + '</div></section>';
   h += '<section class="card"><h3>Получить прогресс</h3><p class="muted" style="margin:0 0 10px">Скопируйте сообщение с кодом в чате и нажмите кнопку. Прогресс того же ученика объединяется, ничего не теряется.</p><button class="btn primary" onclick="pasteCode()">Вставить код</button><div id="codeBox" hidden style="margin-top:10px"><textarea class="inp plain" id="codeIn" rows="3" placeholder="вставьте сюда сообщение с кодом"></textarea><div class="row" style="margin-top:8px"><button class="btn" onclick="useCode($(\'#codeIn\').value)">Загрузить</button></div></div></section>';
+  if (undoInfo()) h += '<div class="row" style="justify-content:center"><button class="btn ghost small" onclick="undoPaste()">Вернуть как было до последней загрузки кода</button></div>';
   if (pk.length) h += '<section class="card"><h3>Профили на этом устройстве</h3><p class="muted" style="margin:0 0 8px">Сейчас открыт: <b>' + esc(DB.name || 'без имени') + '</b>.</p><div class="row">' + pk.map(k => '<button class="btn" onclick="switchProfile(\'' + esc(k) + '\')">' + esc(Pp[k].name || 'без имени') + '</button>').join('') + '</div><p class="meta">Профиль ученика появляется сам, когда вставляют его код. Данные разных учеников не смешиваются.</p></section>';
   shell(h);
 }
@@ -5979,7 +6006,7 @@ window.addEventListener('scroll', () => { const a = document.querySelector('.app
 const STORE = 'g9-endterm-math-v1';
 let DB = { sk: {}, exams: [], ru: false, kbd: false, cur: null };
 try { const s = JSON.parse(localStorage.getItem(STORE) || 'null'); if (s) DB = Object.assign(DB, s); } catch (e) {}
-if (!DB.name) DB.name = 'Тая';
+if (!DB.name) { DB.name = 'Тая'; DB.nameAuto = 1; }
 if (!DB.sid) { DB.sid = Math.random().toString(36).slice(2, 10); try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch (e) {} }
 function save() { try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch (e) {} }
 const $ = (s, el = document) => el.querySelector(s);
@@ -6458,9 +6485,9 @@ function viewExamSetup() {
   let h = crumbs([['Главная', '#/'], ['Пробник']]);
   h += '<nav class="segs">' + SUBJECTS.filter(x => !x.soon).map(x => '<button class="seg' + (x.id === DB.subj ? ' on' : '') + '" data-s="' + x.id + '" onclick="DB.subj=\'' + x.id + '\';save();viewExamSetup()">' + ico(x.id) + '<span>' + esc(x.ru) + '</span></button>').join('') + '</nav>';
   h += '<section class="card"><h2>' + esc((SUBJECTS.find(x => x.id === DB.subj) || {}).ru) + '</h2><div class="meta">экзамен ' + dateRu(EXD[DB.subj] || EXD.math) + ' · ' + whenRu(EXD[DB.subj] || EXD.math) + ' · тем уже было в пробниках: ' + ((DB.excov || {})[DB.subj] || []).length + ' из ' + new Set(CHAPTERS.filter(c => c.subj === DB.subj).flatMap(c => (BP[c.id] || []).map(e => e[0]))).size + '</div><p class="muted">Как школьный вариант, числа каждый раз новые. Подсказок нет — проверка в конце.</p>';
-  h += '<h3>Главы</h3><div class="choice" id="exChs">' + CHAPTERS.filter(c => c.subj === DB.subj).map(c => '<label><input type="checkbox" value="' + c.id + '" checked><span>' + c.num + '. ' + NM(c) + '</span></label>').join('') + '</div>';
-  h += '<h3 style="margin-top:14px">Длина</h3><div class="choice" id="exMode" style="flex-direction:column">' + ['quick', 'standard', 'full'].map((m, i) => '<label><input type="radio" name="exm" value="' + m + '"' + (i === 0 ? ' checked' : '') + '> <span>' + esc(MODES[m].ru) + '</span></label>').join('') + '</div>';
-  h += '<div class="row" style="margin-top:14px"><button class="btn primary" id="exGo">Начать пробник</button>' + (DB.cur && !DB.cur.done && (DB.cur.subj || 'math') === DB.subj ? '<button class="btn" onclick="go(\'#/exam/run\')">Продолжить незаконченный</button>' : '') + '</div></section>';
+  h += '<h3 style="margin-top:10px">Длина</h3><div class="choice" id="exMode" style="flex-direction:column">' + ['quick', 'standard', 'full'].map((m, i) => '<label><input type="radio" name="exm" value="' + m + '"' + (i === 0 ? ' checked' : '') + '> <span>' + esc(MODES[m].ru) + '</span></label>').join('') + '</div>';
+  h += '<div class="row" style="margin-top:12px"><button class="btn primary wide" id="exGo">Начать пробник</button>' + (DB.cur && !DB.cur.done && (DB.cur.subj || 'math') === DB.subj ? '<button class="btn" onclick="go(\'#/exam/run\')">Продолжить незаконченный</button>' : '') + '</div>';
+  h += '<details class="chsel" style="margin-top:14px"><summary>Главы: все (можно убрать лишние)</summary><div class="choice" id="exChs" style="margin-top:8px">' + CHAPTERS.filter(c => c.subj === DB.subj).map(c => '<label><input type="checkbox" value="' + c.id + '" checked><span>' + c.num + '. ' + NM(c) + '</span></label>').join('') + '</div></details></section>';
   const hist = DB.exams.filter(e => (e.subj || 'math') === DB.subj);
   if (hist.length) {
     h += '<section class="card"><h3>История</h3><table class="tbl"><tr><th>Дата</th><th>Вариант</th><th>Результат</th></tr>' + hist.slice().reverse().slice(0, 15).map(e => { const p = Math.round(100 * e.score / e.max); return '<tr><td>' + new Date(e.date).toLocaleDateString() + '</td><td>' + esc(MODE_RU[e.mode] || e.mode) + ' · гл. ' + e.chs.map(c => typeof c === 'number' ? c : (CH(c) || {}).num).join(',') + '</td><td><span class="pill ' + (p >= 80 ? 'g' : p >= 55 ? 'y' : 'r') + '">' + e.score + '/' + e.max + ' · ' + p + '%</span></td></tr>'; }).join('') + '</table></section>';
@@ -6474,7 +6501,7 @@ function viewExamRun() {
   const ex = loadExam(); if (!ex) return go('#/exam');
   if (ex.done) return go('#/exam/res');
   let h = crumbs([['Главная', '#/'], ['Пробник', '#/exam'], ['Идёт пробник']]);
-  h += '<section class="card"><div class="row" style="justify-content:space-between"><div><h2>' + esc((SUBJECTS.find(x => x.id === ex.subj) || {}).ru || '') + '</h2><div class="meta">' + esc((MODES[ex.mode] || {}).ru || '') + ' · начат в ' + new Date(ex.t0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '</div></div><button class="btn small" onclick="endSheet()">Завершить досрочно</button></div><p class="muted" style="margin:6px 0 0">' + 'Решайте на бумаге, ответы вводите здесь. Можно выйти и вернуться позже — ответы сохраняются.' + '</p><details class="syn" style="margin-top:6px"><summary>Как вводить ответы</summary>' + 'Степень: степень <code>^</code> · корень <code>√</code> · дробь <code>/</code> · смешанное число <code>2 1/8</code> · два ответа <code>±3</code> или <code>3, -3</code> · стандартный вид <code>3.5*10^4</code> · «нельзя разложить» → <code>none</code> · химические формулы — обычной клавиатурой: <code>Al2(SO4)3</code>' + '</details></section>';
+  h += '<section class="card"><div class="row" style="justify-content:space-between"><div><h2>' + esc((SUBJECTS.find(x => x.id === ex.subj) || {}).ru || '') + '</h2><div class="meta">' + esc((MODES[ex.mode] || {}).ru || '') + ' · начат в ' + new Date(ex.t0).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) + '</div></div><button class="btn small" onclick="endSheet()">Завершить досрочно</button></div><p class="muted" style="margin:6px 0 0">' + 'Решайте на бумаге, ответы вводите здесь. Можно выйти и вернуться позже — ответы сохраняются.' + '</p><details class="syn" style="margin-top:6px"><summary>Как вводить ответы</summary>' + 'Степень: степень <code>^</code> · корень <code>√</code> · дробь <code>/</code> · смешанное число <code>2 1/8</code> · два ответа <code>±3</code> или <code>3, -3</code> · стандартный вид <code>3.5*10^4</code> · «нельзя разложить» → <code>none</code> · химические формулы — обычной клавиатурой: <code>Al2(SO4)3</code>' + '</details></section>';
   h += renderExamBody(ex, false);
   h += '<div class="sticky"><span class="meta" id="exCount"></span><button class="btn primary" id="exFinish">Завершить и проверить</button></div>';
   shell(h);
