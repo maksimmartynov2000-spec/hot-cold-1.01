@@ -236,6 +236,23 @@ table.pblk tr.pr td{background:var(--warn-soft)}
 .nextbox.hot{border-color:var(--ok);background:var(--ok-soft)}
 .nextbox .t{font-size:18px}
 .nextbox.hot .t{color:var(--ok)}
+/* «Как в школе» */
+.card.school{display:flex;flex-direction:column;gap:8px}
+.scgrp{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.scrow{display:flex;align-items:center;gap:10px;text-align:left;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:8px 10px;cursor:pointer;min-height:46px}
+.scrow .ck{flex:0 0 26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--ok)}
+.scrow.done{border-color:var(--ok);background:var(--ok-soft)}
+.scrow.done .ck{border-color:var(--ok);background:var(--card)}
+.scrow .nm{flex:1;display:flex;flex-direction:column;min-width:0}
+.scrow .nm .ru{font-size:14px;color:var(--muted)}
+.scrow .src{font-size:12px;color:var(--faint)}
+.scb{display:inline-block;margin-top:4px;font-size:12px;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:1px 8px;width:fit-content}
+.schead{border-bottom:1px dashed var(--line);padding-bottom:8px;margin-bottom:8px}
+.pill.b{background:var(--accent-soft);color:var(--accent)}
+.card.school .bar{height:8px;border-radius:99px;background:var(--grid);overflow:hidden}
+.card.school .bar i{display:block;height:100%;background:var(--ok)}
+table.pblk th,table.pblk td{padding:3px 6px}
+table.pblk th{white-space:normal;max-width:150px}
 </style>
 </head>
 <body>
@@ -2248,12 +2265,12 @@ function svgGraph(o) {
   return s;
 }
 function svgBeam(o) { // o: {len, pivot | pivots, forces:[{x, label, up}], dims:[[a, b, text]]}
-  const W = 340, Lm = 30, pw = W - 2 * Lm, y0 = o.forces.some(f => f.up) ? 64 : 22;
+  const W = 340, Lm = 30, pw = W - 2 * Lm, y0 = o.forces.some(f => f.up) ? 64 : o.forces.some(f => f.pt) ? 34 : 22;
   // piecewise scale: every gap between marked points gets at least ~14% of the width so labels never collide
   const pts = [...new Set([0, o.len].concat(o.pivots || [o.pivot]).concat(o.forces.map(f => f.x)).concat((o.dims || []).flat().filter(v => typeof v === 'number')).filter(v => v != null).map(v => +v.toFixed(6)))].sort((a, b) => a - b);
   const wts = pts.slice(1).map((v, i) => Math.max(v - pts[i], o.len * 0.14)); const tw = wts.reduce((a, b) => a + b, 0);
   const X = x => { let acc = 0; for (let i = 0; i < wts.length; i++) { if (x <= pts[i + 1] + 1e-9) return Lm + (acc + (x - pts[i]) / (pts[i + 1] - pts[i] || 1) * wts[i]) / tw * pw; acc += wts[i]; } return Lm + pw; };
-  const downX = o.forces.filter(f => !f.up).map(f => f.x);
+  const downX = o.forces.filter(f => !f.up && !f.pt).map(f => f.x);
   // dimension lines go below the beam, each on its own row if they overlap
   const dims = (o.dims || []).map(([a, b, t]) => [Math.min(a, b), Math.max(a, b), t]).sort((p, q) => p[0] - q[0] || p[1] - q[1]);
   const rows = []; const rowOf = dims.map(([a, b]) => { let k = rows.findIndex(end => end <= a + 1e-9); if (k < 0) { k = rows.length; rows.push(b); } else rows[k] = b; return k; });
@@ -2269,7 +2286,8 @@ function svgBeam(o) { // o: {len, pivot | pivots, forces:[{x, label, up}], dims:
   });
   o.forces.forEach(f => {
     const x = X(f.x);
-    if (f.up) s += '<line class="ar" x1="' + x + '" y1="' + (y0 - 6) + '" x2="' + x + '" y2="' + (y0 - 42) + '" marker-end="url(#ah)"/><text class="lb" x="' + x + '" y="' + (y0 - 48) + '" text-anchor="middle">' + f.label + '</text>';
+    if (f.pt) s += '<circle cx="' + x + '" cy="' + y0 + '" r="3.5" class="pv"/><text class="lb" x="' + x + '" y="' + (y0 - 12) + '" text-anchor="middle">' + f.label + '</text>';
+    else if (f.up) s += '<line class="ar" x1="' + x + '" y1="' + (y0 - 6) + '" x2="' + x + '" y2="' + (y0 - 42) + '" marker-end="url(#ah)"/><text class="lb" x="' + x + '" y="' + (y0 - 48) + '" text-anchor="middle">' + f.label + '</text>';
     else s += '<line class="ar" x1="' + x + '" y1="' + (y0 + 6) + '" x2="' + x + '" y2="' + (y0 + 48) + '" marker-end="url(#ah)"/><text class="lb" x="' + x + '" y="' + (y0 + 66) + '" text-anchor="middle">' + f.label + '</text>';
   });
   s += '<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ahd"/></marker><marker id="dmA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="dmh"/></marker></defs></svg>';
@@ -3768,6 +3786,629 @@ s4: [
     L('Flowchart symbols: rounded rectangle — start/stop; parallelogram — input/output; rectangle — process; diamond — decision (Yes/No); arrows show the flow.', 'Символы блок-схем: скруглённый прямоугольник — начало/конец; параллелограмм — ввод/вывод; прямоугольник — действие; ромб — условие (Да/Нет); стрелки показывают порядок.')] }]
 };
 
+/* ===================== «Как в школе»: tasks copied from school materials ===================== */
+const SCHOOL = [];
+/* def: { id, sk (skill id), src: L(where it is from), en, ru (short title), sets: [params of the original(s)], vary(r, base) → params, ok?(p) → bool, make(p) → item } */
+function school(def) { SCHOOL.push(def); return def; }
+/* a number near v (±pct %), rounded to step, different from v and > 0 */
+function nr(r, v, pct = 25, step = 1) { for (let g = 0; g < 40; g++) { const x = +(Math.round(v * (1 + (r() * 2 - 1) * pct / 100) / step) * step).toFixed(6); if (x !== v && x > 0) return x; } return +(v + step).toFixed(6); }
+const pk = (r, arr) => arr[Math.floor(r() * arr.length)];
+/* steps whose formula line holds several equations separated by ';' are split into separate lines */
+function scFix(it) { if (it.sol) it.sol = it.sol.flatMap(s => s.m && s.m.includes(';') ? s.m.split(';').map((m, i) => i ? { m, u: s.u } : Object.assign({}, s, { m })) : [s]); return it; }
+function scGen(t, r, fresh, n) {
+  if (!fresh && n < t.sets.length) return { it: scFix(t.make(t.sets[n])), orig: n };
+  let p; for (let g = 0; g < 60; g++) { p = t.vary(r, pk(r, t.sets)); if (!t.ok || t.ok(p)) break; }
+  return { it: scFix(t.make(p)), orig: -1 };
+}
+
+/* ===================== Как в школе: MATHS (End-of-Term Variants 2 and 3) ===================== */
+const V = (v, ch, q) => L('Variant ' + v + ' · Chapter ' + ch + ', Q' + q, 'Вариант ' + v + ' · глава ' + ch + ', №' + q);
+const VV = (ch, q) => L('Variants 2 and 3 · Chapter ' + ch + ', Q' + q, 'Варианты 2 и 3 · глава ' + ch + ', №' + q);
+const fmtN = v => String(+(+v).toFixed(6));
+const rus = s => String(s).replace(/(\d)\.(\d)/g, '$1,$2');
+
+/* ---- Chapter 1 ---- */
+school({ id: 'm1.14', sk: '1.12', src: VV(1, 14), en: 'Distances in space in standard form', ru: 'Расстояния в космосе в стандартном виде',
+  sets: [{ en: 'The distance from the Earth to the Moon', ru: 'Расстояние от Земли до Луны', v: 384400 }, { en: 'The diameter of the Sun', ru: 'Диаметр Солнца', v: 1392000 }],
+  vary(r, b) { const e = pk(r, [5, 6, 7, 8]); const m = pk(r, [1.392, 3.844, 1.496, 5.79, 2.279, 7.78, 6.371, 1.08]); return { en: pk(r, ['The distance from the Earth to the Sun', 'The distance from Mars to the Sun', 'The radius of Jupiter’s orbit', 'The distance from Venus to the Sun']), ru: 'Расстояние в космосе', v: Math.round(m * 10 ** e / 100) * 100 }; },
+  make(p) { const s = stdParts(p.v); return { q: L(p.en + ' is about ' + fmtBig(String(p.v)) + ' km. Write this in standard form.', p.ru + ' — примерно ' + fmtBig(String(p.v)) + ' км. Запишите это число в стандартном виде.'), ans: { k: 'num', key: String(p.v), forms: ['std'] }, show: stdTex(p.v) + '\\text{ km}',
+    sol: [st('Put the decimal point after the first non-zero digit: ' + s.a + '. To get back to ' + fmtBig(String(p.v)) + ' you multiply by 10 ' + s.e + ' times.', 'Ставим запятую после первой ненулевой цифры: ' + rus(s.a) + '. Чтобы вернуться к ' + fmtBig(String(p.v)) + ', нужно умножить на 10 ' + s.e + ' раз.'), st('Answer: ' + s.a + ' × 10^' + s.e + ' km.', 'Ответ: ' + rus(s.a) + ' × 10^' + s.e + ' км.')] }; } });
+
+function svgDish(nTxt, mTxt) {
+  let s = '<svg viewBox="0 0 340 150" class="gr" role="img" aria-label="dish"><ellipse cx="120" cy="80" rx="95" ry="52" class="bm"/>';
+  const pts = [[70, 70], [95, 95], [120, 60], [150, 88], [105, 78], [140, 110], [165, 68], [82, 104], [130, 98], [100, 55], [175, 92], [60, 88]];
+  pts.forEach(([x, y]) => s += '<ellipse cx="' + x + '" cy="' + y + '" rx="5" ry="3" class="pv"/>');
+  s += '<line x1="165" y1="68" x2="240" y2="36" class="dm"/><text class="lb" x="335" y="30" text-anchor="end">' + mTxt + '</text><text class="lb" x="120" y="145" text-anchor="middle">' + nTxt + '</text></svg>';
+  return s;
+}
+school({ id: 'm1.16', sk: '1.16', src: VV(1, 16), en: 'Total mass of bacteria', ru: 'Общая масса бактерий',
+  sets: [{ en: 'A sample of soil', ru: 'В образце почвы', in: 'in the sample', inr: 'в образце', a: 8, ae: 7, b: 3.5, be: -12 }, { en: 'A glass of kefir', ru: 'В стакане кефира', in: 'in the glass', inr: 'в стакане', a: 4.5, ae: 10, b: 2, be: -13 }],
+  vary(r, b) { return Object.assign({}, b, { a: pk(r, [2, 3, 4, 5, 6, 8, 1.5, 2.5, 4.5]), ae: b.ae + pk(r, [-1, 0, 1]), b: pk(r, [1.2, 2, 2.5, 3, 3.5, 4, 6]), be: b.be + pk(r, [-1, 0, 1]) }); },
+  make(p) { const v = p.a * 10 ** p.ae * p.b * 10 ** p.be; const prod = +(p.a * p.b).toFixed(6), e = p.ae + p.be; const s = stdParts(v);
+    return { q: L(p.en + ' contains ' + p.a + ' × 10^' + p.ae + ' bacteria, each with mass ' + p.b + ' × 10^' + p.be + ' g. Find the total mass of bacteria ' + p.in + ', writing your answer in standard form.', p.ru + ' ' + rus(p.a) + ' × 10^' + p.ae + ' бактерий, масса каждой ' + rus(p.b) + ' × 10^' + p.be + ' г. Найдите общую массу бактерий ' + p.inr + ' и запишите ответ в стандартном виде.'),
+      svg: svgDish(p.a + ' × 10' + toSup(p.ae) + ' bacteria', p.b + ' × 10' + toSup(p.be) + ' g each'), ans: { k: 'num', key: decStr(v), forms: ['std'] }, show: stdTex(v) + '\\text{ g}',
+      sol: [st('Total mass = number × mass of one: multiply the numbers and add the powers of 10.', 'Общая масса = количество × масса одной: перемножаем числа, а показатели степеней 10 складываем.'), st(p.a + ' × ' + p.b + ' = ' + prod + '; 10^' + p.ae + ' × 10^' + p.be + ' = 10^' + e + '.', rus(p.a) + ' × ' + rus(p.b) + ' = ' + rus(prod) + '; 10^' + p.ae + ' × 10^' + p.be + ' = 10^' + e + '.'), st('So the mass is ' + prod + ' × 10^' + e + (prod >= 10 ? ' = ' + s.a + ' × 10^' + s.e : '') + ' g.', 'Масса ' + rus(prod) + ' × 10^' + e + (prod >= 10 ? ' = ' + rus(s.a) + ' × 10^' + s.e : '') + ' г.')] }; } });
+const SUPS = { '-': '⁻', 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹' };
+function toSup(n) { return String(n).split('').map(c => SUPS[c]).join(''); }
+
+/* ---- Chapter 3 ---- */
+school({ id: 'm3.4', sk: '3.4', src: VV(3, 4), en: 'Root of a fraction in lowest terms', ru: 'Корень из дроби после сокращения',
+  sets: [{ a: 3, b: 4, k: 90 }, { a: 11, b: 8, k: 10 }],
+  vary(r) { let a, b; do { a = r.ri(2, 12); b = r.ri(2, 12); } while (gcd(a, b) !== 1 || a === b); return { a, b, k: pk(r, [5, 6, 10, 12, 15, 20, 30, 40, 90]) }; },
+  make(p) { const N = p.a * p.a * p.k, D = p.b * p.b * p.k;
+    return { q: L('Evaluate √(' + N + '/' + D + ') by first writing the fraction in lowest terms.', 'Вычислите √(' + N + '/' + D + '), сначала сократив дробь.'), m: '√(' + N + '/' + D + ')', ans: { k: 'num', key: p.a + '/' + p.b, forms: ['frac'] },
+      sol: [st('Both numbers are divisible by ' + p.k + ': ' + N + '/' + D + ' = ' + (p.a * p.a) + '/' + (p.b * p.b) + '.', 'Оба числа делятся на ' + p.k + ': ' + N + '/' + D + ' = ' + (p.a * p.a) + '/' + (p.b * p.b) + '.'), st('Both are perfect squares: √(' + (p.a * p.a) + '/' + (p.b * p.b) + ') = ' + p.a + '/' + p.b + '.', 'Оба — точные квадраты: √(' + (p.a * p.a) + '/' + (p.b * p.b) + ') = ' + p.a + '/' + p.b + '.')] }; } });
+
+school({ id: 'm3.7', sk: '3.7', src: VV(3, 7), en: 'Show that a sum of surds is a surd', ru: 'Докажите: сумма корней равна корню',
+  sets: [{ m: 5, k1: 2, k2: 3 }, { m: 3, k1: 2, k2: 5 }],
+  vary(r) { const m = pk(r, [2, 3, 5, 6, 7]); let k1, k2; do { k1 = r.ri(1, 4); k2 = r.ri(2, 5); } while (k1 === k2); return { m, k1, k2 }; },
+  make(p) { const A = p.k1 * p.k1 * p.m, B = p.k2 * p.k2 * p.m, C = (p.k1 + p.k2) ** 2 * p.m; const sq = (k) => (k === 1 ? '' : k) + '√' + p.m;
+    return { q: L('Show that √' + A + ' + √' + B + ' = √' + C + '.', 'Покажите, что √' + A + ' + √' + B + ' = √' + C + '.'), ans: { k: 'self' },
+      sol: [st('Simplify each surd: √' + A + ' = √(' + (p.k1 * p.k1) + ' × ' + p.m + ') = ' + sq(p.k1) + ', √' + B + ' = √(' + (p.k2 * p.k2) + ' × ' + p.m + ') = ' + sq(p.k2) + '.', 'Упрощаем каждый корень: √' + A + ' = √(' + (p.k1 * p.k1) + ' × ' + p.m + ') = ' + sq(p.k1) + ', √' + B + ' = √(' + (p.k2 * p.k2) + ' × ' + p.m + ') = ' + sq(p.k2) + '.'), st('Left side: ' + sq(p.k1) + ' + ' + sq(p.k2) + ' = ' + sq(p.k1 + p.k2) + ' (like surds add like like terms).', 'Левая часть: ' + sq(p.k1) + ' + ' + sq(p.k2) + ' = ' + sq(p.k1 + p.k2) + ' (подобные корни складываются, как подобные слагаемые).'), st('Right side: √' + C + ' = √(' + ((p.k1 + p.k2) ** 2) + ' × ' + p.m + ') = ' + sq(p.k1 + p.k2) + '. Both sides are equal. ∎', 'Правая часть: √' + C + ' = √(' + ((p.k1 + p.k2) ** 2) + ' × ' + p.m + ') = ' + sq(p.k1 + p.k2) + '. Части равны. ∎')] }; } });
+
+/* ---- Chapter 4 ---- */
+school({ id: 'm4.5', sk: '4.5', src: VV(4, 5), en: 'Number puzzle', ru: 'Задача про задуманное число',
+  sets: [{ op: '+', d: 6, k: 3, x: 15 }, { op: '-', d: 5, k: 2, x: 22 }],
+  vary(r, b) { return { op: b.op, d: r.ri(2, 9), k: r.ri(2, 5), x: r.ri(8, 30) }; },
+  make(p) { const res = (p.op === '+' ? p.x + p.d : p.x - p.d) * p.k; const kw = { 2: ['doubled', 'удвоили'], 3: ['trebled', 'утроили'], 4: ['multiplied by 4', 'умножили на 4'], 5: ['multiplied by 5', 'умножили на 5'] }[p.k];
+    return { q: L('When a number is ' + (p.op === '+' ? 'increased' : 'decreased') + ' by ' + p.d + ' and the result is ' + kw[0] + ', the answer is ' + res + '. Find the number.', 'Число ' + (p.op === '+' ? 'увеличили' : 'уменьшили') + ' на ' + p.d + ', а результат ' + kw[1] + '. Получилось ' + res + '. Найдите число.'), ans: { k: 'num', key: String(p.x) },
+      sol: [st('Let the number be x. Then ' + p.k + '(x ' + p.op + ' ' + p.d + ') = ' + res + '.', 'Пусть число x. Тогда ' + p.k + '(x ' + p.op + ' ' + p.d + ') = ' + res + '.'), st('Divide by ' + p.k + ': x ' + p.op + ' ' + p.d + ' = ' + (res / p.k) + ', so x = ' + p.x + '.', 'Делим на ' + p.k + ': x ' + p.op + ' ' + p.d + ' = ' + (res / p.k) + ', значит x = ' + p.x + '.'), st('Check: (' + p.x + ' ' + p.op + ' ' + p.d + ') × ' + p.k + ' = ' + res + ' ✓', 'Проверка: (' + p.x + ' ' + p.op + ' ' + p.d + ') × ' + p.k + ' = ' + res + ' ✓')] }; } });
+
+school({ id: 'm4.6', sk: '4.6', src: VV(4, 6), en: 'Three kinds of objects', ru: 'Три вида предметов',
+  sets: [{ st: 0, x: 16, d1: 5, d2: 2 }, { st: 1, x: 15, d1: 3, d2: 2 }],
+  vary(r, b) { return { st: b.st, x: r.ri(8, 25), d1: r.ri(2, 7), d2: r.ri(2, 6) }; },
+  make(p) { const tot = 3 * p.x + 2 * p.d1 + p.d2; const S = [
+      { en: 'Priya’s bookshelf holds ' + tot + ' books of three kinds. There are ' + p.d1 + ' more novels than biographies, and ' + p.d2 + ' more comics than novels. How many biographies are on the shelf?', ru: 'На полке у Прии ' + tot + ' книг трёх видов. Романов на ' + p.d1 + ' больше, чем биографий, а комиксов на ' + p.d2 + ' больше, чем романов. Сколько биографий на полке?', a: 'biographies', ar: 'биографий', b: 'novels', br: 'романов', c: 'comics', cr: 'комиксов' },
+      { en: 'A bag contains ' + tot + ' marbles of three colours. There are ' + p.d1 + ' more blue marbles than red marbles, and ' + p.d2 + ' more green marbles than blue marbles. How many red marbles are in the bag?', ru: 'В мешке ' + tot + ' шариков трёх цветов. Синих на ' + p.d1 + ' больше, чем красных, а зелёных на ' + p.d2 + ' больше, чем синих. Сколько красных шариков в мешке?', a: 'red', ar: 'красных', b: 'blue', br: 'синих', c: 'green', cr: 'зелёных' }][p.st];
+    return { q: L(S.en, S.ru), ans: { k: 'num', key: String(p.x) },
+      sol: [st('Let x = number of ' + S.a + '. Then ' + S.b + ' = x + ' + p.d1 + ', ' + S.c + ' = x + ' + (p.d1 + p.d2) + '.', 'Пусть x — число ' + S.ar + '. Тогда ' + S.br + ' x + ' + p.d1 + ', ' + S.cr + ' x + ' + (p.d1 + p.d2) + '.'), st('x + (x + ' + p.d1 + ') + (x + ' + (p.d1 + p.d2) + ') = ' + tot + ' → 3x + ' + (2 * p.d1 + p.d2) + ' = ' + tot + ' → 3x = ' + (3 * p.x) + ' → x = ' + p.x + '.', 'x + (x + ' + p.d1 + ') + (x + ' + (p.d1 + p.d2) + ') = ' + tot + ' → 3x + ' + (2 * p.d1 + p.d2) + ' = ' + tot + ' → 3x = ' + (3 * p.x) + ' → x = ' + p.x + '.')] }; } });
+
+school({ id: 'm4.7a', sk: '4.7', src: V(2, 4, 7), en: 'Father and son: ages', ru: 'Отец и сын: возраст',
+  sets: [{ k: 4, yrs: 20, s: 10 }],
+  vary(r) { for (;;) { const k = pk(r, [3, 4, 5]), s = r.ri(4, 15); const yrs = s * (k - 2); if (yrs >= 5 && yrs <= 40) return { k, yrs, s }; } },
+  make(p) { const tbl = '<table class="pblk"><tr><th></th><th>now</th><th>in ' + p.yrs + ' years</th></tr><tr><th>son</th><td>s</td><td>?</td></tr><tr><th>father</th><td>' + p.k + 's</td><td>?</td></tr></table>';
+    return { q: L('A father is ' + ({ 3: 'three', 4: 'four', 5: 'five' })[p.k] + ' times as old as his son. In ' + p.yrs + ' years’ time, the father will be twice as old as his son. How old are they now?', 'Отец в ' + p.k + ' раза старше сына. Через ' + p.yrs + ' лет отец будет вдвое старше сына. Сколько им лет сейчас?'), html: tbl,
+      ans: { k: 'multi', parts: [{ lab: L('Son', 'Сын'), spec: { k: 'num', key: String(p.s) } }, { lab: L('Father', 'Отец'), spec: { k: 'num', key: String(p.k * p.s) } }] },
+      sol: [st('In ' + p.yrs + ' years: son s + ' + p.yrs + ', father ' + p.k + 's + ' + p.yrs + '.', 'Через ' + p.yrs + ' лет: сыну s + ' + p.yrs + ', отцу ' + p.k + 's + ' + p.yrs + '.'), st(p.k + 's + ' + p.yrs + ' = 2(s + ' + p.yrs + ') → ' + p.k + 's + ' + p.yrs + ' = 2s + ' + (2 * p.yrs) + ' → ' + (p.k - 2) + 's = ' + p.yrs + ' → s = ' + p.s + '.', p.k + 's + ' + p.yrs + ' = 2(s + ' + p.yrs + ') → ' + p.k + 's + ' + p.yrs + ' = 2s + ' + (2 * p.yrs) + ' → ' + (p.k - 2) + 's = ' + p.yrs + ' → s = ' + p.s + '.'), st('Son ' + p.s + ', father ' + (p.k * p.s) + '. Check: in ' + p.yrs + ' years ' + (p.s + p.yrs) + ' and ' + (p.k * p.s + p.yrs) + ' — twice ✓', 'Сыну ' + p.s + ', отцу ' + (p.k * p.s) + '. Проверка: через ' + p.yrs + ' лет ' + (p.s + p.yrs) + ' и ' + (p.k * p.s + p.yrs) + ' — вдвое ✓')] }; } });
+
+function svgIso(t1, t2) { return '<svg viewBox="0 0 340 150" class="gr" role="img" aria-label="triangle"><polygon points="90,130 250,130 170,20" class="bm"/><text class="lb" x="170" y="146" text-anchor="middle">' + t1 + '</text><text class="lb" x="112" y="72" text-anchor="end">' + t2 + '</text><text class="lb" x="228" y="72">' + t2 + '</text></svg>'; }
+school({ id: 'm4.7b', sk: '4.7', src: V(3, 4, 7), en: 'Isosceles triangle: find the sides', ru: 'Равнобедренный треугольник: найдите стороны',
+  sets: [{ d: 4, P: 41 }],
+  vary(r) { const d = r.ri(2, 7), b = r.ri(5, 16); return { d, P: 3 * b + 2 * d }; },
+  make(p) { const b = (p.P - 2 * p.d) / 3;
+    return { q: L('Each of the two equal sides of an isosceles triangle is ' + p.d + ' cm longer than its base. The perimeter of the triangle is ' + p.P + ' cm. Find the lengths of its sides.', 'Каждая из двух равных сторон равнобедренного треугольника на ' + p.d + ' см длиннее основания. Периметр треугольника ' + p.P + ' см. Найдите длины его сторон.'), svg: svgIso('b cm', 'b + ' + p.d + ' cm'),
+      ans: { k: 'multi', parts: [{ lab: L('Base (cm)', 'Основание (см)'), spec: { k: 'num', key: String(b) } }, { lab: L('Each equal side (cm)', 'Каждая боковая сторона (см)'), spec: { k: 'num', key: String(b + p.d) } }] },
+      sol: [st('Perimeter: b + (b + ' + p.d + ') + (b + ' + p.d + ') = ' + p.P + ' → 3b + ' + (2 * p.d) + ' = ' + p.P + ' → b = ' + b + '.', 'Периметр: b + (b + ' + p.d + ') + (b + ' + p.d + ') = ' + p.P + ' → 3b + ' + (2 * p.d) + ' = ' + p.P + ' → b = ' + b + '.'), st('Sides: ' + b + ' cm, ' + (b + p.d) + ' cm, ' + (b + p.d) + ' cm. Check: ' + b + ' + ' + (2 * (b + p.d)) + ' = ' + p.P + ' ✓', 'Стороны: ' + b + ' см, ' + (b + p.d) + ' см, ' + (b + p.d) + ' см. Проверка: ' + b + ' + ' + (2 * (b + p.d)) + ' = ' + p.P + ' ✓')] }; } });
+
+school({ id: 'm4.14', sk: '4.14', src: VV(4, 14), en: 'An equation with no solution', ru: 'Уравнение без решений',
+  sets: [{ a: 4, b: 1, c: 1, d: 3 }, { a: 2, b: 3, c: 1, d: 5 }],
+  vary(r) { const a = r.ri(2, 5), b = r.ri(1, 4), c = r.ri(1, 6); let d; do d = r.ri(1, 9); while (d === -a * c); return { a, b, c, d }; },
+  make(p) { const L1 = p.a + '(' + (p.b === 1 ? '' : p.b) + 'x − ' + p.c + ')', R1 = (p.a * p.b) + 'x + ' + p.d;
+    return { q: L('Consider the equation ' + L1 + ' = ' + R1 + '. Try to solve it. How many values of x satisfy the equation?', 'Рассмотрим уравнение ' + L1 + ' = ' + R1 + '. Попробуйте решить его. Сколько значений x ему удовлетворяют?'),
+      ans: { k: 'mcq', opts: [L('None — the x terms cancel and we get a false statement', 'Ни одного — x сокращается и получается неверное равенство'), L('Exactly one', 'Ровно одно'), L('Exactly two', 'Ровно два'), L('Infinitely many (every x)', 'Бесконечно много (любое x)')], c: 0 },
+      sol: [st('Expand: ' + (p.a * p.b) + 'x − ' + (p.a * p.c) + ' = ' + (p.a * p.b) + 'x + ' + p.d + '.', 'Раскрываем: ' + (p.a * p.b) + 'x − ' + (p.a * p.c) + ' = ' + (p.a * p.b) + 'x + ' + p.d + '.'), st('Subtract ' + (p.a * p.b) + 'x from both sides: −' + (p.a * p.c) + ' = ' + p.d + ' — this is false whatever x is. So no value of x works: the equation has no solution.', 'Вычитаем ' + (p.a * p.b) + 'x из обеих частей: −' + (p.a * p.c) + ' = ' + p.d + ' — это неверно при любом x. Значит, решений нет.')] }; } });
+
+school({ id: 'm4.15', sk: '4.15', src: VV(4, 15), en: '«Times as many» with three people', ru: '«Во столько-то раз больше» для троих',
+  sets: [{ st: 0, k: 3, d: 2, x: 7 }, { st: 1, k: 2, d: 5, x: 6 }],
+  vary(r, b) { return { st: b.st, k: r.ri(2, 4), d: r.ri(2, 6), x: r.ri(3, 12) }; },
+  make(p) { const T = p.x + (p.x + p.d) + p.k * (p.x + p.d); const kw = { 2: ['twice', 'вдвое'], 3: ['three times', 'втрое'], 4: ['four times', 'в 4 раза'] }[p.k];
+    const S = [{ en: 'At the weekend, Nadia picked ' + kw[0] + ' as many apples as Omar, who picked ' + p.d + ' more apples than Priya. Together, they picked ' + T + ' apples. How many apples did Priya pick?', ru: 'В выходные Надя собрала ' + kw[1] + ' больше яблок, чем Омар, а Омар — на ' + p.d + ' больше, чем Прия. Вместе они собрали ' + T + ' яблок. Сколько яблок собрала Прия?', A: 'Priya', B: 'Omar', C: 'Nadia', Ar: 'Прия', Br: 'Омар', Cr: 'Надя' },
+      { en: 'Over the holidays, Ana read ' + kw[0] + ' as many books as Ben, who read ' + p.d + ' more books than Cara. Together, they read ' + T + ' books. How many books did Cara read?', ru: 'На каникулах Ана прочитала ' + kw[1] + ' больше книг, чем Бен, а Бен — на ' + p.d + ' больше, чем Кара. Вместе они прочитали ' + T + ' книг. Сколько книг прочитала Кара?', A: 'Cara', B: 'Ben', C: 'Ana', Ar: 'Кара', Br: 'Бен', Cr: 'Ана' }][p.st];
+    return { q: L(S.en, S.ru), ans: { k: 'num', key: String(p.x) },
+      sol: [st('Start from the person everything is compared with: ' + S.A + ' = x, ' + S.B + ' = x + ' + p.d + ', ' + S.C + ' = ' + p.k + '(x + ' + p.d + ').', 'Начинаем с того, с кем всё сравнивают: ' + S.Ar + ' — x, ' + S.Br + ' — x + ' + p.d + ', ' + S.Cr + ' — ' + p.k + '(x + ' + p.d + ').'), st('x + x + ' + p.d + ' + ' + p.k + 'x + ' + (p.k * p.d) + ' = ' + T + ' → ' + (p.k + 2) + 'x + ' + (p.d + p.k * p.d) + ' = ' + T + ' → x = ' + p.x + '.', 'x + x + ' + p.d + ' + ' + p.k + 'x + ' + (p.k * p.d) + ' = ' + T + ' → ' + (p.k + 2) + 'x + ' + (p.d + p.k * p.d) + ' = ' + T + ' → x = ' + p.x + '.')] }; } });
+
+school({ id: 'm4.16', sk: '4.16', src: VV(4, 16), en: 'A fraction of a parent’s age', ru: 'Часть от возраста родителя',
+  sets: [{ st: 0, d: 30, k: 4 }, { st: 1, d: 36, k: 3 }],
+  vary(r, b) { for (;;) { const k = pk(r, [2, 3, 4, 5]), x = r.ri(5, 20); const d = x * (k - 1); if (d >= 20 && d <= 45) return { st: b.st, d, k }; } },
+  make(p) { const x = p.d / (p.k - 1); const fr = { 2: ['one half', 'половину'], 3: ['one third', 'треть'], 4: ['one quarter', 'четверть'], 5: ['one fifth', 'пятую часть'] }[p.k];
+    const S = [['When Lucy was born, her mother was ' + p.d + ' years old. Lucy is now ' + fr[0] + ' of her mother’s age. How old is Lucy now?', 'Когда Люси родилась, её маме было ' + p.d + ' лет. Сейчас возраст Люси составляет ' + fr[1] + ' возраста мамы. Сколько лет Люси?', 'Lucy', 'mother', 'Люси', 'маме'], ['When Ravi was born, his father was ' + p.d + ' years old. Ravi is now ' + fr[0] + ' of his father’s age. How old is Ravi now?', 'Когда Рави родился, его отцу было ' + p.d + ' лет. Сейчас возраст Рави составляет ' + fr[1] + ' возраста отца. Сколько лет Рави?', 'Ravi', 'father', 'Рави', 'отцу']][p.st];
+    return { q: L(S[0], S[1]), ans: { k: 'num', key: String(x) },
+      sol: [st('The age difference never changes: the ' + S[3] + ' is always ' + p.d + ' years older. Let ' + S[2] + '’s age = x, then the ' + S[3] + ' is x + ' + p.d + '.', 'Разница в возрасте не меняется. Пусть ' + S[4] + ' x лет, тогда ' + S[5] + ' x + ' + p.d + '.'), st('x = (x + ' + p.d + ')/' + p.k + ' → ' + p.k + 'x = x + ' + p.d + ' → ' + (p.k - 1) + 'x = ' + p.d + ' → x = ' + x + '.', 'x = (x + ' + p.d + ')/' + p.k + ' → ' + p.k + 'x = x + ' + p.d + ' → ' + (p.k - 1) + 'x = ' + p.d + ' → x = ' + x + '.'), st('Check: ' + x + ' and ' + (x + p.d) + '; ' + (x + p.d) + ' ÷ ' + p.k + ' = ' + x + ' ✓', 'Проверка: ' + x + ' и ' + (x + p.d) + '; ' + (x + p.d) + ' ÷ ' + p.k + ' = ' + x + ' ✓')] }; } });
+
+function svgTins(a, b, n, tot) { const tin = (x, w, h, t) => '<rect x="' + x + '" y="' + (110 - h) + '" width="' + w + '" height="' + h + '" rx="6" class="bm"/><text class="lb" x="' + (x + w / 2) + '" y="' + (104 - h / 2) + '" text-anchor="middle">' + t + '</text>'; return '<svg viewBox="0 0 340 130" class="gr" role="img" aria-label="tins">' + tin(30, 60, 56, a + ' g') + tin(110, 74, 84, b + ' g') + '<text class="lb" x="210" y="50">' + n + ' tins</text><text class="lb" x="210" y="80">total ' + tot + ' kg</text></svg>'; }
+school({ id: 'm4.17', sk: '4.17', src: VV(4, 17), en: 'Tins of two sizes', ru: 'Банки двух размеров',
+  sets: [{ st: 0, a: 120, b: 250, x: 50, y: 36 }, { st: 1, a: 125, b: 300, x: 28, y: 55 }],
+  vary(r, b) { for (;;) { const a = pk(r, [100, 120, 125, 150, 200]), bb = pk(r, [250, 300, 400, 500]), x = r.ri(10, 60), y = r.ri(10, 60); if ((a * x + bb * y) % 1000 === 0) return { st: b.st, a, b: bb, x, y }; } },
+  make(p) { const n = p.x + p.y, M = (p.a * p.x + p.b * p.y) / 1000;
+    const S = [['A shop sells baked beans in ' + p.a + ' g and ' + p.b + ' g tins. In one week, ' + n + ' tins of beans were sold, with a total mass of ' + M + ' kg. How many tins of each type were sold?', 'Магазин продаёт фасоль в банках по ' + p.a + ' г и ' + p.b + ' г. За неделю продали ' + n + ' банок общей массой ' + rus(M) + ' кг. Сколько банок каждого вида продали?'], ['A supermarket sells sweetcorn in ' + p.a + ' g and ' + p.b + ' g tins. In one day, ' + n + ' tins of sweetcorn were sold, with a total mass of ' + M + ' kg. How many tins of each type were sold?', 'Супермаркет продаёт кукурузу в банках по ' + p.a + ' г и ' + p.b + ' г. За день продали ' + n + ' банок общей массой ' + rus(M) + ' кг. Сколько банок каждого вида продали?']][p.st];
+    return { q: L(S[0], S[1]), svg: svgTins(p.a, p.b, n, M),
+      ans: { k: 'multi', parts: [{ lab: L(p.a + ' g tins', 'Банок по ' + p.a + ' г'), spec: { k: 'num', key: String(p.x) } }, { lab: L(p.b + ' g tins', 'Банок по ' + p.b + ' г'), spec: { k: 'num', key: String(p.y) } }] },
+      sol: [st('Work in grams: ' + M + ' kg = ' + (M * 1000) + ' g. Let x = number of ' + p.a + ' g tins, so ' + n + ' − x are ' + p.b + ' g tins.', 'Переводим в граммы: ' + rus(M) + ' кг = ' + (M * 1000) + ' г. Пусть x — число банок по ' + p.a + ' г, тогда банок по ' + p.b + ' г ' + n + ' − x.'), st(p.a + 'x + ' + p.b + '(' + n + ' − x) = ' + (M * 1000) + ' → ' + (p.b * n) + ' − ' + (p.b - p.a) + 'x = ' + (M * 1000) + ' → x = ' + p.x + '.', p.a + 'x + ' + p.b + '(' + n + ' − x) = ' + (M * 1000) + ' → ' + (p.b * n) + ' − ' + (p.b - p.a) + 'x = ' + (M * 1000) + ' → x = ' + p.x + '.'), st(p.x + ' tins of ' + p.a + ' g and ' + p.y + ' tins of ' + p.b + ' g.', p.x + ' банок по ' + p.a + ' г и ' + p.y + ' банок по ' + p.b + ' г.')] }; } });
+
+/* ---- Chapter 9 ---- */
+school({ id: 'm9.8', sk: '9.8', src: VV(9, 8), en: 'Why sum and product does not work', ru: 'Почему не работает «сумма и произведение»',
+  sets: [{ b: -4, c: 6 }, { b: 5, c: 8 }],
+  vary(r) { for (;;) { const b = r.nz(-9, 9), c = r.ri(2, 20); let ok = true; for (let p = -c; p <= c; p++) if (p && c % p === 0 && p + c / p === b) ok = false; if (ok) return { b, c }; } },
+  make(p) { const e = 'x² ' + (p.b < 0 ? '− ' : '+ ') + (Math.abs(p.b) === 1 ? '' : Math.abs(p.b)) + 'x + ' + p.c; const pairs = []; for (let a = 1; a <= p.c; a++) if (p.c % a === 0 && a <= p.c / a) pairs.push(a + ' × ' + (p.c / a));
+    return { q: L('Explain why ' + e + ' cannot be factorised using the “sum and product” method.', 'Объясните, почему ' + e + ' нельзя разложить методом «сумма и произведение».'),
+      ans: mcqSh(mkRng(p.b * 31 + p.c), [L('No two integers have product ' + p.c + ' and sum ' + p.b + '.', 'Нет двух целых чисел с произведением ' + p.c + ' и суммой ' + p.b + '.'), L('Because the constant term is positive.', 'Потому что свободный член положительный.'), L('Because the coefficient of x² is 1.', 'Потому что коэффициент при x² равен 1.'), L('Because ' + p.c + ' is not a perfect square.', 'Потому что ' + p.c + ' — не точный квадрат.')], 0),
+      sol: [st('We need two integers with product ' + p.c + ' and sum ' + p.b + '. Factor pairs of ' + p.c + ': ' + pairs.join(', ') + ' (and the same with both negative).', 'Нужны два целых числа с произведением ' + p.c + ' и суммой ' + p.b + '. Пары множителей ' + p.c + ': ' + pairs.join(', ') + ' (и те же с минусами).'), st('None of these pairs adds to ' + p.b + ', so the method fails.', 'Ни одна пара не даёт сумму ' + p.b + ', поэтому метод не работает.')] }; } });
+
+/* ---- Chapter 10 ---- */
+school({ id: 'm10.10', sk: '10.10', src: VV(10, 10), en: 'Win–loss ratio over a season', ru: 'Соотношение побед и поражений за сезон',
+  sets: [{ st: 0, w: 3, l: 2, n: 7, ww: 3, W: 4, Lr: 3 }, { st: 1, w: 5, l: 3, n: 4, ww: 1, W: 4, Lr: 3 }],
+  vary(r, b) { for (let g = 0; g < 500; g++) { const w = r.ri(2, 6), l = r.ri(1, 5), n = r.ri(3, 9), ww = r.ri(0, n), W = r.ri(1, 6), Lr = r.ri(1, 6); if (gcd(w, l) !== 1 || gcd(W, Lr) !== 1 || w * Lr === l * W) continue; const num = W * (n - ww) - Lr * ww, den = Lr * w - W * l; if (den === 0) continue; const k = num / den; if (Number.isInteger(k) && k >= 1 && k <= 12) return { st: b.st, w, l, n, ww, W, Lr }; } return b; },
+  make(p) { const k = (p.W * (p.n - p.ww) - p.Lr * p.ww) / (p.Lr * p.w - p.W * p.l); const wins = p.w * k + p.ww; const team = p.st ? ['A netball team', 'Команда по нетболу'] : ['A basketball team', 'Баскетбольная команда'];
+    return { q: L(team[0] + ' had a ' + p.w + ' : ' + p.l + ' win-loss ratio before playing the last ' + p.n + ' matches of the season. The team won ' + p.ww + ' of these last ' + p.n + ' matches, and ended the season with a ' + p.W + ' : ' + p.Lr + ' win-loss ratio. How many matches did the team win in total during the season?', team[1] + ' перед последними ' + p.n + ' матчами сезона имела соотношение побед и поражений ' + p.w + ' : ' + p.l + '. Из этих ' + p.n + ' матчей команда выиграла ' + p.ww + ' и закончила сезон с соотношением ' + p.W + ' : ' + p.Lr + '. Сколько всего матчей выиграла команда за сезон?'), ans: { k: 'num', key: String(wins) },
+      sol: [st('Before: ' + p.w + 'k wins and ' + p.l + 'k losses. After: ' + p.w + 'k + ' + p.ww + ' wins and ' + p.l + 'k + ' + (p.n - p.ww) + ' losses.', 'До: ' + p.w + 'k побед и ' + p.l + 'k поражений. После: ' + p.w + 'k + ' + p.ww + ' побед и ' + p.l + 'k + ' + (p.n - p.ww) + ' поражений.'), st('(' + p.w + 'k + ' + p.ww + ')/(' + p.l + 'k + ' + (p.n - p.ww) + ') = ' + p.W + '/' + p.Lr + ' → ' + p.Lr + '(' + p.w + 'k + ' + p.ww + ') = ' + p.W + '(' + p.l + 'k + ' + (p.n - p.ww) + ') → k = ' + k + '.', '(' + p.w + 'k + ' + p.ww + ')/(' + p.l + 'k + ' + (p.n - p.ww) + ') = ' + p.W + '/' + p.Lr + ' → ' + p.Lr + '(' + p.w + 'k + ' + p.ww + ') = ' + p.W + '(' + p.l + 'k + ' + (p.n - p.ww) + ') → k = ' + k + '.'), st('Total wins: ' + p.w + ' × ' + k + ' + ' + p.ww + ' = ' + wins + '.', 'Всего побед: ' + p.w + ' × ' + k + ' + ' + p.ww + ' = ' + wins + '.')] }; } });
+
+/* ---- Chapter 11 ---- */
+school({ id: 'm11.1', sk: '11.1', src: VV(11, 1), en: 'Fixed charge plus hourly rate', ru: 'Фиксированная плата плюс почасовая',
+  sets: [{ st: 0, f: 25, h: 18 }, { st: 1, f: 60, h: 35 }],
+  vary(r, b) { return { st: b.st, f: nr(r, b.f, 40, 5), h: nr(r, b.h, 30, 1) }; },
+  make(p) { const who = p.st ? ['An electrician charges a fixed call-out fee', 'Электрик берёт фиксированную плату за вызов'] : ['A gardener charges a fixed amount for travel', 'Садовник берёт фиксированную плату за дорогу'];
+    return { q: L(who[0] + ' and then an amount per hour for the time he works. Write a formula for the total charge C dollars if the fixed amount is $' + p.f + ', and he works for n hours at $' + p.h + ' per hour.', who[1] + ' и ещё оплату за каждый час работы. Запишите формулу общей стоимости C долларов, если фиксированная плата $' + p.f + ', а он работает n часов по $' + p.h + ' в час.'), ans: { k: 'subj', v: 'C', key: p.f + '+' + p.h + 'n' },
+      sol: [st('Total = fixed part + rate × hours.', 'Итого = фиксированная часть + ставка × часы.', 'C=' + p.f + '+' + p.h + 'n')] }; } });
+
+school({ id: 'm11.2', sk: '11.2', src: VV(11, 2), en: 'Speed formula v = u + at', ru: 'Формула скорости v = u + at',
+  sets: [{ st: 0, u: 3, a: 9.8, t: 3, u2: 4, a2: 1.25, v2: 13 }, { st: 1, u: 1.5, a: 9.8, t: 6, u2: 8, a2: 0.625, v2: 20 }],
+  vary(r, b) { for (;;) { const u2 = r.ri(2, 10), a2 = pk(r, [0.5, 0.625, 0.75, 1.25, 1.5, 2.5]), tt = pk(r, [4, 6, 8, 10, 12, 16]); const v2 = u2 + a2 * tt; if (Number.isInteger(v2 * 10)) return { st: b.st, u: pk(r, [1, 1.5, 2, 2.5, 3, 4]), a: 9.8, t: r.ri(2, 7), u2, a2, v2: +v2.toFixed(2) }; } },
+  make(p) { const v = +(p.u + p.a * p.t).toFixed(3), t2 = +((p.v2 - p.u2) / p.a2).toFixed(3); const S = p.st ? [['A rock falls from a cliff', 'Камень падает со скалы'], ['A train', 'Поезд'], ['train', 'поезду']] : [['A ball is thrown down from a tower', 'Мяч бросают вниз с башни'], ['A scooter', 'Самокат'], ['scooter', 'самокату']];
+    return { q: L('The speed of an object after t seconds is v = u + at m/s (u — initial speed, a — acceleration).', 'Скорость тела через t секунд: v = u + at м/с (u — начальная скорость, a — ускорение).'),
+      ans: { k: 'multi', parts: [{ lab: L('a) ' + S[0][0] + ' with initial speed ' + p.u + ' m/s and acceleration ' + p.a + ' m/s². Find its speed after ' + p.t + ' seconds (m/s).', 'a) ' + S[0][1] + ' с начальной скоростью ' + rus(p.u) + ' м/с и ускорением ' + rus(p.a) + ' м/с². Найдите скорость через ' + p.t + ' с (м/с).'), spec: { k: 'num', key: String(v) } }, { lab: L('b) ' + S[1][0] + ' initially travelling at ' + p.u2 + ' m/s accelerates at ' + p.a2 + ' m/s². How long will it take to reach ' + p.v2 + ' m/s (s)?', 'b) ' + S[1][1] + ' едет со скоростью ' + p.u2 + ' м/с и разгоняется с ускорением ' + rus(p.a2) + ' м/с². Сколько секунд нужно ' + S[2][1] + ', чтобы достичь ' + rus(p.v2) + ' м/с?'), spec: { k: 'num', key: String(t2) } }] },
+      sol: [st('a) v = ' + p.u + ' + ' + p.a + ' × ' + p.t + ' = ' + v + ' m/s.', 'a) v = ' + rus(p.u) + ' + ' + rus(p.a) + ' × ' + p.t + ' = ' + rus(v) + ' м/с.'), st('b) ' + p.v2 + ' = ' + p.u2 + ' + ' + p.a2 + 't → ' + p.a2 + 't = ' + +(p.v2 - p.u2).toFixed(3) + ' → t = ' + t2 + ' s.', 'b) ' + rus(p.v2) + ' = ' + p.u2 + ' + ' + rus(p.a2) + 't → ' + rus(p.a2) + 't = ' + rus(+(p.v2 - p.u2).toFixed(3)) + ' → t = ' + rus(t2) + ' с.')] }; } });
+
+school({ id: 'm11.3', sk: '11.3', src: VV(11, 3), en: 'Formula P = k³ ± c: forwards and backwards', ru: 'Формула P = k³ ± c: туда и обратно',
+  sets: [{ c: 3, k1: 4, k2: 7, k3: 6, k4: 10 }, { c: -9, k1: 3, k2: 5, k3: 7, k4: 20 }],
+  vary(r, b) { const c = pk(r, [2, 3, 4, 5, -1, -3, -8, -9]); const ks = r.sh([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]); return { c, k1: ks[0], k2: ks[1], k3: ks[2], k4: pk(r, [10, 15, 20]) }; },
+  make(p) { const P = k => k ** 3 + p.c; const f = 'P = k³ ' + (p.c < 0 ? '− ' + (-p.c) : '+ ' + p.c);
+    return { q: L('Consider the formula ' + f + '.', 'Рассмотрим формулу ' + f + '.'),
+      ans: { k: 'multi', parts: [{ lab: L('a) P when k = ' + p.k1, 'a) P при k = ' + p.k1), spec: { k: 'num', key: String(P(p.k1)) } }, { lab: L('P when k = ' + p.k2, 'P при k = ' + p.k2), spec: { k: 'num', key: String(P(p.k2)) } }, { lab: L('b) k when P = ' + P(p.k3), 'b) k при P = ' + P(p.k3)), spec: { k: 'num', key: String(p.k3) } }, { lab: L('k when P = ' + P(p.k4), 'k при P = ' + P(p.k4)), spec: { k: 'num', key: String(p.k4) } }] },
+      sol: [st('a) ' + p.k1 + '³ ' + (p.c < 0 ? '− ' + (-p.c) : '+ ' + p.c) + ' = ' + P(p.k1) + '; ' + p.k2 + '³ ' + (p.c < 0 ? '− ' + (-p.c) : '+ ' + p.c) + ' = ' + P(p.k2) + '.', 'a) ' + p.k1 + '³ ' + (p.c < 0 ? '− ' + (-p.c) : '+ ' + p.c) + ' = ' + P(p.k1) + '; ' + p.k2 + '³ ' + (p.c < 0 ? '− ' + (-p.c) : '+ ' + p.c) + ' = ' + P(p.k2) + '.'), st('b) Undo in reverse order: first ' + (p.c < 0 ? 'add ' + (-p.c) : 'subtract ' + p.c) + ', then take the cube root: k³ = ' + (p.k3 ** 3) + ' → k = ' + p.k3 + '; k³ = ' + (p.k4 ** 3) + ' → k = ' + p.k4 + '.', 'b) Действия отменяем в обратном порядке: сначала ' + (p.c < 0 ? 'прибавляем ' + (-p.c) : 'вычитаем ' + p.c) + ', потом извлекаем кубический корень: k³ = ' + (p.k3 ** 3) + ' → k = ' + p.k3 + '; k³ = ' + (p.k4 ** 3) + ' → k = ' + p.k4 + '.')] }; } });
+
+school({ id: 'm11.4', sk: '11.4', src: VV(11, 4), en: 'School trip: cost formula', ru: 'Школьная поездка: формула стоимости',
+  sets: [{ st: 0, s: 22, a: 31, ns: 45, na: 3, ns2: 73, na2: 6 }, { st: 1, s: 24, a: 38, ns: 52, na: 6, ns2: 64, na2: 7 }],
+  vary(r, b) { return { st: b.st, s: nr(r, b.s, 20), a: nr(r, b.a, 20), ns: r.ri(30, 70), na: r.ri(2, 8), ns2: r.ri(40, 90), na2: r.ri(3, 9) }; },
+  make(p) { const C1 = p.s * p.ns + p.a * p.na, C2 = p.s * p.ns2 + p.a * p.na2; const w = p.st ? ['A school theatre excursion', 'Школьная поездка в театр'] : ['A school trip to the zoo', 'Школьная поездка в зоопарк'];
+    return { q: L(w[0] + ' costs $' + p.s + ' for each student and $' + p.a + ' for each adult.', w[1] + ' стоит $' + p.s + ' за каждого ученика и $' + p.a + ' за каждого взрослого.'),
+      ans: { k: 'multi', parts: [{ lab: L('a) Formula for the total cost: C =', 'a) Формула общей стоимости: C ='), spec: { k: 'subj', v: 'C', key: p.s + 's+' + p.a + 'a' } }, { lab: L('b) Total cost for ' + p.ns + ' students and ' + p.na + ' adults ($)', 'b) Стоимость для ' + p.ns + ' учеников и ' + p.na + ' взрослых ($)'), spec: { k: 'num', key: String(C1) } }, { lab: L('c) Number of adults with ' + p.ns2 + ' students if the total is $' + C2, 'c) Число взрослых при ' + p.ns2 + ' учениках, если всего $' + C2), spec: { k: 'num', key: String(p.na2) } }] },
+      sol: [st('a) Each student adds $' + p.s + ', each adult $' + p.a + ': C = ' + p.s + 's + ' + p.a + 'a.', 'a) Каждый ученик добавляет $' + p.s + ', каждый взрослый $' + p.a + ': C = ' + p.s + 's + ' + p.a + 'a.'), st('b) C = ' + p.s + ' × ' + p.ns + ' + ' + p.a + ' × ' + p.na + ' = ' + (p.s * p.ns) + ' + ' + (p.a * p.na) + ' = $' + C1 + '.', 'b) C = ' + p.s + ' × ' + p.ns + ' + ' + p.a + ' × ' + p.na + ' = ' + (p.s * p.ns) + ' + ' + (p.a * p.na) + ' = $' + C1 + '.'), st('c) ' + C2 + ' = ' + (p.s * p.ns2) + ' + ' + p.a + 'a → ' + p.a + 'a = ' + (p.a * p.na2) + ' → a = ' + p.na2 + '.', 'c) ' + C2 + ' = ' + (p.s * p.ns2) + ' + ' + p.a + 'a → ' + p.a + 'a = ' + (p.a * p.na2) + ' → a = ' + p.na2 + '.')] }; } });
+
+school({ id: 'm11.7', sk: '11.7', src: VV(11, 7), en: 'Sound intensity: how far away?', ru: 'Интенсивность звука: на каком расстоянии?',
+  sets: [{ st: 0, P: 20000, i1: 1, i2: 0.1 }, { st: 1, P: 125000, i1: 2, i2: 0.2 }],
+  vary(r, b) { return { st: b.st, P: pk(r, [5000, 10000, 20000, 40000, 50000, 80000, 125000, 200000]), i1: pk(r, [0.5, 1, 2, 4, 5]), i2: pk(r, [0.1, 0.2, 0.05]) }; },
+  make(p) { const d = i => Math.sqrt(0.08 * p.P / i); const S = p.st ? ['A military jet at take-off produces sound with power ', 'Военный самолёт при взлёте издаёт звук мощностью '] : ['An air-raid siren has power ', 'Сирена воздушной тревоги имеет мощность '];
+    return { q: L('The intensity of a sound at distance d m from the source is I ≈ 0.08P/d² W/m², where P is the power in watts. ' + S[0] + p.P + ' W.', 'Интенсивность звука на расстоянии d м от источника I ≈ 0,08P/d² Вт/м², где P — мощность в ваттах. ' + S[1] + p.P + ' Вт.'),
+      ans: { k: 'multi', parts: [{ lab: L('a) Make d the subject: d =', 'a) Выразите d: d ='), spec: { k: 'subj', v: 'd', key: '√(0.08P/I)' } }, { lab: L('b) How far away for I = ' + p.i1 + ' W/m² (m, 3 s.f.)?', 'b) На каком расстоянии I = ' + rus(p.i1) + ' Вт/м² (м, 3 знач. цифры)?'), spec: { k: 'num', key: String(+d(p.i1).toFixed(6)), forms: ['approx'], tol: 0.006 } }, { lab: L('For I = ' + p.i2 + ' W/m² (m, 3 s.f.)', 'При I = ' + rus(p.i2) + ' Вт/м² (м, 3 знач. цифры)'), spec: { k: 'num', key: String(+d(p.i2).toFixed(6)), forms: ['approx'], tol: 0.006 } }] },
+      sol: [st('Multiply by d², divide by I, take the square root:', 'Умножаем на d², делим на I и извлекаем корень:', 'd=√(0.08P/I)'), st('d = √(0.08 × ' + p.P + ' ÷ ' + p.i1 + ') = √' + +(0.08 * p.P / p.i1).toFixed(3) + ' ≈ ' + +d(p.i1).toPrecision(3) + ' m; d = √(0.08 × ' + p.P + ' ÷ ' + p.i2 + ') = √' + +(0.08 * p.P / p.i2).toFixed(3) + ' ≈ ' + +d(p.i2).toPrecision(3) + ' m.', 'd = √(0,08 × ' + p.P + ' ÷ ' + rus(p.i1) + ') = √' + rus(+(0.08 * p.P / p.i1).toFixed(3)) + ' ≈ ' + rus(+d(p.i1).toPrecision(3)) + ' м; d = √(0,08 × ' + p.P + ' ÷ ' + rus(p.i2) + ') = √' + rus(+(0.08 * p.P / p.i2).toFixed(3)) + ' ≈ ' + rus(+d(p.i2).toPrecision(3)) + ' м.')] }; } });
+
+school({ id: 'm11.8', sk: '11.8', src: VV(11, 8), en: 'Same sum and product', ru: 'Одинаковые сумма и произведение',
+  sets: [{ st: 0, a: 4 }, { st: 1, a: 6 }],
+  vary(r, b) { return { st: b.st, a: pk(r, [3, 5, 7, 8, 9, 10, 11]) }; },
+  make(p) { const nm = p.st ? ['Kenji is', 'Кэндзи ищет'] : ['Priya is', 'Прия ищет']; const g = gcd(p.a, p.a - 1); const bs = p.a + '/' + (p.a - 1);
+    return { q: L(nm[0] + ' trying to find pairs of numbers which have the same sum and product, i.e. numbers a and b with ab = a + b.', nm[1] + ' пары чисел с одинаковыми суммой и произведением, т. е. числа a и b, для которых ab = a + b.'),
+      ans: { k: 'multi', parts: [{ lab: L('a) Make b the subject: b =', 'a) Выразите b: b ='), spec: { k: 'subj', v: 'b', key: 'a/(a-1)' } }, { lab: L('b) Find b when a = ' + p.a, 'b) Найдите b при a = ' + p.a), spec: { k: 'num', key: bs, forms: ['frac'] } }] },
+      sol: [st('ab − b = a → b(a − 1) = a → b = a/(a − 1).', 'ab − b = a → b(a − 1) = a → b = a/(a − 1).'), st('a = ' + p.a + ': b = ' + p.a + '/' + (p.a - 1) + '. Check: sum ' + p.a + ' + ' + bs + ' = ' + (p.a * p.a) + '/' + (p.a - 1) + ', product ' + p.a + ' × ' + bs + ' = ' + (p.a * p.a) + '/' + (p.a - 1) + ' ✓', 'a = ' + p.a + ': b = ' + p.a + '/' + (p.a - 1) + '. Проверка: сумма ' + p.a + ' + ' + bs + ' = ' + (p.a * p.a) + '/' + (p.a - 1) + ', произведение ' + p.a + ' × ' + bs + ' = ' + (p.a * p.a) + '/' + (p.a - 1) + ' ✓')] }; } });
+
+function svgPrism() { return '<svg viewBox="0 0 340 170" class="gr" role="img" aria-label="prism"><polygon points="60,60 220,60 270,30 110,30" class="bm"/><polygon points="60,60 220,60 220,150 60,150" class="bm"/><polygon points="220,60 270,30 270,120 220,150" class="bm"/><line x1="60" y1="150" x2="270" y2="30" class="ar"/><text class="lb" x="140" y="166" text-anchor="middle">a</text><text class="lb" x="252" y="148">b</text><text class="lb" x="280" y="80">c</text><text class="lb" x="150" y="98">diagonal L</text></svg>'; }
+school({ id: 'm11.9', sk: '11.9', src: VV(11, 9), en: 'Diagonal of a rectangular prism', ru: 'Диагональ прямоугольного параллелепипеда',
+  sets: [{ a: 2, b: 10, c: 11, x: 6, y: 10, h: 15 }, { a: 8, b: 9, c: 12, x: 5, y: 10, h: 10 }],
+  vary(r, b) { const T = [[1, 4, 8, 9], [2, 3, 6, 7], [2, 6, 9, 11], [4, 4, 7, 9], [2, 10, 11, 15], [8, 9, 12, 17], [6, 6, 7, 11], [3, 4, 12, 13], [1, 2, 2, 3], [4, 8, 8, 12], [6, 10, 15, 19], [5, 10, 10, 15], [2, 5, 14, 15], [4, 13, 16, 21], [6, 9, 18, 21]]; const t1 = pk(r, T); let t2; do t2 = pk(r, T); while (t2 === t1); return { a: t1[0], b: t1[1], c: t1[2], x: t2[0], y: t2[1], h: t2[2] }; },
+  make(p) { const L1 = Math.sqrt(p.a ** 2 + p.b ** 2 + p.c ** 2), D = Math.sqrt(p.x ** 2 + p.y ** 2 + p.h ** 2);
+    return { q: L('The length L of the diagonal of a rectangular prism is L = √(a² + b² + c²).', 'Длина диагонали прямоугольного параллелепипеда L = √(a² + b² + c²).'), svg: svgPrism(),
+      ans: { k: 'multi', parts: [{ lab: L('a) Diagonal of a ' + p.a + ' cm by ' + p.b + ' cm by ' + p.c + ' cm prism (cm)', 'a) Диагональ параллелепипеда ' + p.a + ' × ' + p.b + ' × ' + p.c + ' см (см)'), spec: { k: 'num', key: String(L1) } }, { lab: L('b) Make c the subject: c =', 'b) Выразите c: c ='), spec: { k: 'subj', v: 'c', key: '√(L^2-a^2-b^2)' } }, { lab: L('c) A prism has a ' + p.x + ' cm by ' + p.y + ' cm base and a diagonal of ' + D + ' cm. Height (cm)?', 'c) Основание ' + p.x + ' × ' + p.y + ' см, диагональ ' + D + ' см. Высота (см)?'), spec: { k: 'num', key: String(p.h) } }] },
+      sol: [st('a) L = √(' + (p.a ** 2) + ' + ' + (p.b ** 2) + ' + ' + (p.c ** 2) + ') = √' + (L1 * L1) + ' = ' + L1 + ' cm.', 'a) L = √(' + (p.a ** 2) + ' + ' + (p.b ** 2) + ' + ' + (p.c ** 2) + ') = √' + (L1 * L1) + ' = ' + L1 + ' см.'), st('b) Square both sides: L² = a² + b² + c² → c² = L² − a² − b² → c = √(L² − a² − b²).', 'b) Возводим в квадрат: L² = a² + b² + c² → c² = L² − a² − b² → c = √(L² − a² − b²).'), st('c) c = √(' + (D * D) + ' − ' + (p.x ** 2) + ' − ' + (p.y ** 2) + ') = √' + (p.h ** 2) + ' = ' + p.h + ' cm.', 'c) c = √(' + (D * D) + ' − ' + (p.x ** 2) + ' − ' + (p.y ** 2) + ') = √' + (p.h ** 2) + ' = ' + p.h + ' см.')] }; } });
+
+/* ===================== Как в школе: PHYSICS (school textbook, chapters 1–4) ===================== */
+const TB = (sec, q) => L('Textbook ' + sec + (q ? ', Q' + q : ''), 'Учебник, ' + sec + (q ? ', вопрос ' + q : ''));
+const MP = (lab, v, u) => ({ lab, spec: pnum(v, u) });
+const rn = v => +(+v).toPrecision(6);
+
+/* ---------- Chapter 1 ---------- */
+school({ id: 'p1.4', sk: 'P1.4', src: TB('1.3', 2), en: 'Pendulum: time for one swing', ru: 'Маятник: время одного колебания',
+  sets: [{ n: 20, t: 46 }], vary(r) { const n = pk(r, [10, 20, 25, 30]); return { n, t: rn(n * pk(r, [1.2, 1.4, 1.6, 1.8, 2.2, 2.4])) }; },
+  make(p) { const T = rn(p.t / p.n); return { q: PQ('A student measures the time taken for ' + p.n + ' swings of a pendulum. He finds that the time taken is ' + p.t + ' seconds.', 'Ученик измеряет время ' + p.n + ' колебаний маятника. Получилось ' + p.t + ' с.'),
+    ans: { k: 'multi', parts: [MP(L('a) Time for one swing', 'a) Время одного колебания'), T, 's'), { lab: L('b) Why is it better to time many swings?', 'b) Почему лучше засекать много колебаний?'), spec: mcqSh(mkRng(p.n + p.t), [L('The reaction-time error of the stopwatch is shared over all the swings', 'Ошибка реакции при нажатии секундомера делится на все колебания'), L('The pendulum swings faster after a few swings', 'Через несколько колебаний маятник качается быстрее'), L('One swing is too fast to see', 'Одно колебание слишком быстрое, его не видно'), L('It makes the swings bigger', 'От этого колебания становятся больше')], 0) }] },
+    sol: [su('One swing:', 'Одно колебание:', p.t + '/' + p.n + '=' + T, 's'), st('Starting and stopping the watch adds about 0.1–0.2 s of error. Over ' + p.n + ' swings this error is divided by ' + p.n + ', so the result is much more accurate.', 'Запуск и остановка секундомера дают ошибку около 0,1–0,2 с. На ' + p.n + ' колебаний эта ошибка делится на ' + p.n + ', и результат гораздо точнее.')] }; } });
+
+school({ id: 'p1.7a', sk: 'P1.7', src: TB('1.4', 5), en: 'Aluminium: density, mass and volume', ru: 'Алюминий: плотность, масса и объём',
+  sets: [{ m: 'aluminium', mr: 'алюминий', rho: 2700, V: 20, mm: 27 }],
+  vary(r) { const M = pk(r, [['aluminium', 'алюминий', 2700], ['iron', 'железо', 7900], ['copper', 'медь', 8900], ['lead', 'свинец', 11400], ['granite', 'гранит', 2700]]); return { m: M[0], mr: M[1], rho: M[2], V: pk(r, [5, 10, 15, 20, 25, 40]), mm: rn(M[2] / 1000 * pk(r, [2, 4, 5, 10, 20])) }; },
+  make(p) { const g = p.rho / 1000; return { q: PQ(p.m[0].toUpperCase() + p.m.slice(1) + ' has a density of ' + p.rho + ' kg/m³.', 'Плотность материала «' + p.mr + '» ' + p.rho + ' кг/м³.'),
+    ans: { k: 'multi', parts: [MP(L('a) Density in g/cm³', 'a) Плотность в г/см³'), g, 'g/cm³'), MP(L('b) Mass of ' + p.V + ' cm³', 'b) Масса ' + p.V + ' см³'), rn(g * p.V), 'g'), MP(L('c) Volume of ' + p.mm + ' g', 'c) Объём ' + ruN(p.mm) + ' г'), rn(p.mm / g), 'cm³')] },
+    sol: [st('1 g/cm³ = 1000 kg/m³, so ' + p.rho + ' kg/m³ = ' + g + ' g/cm³.', '1 г/см³ = 1000 кг/м³, поэтому ' + p.rho + ' кг/м³ = ' + ruN(g) + ' г/см³.'), su('m = ρV:', 'm = ρV:', g + '*' + p.V + '=' + rn(g * p.V), 'g'), su('V = m/ρ:', 'V = m/ρ:', p.mm + '/' + g + '=' + rn(p.mm / g), 'cm³')] }; } });
+
+school({ id: 'p1.7b', sk: 'P1.7', src: TB('1.4', '7–9'), en: 'Air in a room, petrol and lead', ru: 'Воздух в комнате, бензин и свинец',
+  sets: [{ a: 5, b: 2, c: 3, mp: 3200, mp2: 1600 }],
+  vary(r) { return { a: r.ri(3, 8), b: r.ri(2, 6), c: pk(r, [2.5, 3, 4]), mp: pk(r, [1600, 2400, 4000, 4800]), mp2: pk(r, [800, 1600, 2400]) }; },
+  make(p) { const V = p.a * p.b * p.c; return { q: PQ('Density of air = 1.3 kg/m³, petrol = 800 kg/m³, lead = 11 400 kg/m³.', 'Плотность воздуха 1,3 кг/м³, бензина 800 кг/м³, свинца 11 400 кг/м³.'),
+    ans: { k: 'multi', parts: [MP(L('a) Mass of air in a room ' + p.a + ' m × ' + p.b + ' m × ' + p.c + ' m', 'a) Масса воздуха в комнате ' + p.a + ' м × ' + p.b + ' м × ' + ruN(p.c) + ' м'), rn(1.3 * V), 'kg'), MP(L('b) Volume of a tank which holds ' + p.mp + ' kg of petrol', 'b) Объём бака, вмещающего ' + p.mp + ' кг бензина'), rn(p.mp / 800), 'm³'), MP(L('c) Mass of lead with the same volume as ' + p.mp2 + ' kg of petrol', 'c) Масса свинца того же объёма, что и ' + p.mp2 + ' кг бензина'), rn(p.mp2 / 800 * 11400), 'kg')] },
+    sol: [su('a) Volume of the room, then m = ρV:', 'a) Объём комнаты, потом m = ρV:', p.a + '*' + p.b + '*' + p.c + '=' + V, 'm³'), su('', '', '1.3*' + V + '=' + rn(1.3 * V), 'kg'), su('b) V = m/ρ:', 'b) V = m/ρ:', p.mp + '/800=' + rn(p.mp / 800), 'm³'), st('c) First the volume of the petrol: ' + p.mp2 + ' ÷ 800 = ' + rn(p.mp2 / 800) + ' m³. Lead of this volume: 11 400 × ' + rn(p.mp2 / 800) + ' = ' + rn(p.mp2 / 800 * 11400) + ' kg.', 'c) Сначала объём бензина: ' + p.mp2 + ' ÷ 800 = ' + ruN(rn(p.mp2 / 800)) + ' м³. Свинец того же объёма: 11 400 × ' + ruN(rn(p.mp2 / 800)) + ' = ' + rn(p.mp2 / 800 * 11400) + ' кг.')] }; } });
+
+school({ id: 'p1.8a', sk: 'P1.8', src: TB('1.5', 1), en: 'Which crown is gold?', ru: 'Какая корона золотая?',
+  sets: [{ m: 3750, vs: [357, 194, 315] }],
+  vary(r) { const m = pk(r, [1930, 2895, 3860, 4825]); const vg = rn(m / 19.3), vsl = Math.round(m / 10.5), vmx = Math.round(m / pk(r, [12, 13, 14, 15])); return { m, vs: r.sh([Math.round(vg), vsl, vmx]) }; },
+  make(p) { const d = p.vs.map(v => p.m / v); const kind = d.map(x => Math.abs(x - 19.3) < 0.4 ? 0 : Math.abs(x - 10.5) < 0.4 ? 1 : 2); const nm = ['A', 'B', 'C'];
+    const crown = '<svg viewBox="0 0 60 30" width="60"><polygon points="5,25 5,8 17,18 30,4 43,18 55,8 55,25" class="bm"/></svg>';
+    const tbl = '<table class="pblk"><tr><th></th>' + nm.map(n => '<th>' + crown + '<br>crown ' + n + '</th>').join('') + '</tr><tr><th>mass/g</th>' + nm.map(() => '<td>' + p.m + '</td>').join('') + '</tr><tr><th>volume/cm³</th>' + p.vs.map(v => '<td>' + v + '</td>').join('') + '</tr></table><p class="meta">density: gold 19.3 g/cm³; silver 10.5 g/cm³</p>';
+    const opts = nm.map(n => L('Crown ' + n, 'Корона ' + n));
+    return { q: PQ('Use the information to decide which crown is gold, which is silver, and which is a mixture.', 'По данным определите, какая корона золотая, какая серебряная, а какая — из смеси.'), html: tbl,
+      ans: { k: 'multi', parts: [{ lab: L('Gold', 'Золотая'), spec: { k: 'mcq', opts, c: kind.indexOf(0) } }, { lab: L('Silver', 'Серебряная'), spec: { k: 'mcq', opts, c: kind.indexOf(1) } }, { lab: L('Mixture', 'Смесь'), spec: { k: 'mcq', opts, c: kind.indexOf(2) } }] },
+      sol: [st('Density = mass ÷ volume: ' + nm.map((n, i) => n + ' ' + p.m + ' ÷ ' + p.vs[i] + ' = ' + d[i].toFixed(1)).join('; ') + ' g/cm³.', 'Плотность = масса ÷ объём: ' + nm.map((n, i) => n + ' ' + p.m + ' ÷ ' + p.vs[i] + ' = ' + ruN(d[i].toFixed(1))).join('; ') + ' г/см³.'), st('19.3 → gold, 10.5 → silver, a value in between → a mixture. Same mass, so the gold crown has the smallest volume.', '19,3 → золото, 10,5 → серебро, промежуточное значение → смесь. Масса одинаковая, поэтому у золотой короны объём наименьший.')] }; } });
+
+function svgCyl(states) { // states: [{lvl, stone, mass, label, top}]
+  let s = '<svg viewBox="0 0 340 190" class="gr" role="img" aria-label="cylinders">';
+  states.forEach((c, i) => { const x = 15 + i * 100; s += '<text x="' + (x + 30) + '" y="12" text-anchor="middle">' + c.label + '</text><rect x="' + (x + 15) + '" y="22" width="30" height="130" class="bm"/>';
+    if (c.lvl) { const y = 152 - c.lvl; s += '<rect x="' + (x + 16) + '" y="' + y + '" width="28" height="' + c.lvl + '" style="fill:var(--accent-soft)"/>'; if (c.top) s += '<line x1="' + (x + 46) + '" y1="' + y + '" x2="' + (x + 58) + '" y2="' + y + '" class="dm"/><text class="lb" x="' + (x + 60) + '" y="' + (y + 4) + '">' + c.top + '</text>'; }
+    if (c.stone) s += '<ellipse cx="' + (x + 30) + '" cy="135" rx="10" ry="15" style="fill:#c98a4b"/>';
+    s += '<rect x="' + x + '" y="155" width="60" height="18" rx="3" class="bm"/><text class="lb" x="' + (x + 30) + '" y="168" text-anchor="middle">' + c.mass + ' g</text>'; });
+  return s + '</svg>';
+}
+school({ id: 'p1.8b', sk: 'P1.8', src: TB('1.5', 2), en: 'Measuring cylinder: liquid and stone', ru: 'Мензурка: жидкость и камень',
+  sets: [{ e: 90, vl: 100, ml: 80, vs: 48, ms: 120 }],
+  vary(r) { const vl = pk(r, [80, 100, 120, 150]); const rl = pk(r, [0.8, 0.9, 1.0, 1.2]); const vs = pk(r, [20, 25, 30, 40, 48, 50]); const rs = pk(r, [2.5, 3, 2, 2.7]); return { e: pk(r, [80, 90, 100, 120]), vl, ml: rn(vl * rl), vs, ms: rn(vs * rs) }; },
+  make(p) { const svg = svgCyl([{ label: 'empty', mass: p.e }, { label: 'liquid added', mass: rn(p.e + p.ml), lvl: 60, top: p.vl + ' cm³' }, { label: 'stone added', mass: rn(p.e + p.ml + p.ms), lvl: Math.round(60 * (p.vl + p.vs) / p.vl), top: (p.vl + p.vs) + ' cm³', stone: true }]);
+    return { q: PQ('Use the information in the diagram to calculate the mass, volume and density of the liquid and of the stone.', 'По рисунку вычислите массу, объём и плотность жидкости и камня.'), svg,
+      ans: { k: 'multi', parts: [MP(L('Mass of liquid', 'Масса жидкости'), p.ml, 'g'), MP(L('Density of liquid', 'Плотность жидкости'), rn(p.ml / p.vl), 'g/cm³'), MP(L('Mass of stone', 'Масса камня'), p.ms, 'g'), MP(L('Volume of stone', 'Объём камня'), p.vs, 'cm³'), MP(L('Density of stone', 'Плотность камня'), rn(p.ms / p.vs), 'g/cm³')] },
+      sol: [su('Liquid: subtract the empty cylinder.', 'Жидкость: вычитаем пустую мензурку.', rn(p.e + p.ml) + '-' + p.e + '=' + p.ml, 'g'), su('', '', 'ρ=' + p.ml + '/' + p.vl + '=' + rn(p.ml / p.vl), 'g/cm³'), su('Stone: the extra mass and the rise in level.', 'Камень: добавившаяся масса и подъём уровня.', rn(p.e + p.ml + p.ms) + '-' + rn(p.e + p.ml) + '=' + p.ms, 'g'), su('', '', (p.vl + p.vs) + '-' + p.vl + '=' + p.vs, 'cm³'), su('', '', 'ρ=' + p.ms + '/' + p.vs + '=' + rn(p.ms / p.vs), 'g/cm³')] }; } });
+
+school({ id: 'p1.9', sk: 'P1.9', src: TB('1.6', 2), en: 'Hot-air balloon: mass of air', ru: 'Воздушный шар: масса воздуха',
+  sets: [{ V: 2000, c: 1.3, h: 1.1 }], vary(r) { return { V: pk(r, [1500, 2000, 2500, 3000, 4000]), c: 1.3, h: pk(r, [0.9, 1.0, 1.1, 1.2]) }; },
+  make(p) { return { q: PQ('A hot-air balloon contains ' + p.V + ' m³ of air. When the air is cold, its density is ' + p.c + ' kg/m³. When heated, the air expands so that some is pushed out of the hole at the bottom, and the density falls to ' + p.h + ' kg/m³.', 'В воздушном шаре ' + p.V + ' м³ воздуха. Холодный воздух имеет плотность ' + ruN(p.c) + ' кг/м³. При нагревании воздух расширяется, часть выходит через отверстие внизу, и плотность падает до ' + ruN(p.h) + ' кг/м³.'),
+    ans: { k: 'multi', parts: [MP(L('a) Mass of air when cold', 'a) Масса холодного воздуха'), rn(p.V * p.c), 'kg'), MP(L('b) Mass of air when hot', 'b) Масса горячего воздуха'), rn(p.V * p.h), 'kg'), MP(L('c) Mass of air lost', 'c) Масса вышедшего воздуха'), rn(p.V * (p.c - p.h)), 'kg')] },
+    sol: [su('m = ρV:', 'm = ρV:', p.c + '*' + p.V + '=' + rn(p.V * p.c), 'kg'), su('', '', p.h + '*' + p.V + '=' + rn(p.V * p.h), 'kg'), su('Lost:', 'Вышло:', rn(p.V * p.c) + '-' + rn(p.V * p.h) + '=' + rn(p.V * (p.c - p.h)), 'kg')] }; } });
+
+/* ---------- Chapter 2 ---------- */
+school({ id: 'p2.2a', sk: 'P2.2', src: TB('2.2', 'Example'), en: 'Car passing post A', ru: 'Машина проезжает столб A',
+  sets: [{ u: 12, a: 3, t: 5 }], vary(r) { return { u: r.ri(5, 20), a: pk(r, [1, 1.5, 2, 2.5, 3, 4]), t: r.ri(3, 8) }; },
+  make(p) { const v = rn(p.u + p.a * p.t); const svg = '<svg viewBox="0 0 340 110" class="gr" role="img" aria-label="road"><polygon points="10,90 330,40 330,70 10,110" class="bm"/><line x1="70" y1="70" x2="70" y2="96" class="ax"/><text class="lb" x="66" y="62">A</text><line x1="280" y1="38" x2="280" y2="66" class="ax"/><text class="lb" x="276" y="30">B</text><text class="lb" x="100" y="58">' + p.u + ' m/s →</text><text class="lb" x="205" y="44">' + p.a + ' m/s²</text><text class="lb" x="175" y="98">' + p.t + ' s</text></svg>';
+    return { q: PQ('A car passes post A with a velocity of ' + p.u + ' m/s. If it has a steady acceleration of ' + p.a + ' m/s², what is its velocity ' + p.t + ' s later, at B?', 'Машина проезжает столб A со скоростью ' + p.u + ' м/с. Её ускорение постоянно и равно ' + p.a + ' м/с². Какова её скорость через ' + p.t + ' с, у столба B?'), svg, ans: pnum(v, 'm/s'),
+      sol: [st('The car gains ' + p.a + ' m/s of velocity every second, so in ' + p.t + ' s it gains ' + rn(p.a * p.t) + ' m/s.', 'Каждую секунду скорость растёт на ' + ruN(p.a) + ' м/с, за ' + p.t + ' с — на ' + ruN(rn(p.a * p.t)) + ' м/с.'), su('final velocity = original + acceleration × time:', 'конечная скорость = начальная + ускорение × время:', 'v=' + p.u + '+' + p.a + '*' + p.t + '=' + v, 'm/s')] }; } });
+
+school({ id: 'p2.2b', sk: 'P2.2', src: TB('2.2', '6–9'), en: 'Car, motorcycle, aircraft, truck', ru: 'Машина, мотоцикл, самолёт, грузовик',
+  sets: [{ v1: 10, v2: 30, t: 8, m: 20, ts: 5, a: 3, ta: 4, va: 20, tb: 8, tr: 25, rd: 2, tt: 4 }],
+  vary(r) { return { v1: r.ri(5, 15), v2: r.ri(20, 40), t: pk(r, [4, 5, 8, 10]), m: pk(r, [15, 20, 24, 30]), ts: pk(r, [3, 4, 5, 6]), a: pk(r, [2, 3, 4]), ta: r.ri(3, 6), va: r.ri(10, 25), tb: r.ri(5, 10), tr: r.ri(20, 30), rd: pk(r, [1.5, 2, 2.5, 3]), tt: r.ri(2, 5) }; },
+  make(p) { return { q: PQ('Answer each part (velocities in m/s, accelerations in m/s²).', 'Ответьте на каждый пункт (скорости в м/с, ускорения в м/с²).'),
+    ans: { k: 'multi', parts: [MP(L('a) A car takes ' + p.t + ' s to increase its velocity from ' + p.v1 + ' m/s to ' + p.v2 + ' m/s. Its average acceleration?', 'a) Машина за ' + p.t + ' с разгоняется с ' + p.v1 + ' до ' + p.v2 + ' м/с. Среднее ускорение?'), rn((p.v2 - p.v1) / p.t), 'm/s²'), MP(L('b) A motorcycle travelling at ' + p.m + ' m/s takes ' + p.ts + ' s to stop. Its average retardation?', 'b) Мотоцикл, едущий со скоростью ' + p.m + ' м/с, останавливается за ' + p.ts + ' с. Среднее замедление?'), rn(p.m / p.ts), 'm/s²'), MP(L('c) An aircraft has a steady acceleration of ' + p.a + ' m/s². Velocity gained in ' + p.ta + ' s?', 'c) Самолёт разгоняется с ускорением ' + p.a + ' м/с². Какую скорость он наберёт за ' + p.ta + ' с?'), p.a * p.ta, 'm/s'), MP(L('d) It passes a post at ' + p.va + ' m/s. Its velocity ' + p.tb + ' s later?', 'd) Он проезжает столб со скоростью ' + p.va + ' м/с. Скорость через ' + p.tb + ' с?'), p.va + p.a * p.tb, 'm/s'), MP(L('e) A truck at ' + p.tr + ' m/s brakes for ' + p.tt + ' s with a retardation of ' + p.rd + ' m/s². Its new velocity?', 'e) Грузовик едет ' + p.tr + ' м/с и тормозит ' + p.tt + ' с с замедлением ' + ruN(p.rd) + ' м/с². Какой станет скорость?'), rn(p.tr - p.rd * p.tt), 'm/s')] },
+    sol: [su('a) a = change in velocity ÷ time:', 'a) a = изменение скорости ÷ время:', '(' + p.v2 + '-' + p.v1 + ')/' + p.t + '=' + rn((p.v2 - p.v1) / p.t), 'm/s²'), su('b)', 'b)', p.m + '/' + p.ts + '=' + rn(p.m / p.ts), 'm/s²'), su('c) d) gain = a × t:', 'c) d) прирост = a × t:', p.a + '*' + p.ta + '=' + (p.a * p.ta) + ';' + p.va + '+' + p.a + '*' + p.tb + '=' + (p.va + p.a * p.tb), 'm/s'), su('e) Velocity drops by ' + p.rd + ' × ' + p.tt + ':', 'e) Скорость падает на ' + ruN(p.rd) + ' × ' + p.tt + ':', p.tr + '-' + p.rd + '*' + p.tt + '=' + rn(p.tr - p.rd * p.tt), 'm/s')] }; } });
+
+school({ id: 'p2.3', sk: 'P2.3', src: TB('2.3', 1), en: 'Motorcycle: distance–time graph A–E', ru: 'Мотоцикл: график пути A–E',
+  sets: [{ tB: 5, dB: 10, tC: 15, dC: 50, tD: 20, dD: 60 }],
+  vary(r) { const tB = 5, dB = pk(r, [5, 10]), v = pk(r, [3, 4, 5]); const tC = 15, dC = dB + v * 10; return { tB, dB, tC, dC, tD: 20, dD: dC + pk(r, [5, 10]) }; },
+  make(p) { const ymax = Math.ceil((p.dD + 5) / 10) * 10; const svg = svgGraph({ pts: [[0, 0], [2, 1], [p.tB, p.dB], [p.tC, p.dC], [18, p.dC + (p.dD - p.dC) * 0.8], [p.tD, p.dD], [25, p.dD]], xmax: 25, ymax, xstep: 5, ystep: 10, xl: 'time / s', yl: 'distance / m', labels: [[0, 0, 'A'], [p.tB, p.dB, 'B'], [p.tC, p.dC, 'C'], [p.tD, p.dD, 'D'], [24, p.dD, 'E']] });
+    const sp = (p.dC - p.dB) / (p.tC - p.tB); const opts = [L('Stationary (not moving)', 'Стоит на месте'), L('Moving at a steady speed', 'Движется с постоянной скоростью'), L('Accelerating', 'Разгоняется'), L('Slowing down', 'Тормозит')];
+    return { q: PQ('The distance–time graph is for a motorcycle travelling along a straight road.', 'График пути от времени для мотоцикла, едущего по прямой дороге.'), svg,
+      ans: { k: 'multi', parts: [{ lab: L('a) What is the motorcycle doing between D and E?', 'a) Что делает мотоцикл между D и E?'), spec: { k: 'mcq', opts, c: 0 } }, { lab: L('b) Between B and C it is…', 'b) Между B и C он…'), spec: { k: 'mcq', opts, c: 1 } }, MP(L('c) The steady speed (B to C)', 'c) Постоянная скорость (от B до C)'), sp, 'm/s'), MP(L('d) Distance travelled between A and D', 'd) Путь между A и D'), p.dD, 'm'), MP(L('e) Average speed between A and D', 'e) Средняя скорость между A и D'), rn(p.dD / p.tD), 'm/s')] },
+      sol: [st('D–E: the line is flat — the distance does not change, so it is stationary. A–B: the line gets steeper — accelerating. B–C: straight sloping line — steady speed.', 'D–E: линия горизонтальна — путь не меняется, мотоцикл стоит. A–B: линия становится круче — разгон. B–C: прямой наклон — постоянная скорость.'), su('Speed = gradient:', 'Скорость = наклон:', '(' + p.dC + '-' + p.dB + ')/(' + p.tC + '-' + p.tB + ')=' + sp, 'm/s'), su('Average A–D:', 'Средняя A–D:', p.dD + '/' + p.tD + '=' + rn(p.dD / p.tD), 'm/s')] }; } });
+
+school({ id: 'p2.4', sk: 'P2.4', src: TB('2.3', 2), en: 'Motorcycle: speed–time graph', ru: 'Мотоцикл: график скорости',
+  sets: [{ v: 30, t1: 10, t2: 20, t3: 25 }],
+  vary(r) { const t1 = pk(r, [5, 10]); const t2 = t1 + pk(r, [5, 10]); return { v: pk(r, [20, 30, 40]), t1, t2, t3: t2 + pk(r, [5, 10]) }; },
+  make(p) { const svg = svgGraph({ pts: [[0, 0], [p.t1, p.v], [p.t2, p.v], [p.t3, 0]], xmax: p.t3, ymax: p.v + 10, xstep: 5, ystep: 10, xl: 'time / s', yl: 'speed / m/s' });
+    const d1 = p.v * p.t1 / 2, d2 = p.v * (p.t2 - p.t1), d3 = p.v * (p.t3 - p.t2) / 2, D = d1 + d2 + d3;
+    return { q: PQ('The speed–time graph is for another motorcycle travelling along the same road.', 'График скорости от времени для другого мотоцикла на той же дороге.'), svg,
+      ans: { k: 'multi', parts: [MP(L('a) Maximum speed', 'a) Максимальная скорость'), p.v, 'm/s'), MP(L('b) Acceleration during the first ' + p.t1 + ' s', 'b) Ускорение в первые ' + p.t1 + ' с'), rn(p.v / p.t1), 'm/s²'), MP(L('c) Deceleration during the last ' + (p.t3 - p.t2) + ' s', 'c) Замедление в последние ' + (p.t3 - p.t2) + ' с'), rn(p.v / (p.t3 - p.t2)), 'm/s²'), MP(L('d) Distance in the first ' + p.t1 + ' s', 'd) Путь за первые ' + p.t1 + ' с'), d1, 'm'), MP(L('e) Total distance', 'e) Весь путь'), D, 'm'), MP(L('f) Average speed for the whole journey', 'f) Средняя скорость за всю поездку'), rn(D / p.t3), 'm/s')] },
+      sol: [su('Acceleration = gradient:', 'Ускорение = наклон:', p.v + '/' + p.t1 + '=' + rn(p.v / p.t1), 'm/s²'), su('', '', p.v + '/' + (p.t3 - p.t2) + '=' + rn(p.v / (p.t3 - p.t2)), 'm/s²'), st('Distance = area under the graph: triangle ' + d1 + ' m + rectangle ' + d2 + ' m + triangle ' + d3 + ' m = ' + D + ' m.', 'Путь = площадь под графиком: треугольник ' + d1 + ' м + прямоугольник ' + d2 + ' м + треугольник ' + d3 + ' м = ' + D + ' м.'), su('Average speed:', 'Средняя скорость:', D + '/' + p.t3 + '=' + rn(D / p.t3), 'm/s')] }; } });
+
+school({ id: 'p2.5', sk: 'P2.5', src: TB('2.5', '1–3'), en: 'Stone thrown upwards', ru: 'Камень, брошенный вверх',
+  sets: [{ u: 20, t: [1, 2, 5] }], vary(r) { const u = pk(r, [10, 20, 30]); return { u, t: [1, u / 10, u / 10 + pk(r, [1, 2, 3])] }; },
+  make(p) { const v = t => Math.abs(p.u - 10 * t);
+    return { q: PQ('Assume that g = 10 m/s² and there is no air resistance. A stone is thrown upwards at ' + p.u + ' m/s. What is its speed…', 'Считайте g = 10 м/с², сопротивления воздуха нет. Камень бросили вверх со скоростью ' + p.u + ' м/с. Какова его скорость…'),
+      ans: { k: 'multi', parts: p.t.map((t, i) => MP(L('abc'[i] + ') after ' + t + ' s', 'abc'[i] + ') через ' + t + ' с'), v(t), 'm/s')) },
+      sol: [st('Going up, it loses 10 m/s every second; at the top its speed is 0 (after ' + (p.u / 10) + ' s); then it falls and gains 10 m/s every second.', 'При подъёме камень теряет 10 м/с каждую секунду; в верхней точке скорость 0 (через ' + (p.u / 10) + ' с); затем он падает и набирает по 10 м/с в секунду.'), st(p.t.map(t => 'after ' + t + ' s: |' + p.u + ' − 10 × ' + t + '| = ' + v(t) + ' m/s' + (p.u - 10 * t < 0 ? ' (moving down)' : '')).join('; ') + '.', p.t.map(t => 'через ' + t + ' с: |' + p.u + ' − 10 × ' + t + '| = ' + v(t) + ' м/с' + (p.u - 10 * t < 0 ? ' (летит вниз)' : '')).join('; ') + '.')] }; } });
+
+function svgCar(m, fr, en) { return '<svg viewBox="0 0 340 120" class="gr" role="img" aria-label="car"><path d="M70,80 L90,55 L150,45 L210,45 L250,62 L280,66 L280,85 L70,85 Z" class="bm"/><circle cx="110" cy="88" r="10" class="pv"/><circle cx="245" cy="88" r="10" class="pv"/><text class="lb" x="175" y="38" text-anchor="middle">mass ' + m + ' kg</text><line x1="150" y1="68" x2="40" y2="68" class="ar" marker-end="url(#ahC)"/><text class="lb" x="20" y="60">' + fr + ' N</text><line x1="200" y1="68" x2="320" y2="68" class="ar" marker-end="url(#ahC)"/><text class="lb" x="280" y="60">' + en + ' N</text><text x="20" y="110">total frictional force</text><text x="230" y="110">force from engine</text><defs><marker id="ahC" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ahd"/></marker></defs></svg>'; }
+school({ id: 'p2.7', sk: 'P2.7', src: TB('2.7', 2), en: 'Car: resultant force and acceleration', ru: 'Машина: равнодействующая и ускорение',
+  sets: [{ m: 800, fr: 500, en: 1500 }], vary(r) { const m = pk(r, [600, 800, 1000, 1200, 1500]); const fr = pk(r, [300, 400, 500, 600]); return { m, fr, en: fr + pk(r, [600, 900, 1000, 1200, 1500]) }; },
+  make(p) { const F = p.en - p.fr; return { q: PQ('The diagram shows the forces on a car.', 'На рисунке показаны силы, действующие на машину.'), svg: svgCar(p.m, p.fr, p.en),
+    ans: { k: 'multi', parts: [MP(L('a) Resultant force', 'a) Равнодействующая сила'), F, 'N'), MP(L('b) Acceleration', 'b) Ускорение'), rn(F / p.m), 'm/s²'), { lab: L('c) If the total frictional force rises to ' + p.en + ' N, the car…', 'c) Если сила трения вырастет до ' + p.en + ' Н, машина…'), spec: mcqSh(mkRng(p.m + p.fr), [L('keeps moving at a steady velocity (no acceleration)', 'будет двигаться с постоянной скоростью (без ускорения)'), L('stops immediately', 'сразу остановится'), L('keeps accelerating at the same rate', 'продолжит разгоняться так же'), L('moves backwards', 'поедет назад')], 0) }] },
+    sol: [su('Forces in opposite directions subtract:', 'Силы в противоположных направлениях вычитаются:', p.en + '-' + p.fr + '=' + F, 'N'), su('a = F/m:', 'a = F/m:', F + '/' + p.m + '=' + rn(F / p.m), 'm/s²'), st('If friction = engine force, the resultant is 0: no acceleration, so the car keeps its current velocity (Newton’s first law).', 'Если трение = силе двигателя, равнодействующая 0: ускорения нет, машина сохраняет скорость (первый закон Ньютона).')] }; } });
+
+school({ id: 'p2.8', sk: 'P2.8', src: TB('2.8', 2), en: 'Probe going to Mars', ru: 'Зонд летит на Марс',
+  sets: [{ m: 100, g: 3.7, pl: 'Mars', plr: 'Марс' }], vary(r) { const P = pk(r, [['Mars', 'Марс', 3.7], ['the Moon', 'Луна', 1.6], ['Venus', 'Венера', 8.9], ['Mercury', 'Меркурий', 3.7]]); return { m: pk(r, [50, 80, 120, 150, 200]), g: P[2], pl: P[0], plr: P[1] }; },
+  make(p) { return { q: PQ('A spacecraft travels from Earth to ' + p.pl + ', where the gravitational field strength near the surface is ' + p.g + ' N/kg. It is carrying a probe which has a mass of ' + p.m + ' kg when measured on Earth (g = 10 N/kg).', 'Корабль летит с Земли на ' + p.plr + ' (там напряжённость поля тяготения у поверхности ' + ruN(p.g) + ' Н/кг). На борту зонд массой ' + p.m + ' кг (измерено на Земле, g = 10 Н/кг).'),
+    ans: { k: 'multi', parts: [MP(L('a) Weight on Earth', 'a) Вес на Земле'), p.m * 10, 'N'), MP(L('b) Mass in space', 'b) Масса в космосе'), p.m, 'kg'), MP(L('c) Weight on ' + p.pl, 'c) Вес на планете ' + p.plr), rn(p.m * p.g), 'N'), MP(L('d) Acceleration when falling near the surface of ' + p.pl, 'd) Ускорение при падении у поверхности'), p.g, 'm/s²')] },
+    sol: [su('W = mg:', 'W = mg:', p.m + '*10=' + (p.m * 10), 'N'), st('Mass is the amount of matter — it is the same everywhere: ' + p.m + ' kg.', 'Масса — количество вещества, она везде одинакова: ' + p.m + ' кг.'), su('', '', p.m + '*' + p.g + '=' + rn(p.m * p.g), 'N'), st('Free-fall acceleration equals g there: ' + p.g + ' m/s².', 'Ускорение свободного падения там равно g: ' + ruN(p.g) + ' м/с².')] }; } });
+
+school({ id: 'p2.9', sk: 'P2.9', src: TB('2.9', 3), en: 'Trolley: momentum and force', ru: 'Тележка: импульс и сила',
+  sets: [{ m: 12, u: 4, v: 6, t: 3 }], vary(r) { const m = pk(r, [5, 8, 10, 12, 15, 20]); const u = r.ri(2, 5); return { m, u, v: u + r.ri(1, 4), t: pk(r, [2, 3, 4, 5]) }; },
+  make(p) { const dp = p.m * (p.v - p.u); return { q: PQ('When a resultant force acts for ' + p.t + ' seconds on a trolley of total mass ' + p.m + ' kg, its velocity increases from ' + p.u + ' m/s to ' + p.v + ' m/s.', 'Равнодействующая сила действует ' + p.t + ' с на тележку общей массой ' + p.m + ' кг, и её скорость растёт с ' + p.u + ' до ' + p.v + ' м/с.'),
+    ans: { k: 'multi', parts: [MP(L('a) Momentum before', 'a) Импульс до'), p.m * p.u, 'kg m/s'), MP(L('b) Momentum after', 'b) Импульс после'), p.m * p.v, 'kg m/s'), MP(L('c) Change in momentum every second', 'c) Изменение импульса за каждую секунду'), rn(dp / p.t), 'kg m/s'), MP(L('d) Resultant force', 'd) Равнодействующая сила'), rn(dp / p.t), 'N')] },
+    sol: [su('p = mv:', 'p = mv:', p.m + '*' + p.u + '=' + (p.m * p.u) + ';' + p.m + '*' + p.v + '=' + (p.m * p.v), 'kg m/s'), st('Change: ' + dp + ' kg m/s in ' + p.t + ' s → ' + rn(dp / p.t) + ' kg m/s every second.', 'Изменение: ' + dp + ' кг·м/с за ' + p.t + ' с → ' + ruN(rn(dp / p.t)) + ' кг·м/с за секунду.'), st('Force = rate of change of momentum = ' + rn(dp / p.t) + ' N. (Check with F = ma: a = ' + rn((p.v - p.u) / p.t) + ' m/s², F = ' + p.m + ' × ' + rn((p.v - p.u) / p.t) + ' = ' + rn(dp / p.t) + ' N.)', 'Сила = скорость изменения импульса = ' + ruN(rn(dp / p.t)) + ' Н. (Проверка через F = ma: a = ' + ruN(rn((p.v - p.u) / p.t)) + ' м/с², F = ' + ruN(rn(dp / p.t)) + ' Н.)')] }; } });
+
+school({ id: 'p2.10a', sk: 'P2.10', src: TB('2.10', 1), en: 'Spring pushes two trolleys apart', ru: 'Пружина расталкивает две тележки',
+  sets: [{ m1: 2, m2: 3, v1: 6 }], vary(r) { for (;;) { const m1 = r.ri(1, 4), m2 = r.ri(2, 6), v1 = r.ri(2, 9); if (m1 !== m2 && Number.isInteger(m1 * v1 / m2 * 10)) return { m1, m2, v1 }; } },
+  make(p) { const v2 = rn(p.m1 * p.v1 / p.m2); return { q: PQ('A trolley of mass ' + p.m1 + ' kg rests next to a trolley of mass ' + p.m2 + ' kg on a flat bench. When a spring is released between them, they are pushed apart, and the ' + p.m1 + ' kg trolley travels to the left at ' + p.v1 + ' m/s.', 'Тележка ' + p.m1 + ' кг стоит рядом с тележкой ' + p.m2 + ' кг на ровном столе. Пружина между ними распрямляется, и тележка ' + p.m1 + ' кг едет влево со скоростью ' + p.v1 + ' м/с.'),
+    ans: { k: 'multi', parts: [{ lab: L('a) Total momentum before separation', 'a) Суммарный импульс до'), spec: { k: 'num', key: '0', unit: 'kg m/s' } }, MP(L('b) Momentum of the ' + p.m2 + ' kg trolley after (size)', 'b) Импульс тележки ' + p.m2 + ' кг после (модуль)'), p.m1 * p.v1, 'kg m/s'), MP(L('c) Speed of the ' + p.m2 + ' kg trolley', 'c) Скорость тележки ' + p.m2 + ' кг'), v2, 'm/s')] },
+    sol: [st('Before: both at rest, total momentum 0. Momentum is conserved, so after it is still 0.', 'До: обе стоят, суммарный импульс 0. Импульс сохраняется — после он тоже 0.'), st('The ' + p.m1 + ' kg trolley: ' + p.m1 + ' × (−' + p.v1 + ') = −' + (p.m1 * p.v1) + ' kg m/s, so the other has +' + (p.m1 * p.v1) + ' kg m/s (to the right).', 'Тележка ' + p.m1 + ' кг: ' + p.m1 + ' × (−' + p.v1 + ') = −' + (p.m1 * p.v1) + ' кг·м/с, значит у другой +' + (p.m1 * p.v1) + ' кг·м/с (вправо).'), su('', '', 'v=' + (p.m1 * p.v1) + '/' + p.m2 + '=' + v2, 'm/s')] }; } });
+
+school({ id: 'p2.10b', sk: 'P2.10', src: TB('2.10', 2), en: 'Two masses collide and stick', ru: 'Два тела сталкиваются и слипаются',
+  sets: [{ m1: 16, v1: 5, m2: 4, v2: 5 }], vary(r) { for (;;) { const m1 = r.ri(6, 20), v1 = r.ri(2, 8), m2 = r.ri(2, 8), v2 = r.ri(2, 8); const p = m1 * v1 - m2 * v2; if (p > 0 && Number.isInteger(p / (m1 + m2) * 10)) return { m1, v1, m2, v2 }; } },
+  make(p) { const P = p.m1 * p.v1 - p.m2 * p.v2, v = rn(P / (p.m1 + p.m2)); return { q: PQ('A ' + p.m1 + ' kg mass travelling to the right at ' + p.v1 + ' m/s collides with a ' + p.m2 + ' kg mass travelling to the left at ' + p.v2 + ' m/s. When they collide, they stick together and move along the same line. (Take right as positive.)', 'Тело ' + p.m1 + ' кг движется вправо со скоростью ' + p.v1 + ' м/с и сталкивается с телом ' + p.m2 + ' кг, движущимся влево со скоростью ' + p.v2 + ' м/с. После удара они слипаются и движутся по той же прямой. (Вправо — положительное направление.)'),
+    ans: { k: 'multi', parts: [MP(L('a) Momentum of the ' + p.m1 + ' kg mass', 'a) Импульс тела ' + p.m1 + ' кг'), p.m1 * p.v1, 'kg m/s'), MP(L('b) Momentum of the ' + p.m2 + ' kg mass', 'b) Импульс тела ' + p.m2 + ' кг'), -p.m2 * p.v2, 'kg m/s'), MP(L('c) Total momentum', 'c) Суммарный импульс'), P, 'kg m/s'), MP(L('d) Velocity of the masses after the collision', 'd) Скорость после столкновения'), v, 'm/s')] },
+    sol: [su('', '', p.m1 + '*' + p.v1 + '=' + (p.m1 * p.v1) + ';' + p.m2 + '*(-' + p.v2 + ')=' + (-p.m2 * p.v2), 'kg m/s'), su('Total (conserved):', 'Сумма (сохраняется):', (p.m1 * p.v1) + '-' + (p.m2 * p.v2) + '=' + P, 'kg m/s'), su('Combined mass ' + (p.m1 + p.m2) + ' kg:', 'Общая масса ' + (p.m1 + p.m2) + ' кг:', 'v=' + P + '/' + (p.m1 + p.m2) + '=' + v, 'm/s'), st('Positive, so they move to the right.', 'Знак плюс — движутся вправо.')] }; } });
+
+school({ id: 'p2.11', sk: 'P2.11', src: TB('2.11', 2), en: 'Two forces: greatest, least, at right angles', ru: 'Две силы: наибольшая, наименьшая, под прямым углом',
+  sets: [{ a: 12, b: 5 }], vary(r) { return pk(r, [{ a: 8, b: 6 }, { a: 24, b: 7 }, { a: 15, b: 8 }, { a: 4, b: 3 }, { a: 12, b: 9 }, { a: 40, b: 9 }]); },
+  make(p) { const c = Math.hypot(p.a, p.b); return { q: PQ('Forces of ' + p.a + ' N and ' + p.b + ' N both act at the same point, but their directions can be varied.', 'Силы ' + p.a + ' Н и ' + p.b + ' Н приложены к одной точке, но их направления можно менять.'),
+    ans: { k: 'multi', parts: [MP(L('a) Greatest possible resultant', 'a) Наибольшая возможная равнодействующая'), p.a + p.b, 'N'), MP(L('b) Least possible resultant', 'b) Наименьшая возможная равнодействующая'), p.a - p.b, 'N'), MP(L('c) Resultant if the forces are at right angles', 'c) Равнодействующая, если силы под прямым углом'), c, 'N')] },
+    sol: [st('Same direction: they add, ' + (p.a + p.b) + ' N. Opposite directions: they subtract, ' + (p.a - p.b) + ' N.', 'В одну сторону — складываются: ' + (p.a + p.b) + ' Н. В противоположные — вычитаются: ' + (p.a - p.b) + ' Н.'), su('At right angles use Pythagoras:', 'Под прямым углом — теорема Пифагора:', '√(' + p.a + '^2+' + p.b + '^2)=' + c, 'N')] }; } });
+
+/* ---------- Chapter 3 ---------- */
+school({ id: 'p3.2', sk: 'P3.2', src: TB('3.1', 3), en: 'Balancing a plank with stones', ru: 'Уравновесить доску с камнями',
+  sets: [{ F1: 6, d1: 2, F2: 4, d2: 4, dp: 4 }], vary(r) { for (;;) { const F1 = r.ri(2, 9), d1 = r.ri(1, 3), F2 = r.ri(2, 9), d2 = r.ri(2, 5); const dp = d1 + r.ri(1, 2); if (F1 * d1 !== F2 * d2 && Number.isInteger(Math.abs(F2 * d2 - F1 * d1) / dp * 10)) return { F1, d1, F2, d2, dp }; } },
+  make(p) { const M1 = p.F1 * p.d1, M2 = p.F2 * p.d2; const tip = M2 > M1; const X = rn(Math.abs(M2 - M1) / p.dp);
+    const svg = svgBeam({ len: p.dp + p.d2, pivot: p.dp, forces: [{ x: p.dp - p.d1, label: p.F1 + ' N' }, { x: p.dp + p.d2, label: p.F2 + ' N' }, { x: 0, label: 'P', pt: true }], dims: [[0, p.dp - p.d1, (p.dp - p.d1) + ' m'], [p.dp - p.d1, p.dp, p.d1 + ' m'], [p.dp, p.dp + p.d2, p.d2 + ' m'], [0, p.dp, 'P to O: ' + p.dp + ' m']] });
+    return { q: PQ('Someone is trying to balance a plank with stones on a pivot O. The plank has negligible weight. Point P is at the left end, ' + p.dp + ' m from O.', 'Кто-то пытается уравновесить доску с камнями на опоре O. Весом доски пренебрегаем. Точка P — левый конец, в ' + p.dp + ' м от O.'), svg,
+      ans: { k: 'multi', parts: [MP(L('a) Moment of the ' + p.F1 + ' N force about O', 'a) Момент силы ' + p.F1 + ' Н относительно O'), M1, 'N m'), MP(L('b) Moment of the ' + p.F2 + ' N force about O', 'b) Момент силы ' + p.F2 + ' Н относительно O'), M2, 'N m'), { lab: L('c) Will the plank balance?', 'c) Будет ли доска в равновесии?'), spec: mcqSh(mkRng(M1 * 7 + M2), [L('No — it tips ' + (tip ? 'clockwise (right side down)' : 'anticlockwise (left side down)'), 'Нет — повернётся ' + (tip ? 'по часовой (правый край вниз)' : 'против часовой (левый край вниз)')), L('No — it tips ' + (tip ? 'anticlockwise (left side down)' : 'clockwise (right side down)'), 'Нет — повернётся ' + (tip ? 'против часовой (левый край вниз)' : 'по часовой (правый край вниз)')), L('Yes, it balances', 'Да, будет')], 0) }, MP(L('d) Extra force needed at P to balance the plank', 'd) Какая дополнительная сила нужна в точке P'), X, 'N'), { lab: L('e) In which direction must the force at P act?', 'e) Куда должна быть направлена сила в P?'), spec: { k: 'mcq', opts: [L('Downwards', 'Вниз'), L('Upwards', 'Вверх')], c: tip ? 0 : 1 } }] },
+      sol: [su('Moment = force × distance from the pivot:', 'Момент = сила × расстояние до опоры:', p.F1 + '*' + p.d1 + '=' + M1 + ';' + p.F2 + '*' + p.d2 + '=' + M2, 'N m'), st((tip ? 'Clockwise ' + M2 + ' > anticlockwise ' + M1 : 'Anticlockwise ' + M1 + ' > clockwise ' + M2) + ', so it does not balance.', (tip ? 'По часовой ' + M2 + ' > против ' + M1 : 'Против часовой ' + M1 + ' > по часовой ' + M2) + ' — равновесия нет.'), su('Missing moment ' + Math.abs(M2 - M1) + ' N m at ' + p.dp + ' m:', 'Не хватает ' + Math.abs(M2 - M1) + ' Н·м на плече ' + p.dp + ' м:', 'F=' + Math.abs(M2 - M1) + '/' + p.dp + '=' + X, 'N'), st('It must turn the plank ' + (tip ? 'anticlockwise, so at P (left of O) it pushes down.' : 'clockwise, so at P (left of O) it pushes up.'), 'Она должна поворачивать доску ' + (tip ? 'против часовой, поэтому в P (слева от O) она направлена вниз.' : 'по часовой, поэтому в P (слева от O) она направлена вверх.'))] }; } });
+
+school({ id: 'p3.3a', sk: 'P3.3', src: TB('3.3', 1), en: 'Man on a plank on two trestles', ru: 'Человек на доске на двух козлах',
+  sets: [{ W: 120, M: 480, x: 1, L: 4 }], vary(r) { for (;;) { const L1 = pk(r, [4, 5, 6]), W = pk(r, [100, 120, 150, 200]), M = pk(r, [400, 480, 500, 600, 700]), x = pk(r, [0.5, 1, 1.5, 2]); const RB = (M * x + W * L1 / 2) / L1; if (Number.isInteger(RB) && x < L1 / 2) return { W, M, x, L: L1 }; } },
+  make(p) { const cw = p.M * p.x + p.W * p.L / 2, RB = cw / p.L, RA = p.M + p.W - RB;
+    const svg = svgBeam({ len: p.L, pivots: [0, p.L], forces: [{ x: p.x, label: p.M + ' N' }, { x: p.L / 2, label: p.W + ' N' }, { x: 0, label: 'A', up: true }, { x: p.L, label: 'B', up: true }], dims: [[0, p.x, p.x + ' m'], [p.x, p.L / 2, (p.L / 2 - p.x) + ' m'], [p.L / 2, p.L, (p.L / 2) + ' m'], [0, p.L, p.L + ' m']] });
+    return { q: PQ('A uniform plank weighing ' + p.W + ' N is supported by two trestles at A and B, ' + p.L + ' m apart. A man weighing ' + p.M + ' N stands on the plank ' + p.x + ' m from A.', 'Однородная доска весом ' + p.W + ' Н лежит на двух козлах A и B, расстояние между ними ' + p.L + ' м. Человек весом ' + p.M + ' Н стоит на доске в ' + ruN(p.x) + ' м от A.'), svg,
+      ans: { k: 'multi', parts: [MP(L('a) Total clockwise moment of the two weights about A', 'a) Суммарный момент двух весов относительно A'), cw, 'N m'), MP(L('b) Upward force from the trestle at B', 'b) Сила реакции опоры B'), RB, 'N'), MP(L('c) Total downward force on the trestles', 'c) Общая сила, давящая на козлы'), p.M + p.W, 'N'), MP(L('d) Upward force from the trestle at A', 'd) Сила реакции опоры A'), RA, 'N')] },
+      sol: [st('The plank’s weight acts at its centre, ' + (p.L / 2) + ' m from A.', 'Вес доски приложен в её середине, в ' + ruN(p.L / 2) + ' м от A.'), su('Moments about A:', 'Моменты относительно A:', p.M + '*' + p.x + '+' + p.W + '*' + (p.L / 2) + '=' + cw, 'N m'), su('Balanced by B:', 'Их уравновешивает B:', 'F_B=' + cw + '/' + p.L + '=' + RB, 'N'), su('Up = down:', 'Вверх = вниз:', 'F_A=' + (p.M + p.W) + '-' + RB + '=' + RA, 'N')] }; } });
+
+school({ id: 'p3.3b', sk: 'P3.3', src: TB('3.2', 2), en: 'Metre rule with a weight on one end', ru: 'Метровая линейка с грузом на конце',
+  sets: [{ F: 4, a: 0.1 }], vary(r) { return { F: pk(r, [2, 3, 4, 5, 6]), a: pk(r, [0.1, 0.2, 0.25, 0.3]) }; },
+  make(p) { const W = rn(p.F * p.a / (0.5 - p.a)); const svg = svgBeam({ len: 1, pivot: p.a, forces: [{ x: 0, label: p.F + ' N' }, { x: 0.5, label: 'W = ?' }], dims: [[0, p.a, p.a + ' m'], [p.a, 0.5, rn(0.5 - p.a) + ' m'], [0.5, 1, '0.5 m']] });
+    return { q: PQ('A uniform metre rule has a ' + p.F + ' N weight hanging from one end. The rule balances when suspended from a point ' + p.a + ' m from that end. Calculate the weight of the rule.', 'К одному концу однородной метровой линейки подвешен груз ' + p.F + ' Н. Линейка уравновешена, если подвесить её в точке ' + ruN(p.a) + ' м от этого конца. Найдите вес линейки.'), svg, ans: pnum(W, 'N'),
+      sol: [st('The rule’s weight W acts at its middle (0.5 m mark), ' + rn(0.5 - p.a) + ' m from the pivot.', 'Вес линейки W приложен посередине (отметка 0,5 м), в ' + ruN(rn(0.5 - p.a)) + ' м от точки подвеса.'), su('Moments balance:', 'Моменты равны:', p.F + '*' + p.a + '=W*' + rn(0.5 - p.a), ''), su('', '', 'W=' + W, 'N')] }; } });
+
+school({ id: 'p3.4', sk: 'P3.4', src: TB('3.4', 4), en: 'Spring-stretching experiment', ru: 'Опыт с растяжением пружины',
+  sets: [{ l0: 40, k: 9, ext: [0, 9, 18, 27, 36, 48, 70], qe: 35, ql: 65 }],
+  vary(r) { const l0 = pk(r, [30, 40, 50, 60]), k = pk(r, [6, 8, 10, 12]); const ext = [0, 1, 2, 3, 4].map(i => i * k); ext.push(5 * k + 3, 5 * k + 3 + 2 * k + 6); return { l0, k, ext, qe: pk(r, [1.5, 2.5, 3.5]) * k, ql: l0 + pk(r, [2, 3]) * k }; },
+  make(p) { const lens = p.ext.map(e => p.l0 + e); const tbl = '<table class="pblk"><tr><th>load / N</th>' + lens.map((_, i) => '<td>' + i + '</td>').join('') + '</tr><tr><th>length / mm</th>' + lens.map(x => '<td>' + x + '</td>').join('') + '</tr><tr><th>extension / mm</th>' + lens.map(() => '<td>?</td>').join('') + '</tr></table>';
+    return { q: PQ('The table shows the readings taken in a spring-stretching experiment.', 'В таблице — результаты опыта с растяжением пружины.'), html: tbl,
+      ans: { k: 'multi', parts: [MP(L('a) Unstretched length', 'a) Длина нерастянутой пружины'), p.l0, 'mm'), MP(L('b) Extension with a 3 N load', 'b) Удлинение при нагрузке 3 Н'), p.ext[3], 'mm'), MP(L('c) Up to which load is the extension proportional to the load?', 'c) До какой нагрузки удлинение пропорционально нагрузке?'), 4, 'N'), MP(L('d) What load would produce a ' + p.qe + ' mm extension?', 'd) Какая нагрузка даст удлинение ' + p.qe + ' мм?'), rn(p.qe / p.k), 'N'), MP(L('e) What load would make the spring ' + p.ql + ' mm long?', 'e) При какой нагрузке длина пружины станет ' + p.ql + ' мм?'), rn((p.ql - p.l0) / p.k), 'N')] },
+      sol: [st('Extension = length − original length. With 0 N the length is ' + p.l0 + ' mm, so extensions are ' + p.ext.join(', ') + ' mm.', 'Удлинение = длина − исходная длина. При 0 Н длина ' + p.l0 + ' мм, удлинения: ' + p.ext.join(', ') + ' мм.'), st('Up to 4 N each newton adds ' + p.k + ' mm (Hooke’s law). After that the extension grows faster — the limit of proportionality has been passed.', 'До 4 Н каждый ньютон даёт ещё ' + p.k + ' мм (закон Гука). Дальше удлинение растёт быстрее — предел пропорциональности пройден.'), su('In the proportional part:', 'На пропорциональном участке:', p.qe + '/' + p.k + '=' + rn(p.qe / p.k) + ';(' + p.ql + '-' + p.l0 + ')/' + p.k + '=' + rn((p.ql - p.l0) / p.k), 'N')] }; } });
+
+school({ id: 'p3.5a', sk: 'P3.5', src: TB('3.5', 'Example 2'), en: 'Concrete block: maximum pressure', ru: 'Бетонный блок: наибольшее давление',
+  sets: [{ m: 2600, a: 0.5, b: 1.0, c: 2.0 }], vary(r) { const s = pk(r, [[0.5, 1, 2], [0.4, 1, 2], [0.5, 0.8, 1.5], [0.25, 1, 2], [0.2, 0.5, 1]]); return { m: pk(r, [1000, 1200, 2000, 2400, 2600, 3000]), a: s[0], b: s[1], c: s[2] }; },
+  make(p) { const W = p.m * 10, Amin = rn(p.a * p.b), Amax = rn(p.b * p.c); return { q: PQ('A concrete block has a mass of ' + p.m + ' kg. It measures ' + p.a + ' m by ' + p.b + ' m by ' + p.c + ' m (g = 10 N/kg).', 'Бетонный блок массой ' + p.m + ' кг имеет размеры ' + ruN(p.a) + ' м × ' + ruN(p.b) + ' м × ' + ruN(p.c) + ' м (g = 10 Н/кг).'),
+    ans: { k: 'multi', parts: [MP(L('a) Weight of the block', 'a) Вес блока'), W, 'N'), MP(L('b) Maximum pressure on the ground', 'b) Наибольшее давление на землю'), rn(W / Amin), 'Pa'), MP(L('c) Minimum pressure on the ground', 'c) Наименьшее давление на землю'), rn(W / Amax), 'Pa')] },
+    sol: [su('W = mg:', 'W = mg:', p.m + '*10=' + W, 'N'), st('Maximum pressure — on the smallest face (' + p.a + ' × ' + p.b + ' = ' + Amin + ' m²); minimum — on the largest (' + p.b + ' × ' + p.c + ' = ' + Amax + ' m²).', 'Наибольшее давление — на самой маленькой грани (' + ruN(p.a) + ' × ' + ruN(p.b) + ' = ' + ruN(Amin) + ' м²), наименьшее — на самой большой (' + ruN(p.b) + ' × ' + ruN(p.c) + ' = ' + ruN(Amax) + ' м²).'), su('p = F/A:', 'p = F/A:', W + '/' + Amin + '=' + rn(W / Amin) + ';' + W + '/' + Amax + '=' + rn(W / Amax), 'Pa')] }; } });
+
+school({ id: 'p3.6', sk: 'P3.6', src: TB('3.6', 2), en: 'Storage tank filled with paraffin', ru: 'Бак, заполненный керосином',
+  sets: [{ l: 4, w: 3, h: 2 }], vary(r) { return { l: r.ri(2, 6), w: r.ri(2, 5), h: pk(r, [1, 1.5, 2, 2.5, 3]) }; },
+  make(p) { const V = rn(p.l * p.w * p.h), m = V * 800; return { q: PQ('A rectangular storage tank ' + p.l + ' m long by ' + p.w + ' m wide is filled with paraffin to a depth of ' + p.h + ' m. Density of paraffin = 800 kg/m³, g = 10 N/kg.', 'Прямоугольный бак длиной ' + p.l + ' м и шириной ' + p.w + ' м заполнен керосином на глубину ' + ruN(p.h) + ' м. Плотность керосина 800 кг/м³, g = 10 Н/кг.'),
+    ans: { k: 'multi', parts: [MP(L('a) Volume of paraffin', 'a) Объём керосина'), V, 'm³'), MP(L('b) Mass of paraffin', 'b) Масса керосина'), rn(m), 'kg'), MP(L('c) Weight of paraffin', 'c) Вес керосина'), rn(m * 10), 'N'), MP(L('d) Pressure at the bottom due to the paraffin', 'd) Давление керосина на дно'), rn(800 * 10 * p.h), 'Pa')] },
+    sol: [su('', '', 'V=' + p.l + '*' + p.w + '*' + p.h + '=' + V, 'm³'), su('m = ρV, W = mg:', 'm = ρV, W = mg:', '800*' + V + '=' + rn(m), 'kg'), su('Pressure = ρgh:', 'Давление = ρgh:', '800*10*' + p.h + '=' + rn(8000 * p.h), 'Pa'), st('Check: weight ÷ floor area = ' + rn(m * 10) + ' ÷ ' + (p.l * p.w) + ' = ' + rn(8000 * p.h) + ' Pa — the same.', 'Проверка: вес ÷ площадь дна = ' + rn(m * 10) + ' ÷ ' + (p.l * p.w) + ' = ' + rn(8000 * p.h) + ' Па — то же самое.')] }; } });
+
+school({ id: 'p3.7', sk: 'P3.7', src: TB('3.7', 2), en: 'Helium balloon rising (Boyle’s law)', ru: 'Шар с гелием поднимается (закон Бойля)',
+  sets: [{ V: 6, p1: 100, a: 50, b: 40 }], vary(r) { return { V: pk(r, [2, 3, 4, 5, 6, 8, 10]), p1: 100, a: pk(r, [50, 80, 25]), b: pk(r, [40, 20, 60]) }; },
+  make(p) { return { q: PQ('A balloon contains ' + p.V + ' m³ of helium at a pressure of ' + p.p1 + ' kPa. As the balloon rises, the pressure falls and the balloon expands. Assuming that the temperature does not change, what is the volume when the pressure has fallen to…', 'В шаре ' + p.V + ' м³ гелия при давлении ' + p.p1 + ' кПа. При подъёме давление падает, шар расширяется. Температура не меняется. Каков объём, когда давление упадёт до…'),
+    ans: { k: 'multi', parts: [MP(L('a) ' + p.a + ' kPa', 'a) ' + p.a + ' кПа'), rn(p.p1 * p.V / p.a), 'm³'), MP(L('b) ' + p.b + ' kPa', 'b) ' + p.b + ' кПа'), rn(p.p1 * p.V / p.b), 'm³')] },
+    sol: [st('Boyle’s law: p₁V₁ = p₂V₂, so pV stays ' + p.p1 + ' × ' + p.V + ' = ' + (p.p1 * p.V) + '.', 'Закон Бойля: p₁V₁ = p₂V₂, произведение pV остаётся ' + p.p1 + ' × ' + p.V + ' = ' + (p.p1 * p.V) + '.'), su('', '', 'V=' + (p.p1 * p.V) + '/' + p.a + '=' + rn(p.p1 * p.V / p.a) + ';' + (p.p1 * p.V) + '/' + p.b + '=' + rn(p.p1 * p.V / p.b), 'm³')] }; } });
+
+/* ---------- Chapter 4 ---------- */
+school({ id: 'p4.4a', sk: 'P4.4', src: TB('4.3', 'Examples'), en: 'Stone falling and sliding down a slope', ru: 'Камень падает и скатывается со склона',
+  sets: [{ m: 4, h: 4, hs: 5 }], vary(r) { const h = pk(r, [2, 4, 6, 8]); return { m: pk(r, [2, 3, 4, 5]), h, hs: pk(r, [5, 1.8, 3.2, 7.2, 20]) }; },
+  make(p) { const half = p.m * 10 * p.h / 2, v = rn(Math.sqrt(2 * 10 * p.hs)); return { q: PQ('A ' + p.m + ' kg stone (g = 10 N/kg, no air resistance or friction).', 'Камень массой ' + p.m + ' кг (g = 10 Н/кг, сопротивления и трения нет).'),
+    ans: { k: 'multi', parts: [MP(L('a) It is dropped from ' + p.h + ' m. Its kinetic energy when it has fallen half-way to the ground', 'a) Его роняют с высоты ' + p.h + ' м. Кинетическая энергия на полпути до земли'), half, 'J'), MP(L('b) It slides down a smooth slope of height ' + p.hs + ' m. Its speed at the bottom', 'b) Он скатывается с гладкого склона высотой ' + ruN(p.hs) + ' м. Скорость внизу'), v, 'm/s')] },
+    sol: [st('a) Gain in KE = loss in PE. Half-way it has lost ' + (p.h / 2) + ' m of height.', 'a) Прирост KE = потере PE. На полпути камень опустился на ' + ruN(p.h / 2) + ' м.'), su('', '', p.m + '*10*' + (p.h / 2) + '=' + half, 'J'), su('b) mgh = ½mv² (the mass cancels):', 'b) mgh = ½mv² (масса сокращается):', 'v=√(2*10*' + p.hs + ')=' + v, 'm/s'), st('If it fell vertically from the same height, its final speed would be the same.', 'Если бы он упал вертикально с той же высоты, скорость была бы такой же.')] }; } });
+
+school({ id: 'p4.4b', sk: 'P4.4', src: TB('4.3', 4), en: 'Ball dropped from a cliff into the sea', ru: 'Мяч падает со скалы в море',
+  sets: [{ m: 0.5, v: 10 }], vary(r) { return { m: pk(r, [0.2, 0.4, 0.5, 1, 2]), v: pk(r, [8, 10, 12, 14, 20]) }; },
+  make(p) { const KE = rn(0.5 * p.m * p.v * p.v), h = rn(p.v * p.v / 20); return { q: PQ('A ball has a mass of ' + p.m + ' kg. Dropped from a cliff top, it hits the sea below at a speed of ' + p.v + ' m/s (g = 10 N/kg, ignore air resistance).', 'Мяч массой ' + ruN(p.m) + ' кг роняют с вершины скалы, и он входит в море со скоростью ' + p.v + ' м/с (g = 10 Н/кг, сопротивлением пренебрегаем).'),
+    ans: { k: 'multi', parts: [MP(L('a) Kinetic energy just before hitting the sea', 'a) Кинетическая энергия перед ударом о воду'), KE, 'J'), MP(L('b) Gravitational potential energy before it was dropped', 'b) Потенциальная энергия до падения'), KE, 'J'), MP(L('c) Height of the cliff', 'c) Высота скалы'), h, 'm')] },
+    sol: [su('KE = ½mv²:', 'KE = ½mv²:', '0.5*' + p.m + '*' + p.v + '^2=' + KE, 'J'), st('All the PE became KE, so PE at the top = ' + KE + ' J.', 'Вся PE перешла в KE, значит PE наверху = ' + ruN(KE) + ' Дж.'), su('h = PE/(mg):', 'h = PE/(mg):', KE + '/(' + p.m + '*10)=' + h, 'm'), st('Note: the mass does not matter — a ' + (p.m === 1 ? 2 : 1) + ' kg stone hitting the sea at ' + p.v + ' m/s also fell ' + h + ' m.', 'Заметьте: масса не важна — камень массой ' + (p.m === 1 ? 2 : 1) + ' кг со скоростью ' + p.v + ' м/с тоже упал с ' + ruN(h) + ' м.')] }; } });
+
+school({ id: 'p4.5', sk: 'P4.5', src: TB('4.4', '4–5'), en: 'Hauling a load and a crane: power', ru: 'Подъём груза и кран: мощность',
+  sets: [{ F: 600, h: 10, t: 20, m: 600, hc: 12, tc: 18 }], vary(r) { return { F: pk(r, [400, 500, 600, 800]), h: pk(r, [5, 8, 10, 12]), t: pk(r, [10, 16, 20, 25]), m: pk(r, [300, 500, 600, 900]), hc: pk(r, [6, 9, 12, 15]), tc: pk(r, [10, 12, 15, 18, 20]) }; },
+  make(p) { const W = p.F * p.h, Wc = p.m * 10 * p.hc; return { q: PQ('g = 10 N/kg.', 'g = 10 Н/кг.'),
+    ans: { k: 'multi', parts: [MP(L('a) Someone hauls a load weighing ' + p.F + ' N through a vertical height of ' + p.h + ' m in ' + p.t + ' s. Useful work done?', 'a) Человек поднимает груз весом ' + p.F + ' Н на высоту ' + p.h + ' м за ' + p.t + ' с. Полезная работа?'), W, 'J'), MP(L('b) Her useful power output?', 'b) Её полезная мощность?'), rn(W / p.t), 'W'), MP(L('c) A crane lifts a ' + p.m + ' kg mass through ' + p.hc + ' m in ' + p.tc + ' s. Weight being lifted?', 'c) Кран поднимает груз ' + p.m + ' кг на ' + p.hc + ' м за ' + p.tc + ' с. Вес груза?'), p.m * 10, 'N'), MP(L('d) The crane’s useful power output?', 'd) Полезная мощность крана?'), rn(Wc / p.tc), 'W')] },
+    sol: [su('Work = force × distance:', 'Работа = сила × путь:', p.F + '*' + p.h + '=' + W, 'J'), su('Power = work ÷ time:', 'Мощность = работа ÷ время:', W + '/' + p.t + '=' + rn(W / p.t), 'W'), su('Crane:', 'Кран:', p.m + '*10*' + p.hc + '=' + Wc, 'J'), su('', '', Wc + '/' + p.tc + '=' + rn(Wc / p.tc), 'W')] }; } });
+
+school({ id: 'p4.6', sk: 'P4.6', src: TB('4.5', 3), en: 'Two power stations: output and efficiency', ru: 'Две электростанции: мощность и КПД',
+  sets: [{ inp: 5600, x: [600, 2900, 40, 60], y: [200, 3800, 40, 60] }],
+  vary(r) { const inp = pk(r, [4000, 4800, 5600, 6000]); const t = () => [pk(r, [200, 400, 600]), rn(inp * pk(r, [0.45, 0.5, 0.55, 0.6, 0.65])), 40, 60]; return { inp, x: t(), y: t() }; },
+  make(p) { const ox = p.inp - p.x.reduce((a, b) => a + b, 0), oy = p.inp - p.y.reduce((a, b) => a + b, 0); const rows = [['power input from fuel', p.inp, p.inp], ['losses in reactors/boilers', p.x[0], p.y[0]], ['losses in turbines', p.x[1], p.y[1]], ['losses in generators', p.x[2], p.y[2]], ['power to run station', p.x[3], p.y[3]], ['electrical power output', '?', '?']];
+    const tbl = '<table class="pblk"><tr><th>MW</th><th>station X (coal)</th><th>station Y (nuclear)</th></tr>' + rows.map(r => '<tr><th>' + r[0] + '</th><td>' + r[1] + '</td><td>' + r[2] + '</td></tr>').join('') + '</table>';
+    return { q: PQ('The table gives data about the power input and losses in two power stations, X and Y. Assume the table shows all the losses.', 'В таблице — входная мощность и потери на двух электростанциях X и Y. Считайте, что все потери указаны.'), html: tbl,
+      ans: { k: 'multi', parts: [MP(L('a) Electrical power output of X', 'a) Электрическая мощность X'), ox, 'MW'), MP(L('b) Electrical power output of Y', 'b) Электрическая мощность Y'), oy, 'MW'), MP(L('c) Efficiency of X', 'c) КПД X'), rn(100 * ox / p.inp), '%'), MP(L('d) Efficiency of Y', 'd) КПД Y'), rn(100 * oy / p.inp), '%')] },
+      sol: [st('Output = input − all losses. X: ' + p.inp + ' − ' + p.x.join(' − ') + ' = ' + ox + ' MW. Y: ' + p.inp + ' − ' + p.y.join(' − ') + ' = ' + oy + ' MW.', 'Выход = вход − все потери. X: ' + p.inp + ' − ' + p.x.join(' − ') + ' = ' + ox + ' МВт. Y: ' + p.inp + ' − ' + p.y.join(' − ') + ' = ' + oy + ' МВт.'), su('Efficiency = useful output ÷ input × 100%:', 'КПД = полезная мощность ÷ входная × 100%:', ox + '/' + p.inp + '*100=' + rn(100 * ox / p.inp) + ';' + oy + '/' + p.inp + '*100=' + rn(100 * oy / p.inp), '%'), st('Most energy is wasted in the turbines, as heat (thermal energy) carried away by the cooling water.', 'Больше всего энергии теряется в турбинах — в виде тепла, которое уносит охлаждающая вода.')] }; } });
+
+school({ id: 'p4.7', sk: 'P4.7', src: TB('4.5', 'Example 2'), en: 'Car at steady speed: useful power', ru: 'Машина с постоянной скоростью: полезная мощность',
+  sets: [{ v: 30, F: 700 }], vary(r) { return { v: pk(r, [15, 20, 25, 30, 35]), F: pk(r, [500, 600, 700, 800, 1000, 2500]) }; },
+  make(p) { const P = p.v * p.F; return { q: PQ('A car has a steady speed of ' + p.v + ' m/s. If the total frictional force on the car is ' + p.F + ' N, what useful power output does the engine deliver to the driving wheels?', 'Машина едет с постоянной скоростью ' + p.v + ' м/с. Суммарная сила трения ' + p.F + ' Н. Какую полезную мощность двигатель передаёт на ведущие колёса?'), ans: pnum(P, 'W'),
+    sol: [st('Steady speed → the forward force balances friction: ' + p.F + ' N.', 'Скорость постоянна → сила тяги равна трению: ' + p.F + ' Н.'), st('In 1 s this force moves ' + p.v + ' m, so work per second = ' + p.F + ' × ' + p.v + ' = ' + P + ' J.', 'За 1 с эта сила проходит ' + p.v + ' м, работа за секунду ' + p.F + ' × ' + p.v + ' = ' + P + ' Дж.'), su('useful power = force × speed:', 'полезная мощность = сила × скорость:', p.F + '*' + p.v + '=' + P, 'W')] }; } });
+
+/* ===================== Как в школе: CHEMISTRY (Тая’s class notes, Term 1) ===================== */
+const NB = (t) => L('Class notes · ' + t, 'Тетрадь · ' + t);
+const CP = (lab, v, u) => ({ lab, spec: pnum(v, u) });
+const r3 = v => +(+v).toPrecision(4);
+const sdt = v => { const q = stdParts(v); return q.a + ' × 10' + toSup(q.e); };
+
+/* ---------- C1 ---------- */
+function pneTask(id, sk, src, en, ru, sets, pool) {
+  school({ id, sk, src: NB(src), en, ru, sets,
+    vary(r) { return pk(r, pool); },
+    make(p) { const [Z, sym, A, c] = p; const n = A - Z, e = Z - c;
+      return { q: L(c ? 'Atoms vs ions: how many protons, neutrons and electrons are in the ion?' : 'How many protons, neutrons and electrons are in this atom?', c ? 'Атом и ион: сколько протонов, нейтронов и электронов в ионе?' : 'Сколько протонов, нейтронов и электронов в этом атоме?'), tex: nuc(A, Z, sym, c),
+        ans: { k: 'multi', parts: [{ lab: L('protons', 'протоны'), spec: { k: 'num', key: String(Z), nohelp: true } }, { lab: L('neutrons', 'нейтроны'), spec: { k: 'num', key: String(n), nohelp: true } }, { lab: L('electrons', 'электроны'), spec: { k: 'num', key: String(e), nohelp: true } }] },
+        sol: [st('p = Z = ' + Z + '; n = A − Z = ' + A + ' − ' + Z + ' = ' + n + '.', 'p = Z = ' + Z + '; n = A − Z = ' + A + ' − ' + Z + ' = ' + n + '.'), st(c === 0 ? 'A neutral atom has as many electrons as protons: ' + e + '.' : 'The ' + fm(sym + '^' + chg(c)) + ' ion has ' + (c > 0 ? 'lost ' + c : 'gained ' + (-c)) + ' electron(s) compared with the atom: ' + Z + (c > 0 ? ' − ' + c : ' + ' + (-c)) + ' = ' + e + '. Protons and neutrons do not change.', c === 0 ? 'В нейтральном атоме электронов столько же, сколько протонов: ' + e + '.' : 'Ион ' + fm(sym + '^' + chg(c)) + ' ' + (c > 0 ? 'отдал ' + c : 'принял ' + (-c)) + ' электрон(а) по сравнению с атомом: ' + Z + (c > 0 ? ' − ' + c : ' + ' + (-c)) + ' = ' + e + '. Протоны и нейтроны не меняются.')] }; } });
+}
+pneTask('c1.2', 'C1.2', 'magnesium atom', 'Magnesium atom ²⁴₁₂Mg', 'Атом магния ²⁴₁₂Mg', [[12, 'Mg', 24, 0]], [[11, 'Na', 23, 0], [13, 'Al', 27, 0], [16, 'S', 32, 0], [17, 'Cl', 35, 0], [19, 'K', 39, 0], [20, 'Ca', 40, 0], [9, 'F', 19, 0], [15, 'P', 31, 0]]);
+pneTask('c1.3a', 'C1.3', 'atoms vs ions', 'Aluminium ion Al³⁺', 'Ион алюминия Al³⁺', [[13, 'Al', 27, 3]], [[12, 'Mg', 24, 2], [11, 'Na', 23, 1], [20, 'Ca', 40, 2], [19, 'K', 39, 1], [3, 'Li', 7, 1]]);
+pneTask('c1.3b', 'C1.3', 'atoms vs ions', 'Sulfide ion S²⁻', 'Сульфид-ион S²⁻', [[16, 'S', 32, -2]], [[8, 'O', 16, -2], [17, 'Cl', 35, -1], [9, 'F', 19, -1], [7, 'N', 14, -3], [15, 'P', 31, -3]]);
+
+/* ---------- C2 ---------- */
+school({ id: 'c2.1', sk: 'C2.1', src: NB('formulae of ionic compounds'), en: 'Criss-cross: MgO, AlCl₃, MgCl₂', ru: 'Крест-накрест: MgO, AlCl₃, MgCl₂',
+  sets: [{ c: ['Mg', 2, 'magnesium', 'магний'], a: ['O', 2, 'oxide', 'оксид'] }, { c: ['Al', 3, 'aluminium', 'алюминий'], a: ['Cl', 1, 'chloride', 'хлорид'] }, { c: ['Mg', 2, 'magnesium', 'магний'], a: ['Cl', 1, 'chloride', 'хлорид'] }],
+  vary(r) { const C = pk(r, [['Na', 1, 'sodium', 'натрий'], ['K', 1, 'potassium', 'калий'], ['Ca', 2, 'calcium', 'кальций'], ['Mg', 2, 'magnesium', 'магний'], ['Al', 3, 'aluminium', 'алюминий'], ['Li', 1, 'lithium', 'литий']]); const A = pk(r, [['O', 2, 'oxide', 'оксид'], ['Cl', 1, 'chloride', 'хлорид'], ['S', 2, 'sulfide', 'сульфид'], ['F', 1, 'fluoride', 'фторид'], ['N', 3, 'nitride', 'нитрид'], ['Br', 1, 'bromide', 'бромид']]); return { c: C, a: A }; },
+  make(p) { const [cs, cq, cn, cr] = p.c, [as, aq, an, ar] = p.a; const g = gcd(cq, aq); const nc = aq / g, na = cq / g; const f = cs + (nc > 1 ? nc : '') + as + (na > 1 ? na : '');
+    const rr = { 'оксид': 'оксида', 'хлорид': 'хлорида', 'сульфид': 'сульфида', 'фторид': 'фторида', 'нитрид': 'нитрида', 'бромид': 'бромида' };
+    return { q: L('Write the formula of ' + cn + ' ' + an + '.', 'Запишите формулу соединения «' + ar + ' (' + cr + ')».'), tex: '\\mathrm{' + cs + '}^{' + (cq > 1 ? cq : '') + '+}\\quad\\mathrm{' + as + '}^{' + (aq > 1 ? aq : '') + '-}', ans: { k: 'text', norm: 'chem', key: f }, show: chemTex(f),
+      sol: [st('Ions: ' + fm(cs + '^' + chg(cq)) + ' and ' + fm(as + '^' + chg(-aq)) + '. Criss-cross the charges: ' + cs + ' gets ' + aq + ', ' + as + ' gets ' + cq + (g > 1 ? ', then simplify ' + aq + ' : ' + cq + ' = ' + nc + ' : ' + na : '') + '.', 'Ионы: ' + fm(cs + '^' + chg(cq)) + ' и ' + fm(as + '^' + chg(-aq)) + '. Заряды крест-накрест: у ' + cs + ' индекс ' + aq + ', у ' + as + ' — ' + cq + (g > 1 ? ', сокращаем ' + aq + ' : ' + cq + ' = ' + nc + ' : ' + na : '') + '.'), st('Formula: ' + fm(f) + '. Check: ' + nc + ' × (+' + cq + ') + ' + na + ' × (−' + aq + ') = 0.', 'Формула: ' + fm(f) + '. Проверка: ' + nc + ' × (+' + cq + ') + ' + na + ' × (−' + aq + ') = 0.')] }; } });
+
+/* ---------- C4 ---------- */
+function svgChrom(a, b, s) { const Y = v => 150 - v * 14; return '<svg viewBox="0 0 340 170" class="gr" role="img" aria-label="chromatogram"><rect x="110" y="10" width="120" height="150" class="bm"/><line x1="110" y1="' + Y(0) + '" x2="230" y2="' + Y(0) + '" class="dm"/><text x="236" y="' + (Y(0) + 4) + '">base line</text><line x1="110" y1="' + Y(s) + '" x2="230" y2="' + Y(s) + '" class="dg"/><text x="236" y="' + (Y(s) + 4) + '">solvent front</text><circle cx="140" cy="' + Y(a) + '" r="6" class="pv"/><text class="lb" x="130" y="' + (Y(a) + 4) + '" text-anchor="end">A (' + a + ' cm)</text><circle cx="200" cy="' + Y(b) + '" r="6" class="pv"/><text class="lb" x="210" y="' + (Y(b) + 4) + '">B (' + b + ' cm)</text><line x1="30" y1="' + Y(0) + '" x2="30" y2="' + Y(s) + '" class="dm" marker-start="url(#dmA)" marker-end="url(#dmA)"/><text class="lb" x="36" y="' + (Y(s) + 14) + '">' + s + ' cm</text><defs><marker id="dmA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="dmh"/></marker></defs></svg>'; }
+school({ id: 'c4.2', sk: 'C4.2', src: NB('paper chromatography'), en: 'Chromatogram: Rf values of A and B', ru: 'Хроматограмма: Rf веществ A и B',
+  sets: [{ a: 6, b: 3, s: 8 }], vary(r) { const s = pk(r, [8, 9, 10]); const a = r.ri(4, s - 1); let b; do b = r.ri(1, s - 2); while (b === a); return { a, b, s }; },
+  make(p) { return { q: L('The chromatogram shows two components A and B. Distances are measured from the base line.', 'На хроматограмме два компонента A и B. Расстояния измерены от линии старта.'), svg: svgChrom(p.a, p.b, p.s),
+    ans: { k: 'multi', parts: [CP(L('Rf of A (2 d.p.)', 'Rf вещества A (2 знака)'), +(p.a / p.s).toFixed(4), ''), CP(L('Rf of B (2 d.p.)', 'Rf вещества B (2 знака)'), +(p.b / p.s).toFixed(4), ''), { lab: L('Which component is more attracted to the solvent?', 'Какой компонент сильнее «тянется» к растворителю?'), spec: { k: 'mcq', opts: [L('A', 'A'), L('B', 'B')], c: p.a > p.b ? 0 : 1 } }] },
+    sol: [st('Rf = distance moved by the component ÷ distance moved by the solvent.', 'Rf = путь вещества ÷ путь растворителя.'), st('A: ' + p.a + ' ÷ ' + p.s + ' = ' + (p.a / p.s).toFixed(2) + '; B: ' + p.b + ' ÷ ' + p.s + ' = ' + (p.b / p.s).toFixed(2) + '.', 'A: ' + p.a + ' ÷ ' + p.s + ' = ' + ruN((p.a / p.s).toFixed(2)) + '; B: ' + p.b + ' ÷ ' + p.s + ' = ' + ruN((p.b / p.s).toFixed(2)) + '.'), st('The component that travels further (' + (p.a > p.b ? 'A' : 'B') + ') has more affinity for the solvent; the other sticks more to the paper.', 'Тот, кто прошёл дальше (' + (p.a > p.b ? 'A' : 'B') + '), сильнее связан с растворителем; другой сильнее держится за бумагу.')] }; } });
+
+/* ---------- C5 ---------- */
+school({ id: 'c5.1', sk: 'C5.1', src: NB('relative molecular mass'), en: 'Molecular mass of (NH₄)₂SO₄ and Na₂CO₃', ru: 'Молекулярная масса (NH₄)₂SO₄ и Na₂CO₃',
+  sets: [{ f: ['(NH4)2SO4', 'Na2CO3'] }, { f: ['C6H12O6', 'H2O'] }],
+  vary(r) { const s = r.sh(['CaCO3', 'H2SO4', 'Mg(OH)2', 'Al2(SO4)3', 'NH4NO3', 'Ca(OH)2', 'K2CO3', 'Fe2O3', 'CuSO4', 'HNO3', 'NaHCO3', 'C2H6O']); return { f: [s[0], s[1]] }; },
+  make(p) { const els = p.f.flatMap(f => Object.keys(formulaCount(f)));
+    return { q: L('Calculate the relative molecular mass of ' + p.f.map(fm).join(' and ') + '.' + arNote(els), 'Вычислите относительную молекулярную массу ' + p.f.map(fm).join(' и ') + '.' + arNote(els)),
+      ans: { k: 'multi', parts: p.f.map(f => ({ lab: L('Mr of ' + fm(f), 'Mr ' + fm(f)), spec: { k: 'num', key: String(Mr(f)) } })) },
+      sol: p.f.map(f => st(fm(f) + ' = ' + mrWork(f) + '.', fm(f) + ' = ' + mrWork(f) + '.')) }; } });
+
+school({ id: 'c5.2a', sk: 'C5.2', src: NB('molar mass'), en: 'Moles in 2.55 g of H₂S', ru: 'Количество вещества в 2,55 г H₂S',
+  sets: [{ f: 'H2S', m: 2.55 }, { f: 'NH3', m: 85 }],
+  vary(r) { const f = pk(r, ['H2S', 'NH3', 'H2O', 'CO2', 'CH4', 'O2', 'NaCl', 'CaCO3', 'MgO']); return { f, m: r3(Mr(f) * pk(r, [0.05, 0.075, 0.1, 0.25, 0.5, 1.5, 2, 3, 5])) }; },
+  make(p) { const M = Mr(p.f), n = r3(p.m / M); return { q: L('Calculate the number of moles present in ' + p.m + ' g of ' + fm(p.f) + '.' + arNoteF(p.f), 'Вычислите количество вещества (моль) в ' + ruN(p.m) + ' г ' + fm(p.f) + '.' + arNoteF(p.f)), ans: pnum(n, 'mol'),
+    sol: [st('M(' + fm(p.f) + ') = ' + mrWork(p.f) + ' g/mol.', 'M(' + fm(p.f) + ') = ' + mrWork(p.f) + ' г/моль.'), st('n = m ÷ M = ' + p.m + ' ÷ ' + M + ' = ' + n + ' mol.', 'n = m ÷ M = ' + ruN(p.m) + ' ÷ ' + M + ' = ' + ruN(n) + ' моль.')] }; } });
+
+school({ id: 'c5.3', sk: 'C5.3', src: NB('the mole'), en: 'Atoms in 6 moles of glucose', ru: 'Атомы в 6 моль глюкозы',
+  sets: [{ n: 6, f: 'C6H12O6', nm: 'glucose', nr: 'глюкозы' }], vary(r) { const F = pk(r, [['C6H12O6', 'glucose', 'глюкозы'], ['H2O', 'water', 'воды'], ['NH3', 'ammonia', 'аммиака'], ['CO2', 'carbon dioxide', 'углекислого газа'], ['CH4', 'methane', 'метана']]); return { n: pk(r, [2, 3, 4, 5, 6, 0.5]), f: F[0], nm: F[1], nr: F[2] }; },
+  make(p) { const cnt = formulaCount(p.f); const els = Object.keys(cnt); const N = p.n * 6.02e23; const e = els[0];
+    return { q: L('How many molecules, and how many ' + e + ' atoms, are there in ' + p.n + ' moles of ' + p.nm + ' (' + fm(p.f) + ')? (Avogadro constant = 6.02 × 10²³ per mole)', 'Сколько молекул и сколько атомов ' + e + ' в ' + ruN(p.n) + ' моль ' + p.nr + ' (' + fm(p.f) + ')? (Постоянная Авогадро 6,02 × 10²³ моль⁻¹)'),
+      ans: { k: 'multi', parts: [{ lab: L('molecules', 'молекул'), spec: { k: 'num', key: decStr(N), forms: ['std'] } }, { lab: L(e + ' atoms', 'атомов ' + e), spec: { k: 'num', key: decStr(N * cnt[e]), forms: ['std'] } }] },
+      sol: [st('Molecules: ' + p.n + ' × 6.02 × 10²³ = ' + sdt(N) + '.', 'Молекул: ' + ruN(p.n) + ' × 6,02 × 10²³ = ' + ruN(sdt(N)) + '.'), st('Each molecule has ' + cnt[e] + ' ' + e + ' atom(s): ' + sdt(N) + ' × ' + cnt[e] + ' = ' + sdt(N * cnt[e]) + '.', 'В каждой молекуле ' + cnt[e] + ' атом(а) ' + e + ': ' + ruN(sdt(N)) + ' × ' + cnt[e] + ' = ' + ruN(sdt(N * cnt[e])) + '.')] }; } });
+
+school({ id: 'c5.4', sk: 'C5.4', src: NB('molar volume'), en: 'Moles of gas from volume (24 dm³)', ru: 'Моли газа по объёму (24 дм³)',
+  sets: [{ g: 'O2', v: 48, u: 'dm³', g2: 'NH3', v2: 120 }], vary(r) { return { g: pk(r, ['O2', 'CO2', 'N2', 'H2']), v: pk(r, [12, 36, 48, 60, 72, 6]), u: 'dm³', g2: pk(r, ['NH3', 'CH4', 'Cl2']), v2: pk(r, [60, 120, 240, 360, 480]) }; },
+  make(p) { const n1 = r3(p.v / 24), n2 = r3(p.v2 / 24000); return { q: L('Molar volume of a gas at r.t.p. = 24 dm³. Calculate the number of moles in:', 'Молярный объём газа при к.у. (комнатных условиях) 24 дм³. Вычислите количество вещества в:'),
+    ans: { k: 'multi', parts: [CP(L('a) ' + p.v + ' dm³ of ' + fm(p.g) + ' gas', 'a) ' + p.v + ' дм³ газа ' + fm(p.g)), n1, 'mol'), CP(L('b) ' + p.v2 + ' cm³ of ' + fm(p.g2) + ' gas', 'b) ' + p.v2 + ' см³ газа ' + fm(p.g2)), n2, 'mol')] },
+    sol: [st('n = volume ÷ 24 dm³: ' + p.v + ' ÷ 24 = ' + n1 + ' mol.', 'n = объём ÷ 24 дм³: ' + p.v + ' ÷ 24 = ' + ruN(n1) + ' моль.'), st('Convert cm³ to dm³ first: ' + p.v2 + ' cm³ = ' + (p.v2 / 1000) + ' dm³; ' + (p.v2 / 1000) + ' ÷ 24 = ' + n2 + ' mol.', 'Сначала переводим см³ в дм³: ' + p.v2 + ' см³ = ' + ruN(p.v2 / 1000) + ' дм³; ' + ruN(p.v2 / 1000) + ' ÷ 24 = ' + ruN(n2) + ' моль.')] }; } });
+
+school({ id: 'c5.5', sk: 'C5.5', src: NB('concentration of solution'), en: 'Volume of a 2 mol/dm³ solution', ru: 'Объём раствора 2 моль/дм³',
+  sets: [{ c: 2, n: 0.6 }], vary(r) { return { c: pk(r, [0.5, 1, 2, 4]), n: pk(r, [0.2, 0.4, 0.5, 0.6, 1.2, 2]) }; },
+  make(p) { const V = r3(p.n / p.c); return { q: L('Calculate the volume of ' + p.c + ' mol/dm³ solution containing ' + p.n + ' mol of solute.', 'Вычислите объём раствора с концентрацией ' + ruN(p.c) + ' моль/дм³, в котором ' + ruN(p.n) + ' моль растворённого вещества.'), ans: pnum(V, 'dm³'),
+    sol: [st('c = n ÷ V, so V = n ÷ c.', 'c = n ÷ V, значит V = n ÷ c.'), st('V = ' + p.n + ' ÷ ' + p.c + ' = ' + V + ' dm³ (= ' + r3(V * 1000) + ' cm³).', 'V = ' + ruN(p.n) + ' ÷ ' + ruN(p.c) + ' = ' + ruN(V) + ' дм³ (= ' + ruN(r3(V * 1000)) + ' см³).')] }; } });
+
+school({ id: 'c5.7', sk: 'C5.7', src: NB('reacting masses'), en: 'Heating 31 g of copper(II) carbonate', ru: 'Разложение 31 г карбоната меди(II)',
+  sets: [{ m: 31 }], vary(r) { return { m: pk(r, [12.4, 24.8, 62, 93, 6.2, 49.6]) }; },
+  make(p) { const a = r3(p.m * 80 / 124), b = r3(p.m * 44 / 124); return { q: L('Copper(II) carbonate decomposes on heating: CuCO₃ → CuO + CO₂. Calculate the mass of each product formed from ' + p.m + ' g of CuCO₃. (Ar: Cu = 64, C = 12, O = 16)', 'Карбонат меди(II) разлагается при нагревании: CuCO₃ → CuO + CO₂. Вычислите массу каждого продукта из ' + ruN(p.m) + ' г CuCO₃. (Ar: Cu = 64, C = 12, O = 16)'),
+    ans: { k: 'multi', parts: [CP(L('mass of CuO', 'масса CuO'), a, 'g'), CP(L('mass of CO₂', 'масса CO₂'), b, 'g')] },
+    sol: [st('Mr: CuCO₃ = 64 + 12 + 3 × 16 = 124; CuO = 64 + 16 = 80; CO₂ = 12 + 2 × 16 = 44.', 'Mr: CuCO₃ = 64 + 12 + 3 × 16 = 124; CuO = 64 + 16 = 80; CO₂ = 12 + 2 × 16 = 44.'), st('1 mol CuCO₃ gives 1 mol CuO: 124 g → 80 g, so ' + p.m + ' g → ' + p.m + ' × 80 ÷ 124 = ' + a + ' g.', '1 моль CuCO₃ даёт 1 моль CuO: 124 г → 80 г, значит ' + ruN(p.m) + ' г → ' + ruN(p.m) + ' × 80 ÷ 124 = ' + ruN(a) + ' г.'), st('CO₂: ' + p.m + ' × 44 ÷ 124 = ' + b + ' g. Check: ' + a + ' + ' + b + ' = ' + r3(a + b) + ' g ✓ (mass is conserved).', 'CO₂: ' + ruN(p.m) + ' × 44 ÷ 124 = ' + ruN(b) + ' г. Проверка: ' + ruN(a) + ' + ' + ruN(b) + ' = ' + ruN(r3(a + b)) + ' г ✓ (масса сохраняется).')] }; } });
+
+school({ id: 'c5.8a', sk: 'C5.8', src: NB('empirical formula'), en: 'Iron oxide from 70 g Fe and 30 g O', ru: 'Оксид железа из 70 г Fe и 30 г O',
+  sets: [{ k: 0, s: 1 }], vary(r) { return { k: pk(r, [0, 1, 2]), s: pk(r, [0.5, 2, 3, 0.8, 1.5]) }; },
+  make(p) { const T = [['Fe', 'O', 56, 16, 70, 30, 'Fe2O3', 'iron(III) oxide', 'оксид железа(III)'], ['Cu', 'O', 64, 16, 80, 20, 'CuO', 'copper(II) oxide', 'оксид меди(II)'], ['Mg', 'O', 24, 16, 60, 40, 'MgO', 'magnesium oxide', 'оксид магния']][p.k]; const ma = r3(T[4] * p.s), mb = r3(T[5] * p.s); const na = ma / T[2], nb = mb / T[3]; const mn = Math.min(na, nb);
+    return { q: L('A compound contains ' + ma + ' g of ' + T[0] + ' and ' + mb + ' g of ' + T[1] + '. Calculate its empirical formula. (Ar: ' + T[0] + ' = ' + T[2] + ', ' + T[1] + ' = ' + T[3] + ')', 'Соединение содержит ' + ruN(ma) + ' г ' + T[0] + ' и ' + ruN(mb) + ' г ' + T[1] + '. Найдите его эмпирическую формулу. (Ar: ' + T[0] + ' = ' + T[2] + ', ' + T[1] + ' = ' + T[3] + ')'), ans: { k: 'text', norm: 'chem', key: T[6] }, show: chemTex(T[6]),
+      sol: [st('Moles: ' + T[0] + ' ' + ma + ' ÷ ' + T[2] + ' = ' + r3(na) + '; ' + T[1] + ' ' + mb + ' ÷ ' + T[3] + ' = ' + r3(nb) + '.', 'Моли: ' + T[0] + ' ' + ruN(ma) + ' ÷ ' + T[2] + ' = ' + ruN(r3(na)) + '; ' + T[1] + ' ' + ruN(mb) + ' ÷ ' + T[3] + ' = ' + ruN(r3(nb)) + '.'), st('Divide by the smallest: ' + r3(na / mn) + ' : ' + r3(nb / mn) + (T[6] === 'Fe2O3' ? ' = 1 : 1.5; multiply by 2 → 2 : 3.' : '.'), 'Делим на наименьшее: ' + ruN(r3(na / mn)) + ' : ' + ruN(r3(nb / mn)) + (T[6] === 'Fe2O3' ? ' = 1 : 1,5; умножаем на 2 → 2 : 3.' : '.')), st('Empirical formula: ' + fm(T[6]) + ' (' + T[7] + ').', 'Эмпирическая формула: ' + fm(T[6]) + ' (' + T[8] + ').')] }; } });
+
+school({ id: 'c5.8b', sk: 'C5.8', src: NB('molecular formula'), en: '40% C, 6.7% H, rest O, Mr = 180', ru: '40% C, 6,7% H, остальное O, Mr = 180',
+  sets: [{ k: 0 }], vary(r) { return { k: pk(r, [0, 1, 2, 3]) }; },
+  make(p) { const T = [[40, 6.7, 180, 6, 'C6H12O6'], [40, 6.7, 60, 2, 'C2H4O2'], [40, 6.7, 90, 3, 'C3H6O3'], [40, 6.7, 120, 4, 'C4H8O4']][p.k]; const o = r3(100 - T[0] - T[1]);
+    return { q: L('A compound contains ' + T[0] + '% carbon, ' + T[1] + '% hydrogen, and the rest is oxygen. Calculate its molecular formula if its molecular mass is ' + T[2] + '. (Ar: C = 12, H = 1, O = 16)', 'Соединение содержит ' + T[0] + '% углерода, ' + ruN(T[1]) + '% водорода, остальное — кислород. Найдите молекулярную формулу, если молекулярная масса ' + T[2] + '. (Ar: C = 12, H = 1, O = 16)'), ans: { k: 'text', norm: 'chem', key: T[4] }, show: chemTex(T[4]),
+      sol: [st('Oxygen: 100 − ' + T[0] + ' − ' + T[1] + ' = ' + o + '%.', 'Кислород: 100 − ' + T[0] + ' − ' + ruN(T[1]) + ' = ' + ruN(o) + '%.'), st('Moles in 100 g: C 40 ÷ 12 = 3.33; H 6.7 ÷ 1 = 6.7; O ' + o + ' ÷ 16 = 3.33. Ratio 1 : 2 : 1 → empirical formula CH₂O.', 'Моли в 100 г: C 40 ÷ 12 = 3,33; H 6,7 ÷ 1 = 6,7; O ' + ruN(o) + ' ÷ 16 = 3,33. Отношение 1 : 2 : 1 → эмпирическая формула CH₂O.'), st('Mass of CH₂O = 12 + 2 + 16 = 30; x = ' + T[2] + ' ÷ 30 = ' + T[3] + '; (CH₂O) × ' + T[3] + ' = ' + fm(T[4]) + '.', 'Масса CH₂O = 12 + 2 + 16 = 30; x = ' + T[2] + ' ÷ 30 = ' + T[3] + '; (CH₂O) × ' + T[3] + ' = ' + fm(T[4]) + '.')] }; } });
+
+school({ id: 'c5.9a', sk: 'C5.9', src: NB('yield'), en: 'Burning 100 g of aluminium: % yield', ru: 'Сжигание 100 г алюминия: выход продукта',
+  sets: [{ m: 100, act: 150 }], vary(r) { const m = pk(r, [27, 54, 81, 100, 108, 135]); const th = m * 2 * 102 / (4 * 27); return { m, act: r3(th * pk(r, [0.6, 0.7, 0.75, 0.8, 0.85, 0.9])) }; },
+  make(p) { const th = r3(p.m * 2 * 102 / (4 * 27)), y = r3(100 * p.act / th); return { q: L(p.m + ' g of aluminium is burnt in oxygen to give ' + p.act + ' g of aluminium oxide: 4Al + 3O₂ → 2Al₂O₃. Calculate the percentage yield. (Ar: Al = 27, O = 16)', 'При сжигании ' + p.m + ' г алюминия в кислороде получили ' + ruN(p.act) + ' г оксида алюминия: 4Al + 3O₂ → 2Al₂O₃. Вычислите выход продукта в процентах. (Ar: Al = 27, O = 16)'),
+    ans: { k: 'multi', parts: [CP(L('Theoretical mass of Al₂O₃', 'Теоретическая масса Al₂O₃'), th, 'g'), CP(L('Percentage yield', 'Выход, %'), y, '%')] },
+    sol: [st('Mr(Al₂O₃) = 2 × 27 + 3 × 16 = 102. 4 mol Al give 2 mol Al₂O₃: 4 × 27 g → 2 × 102 g.', 'Mr(Al₂O₃) = 2 × 27 + 3 × 16 = 102. 4 моль Al дают 2 моль Al₂O₃: 4 × 27 г → 2 × 102 г.'), st(p.m + ' g Al gives ' + p.m + ' × 2 × 102 ÷ (4 × 27) = ' + th + ' g (theoretical).', p.m + ' г Al дают ' + p.m + ' × 2 × 102 ÷ (4 × 27) = ' + ruN(th) + ' г (теоретически).'), st('% yield = experimental ÷ theoretical × 100 = ' + p.act + ' ÷ ' + th + ' × 100 = ' + y + '%. It is less than 100% because some reactant may not react or is spilt.', 'Выход = практическая ÷ теоретическая × 100 = ' + ruN(p.act) + ' ÷ ' + ruN(th) + ' × 100 = ' + ruN(y) + '%. Меньше 100%, потому что часть реагента не прореагировала или была потеряна.')] }; } });
+
+school({ id: 'c5.9b', sk: 'C5.9', src: NB('percentage yield'), en: 'Electrolysis of 102 kg of Al₂O₃', ru: 'Электролиз 102 кг Al₂O₃',
+  sets: [{ m: 102, act: 51 }], vary(r) { const m = pk(r, [51, 102, 204, 306]); return { m, act: r3(m * 54 / 102 * pk(r, [0.8, 0.85, 0.9, 0.95])) }; },
+  make(p) { const th = r3(p.m * 4 * 27 / (2 * 102)), y = r3(100 * p.act / th); return { q: L('Electrolysis of ' + p.m + ' kg of Al₂O₃ gives ' + p.act + ' kg of Al: 2Al₂O₃ → 4Al + 3O₂. Calculate the % yield. (Ar: Al = 27, O = 16)', 'Электролиз ' + p.m + ' кг Al₂O₃ дал ' + ruN(p.act) + ' кг Al: 2Al₂O₃ → 4Al + 3O₂. Вычислите выход в процентах. (Ar: Al = 27, O = 16)'),
+    ans: { k: 'multi', parts: [CP(L('Theoretical mass of Al', 'Теоретическая масса Al'), th, 'kg'), CP(L('Percentage yield', 'Выход, %'), y, '%')] },
+    sol: [st('2 mol Al₂O₃ give 4 mol Al: 2 × 102 g → 4 × 27 g.', '2 моль Al₂O₃ дают 4 моль Al: 2 × 102 г → 4 × 27 г.'), st(p.m + ' kg gives ' + p.m + ' × 4 × 27 ÷ (2 × 102) = ' + th + ' kg of Al.', p.m + ' кг дают ' + p.m + ' × 4 × 27 ÷ (2 × 102) = ' + ruN(th) + ' кг Al.'), st('% yield = ' + p.act + ' ÷ ' + th + ' × 100 = ' + y + '%.', 'Выход = ' + ruN(p.act) + ' ÷ ' + ruN(th) + ' × 100 = ' + ruN(y) + '%.')] }; } });
+
+school({ id: 'c5.10', sk: 'C5.10', src: NB('limiting reagent'), en: '56 g of N₂ and 10 g of H₂ make NH₃', ru: '56 г N₂ и 10 г H₂ дают NH₃',
+  sets: [{ n: 56, h: 10 }], vary(r) { for (;;) { const n = pk(r, [28, 42, 56, 84, 112]), h = pk(r, [3, 4, 6, 8, 10, 15, 20]); if (h * 28 / 6 !== n) return { n, h }; } },
+  make(p) { const need = r3(p.n * 6 / 28); const hLim = p.h < need; const nh3 = r3(hLim ? p.h * 34 / 6 : p.n * 34 / 28); const left = r3(hLim ? p.n - p.h * 28 / 6 : p.h - need);
+    return { q: L(p.n + ' g of N₂ and ' + p.h + ' g of H₂ react to form NH₃: N₂ + 3H₂ → 2NH₃. (Ar: N = 14, H = 1)', p.n + ' г N₂ и ' + p.h + ' г H₂ реагируют с образованием NH₃: N₂ + 3H₂ → 2NH₃. (Ar: N = 14, H = 1)'),
+      ans: { k: 'multi', parts: [{ lab: L('a) Limiting reagent', 'a) Реагент в недостатке'), spec: { k: 'mcq', opts: [L('N₂', 'N₂'), L('H₂', 'H₂')], c: hLim ? 1 : 0 } }, CP(L('b) Mass of NH₃ formed', 'b) Масса образовавшегося NH₃'), nh3, 'g'), CP(L('c) Mass of excess reagent left unreacted', 'c) Масса непрореагировавшего избытка'), left, 'g')] },
+      sol: [st('Mr: N₂ = 28, H₂ = 2, NH₃ = 17. 1 mol N₂ (28 g) reacts with 3 mol H₂ (6 g).', 'Mr: N₂ = 28, H₂ = 2, NH₃ = 17. 1 моль N₂ (28 г) реагирует с 3 моль H₂ (6 г).'), st(p.n + ' g N₂ needs ' + p.n + ' × 6 ÷ 28 = ' + need + ' g H₂. We have ' + p.h + ' g, ' + (hLim ? 'less → H₂ is limiting, N₂ is in excess.' : 'more → N₂ is limiting, H₂ is in excess.'), p.n + ' г N₂ нужно ' + p.n + ' × 6 ÷ 28 = ' + ruN(need) + ' г H₂. Есть ' + p.h + ' г — ' + (hLim ? 'меньше → H₂ в недостатке, N₂ в избытке.' : 'больше → N₂ в недостатке, H₂ в избытке.')), st(hLim ? '6 g H₂ give 34 g NH₃, so ' + p.h + ' g give ' + p.h + ' × 34 ÷ 6 = ' + nh3 + ' g. N₂ used: ' + p.h + ' × 28 ÷ 6 = ' + r3(p.h * 28 / 6) + ' g; left ' + p.n + ' − ' + r3(p.h * 28 / 6) + ' = ' + left + ' g.' : '28 g N₂ give 34 g NH₃, so ' + p.n + ' g give ' + nh3 + ' g. H₂ left: ' + p.h + ' − ' + need + ' = ' + left + ' g.', hLim ? '6 г H₂ дают 34 г NH₃, значит ' + p.h + ' г дают ' + p.h + ' × 34 ÷ 6 = ' + ruN(nh3) + ' г. Израсходовано N₂: ' + p.h + ' × 28 ÷ 6 = ' + ruN(r3(p.h * 28 / 6)) + ' г; осталось ' + p.n + ' − ' + ruN(r3(p.h * 28 / 6)) + ' = ' + ruN(left) + ' г.' : '28 г N₂ дают 34 г NH₃, значит ' + p.n + ' г дают ' + ruN(nh3) + ' г. Осталось H₂: ' + p.h + ' − ' + ruN(need) + ' = ' + ruN(left) + ' г.')] }; } });
+
+/* ===================== Как в школе: COMPUTER SCIENCE (school booklet, parts 1–4) ===================== */
+const BK = (part, t) => L('Booklet part ' + part + ' · ' + t, 'Учебник, часть ' + part + ' · ' + t);
+
+/* ---------- S1 ---------- */
+school({ id: 's1.5', sk: 'S1.5', src: BK(1, 'logical shifts'), en: 'Shift 109 left and right', ru: 'Сдвиг числа 109 влево и вправо',
+  sets: [{ n: 109 }], vary(r) { let n; do n = r.ri(65, 127); while (n % 2 === 0); return { n }; },
+  make(p) { const L1 = (p.n << 1) & 255, R1 = p.n >> 1; return { q: L('The 8-bit binary number ' + nib(b8(p.n)) + ' represents ' + p.n + '. Perform a 1-bit logical left shift and, separately, a 1-bit logical right shift.', '8-битное число ' + nib(b8(p.n)) + ' — это ' + p.n + '. Выполните логический сдвиг на 1 бит влево и, отдельно, на 1 бит вправо.'),
+    ans: { k: 'multi', parts: [{ lab: L('a) After the left shift (8 bits)', 'a) После сдвига влево (8 бит)'), spec: BIN(b8(L1), 8) }, { lab: L('Its denary value', 'Его значение в десятичной'), spec: NUM(L1) }, { lab: L('b) After the right shift (8 bits)', 'b) После сдвига вправо (8 бит)'), spec: BIN(b8(R1), 8) }, { lab: L('Its denary value', 'Его значение в десятичной'), spec: NUM(R1) }] },
+    sol: [st('Left: every bit moves one place left, a 0 comes in on the right: ' + nib(b8(L1)) + ' = ' + L1 + ' = ' + p.n + ' × 2.', 'Влево: каждый бит сдвигается на позицию влево, справа дописывается 0: ' + nib(b8(L1)) + ' = ' + L1 + ' = ' + p.n + ' × 2.'), st('Right: every bit moves one place right, a 0 comes in on the left: ' + nib(b8(R1)) + ' = ' + R1 + '. ' + p.n + ' ÷ 2 = ' + (p.n / 2) + ', but the rightmost 1 fell off, so the result is rounded down — a rounding error.', 'Вправо: каждый бит сдвигается вправо, слева 0: ' + nib(b8(R1)) + ' = ' + R1 + '. ' + p.n + ' ÷ 2 = ' + String(p.n / 2).replace('.', ',') + ', но крайняя правая 1 выпала, результат округлился вниз — ошибка округления.')] }; } });
+
+school({ id: 's1.4', sk: 'S1.4', src: BK(1, 'overflow errors'), en: 'Adding 11111011 + 11011000', ru: 'Сложение 11111011 + 11011000',
+  sets: [{ a: 251, b: 216 }], vary(r) { let a, b; do { a = r.ri(150, 250); b = r.ri(150, 250); } while (a + b <= 255); return { a, b }; },
+  make(p) { const s = p.a + p.b; return { q: L('Add the 8-bit binary numbers ' + nib(b8(p.a)) + ' and ' + nib(b8(p.b)) + '.', 'Сложите 8-битные числа ' + nib(b8(p.a)) + ' и ' + nib(b8(p.b)) + '.'),
+    ans: { k: 'multi', parts: [{ lab: L('a) What is left in the 8-bit register?', 'a) Что останется в 8-битном регистре?'), spec: BIN(b8(s & 255), 8) }, { lab: L('b) Has an overflow error occurred?', 'b) Произошло ли переполнение?'), spec: YESNO(mkRng(s), true) }] },
+    sol: [st('In denary: ' + p.a + ' + ' + p.b + ' = ' + s + ' — more than 255, the largest 8-bit number.', 'В десятичной: ' + p.a + ' + ' + p.b + ' = ' + s + ' — больше 255, наибольшего 8-битного числа.'), st('The full sum is 9 bits: 1 ' + nib(b8(s & 255)) + '. The 9th bit does not fit, so the register keeps ' + nib(b8(s & 255)) + ' (= ' + (s & 255) + ') and an overflow error occurs.', 'Полная сумма 9-битная: 1 ' + nib(b8(s & 255)) + '. Девятый бит не помещается: в регистре остаётся ' + nib(b8(s & 255)) + ' (= ' + (s & 255) + '), возникает переполнение.')] }; } });
+
+school({ id: 's1.6', sk: 'S1.6', src: BK(1, "two's complement"), en: "Two's complement: −105, 200, 11010010, 01110001", ru: 'Дополнительный код: −105, 200, 11010010, 01110001',
+  sets: [{ a: -105, b: 200, c: -46, d: 113 }], vary(r) { return { a: -r.ri(20, 127), b: r.ri(128, 250), c: -r.ri(20, 120), d: r.ri(20, 127) }; },
+  make(p) { return { q: L("Convert using 8-bit two's complement (range −128 to 127).", 'Переведите, используя 8-битный дополнительный код (диапазон от −128 до 127).'),
+    ans: { k: 'multi', parts: [{ lab: L('a) ' + p.a + ' → binary', 'a) ' + p.a + ' → двоичное'), spec: BIN(b8(p.a & 255), 8) }, { lab: L('b) Can ' + p.b + " be stored in 8-bit two's complement?", 'b) Можно ли записать ' + p.b + ' в 8-битном дополнительном коде?'), spec: YESNO(mkRng(p.b), false) }, { lab: L('c) ' + nib(b8(p.c & 255)) + ' → denary', 'c) ' + nib(b8(p.c & 255)) + ' → десятичное'), spec: NUM(p.c) }, { lab: L('d) ' + nib(b8(p.d)) + ' → denary', 'd) ' + nib(b8(p.d)) + ' → десятичное'), spec: NUM(p.d) }] },
+    sol: [st('a) +' + (-p.a) + ' = ' + nib(b8(-p.a)) + '; flip the bits: ' + nib(b8(~(-p.a) & 255)) + '; add 1: ' + nib(b8(p.a & 255)) + '.', 'a) +' + (-p.a) + ' = ' + nib(b8(-p.a)) + '; инвертируем: ' + nib(b8(~(-p.a) & 255)) + '; прибавляем 1: ' + nib(b8(p.a & 255)) + '.'), st('b) The largest positive value is 127, so ' + p.b + ' cannot be stored (in ordinary 8-bit binary it would be fine, up to 255).', 'b) Наибольшее положительное — 127, поэтому ' + p.b + ' записать нельзя (в обычном 8-битном двоичном — можно, до 255).'), st('c) Leftmost 1 = −128: −128 + ' + (128 + p.c) + ' = ' + p.c + '. d) Leftmost 0 → positive: ' + pvSum(p.d) + ' = ' + p.d + '.', 'c) Старшая 1 = −128: −128 + ' + (128 + p.c) + ' = ' + p.c + '. d) Старший 0 → положительное: ' + pvSum(p.d) + ' = ' + p.d + '.')] }; } });
+
+school({ id: 's1.8', sk: 'S1.8', src: BK(1, 'file size calculation'), en: 'Photo 1024 × 768, 16-bit colour', ru: 'Фото 1024 × 768, 16-битный цвет',
+  sets: [{ w: 1024, h: 768, d: 16 }, { w: 1920, h: 1080, d: 24 }], vary(r) { return { w: pk(r, [800, 1024, 1280, 1600, 1920, 2048]), h: pk(r, [600, 720, 768, 1024, 1080, 1200]), d: pk(r, [8, 16, 24]) }; },
+  make(p) { const bits = p.w * p.h * p.d, B = bits / 8, K = B / 1024, M = K / 1024; return { q: L('An image has a resolution of ' + p.w + ' × ' + p.h + ' and a colour depth of ' + p.d + ' bits.', 'Разрешение изображения ' + p.w + ' × ' + p.h + ', глубина цвета ' + p.d + ' бит.'),
+    ans: { k: 'multi', parts: [{ lab: L('a) File size in bits', 'a) Размер в битах'), spec: NUM(bits) }, { lab: L('b) In bytes', 'b) В байтах'), spec: NUM(B) }, { lab: L('c) In MiB (to 2 decimal places)', 'c) В MiB (2 знака после запятой)'), spec: { k: 'num', key: String(+M.toFixed(2)), nohelp: true } }] },
+    sol: [st('Bits = width × height × colour depth = ' + p.w + ' × ' + p.h + ' × ' + p.d + ' = ' + bits + '.', 'Биты = ширина × высота × глубина = ' + p.w + ' × ' + p.h + ' × ' + p.d + ' = ' + bits + '.'), st('Bytes: ÷ 8 = ' + B + '. KiB: ÷ 1024 = ' + +K.toFixed(2) + '. MiB: ÷ 1024 = ' + +M.toFixed(4) + ' ≈ ' + M.toFixed(2) + ' MiB.', 'Байты: ÷ 8 = ' + B + '. KiB: ÷ 1024 = ' + String(+K.toFixed(2)).replace('.', ',') + '. MiB: ÷ 1024 = ' + String(+M.toFixed(4)).replace('.', ',') + ' ≈ ' + M.toFixed(2).replace('.', ',') + ' MiB.')] }; } });
+
+/* ---------- S2 ---------- */
+school({ id: 's2.3', sk: 'S2.3', src: BK(2, 'parity check worked examples'), en: 'Was the byte received correctly?', ru: 'Байт получен без ошибок?',
+  sets: [{ b: '11011110', even: true }, { b: '01001110', even: false }],
+  vary(r, base) { const d = b8(r.ri(1, 127), 7); const k = ones(d); let byte = ((base.even ? k % 2 : 1 - k % 2) + d); if (r() < 0.5) { const i = r.ri(0, 7); byte = byte.slice(0, i) + (byte[i] === '1' ? '0' : '1') + byte.slice(i + 1); } return { b: byte, even: base.even }; },
+  make(p) { const n = ones(p.b); const ok = p.even ? n % 2 === 0 : n % 2 === 1; return { q: L('A byte was transmitted using ' + (p.even ? 'even' : 'odd') + ' parity. The received byte was ' + nib(p.b) + '. State whether the byte was transmitted correctly.', 'Байт передан с ' + (p.even ? 'чётным' : 'нечётным') + ' контролем. Получен байт ' + nib(p.b) + '. Был ли байт передан правильно?'),
+    ans: mcqSh(mkRng(parseInt(p.b, 2) + (p.even ? 1 : 0)), [ok ? L('Yes — no error detected', 'Да — ошибка не обнаружена') : L('No — an error has been detected', 'Нет — обнаружена ошибка'), ok ? L('No — an error has been detected', 'Нет — обнаружена ошибка') : L('Yes — no error detected', 'Да — ошибка не обнаружена')], 0),
+    sol: [st('Count the 1s: ' + n + ' (' + (n % 2 ? 'odd' : 'even') + '). With ' + (p.even ? 'even' : 'odd') + ' parity the count must be ' + (p.even ? 'even' : 'odd') + '.', 'Считаем единицы: ' + n + ' (' + (n % 2 ? 'нечётно' : 'чётно') + '). При ' + (p.even ? 'чётном' : 'нечётном') + ' контроле должно быть ' + (p.even ? 'чётно' : 'нечётно') + '.'), st(ok ? 'It matches — no error detected (but a parity check cannot catch two flipped bits).' : 'It does not match — an error has occurred; the receiver asks for the byte again.', ok ? 'Совпадает — ошибки не видно (но проверка чётности не заметит две ошибки сразу).' : 'Не совпадает — ошибка; получатель запросит байт повторно.')] }; } });
+
+school({ id: 's2.5', sk: 'S2.5', src: BK(2, 'checksum worked examples'), en: 'Checksums for 189, 1250 and the block from Japan', ru: 'Контрольные суммы 189, 1250 и блок из Японии',
+  sets: [{ a: 189, b: 1250, c: 3550, s: 198 }, { a: 240, b: 2150, c: 3550, s: 198 }], vary(r) { const c = r.ri(1000, 5000), cs = c % 256; return { a: r.ri(50, 255), b: r.ri(300, 3000), c, s: r() < 0.5 ? cs : (cs + r.ri(5, 40)) % 256 }; },
+  make(p) { const ck = v => v % 256; const ok = ck(p.c) === p.s; return { q: L('Using the checksum rules from the booklet (sum ≤ 255 → the sum itself; otherwise sum − 256 × (sum DIV 256)):', 'По правилам контрольной суммы из учебника (сумма ≤ 255 → сама сумма; иначе сумма − 256 × (сумма DIV 256)):'),
+    ans: { k: 'multi', parts: [{ lab: L('a) Checksum for the denary number ' + p.a, 'a) Контрольная сумма для числа ' + p.a), spec: NUM(ck(p.a)) }, { lab: L('b) Checksum for ' + p.b, 'b) Контрольная сумма для ' + p.b), spec: NUM(ck(p.b)) }, { lab: L('c) The sender calculated the checksum as ' + p.s + '. At the receiving computer the data block had the value ' + p.c + '. Was it transmitted without errors?', 'c) Отправитель вычислил контрольную сумму ' + p.s + '. У получателя блок имеет значение ' + p.c + '. Передан ли он без ошибок?'), spec: YESNO(mkRng(p.c), ok) }] },
+    sol: [st('a) ' + p.a + (p.a <= 255 ? ' ≤ 255, so the checksum is ' + p.a + '.' : ' > 255: ' + p.a + ' − 256 × ' + Math.floor(p.a / 256) + ' = ' + ck(p.a) + '.'), 'a) ' + p.a + (p.a <= 255 ? ' ≤ 255, контрольная сумма ' + p.a + '.' : ' > 255: ' + p.a + ' − 256 × ' + Math.floor(p.a / 256) + ' = ' + ck(p.a) + '.')), st('b) ' + p.b + ' ÷ 256 = ' + (p.b / 256).toFixed(2) + ' → ' + Math.floor(p.b / 256) + '; ' + Math.floor(p.b / 256) + ' × 256 = ' + (256 * Math.floor(p.b / 256)) + '; ' + p.b + ' − ' + (256 * Math.floor(p.b / 256)) + ' = ' + ck(p.b) + '.', 'b) ' + p.b + ' ÷ 256 = ' + (p.b / 256).toFixed(2).replace('.', ',') + ' → ' + Math.floor(p.b / 256) + '; ' + Math.floor(p.b / 256) + ' × 256 = ' + (256 * Math.floor(p.b / 256)) + '; ' + p.b + ' − ' + (256 * Math.floor(p.b / 256)) + ' = ' + ck(p.b) + '.'), st('c) Receiver: ' + p.c + ' − 256 × ' + Math.floor(p.c / 256) + ' = ' + ck(p.c) + (ok ? ' = ' + p.s + ' — no error.' : ' ≠ ' + p.s + ' — an error occurred; the computer should request the block to be sent again.'), 'c) Получатель: ' + p.c + ' − 256 × ' + Math.floor(p.c / 256) + ' = ' + ck(p.c) + (ok ? ' = ' + p.s + ' — ошибки нет.' : ' ≠ ' + p.s + ' — ошибка; компьютер должен запросить блок повторно.'))] }; } });
+
+school({ id: 's2.6a', sk: 'S2.6', src: BK(2, 'check digits, worked example 2'), en: 'Check digit for 97800991 (mod 11)', ru: 'Контрольная цифра для 97800991 (mod 11)',
+  sets: [{ d: '97800991', t: '97879019', tc: 'X' }], vary(r) { const g = () => Array.from({ length: 8 }, () => r.ri(0, 9)).join(''); const t = g(); const o = cd11(t.split('').map(Number)); const w = (o.m + r.ri(1, 9)) % 11; return { d: g(), t, tc: r() < 0.5 ? o.c : w === 10 ? 'X' : String(w) }; },
+  make(p) { const a = cd11(p.d.split('').map(Number)), b = cd11(p.t.split('').map(Number)); const ok = b.c === p.tc;
+    return { q: L('An 8-digit number has a 9th check digit: each digit is multiplied by its position (1–8), the products are added, the total is divided by 11, and the remainder is the check digit (10 → X).', 'К 8-значному числу добавляется 9-я контрольная цифра: каждая цифра умножается на свою позицию (1–8), произведения складываются, сумма делится на 11, остаток — контрольная цифра (10 → X).'),
+      ans: { k: 'multi', parts: [{ lab: L('a) Check digit for ' + p.d, 'a) Контрольная цифра для ' + p.d), spec: OUT(a.c, a.c === 'X' ? ['x', '10'] : []) }, { lab: L('b) A data clerk captured ' + p.t + ' ' + p.tc + '. Was it captured correctly?', 'b) Оператор ввёл ' + p.t + ' ' + p.tc + '. Введено правильно?'), spec: YESNO(mkRng(+p.t), ok) }] },
+      sol: [st('a) ' + a.prods + ' = ' + a.s + '; ' + a.s + ' ÷ 11 = ' + Math.floor(a.s / 11) + ' r ' + a.m + ' → ' + a.c + '.', 'a) ' + a.prods + ' = ' + a.s + '; ' + a.s + ' ÷ 11 = ' + Math.floor(a.s / 11) + ' ост. ' + a.m + ' → ' + a.c + '.'), st('b) ' + b.prods + ' = ' + b.s + '; remainder ' + b.m + ' → ' + b.c + (ok ? ' = ' + p.tc + ': correct.' : ' ≠ ' + p.tc + ': a data-entry error.'), 'b) ' + b.prods + ' = ' + b.s + '; остаток ' + b.m + ' → ' + b.c + (ok ? ' = ' + p.tc + ': верно.' : ' ≠ ' + p.tc + ': ошибка ввода.'))] }; } });
+
+school({ id: 's2.6b', sk: 'S2.6', src: BK(2, 'check digits: the perfume barcode'), en: 'Is the barcode 6001051003754 correct?', ru: 'Верен ли штрихкод 6001051003754?',
+  sets: [{ c: '6001051003754' }, { c: '6963000052317' }], vary(r) { const d = Array.from({ length: 12 }, () => r.ri(0, 9)); const o = isbn(d); return { c: d.join('') + (r() < 0.5 ? o.c : (o.c + r.ri(1, 9)) % 10) }; },
+  make(p) { const d = p.c.slice(0, 12).split('').map(Number), last = +p.c[12]; const o = isbn(d); const ok = o.c === last;
+    return { q: L('A barcode was scanned as ' + p.c + '. The last digit is the check digit (ISBN-13 method: weights 1, 3, 1, 3…, check digit = 10 − (sum MOD 10), or 0). Is there a data-entry error?', 'Штрихкод считан как ' + p.c + '. Последняя цифра — контрольная (метод ISBN-13: веса 1, 3, 1, 3…, контрольная = 10 − (сумма MOD 10), или 0). Есть ли ошибка ввода?'),
+      ans: { k: 'multi', parts: [{ lab: L('Calculated check digit', 'Вычисленная контрольная цифра'), spec: NUM(o.c) }, { lab: L('Is the barcode correct?', 'Штрихкод верный?'), spec: YESNO(mkRng(+p.c.slice(5)), ok) }] },
+      sol: [st(o.prods + ' = ' + o.s + '. Remainder ÷ 10: ' + (o.s % 10) + '; 10 − ' + (o.s % 10) + ' = ' + ((10 - o.s % 10) % 10) + '.', o.prods + ' = ' + o.s + '. Остаток от ÷ 10: ' + (o.s % 10) + '; 10 − ' + (o.s % 10) + ' = ' + ((10 - o.s % 10) % 10) + '.'), st(ok ? 'It equals the last digit ' + last + ' — the barcode is correct.' : 'The last digit is ' + last + ', not ' + o.c + ' — there is an error, it will not scan as valid.', ok ? 'Совпадает с последней цифрой ' + last + ' — штрихкод верный.' : 'Последняя цифра ' + last + ', а должна быть ' + o.c + ' — ошибка, код не пройдёт проверку.')] }; } });
+
+school({ id: 's2.8', sk: 'S2.8', src: BK(2, 'Caesar cipher'), en: 'HELLO WORLD and FRPXWHU VFLHQFH', ru: 'HELLO WORLD и FRPXWHU VFLHQFH',
+  sets: [{ p: 'HELLO WORLD', c: 'COMPUTER SCIENCE', k: 3 }], vary(r) { const w = r.sh(WORDS); return { p: w[0], c: w[1], k: r.ri(1, 6) }; },
+  make(p) { return { q: L('Caesar cipher, shift ' + p.k + ' to the right.', 'Шифр Цезаря, сдвиг ' + p.k + ' вправо.'),
+    ans: { k: 'multi', parts: [{ lab: L('a) Encrypt: ' + p.p, 'a) Зашифруйте: ' + p.p), spec: UP(caesar(p.p, p.k)) }, { lab: L('b) Decrypt: ' + caesar(p.c, p.k), 'b) Расшифруйте: ' + caesar(p.c, p.k)), spec: UP(p.c) }] },
+    sol: [st('a) Move each letter ' + p.k + ' forward: ' + p.p + ' → ' + caesar(p.p, p.k) + '.', 'a) Каждую букву сдвигаем на ' + p.k + ' вперёд: ' + p.p + ' → ' + caesar(p.p, p.k) + '.'), st('b) Move each letter ' + p.k + ' back: ' + caesar(p.c, p.k) + ' → ' + p.c + '. The same key encrypts and decrypts — symmetric encryption.', 'b) Сдвигаем каждую букву на ' + p.k + ' назад: ' + caesar(p.c, p.k) + ' → ' + p.c + '. Один ключ и шифрует, и расшифровывает — симметричное шифрование.')] }; } });
+
+/* ---------- S3 ---------- */
+school({ id: 's3.3', sk: 'S3.3', src: BK(3, 'CPU performance'), en: 'A 3 GHz CPU: cycles per second', ru: 'Процессор 3 ГГц: тактов в секунду',
+  sets: [{ g: 3 }], vary(r) { return { g: pk(r, [1.8, 2.4, 2.8, 3.2, 3.6, 4.2]) }; },
+  make(p) { const v = Math.round(p.g * 1e9); return { q: L('The clock speed of a CPU is ' + p.g + ' GHz. How many cycles can it perform each second?', 'Тактовая частота процессора ' + String(p.g).replace('.', ',') + ' ГГц. Сколько тактов он выполняет в секунду?'), ans: { k: 'num', key: String(v) },
+    sol: [st('G (giga) = 1 000 000 000. ' + p.g + ' × 1 000 000 000 = ' + v.toLocaleString('en').replace(/,/g, ' ') + ' cycles per second (roughly: one fetch–decode–execute cycle per tick).', 'Г (гига) = 1 000 000 000. ' + String(p.g).replace('.', ',') + ' × 1 000 000 000 = ' + v.toLocaleString('en').replace(/,/g, ' ') + ' тактов в секунду (примерно: один цикл выборки-исполнения на такт).')] }; } });
+
+const SFACT = [[L('a chemical factory measures the pressure of gas in a pipe', 'на химическом заводе измеряют давление газа в трубе'), 'Pressure', 'Давления'], [L('a chemical factory measures the temperature of a chemical container', 'на химическом заводе измеряют температуру ёмкости с реагентом'), 'Temperature', 'Температуры'], [L('an automatic door detects a person walking in front of it', 'автоматическая дверь замечает идущего к ней человека'), 'Infra-red', 'Инфракрасный'], [L('a greenhouse checks whether the soil needs watering', 'теплица проверяет, нужно ли поливать почву'), 'Moisture', 'Влажности почвы'], [L('street lights switch on when it gets dark', 'уличные фонари включаются, когда темнеет'), 'Light', 'Освещённости'], [L('a car warns the driver of an object close behind', 'машина предупреждает водителя о препятствии сзади'), 'Proximity', 'Приближения']];
+school({ id: 's3.5', sk: 'S3.5', src: BK(3, 'sensors: examples in the booklet'), en: 'Which sensor? (factory, door, greenhouse)', ru: 'Какой датчик? (завод, дверь, теплица)',
+  sets: [{ i: 0 }, { i: 2 }], vary(r) { return { i: r.ri(0, SFACT.length - 1) }; },
+  make(p) { const it = SFACT[p.i]; const others = SFACT.filter(x => x[1] !== it[1]).slice(0, 3); return { q: L('Which sensor would be used: ' + it[0].en + '?', 'Какой датчик нужен: ' + it[0].ru + '?'), ans: mcqSh(mkRng(p.i * 13 + 1), [it].concat(others).map(s => L(s[1] + ' sensor', 'Датчик: ' + s[2].toLowerCase())), 0),
+    sol: [st('A ' + it[1].toLowerCase() + ' sensor measures exactly this quantity and sends the readings to the microprocessor; the microprocessor decides what to do (e.g. send a signal to an actuator).', 'Датчик «' + it[2].toLowerCase() + '» измеряет именно эту величину и передаёт показания микропроцессору; решение (например, сигнал приводу) принимает микропроцессор.')] }; } });
+
+/* ---------- S4 ---------- */
+school({ id: 's4.2', sk: 'S4.2', src: BK(4, 'library routines: DIV and MOD'), en: 'DIV and MOD of 10 and 2', ru: 'DIV и MOD для 10 и 2',
+  sets: [{ a: 10, b: 2 }], vary(r) { return { a: r.ri(11, 60), b: r.ri(3, 9) }; },
+  make(p) { return code({ q: L('What does this pseudocode output? Type both values, separated by a space.', 'Что выведет этот псевдокод? Введите оба значения через пробел.'), ans: OUT(Math.floor(p.a / p.b) + ' ' + (p.a % p.b)),
+    sol: [st(p.a + ' ÷ ' + p.b + ' = ' + Math.floor(p.a / p.b) + ' remainder ' + (p.a % p.b) + '. DIV gives the quotient ' + Math.floor(p.a / p.b) + ', MOD gives the remainder ' + (p.a % p.b) + '.', p.a + ' ÷ ' + p.b + ' = ' + Math.floor(p.a / p.b) + ' остаток ' + (p.a % p.b) + '. DIV даёт частное ' + Math.floor(p.a / p.b) + ', MOD — остаток ' + (p.a % p.b) + '.')] }, ['DECLARE Input1 : INTEGER', 'DECLARE Input2 : INTEGER', 'Input1 = ' + p.a, 'Input2 = ' + p.b, 'OUTPUT DIV(Input1, Input2)', 'OUTPUT MOD(Input1, Input2)'], PC); } });
+
+school({ id: 's4.6', sk: 'S4.6', src: BK(4, 'string handling'), en: 'UserName "John Doe": first letter and SUBSTRING', ru: 'UserName "John Doe": первая буква и SUBSTRING',
+  sets: [{ n: 'John Doe', l: 4 }], vary(r) { return { n: pk(r, ['Maria Lopez', 'Anna Smith', 'Kenji Sato', 'Priya Shah', 'Tom Brown', 'Leila Haddad']), l: r.ri(3, 5) }; },
+  make(p) { const s = p.n.slice(0, p.l); return code({ q: L('What is output by each line? Type the three outputs, separated by spaces.', 'Что выведет каждая строка? Введите три результата через пробел.'), ans: OUT(p.n[0] + ' ' + s + ' ' + p.n.length),
+    sol: [st('UserName[1] — strings work like arrays of characters, position 1 is the first character: ' + p.n[0] + '.', 'UserName[1] — строка как массив символов, позиция 1 — первый символ: ' + p.n[0] + '.'), st('SUBSTRING(UserName, 1, ' + p.l + ') — start at position 1, take ' + p.l + ' characters: ' + s + '.', 'SUBSTRING(UserName, 1, ' + p.l + ') — с позиции 1 берём ' + p.l + ' символов: ' + s + '.'), st('LENGTH counts every character, including the space: ' + p.n.length + '.', 'LENGTH считает все символы, включая пробел: ' + p.n.length + '.')] }, ['DECLARE UserName : STRING', 'UserName = "' + p.n + '"', 'OUTPUT UserName[1]', 'OUTPUT SUBSTRING(UserName, 1, ' + p.l + ')', 'OUTPUT LENGTH(UserName)'], PC); } });
+
+school({ id: 's4.8a', sk: 'S4.8', src: BK(4, 'function ComputeSchoolYear'), en: 'Function ComputeSchoolYear(Age)', ru: 'Функция ComputeSchoolYear(Age)',
+  sets: [{ a: 15 }, { a: 19 }], vary(r) { return { a: r.ri(12, 19) }; },
+  make(p) { const y = { 14: 9, 15: 10, 16: 11, 17: 12 }[p.a]; return code({ q: L('What is output when the program runs?', 'Что будет выведено при запуске программы?'), ans: y ? OUT(String(y)) : OUT('Invalid age value -1', ['Invalid age value, -1', 'invalid age value -1']),
+    sol: [st('ComputeSchoolYear(' + p.a + '): the IF … ELSE chain checks Age = 14, 15, 16, 17 in turn.', 'ComputeSchoolYear(' + p.a + '): цепочка IF … ELSE по очереди проверяет Age = 14, 15, 16, 17.'), st(y ? 'Age = ' + p.a + ' matches, so the function RETURNS ' + y + ' and OUTPUT shows ' + y + '.' : 'No value matches ' + p.a + ', so the last ELSE runs: it outputs "Invalid age value" and returns −1, which is then output.', y ? 'Age = ' + p.a + ' совпадает, функция возвращает ' + y + ', и OUTPUT выводит ' + y + '.' : 'Ни одно значение не совпало с ' + p.a + ', выполняется последний ELSE: выводится "Invalid age value" и возвращается −1, который тоже выводится.')] },
+    ['FUNCTION ComputeSchoolYear(Age : INTEGER) RETURNS INTEGER', '  IF Age = 14 THEN RETURN 9', '  ELSE IF Age = 15 THEN RETURN 10', '  ELSE IF Age = 16 THEN RETURN 11', '  ELSE IF Age = 17 THEN RETURN 12', '  ELSE', '    OUTPUT "Invalid age value"', '    RETURN -1', '  ENDIF', 'ENDFUNCTION', '', 'OUTPUT ComputeSchoolYear(' + p.a + ')'], PC); } });
+
+school({ id: 's4.3', sk: 'S4.3', src: BK(4, 'procedure EvenOrOdd'), en: 'Procedure EvenOrOdd', ru: 'Процедура EvenOrOdd',
+  sets: [{ n: 37 }], vary(r) { return { n: r.ri(10, 99) }; },
+  make(p) { const even = p.n % 2 === 0; return code({ q: L('The user enters ' + p.n + '. What is output?', 'Пользователь вводит ' + p.n + '. Что будет выведено?'), ans: OUT(even ? 'The entered number is divisible by 2' : 'The entered number is not divisible by 2'),
+    sol: [st(p.n + ' MOD 2 = ' + (p.n % 2) + ', so the condition UserNumber MOD 2 = 0 is ' + (even ? 'TRUE → the THEN branch.' : 'FALSE → the ELSE branch.'), p.n + ' MOD 2 = ' + (p.n % 2) + ', условие UserNumber MOD 2 = 0 ' + (even ? 'истинно → ветка THEN.' : 'ложно → ветка ELSE.')), st('A procedure does not return a value; it just carries out its steps when it is called.', 'Процедура не возвращает значение — она просто выполняет свои шаги при вызове.')] },
+    ['PROCEDURE EvenOrOdd', '  INPUT UserNumber', '  IF UserNumber MOD 2 = 0', '    THEN', '      OUTPUT "The entered number is divisible by 2"', '    ELSE', '      OUTPUT "The entered number is not divisible by 2"', '  ENDIF', 'ENDPROCEDURE', '', 'CALL EvenOrOdd'], PC); } });
+
 /* ===================== EXTRAS: report to tutor, settings, export/import, PWA ===================== */
 function pct(a, b) { return b ? Math.round(100 * a / b) : 0; }
 function examReport(ex, s) {
@@ -3841,7 +4482,7 @@ function viewSettings() {
   if ($('#stInst')) $('#stInst').onclick = () => { window.__installEvt.prompt(); window.__installEvt = null; };
 }
 function exportProgress() {
-  const data = { app: 'endterm-g9', v: 1, exported: new Date().toISOString(), db: { sk: DB.sk, exams: DB.exams, name: DB.name, tutorWa: DB.tutorWa, ru: DB.ru, subj: DB.subj } };
+  const data = { app: 'endterm-g9', v: 1, exported: new Date().toISOString(), db: { sk: DB.sk, sc: DB.sc, scr: DB.scr, exams: DB.exams, name: DB.name, tutorWa: DB.tutorWa, ru: DB.ru, subj: DB.subj } };
   const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
   const nm = 'endterm-progress' + (DB.name ? '-' + DB.name.replace(/[^\wа-яА-Я-]+/g, '_') : '') + '-' + new Date().toISOString().slice(0, 10) + '.json';
   const file = new File([blob], nm, { type: 'application/json' });
@@ -3855,6 +4496,8 @@ function importProgress(f) {
     let d; try { d = JSON.parse(rd.result); } catch (e) { return toast('Это не файл прогресса'); }
     if (!d || d.app !== 'endterm-g9' || !d.db) return toast('Это не файл прогресса этого приложения');
     const src = d.db;
+    Object.keys(src.sc || {}).forEach(id => { const a = DB.sc[id], b = src.sc[id]; DB.sc[id] = !a ? b : { n: Math.max(a.n, b.n), rd: Math.max(a.rd, b.rd) }; });
+    Object.keys(src.scr || {}).forEach(ch => { DB.scr[ch] = Math.max(DB.scr[ch] || 1, src.scr[ch]); });
     Object.keys(src.sk || {}).forEach(id => {
       const a = DB.sk[id], b = src.sk[id];
       if (!a) { DB.sk[id] = b; return; }
@@ -3871,7 +4514,7 @@ function importProgress(f) {
 }
 
 /* ---------- PWA ---------- */
-const APP_VERSION = '20261110-1129';
+const APP_VERSION = '20261110-1228';
 function isStandalone() { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.__installEvt = e; });
 if ('serviceWorker' in navigator) { navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())).catch(() => {}); if (window.caches) caches.keys().then(ks => ks.filter(x => x.startsWith('endterm-')).forEach(x => caches.delete(x))).catch(() => {}); }
@@ -3905,7 +4548,30 @@ const SUBJECTS = [{ id: 'math', en: 'Maths', ru: 'Математика' }, { id:
 const PFX = { math: 'm', phys: 'p', chem: 'c', cs: 's' };
 CHAPTERS.forEach(c => { c.subj = c.subj || 'math'; c.num = c.id; c.id = PFX[c.subj] + c.num; });
 SKILLS.forEach(s => { s.ch = PFX[s.subj] + s.ch; s.code = s.code || s.id; if (s.subj === 'phys' || s.subj === 'chem') s.calc = true; });
-SKILLS.filter(s => s.subj === 'phys').forEach(s => { const g0 = s.gen; s.gen = function (r, vi) { const it = g0.call(this, r, vi); const mk = sp => { if (!sp) return; if (sp.k === 'multi') sp.parts.forEach(p => mk(p.spec)); else if (sp.unit && sp.k === 'num') sp.uin = true; }; mk(it.ans); return it; }; });
+function markUnits(sp) { if (!sp) return; if (sp.k === 'multi') sp.parts.forEach(p => markUnits(p.spec)); else if (sp.unit && sp.k === 'num') sp.uin = true; }
+SKILLS.filter(s => s.subj === 'phys').forEach(s => { const g0 = s.gen; s.gen = function (r, vi) { const it = g0.call(this, r, vi); markUnits(it.ans); return it; }; });
+SCHOOL.forEach(t => { const k = SK(t.sk); if (!k) throw new Error('school task ' + t.id + ': no skill ' + t.sk); t.ch = k.ch; t.subj = k.subj; });
+DB.sc = DB.sc || {}; DB.scr = DB.scr || {};
+const scRound = ch => DB.scr[ch] || 1;
+const scDone = t => { const v = DB.sc[t.id]; return !!v && v.rd >= scRound(t.ch); };
+const scOf = ch => SCHOOL.filter(t => t.ch === ch);
+const scOfSk = id => SCHOOL.filter(t => t.sk === id);
+const scCount = list => [list.filter(scDone).length, list.length];
+const ST = id => SCHOOL.find(t => t.id === id);
+function scMark(t) { const v = DB.sc[t.id] || { n: 0, rd: 0 }; v.n++; v.rd = scRound(t.ch); DB.sc[t.id] = v; save(); }
+function scAgain(ch) { DB.scr[ch] = scRound(ch) + 1; save(); const f = scOf(ch)[0]; if (f) go('#/p/' + encodeURIComponent('t:' + f.id)); }
+function scRow(t) { return '<button class="scrow' + (scDone(t) ? ' done' : '') + '" onclick="go(\'#/p/' + encodeURIComponent('t:' + t.id) + '\')"><span class="ck">' + (scDone(t) ? '✓' : '') + '</span><span class="nm"><span>' + esc(t.en) + '</span><span class="ru">' + esc(t.ru) + '</span><span class="src">' + esc(t.src.ru) + '</span></span></button>'; }
+function scSection(ch) {
+  const list = scOf(ch); if (!list.length) return '';
+  const [d, n] = scCount(list); const rd = scRound(ch); const nx = list.find(t => !scDone(t));
+  let h = '<section class="card school"><div class="row" style="justify-content:space-between;align-items:baseline"><h3 style="margin:0">Как в школе</h3><span class="pill ' + (d === n ? 'g' : 'y') + '">сделано ' + d + ' из ' + n + '</span></div>';
+  h += '<p class="syn">Задания из школьных материалов: тот же сюжет и рисунок. В первый раз — школьные числа, потом немного другие.' + (rd > 1 ? ' Круг ' + rd + '.' : '') + '</p>';
+  h += '<div class="bar"><i style="width:' + Math.round(100 * d / n) + '%"></i></div>';
+  h += '<div class="row">' + (nx ? '<button class="btn primary" onclick="go(\'#/p/' + encodeURIComponent('t:' + nx.id) + '\')">' + (d ? 'Продолжить по порядку →' : 'Решать по порядку →') + '</button>' : '<span class="pill g">Глава пройдена ✓</span><button class="btn" onclick="scAgain(\'' + ch + '\')">Пройти заново (круг ' + (rd + 1) + ') — новые числа</button>') + '</div>';
+  const bySk = {}; list.forEach(t => (bySk[t.sk] = bySk[t.sk] || []).push(t));
+  Object.keys(bySk).forEach(id => { const k = SK(id); const [a, b] = scCount(bySk[id]); h += '<div class="scgrp"><div class="meta">' + k.code + ' · ' + esc(k.en) + ' <span class="ru">· ' + esc(k.ru) + '</span> — ' + a + '/' + b + '</div>' + bySk[id].map(scRow).join('') + '</div>'; });
+  return h + '</section>';
+}
 const TH = {}; Object.keys(THEORY).forEach(k => TH['m' + k] = THEORY[k]); Object.assign(TH, PTHEORY, CTHEORY, STHEORY);
 const CH = id => CHAPTERS.find(c => c.id === id);
 if (!DB.subj) DB.subj = 'math';
@@ -4072,7 +4738,7 @@ function viewHome() {
   h += '</section><div class="grid2">';
   CHAPTERS.filter(c => c.subj === sub.id).forEach(c => {
     const [m, n] = chProgress(c.id);
-    h += '<button class="card chcard" onclick="go(\'#/ch/' + c.id + '\')"><span class="chnum">Глава ' + c.num + ' · Chapter ' + c.num + '</span><span class="chtitle">' + esc(c.en) + '</span><span class="chru">' + esc(c.ru) + '</span><span class="bar"><i style="width:' + Math.round(100 * m / n) + '%"></i></span><span class="meta">' + 'освоено навыков: ' + m + ' из ' + n + '</span></button>';
+    h += '<button class="card chcard" onclick="go(\'#/ch/' + c.id + '\')"><span class="chnum">Глава ' + c.num + ' · Chapter ' + c.num + '</span><span class="chtitle">' + esc(c.en) + '</span><span class="chru">' + esc(c.ru) + '</span><span class="bar"><i style="width:' + Math.round(100 * m / n) + '%"></i></span><span class="meta">' + 'освоено навыков: ' + m + ' из ' + n + '</span>' + (scOf(c.id).length ? '<span class="meta">как в школе: ' + scCount(scOf(c.id)).join(' из ') + (scCount(scOf(c.id))[0] === scOf(c.id).length ? ' ✓' : '') + '</span>' : '') + '</button>';
   });
   h += '</div><p class="meta">Навык считается освоенным, когда 3 задания подряд решены с первой попытки (три зелёные точки). Прогресс хранится на этом устройстве; перенести его можно в ⚙ Настройках.' + (sub.id !== 'math' ? ' Значок <b class="ext">E</b> — материал уровня Extended.' : '') + ' Кнопка «Перевод» вверху показывает русский перевод заданий и объяснений.</p>';
   shell(h);
@@ -4085,7 +4751,8 @@ function viewChapter(ch) {
   let h = crumbs([['Главная', '#/'], ['Глава ' + c.num]]);
   h += '<div><div class="meta">Глава ' + c.num + ' · Chapter ' + c.num + '</div><h2>' + esc(c.en) + '</h2><div class="muted">' + esc(c.ru) + '</div></div>';
   h += '<div class="row"><button class="btn primary" onclick="go(\'#/p/mix:' + ch + '\')">Все навыки вперемешку</button><button class="btn" onclick="startExam([\'' + ch + '\'],\'chapter\')">Тест по главе</button></div>';
-  h += '<div class="skills">' + SKILLS.filter(s => s.ch === ch).map(s => '<button class="skill" onclick="go(\'#/p/' + s.id + '\')"><span class="nm"><span class="id">' + s.code + (s.ext ? ' · <b class="ext">E</b>' : '') + (s.calc && s.subj === 'math' ? ' · калькулятор' : '') + '</span><span>' + esc(s.en) + '</span><span class="ru">' + esc(s.ru) + '</span></span>' + dotsHtml(s.id) + '</button>').join('') + '</div>';
+  h += '<div class="skills">' + SKILLS.filter(s => s.ch === ch).map(s => '<button class="skill" onclick="go(\'#/p/' + s.id + '\')"><span class="nm"><span class="id">' + s.code + (s.ext ? ' · <b class="ext">E</b>' : '') + (s.calc && s.subj === 'math' ? ' · калькулятор' : '') + '</span><span>' + esc(s.en) + '</span><span class="ru">' + esc(s.ru) + '</span>' + (scOfSk(s.id).length ? '<span class="scb">как в школе: ' + scCount(scOfSk(s.id)).join(' из ') + '</span>' : '') + '</span>' + dotsHtml(s.id) + '</button>').join('') + '</div>';
+  h += scSection(ch);
   h += theoryHtml(ch, false, 'Теория по главе · Theory');
   shell(h);
 }
@@ -4104,7 +4771,15 @@ function nextAfter(sk, mix) {
   if (nch) return { kind: 'chapter', ch: nch, sk: SKILLS.find(s => s.ch === nch.id && !isM(s.id)), done: ch };
   return { kind: 'exam', done: ch };
 }
+function nextBoxSchool() {
+  const t = P.school; if (!P.done || !scDone(t)) return '';
+  const list = scOf(t.ch); const i = list.indexOf(t); const nx = list.slice(i + 1).concat(list.slice(0, i)).find(x => !scDone(x));
+  if (nx) return '<div class="nextbox hot"><b class="t">Задание сделано!</b><div>В главе сделано ' + scCount(list).join(' из ') + '. Дальше: <b>' + esc(nx.en) + '</b> <span class="muted">' + esc(nx.ru) + '</span></div><div class="row"><button class="btn primary" onclick="go(\'#/p/' + encodeURIComponent('t:' + nx.id) + '\')">Следующее школьное задание →</button></div></div>';
+  const c = CH(t.ch); const chs = CHAPTERS.filter(x => x.subj === c.subj); const nch = chs.slice(chs.indexOf(c) + 1).concat(chs.slice(0, chs.indexOf(c))).find(x => scOf(x.id).some(y => !scDone(y)));
+  return '<div class="nextbox hot"><b class="t">Все школьные задания главы ' + c.num + ' сделаны!</b><div>Можно пройти их заново с новыми числами' + (nch ? ' или перейти к главе ' + nch.num + '.' : '.') + '</div><div class="row">' + (nch ? '<button class="btn primary" onclick="go(\'#/ch/' + nch.id + '\')">Глава ' + nch.num + ' →</button>' : '') + '<button class="btn" onclick="scAgain(\'' + c.id + '\')">Пройти заново (круг ' + (scRound(c.id) + 1) + ')</button><button class="btn" onclick="startExam([\'' + c.id + '\'], \'chapter\')">Тест по главе ' + c.num + '</button></div></div>';
+}
 function nextBoxHtml() {
+  if (P.school) return nextBoxSchool();
   const mix = P.target.startsWith('mix:');
   if (!P.done || !(mix ? true : isM(P.sk.id))) return '';
   const n = nextAfter(P.sk, mix); if (!n) return '';
@@ -4118,6 +4793,7 @@ function nextBoxHtml() {
 let P = null; // current practice state
 function newItem(target) {
   let sk;
+  if (target.startsWith('t:')) { const t = ST(target.slice(2)); if (!t) return null; const r = mkRng((Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0); const fresh = !!(P && P.target === target); const g = scGen(t, r, fresh, (DB.sc[t.id] || {}).n || 0); if (t.subj === 'phys') markUnits(g.it.ans); return { target, sk: SK(t.sk), it: g.it, school: t, orig: g.orig, uid: ++UID, vals: {}, tries: 0, first: null, done: false, hintN: 0, showSol: false, fb: null, selfShown: false }; }
   if (target.startsWith('mix:')) { const ch = target.slice(4); const pool = SKILLS.filter(s => s.ch === ch); const weak = pool.filter(s => !(DB.sk[s.id] || {}).m); const src = weak.length && Math.random() < 0.7 ? weak : pool; sk = src[Math.floor(Math.random() * src.length)]; if (P && P.sk === sk && src.length > 1) sk = src[(src.indexOf(sk) + 1) % src.length]; }
   else sk = SK(target);
   if (!sk) return null;
@@ -4133,9 +4809,10 @@ function viewPractice(target) {
 }
 function renderPractice() {
   const { sk, it } = P; const ch = CHAPTERS.find(c => c.id === sk.ch);
-  const mix = P.target.startsWith('mix:');
-  let h = crumbs([['Главная', '#/'], ['Гл. ' + ch.num + ' ' + ch.en, '#/ch/' + ch.id], [mix ? 'Вперемешку' : sk.code]]);
+  const mix = P.target.startsWith('mix:'); const sc = P.school;
+  let h = crumbs([['Главная', '#/'], ['Гл. ' + ch.num + ' ' + ch.en, '#/ch/' + ch.id], [sc ? 'Как в школе' : mix ? 'Вперемешку' : sk.code]]);
   h += '<section class="card q">';
+  if (sc) { const [d, n] = scCount(scOf(ch.id)); h += '<div class="schead"><span class="pill b">Как в школе</span> <b>' + esc(sc.en) + '</b> <span class="ru">· ' + esc(sc.ru) + '</span><div class="meta">' + esc(sc.src.ru) + ' · ' + (P.orig >= 0 ? (sc.sets.length > 1 ? 'школьные числа (' + (P.orig + 1) + ' из ' + sc.sets.length + ')' : 'школьные числа') : 'числа изменены') + ' · в главе сделано ' + d + ' из ' + n + (scDone(sc) ? ' · это задание уже сделано ✓' : '') + '</div></div>'; }
   h += '<div class="qhead"><span>' + sk.code + ' · ' + NM(sk) + (sk.ext ? ' <b class="ext">E</b>' : '') + '</span><span>' + ((it.calc || sk.calc) ? '<span class="calc">С калькулятором</span>' : '<span class="nocalc">Без калькулятора</span>') + ' ' + dotsHtml(sk.id) + '</span></div>';
   h += '<div class="instr">' + tr(it.q) + '</div>' + promptHtml(it);
   h += '<div class="ansbox">';
@@ -4169,8 +4846,9 @@ function renderPractice() {
   if (!P.done && P.hintN < sk.hints.length) h += '<button class="btn" id="bHint">Подсказка' + (sk.hints.length > 1 ? ' ' + (P.hintN + 1) + '/' + sk.hints.length : '') + '</button>';
   if (!P.done && !P.showSol && it.ans.k !== 'self') h += '<button class="btn" id="bSol">Решение</button>';
   h += '<button class="btn" id="bTh">' + (P.showTh ? 'Скрыть теорию' : '📖 Теория') + '</button>';
-  h += '<button class="btn' + (P.done && !nb ? ' primary' : ' ghost') + '" id="bNext">' + (nb ? 'Ещё задание по этому навыку' : 'Новое задание →') + '</button>';
+  h += '<button class="btn' + (P.done && !nb ? ' primary' : ' ghost') + '" id="bNext">' + (P.school ? 'То же задание, другие числа' : nb ? 'Ещё задание по этому навыку' : 'Новое задание →') + '</button>';
   h += '</div></section>';
+  if (!sc && !mix && scOfSk(sk.id).length) h += '<section class="card school"><div class="meta">Как в школе по этому навыку: ' + scCount(scOfSk(sk.id)).join(' из ') + '</div>' + scOfSk(sk.id).map(scRow).join('') + '</section>';
   if (P.showTh) h += theoryHtml(ch.id, false, 'Теория · Глава ' + ch.num + ' · ' + esc(ch.ru));
   h += '<div class="row"><button class="btn ghost small" onclick="go(\'#/ch/' + ch.id + '\')">← Глава ' + ch.num + ': теория и навыки</button></div>';
   shell(h);
@@ -4182,7 +4860,7 @@ function renderPractice() {
   if (b('bNext')) b('bNext').onclick = () => { const t = P.showTh; P = newItem(P.target); P.showTh = t; renderPractice(); };
   if (b('bTh')) b('bTh').onclick = () => { collectVals($('#app')); P.showTh = !P.showTh; renderPracticeKeep(); if (P.showTh) { const box = $('#thBox'); if (box) box.scrollIntoView({ behavior: 'smooth', block: 'start' }); } };
   if (b('bSelf')) b('bSelf').onclick = () => { P.showSol = true; renderPracticeKeep(); };
-  if (b('bSelfOk')) b('bSelfOk').onclick = () => { P.done = true; P.first = true; record(true); P.fb = { ok: true }; renderPracticeKeep(); };
+  if (b('bSelfOk')) b('bSelfOk').onclick = () => { P.done = true; P.first = true; record(true); if (P.school) scMark(P.school); P.fb = { ok: true }; renderPracticeKeep(); };
   if (b('bSelfNo')) b('bSelfNo').onclick = () => { P.done = true; P.first = false; record(false); P.fb = { ok: false, msg: L('Read the model answer carefully, then try a new question.', 'Внимательно разберите образец и возьмите новое задание.') }; renderPracticeKeep(); };
   const first = $('input.inp:not([readonly])'); if (first && !P.done && !P.fb && matchMedia('(pointer:fine)').matches) first.focus();
 }
@@ -4198,7 +4876,7 @@ function checkPractice() {
   const ok = res.every(r => r.ok);
   P.tries++;
   if (P.first === null) { P.first = ok; record(ok); }
-  if (ok) P.done = true;
+  if (ok) { P.done = true; if (P.school && !P.showSol) scMark(P.school); }
   const msgR = res.find(r => !r.ok && r.msg);
   P.fb = { ok, unitErr: fs.length === 1 && !!res[0].unitErr, near: !ok && res.some(r => r.near), msg: fs.length > 1 ? (ok ? null : L('Some parts are not right yet (marked in red).', 'Некоторые части пока неверны (отмечены красным).')) : (msgR ? msgR.msg : null), parts: fs.length > 1 ? res : null };
   if (!ok && P.hintN === 0 && P.tries === 1) P.hintN = 0;
