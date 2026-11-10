@@ -3137,7 +3137,7 @@ function importProgress(f) {
 }
 
 /* ---------- PWA ---------- */
-const APP_VERSION = '20261110-1020';
+const APP_VERSION = '20261110-1026';
 function isStandalone() { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.__installEvt = e; });
 if ('serviceWorker' in navigator) { navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())).catch(() => {}); if (window.caches) caches.keys().then(ks => ks.filter(x => x.startsWith('endterm-')).forEach(x => caches.delete(x))).catch(() => {}); }
@@ -3332,12 +3332,15 @@ function viewChapter(ch) {
   DB.subj = c.subj; save();
   let h = crumbs([['Главная', '#/'], ['Глава ' + c.num]]);
   h += '<div><div class="meta">Глава ' + c.num + ' · Chapter ' + c.num + '</div><h2>' + esc(c.en) + '</h2><div class="muted">' + esc(c.ru) + '</div></div>';
-  h += '<section class="card theory"><h3>Теория · Theory</h3>' + (TH[ch] || []).map((b, i) => '<details' + (i === 0 ? ' open' : '') + '><summary>' + NM(b.h) + '</summary>' + b.p.map(p => '<p>' + tr(p) + '</p>').join('') + (b.ex && b.ex.length ? '<div class="ex">' + b.ex.map(e => K(mi(e))).join('<br>') + '</div>' : '') + '</details>').join('') + '</section>';
   h += '<div class="row"><button class="btn primary" onclick="go(\'#/p/mix:' + ch + '\')">Все навыки вперемешку</button><button class="btn" onclick="startExam([\'' + ch + '\'],\'chapter\')">Тест по главе</button></div>';
   h += '<div class="skills">' + SKILLS.filter(s => s.ch === ch).map(s => '<button class="skill" onclick="go(\'#/p/' + s.id + '\')"><span class="nm"><span class="id">' + s.code + (s.ext ? ' · <b class="ext">E</b>' : '') + (s.calc && s.subj === 'math' ? ' · калькулятор' : '') + '</span><span>' + esc(s.en) + '</span><span class="ru">' + esc(s.ru) + '</span></span>' + dotsHtml(s.id) + '</button>').join('') + '</div>';
+  h += theoryHtml(ch, false, 'Теория по главе · Theory');
   shell(h);
 }
 
+function theoryHtml(ch, open1, title) {
+  return '<section class="card theory" id="thBox"><h3>' + title + '</h3><p class="syn">Нажмите на тему, чтобы раскрыть.</p>' + (TH[ch] || []).map((b, i) => '<details' + (open1 && i === 0 ? ' open' : '') + '><summary>' + NM(b.h) + '</summary>' + b.p.map(p => '<p>' + tr(p) + '</p>').join('') + (b.ex && b.ex.length ? '<div class="ex">' + b.ex.map(e => K(mi(e))).join('<br>') + '</div>' : '') + '</details>').join('') + '</section>';
+}
 /* ---------- practice ---------- */
 let P = null; // current practice state
 function newItem(target) {
@@ -3391,8 +3394,10 @@ function renderPractice() {
   } else if (!P.done) h += '<button class="btn primary" id="bCheck">Проверить</button>';
   if (!P.done && P.hintN < sk.hints.length) h += '<button class="btn" id="bHint">Подсказка' + (sk.hints.length > 1 ? ' ' + (P.hintN + 1) + '/' + sk.hints.length : '') + '</button>';
   if (!P.done && !P.showSol && it.ans.k !== 'self') h += '<button class="btn" id="bSol">Решение</button>';
+  h += '<button class="btn" id="bTh">' + (P.showTh ? 'Скрыть теорию' : '📖 Теория') + '</button>';
   h += '<button class="btn' + (P.done ? ' primary' : ' ghost') + '" id="bNext">Новое задание →</button>';
   h += '</div></section>';
+  if (P.showTh) h += theoryHtml(ch.id, false, 'Теория · Глава ' + ch.num + ' · ' + esc(ch.ru));
   h += '<div class="row"><button class="btn ghost small" onclick="go(\'#/ch/' + ch.id + '\')">← Глава ' + ch.num + ': теория и навыки</button></div>';
   shell(h);
   wireFields($('#app'));
@@ -3400,7 +3405,8 @@ function renderPractice() {
   if (b('bCheck')) b('bCheck').onclick = checkPractice;
   if (b('bHint')) b('bHint').onclick = () => { P.hintN++; renderPracticeKeep(); };
   if (b('bSol')) b('bSol').onclick = () => { P.showSol = true; if (P.first === null) { P.first = false; record(false); } renderPracticeKeep(); };
-  if (b('bNext')) b('bNext').onclick = () => { P = newItem(P.target); renderPractice(); };
+  if (b('bNext')) b('bNext').onclick = () => { const t = P.showTh; P = newItem(P.target); P.showTh = t; renderPractice(); };
+  if (b('bTh')) b('bTh').onclick = () => { collectVals($('#app')); P.showTh = !P.showTh; renderPracticeKeep(); if (P.showTh) { const box = $('#thBox'); if (box) box.scrollIntoView({ behavior: 'smooth', block: 'start' }); } };
   if (b('bSelf')) b('bSelf').onclick = () => { P.showSol = true; renderPracticeKeep(); };
   if (b('bSelfOk')) b('bSelfOk').onclick = () => { P.done = true; P.first = true; record(true); P.fb = { ok: true }; renderPracticeKeep(); };
   if (b('bSelfNo')) b('bSelfNo').onclick = () => { P.done = true; P.first = false; record(false); P.fb = { ok: false, msg: L('Read the model answer carefully, then try a new question.', 'Внимательно разберите образец и возьмите новое задание.') }; renderPracticeKeep(); };
